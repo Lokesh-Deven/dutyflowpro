@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Dispatch, SetStateAction } from 'react';
+import React, { Dispatch, SetStateAction, useRef } from 'react';
 import type { Examination } from '@/lib/types';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,6 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Calendar as CalendarIcon, Upload, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import * as XLSX from 'xlsx';
 
 const examSchema = z.object({
   date: z.date({ required_error: "A date is required." }),
@@ -33,8 +34,9 @@ type ExaminationManagementProps = {
   onGenerate: () => void;
 };
 
-export function ExaminationManagement({ setExaminations, onGenerate }: ExaminationManagementProps) {
+export function ExaminationManagement({ examinations, setExaminations, onGenerate }: ExaminationManagementProps) {
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const form = useForm<z.infer<typeof examSchema>>({
     resolver: zodResolver(examSchema),
     defaultValues: {
@@ -52,18 +54,87 @@ export function ExaminationManagement({ setExaminations, onGenerate }: Examinati
     form.reset();
   }
   
-  const handleBulkUpload = () => {
-    toast({
-        title: "Bulk Upload",
-        description: "This feature will allow uploading exams from an Excel file. (This is a demo action)",
-    });
+  const handleBulkUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const excelSerialDateToJSDate = (serial: number) => {
+    const utc_days  = Math.floor(serial - 25569);
+    const utc_value = utc_days * 86400;                                        
+    const date_info = new Date(utc_value * 1000);
+    return new Date(date_info.getFullYear(), date_info.getMonth(), date_info.getDate());
+  }
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const data = new Uint8Array(e.target?.result as ArrayBuffer);
+            const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            
+            const rows = json.slice(1);
+            
+            const newExams: Examination[] = rows.map((row: any, index) => {
+                const [examName, college, subject, date, startTime, endTime, rooms, relievers] = row;
+                
+                let examDate;
+                if (typeof date === 'number') {
+                  examDate = excelSerialDateToJSDate(date);
+                } else if (typeof date === 'string') {
+                  examDate = new Date(date);
+                } else {
+                  examDate = new Date();
+                }
+
+                return {
+                    id: `exam-bulk-${Date.now()}-${index}`,
+                    examName: String(examName || ''),
+                    college: String(college || ''),
+                    subject: String(subject || ''),
+                    date: examDate,
+                    startTime: String(startTime || ''),
+                    endTime: String(endTime || ''),
+                    rooms: Number(rooms || 0),
+                    relievers: Number(relievers || 0),
+                };
+            }).filter(exam => exam.subject && exam.examName);
+
+            if (newExams.length > 0) {
+                setExaminations(prev => [...prev, ...newExams]);
+                toast({
+                    title: "Bulk Import Successful",
+                    description: `${newExams.length} examinations have been added.`,
+                });
+            } else {
+                throw new Error("No valid examination data found in the file.");
+            }
+        } catch (error) {
+            console.error("Error processing Excel file:", error);
+            toast({
+                variant: "destructive",
+                title: "Import Failed",
+                description: "Could not parse the Excel file. Please ensure it is in the correct format.",
+            });
+        } finally {
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
+        }
+    };
+    reader.readAsArrayBuffer(file);
   };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Examination Details</CardTitle>
-        <CardDescription>Add the details for each examination to be scheduled.</CardDescription>
+        <CardDescription>Add the details for each examination to be scheduled. For bulk add, use an Excel file with columns: Examination Name, College Name, Subject, Date, Start Time, End Time, Number of Rooms, Number of Relievers.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -75,7 +146,7 @@ export function ExaminationManagement({ setExaminations, onGenerate }: Examinati
               <FormItem><FormLabel>College Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
             )}/>
             <FormField control={form.control} name="subject" render={({ field }) => (
-              <FormItem><FormLabel>Subject</FormLabel><FormControl><Input {...field} placeholder="e.g. Advanced Calculus" /></FormControl><FormMessage /></FormItem>
+              <FormItem><FormLabel>Subject</FormLabel><FormControl><Input {...field} placeholder="e.g. Advanced Calculus" /></FormControl><FormMessage /></Form.Item>
             )}/>
             <FormField control={form.control} name="date" render={({ field }) => (
               <FormItem className="flex flex-col pt-2"><FormLabel className="mb-1.5">Date</FormLabel>
@@ -106,10 +177,17 @@ export function ExaminationManagement({ setExaminations, onGenerate }: Examinati
             <div className="md:col-span-2 lg:col-span-4 flex justify-between items-end gap-4 pt-4">
               <div className="flex gap-2">
                  <Button type="submit">Add Examination</Button>
-                 <Button type="button" variant="outline" onClick={handleBulkUpload}>
+                 <Button type="button" variant="outline" onClick={handleBulkUploadClick}>
                     <Upload className="mr-2" />
                     Bulk Add
                 </Button>
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    className="hidden"
+                    accept=".xlsx, .xls"
+                />
               </div>
               <Button type="button" variant="default" className="bg-accent hover:bg-accent/90" onClick={onGenerate}>
                 <Sparkles className="mr-2" />

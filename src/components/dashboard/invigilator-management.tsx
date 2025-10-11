@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Dispatch, SetStateAction } from 'react';
+import React, { Dispatch, SetStateAction, useRef } from 'react';
 import type { Invigilator } from '@/lib/types';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Switch } from '@/components/ui/switch';
 import { Edit, Trash2, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import * as XLSX from 'xlsx';
 
 const invigilatorSchema = z.object({
   name: z.string().min(1, "Name is required."),
@@ -29,6 +30,7 @@ type InvigilatorManagementProps = {
 
 export function InvigilatorManagement({ invigilators, setInvigilators }: InvigilatorManagementProps) {
     const { toast } = useToast();
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const form = useForm<z.infer<typeof invigilatorSchema>>({
         resolver: zodResolver(invigilatorSchema),
@@ -50,18 +52,69 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
         toast({ title: "Invigilator Removed", variant: "destructive" });
     }
 
-    const handleBulkUpload = () => {
-        toast({
-            title: "Bulk Upload",
-            description: "This feature will allow uploading invigilators from an Excel file. (This is a demo action)",
-        });
+    const handleBulkUploadClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = new Uint8Array(e.target?.result as ArrayBuffer);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                
+                // Assumes header row, skip it
+                const rows = json.slice(1);
+                
+                const newInvigilators: Invigilator[] = rows.map((row: any, index) => {
+                    const [name, designation, mobile, email, isPartTime] = row;
+                    return {
+                        id: `inv-bulk-${Date.now()}-${index}`,
+                        name: String(name || ''),
+                        designation: String(designation || ''),
+                        mobile: String(mobile || '').replace(/\D/g, ''),
+                        email: String(email || ''),
+                        isPartTime: isPartTime === true || String(isPartTime).toLowerCase() === 'yes',
+                    };
+                }).filter(inv => inv.name && inv.email); // Basic validation
+
+                if (newInvigilators.length > 0) {
+                    setInvigilators(prev => [...prev, ...newInvigilators]);
+                    toast({
+                        title: "Bulk Import Successful",
+                        description: `${newInvigilators.length} invigilators have been added.`,
+                    });
+                } else {
+                    throw new Error("No valid invigilator data found in the file.");
+                }
+            } catch (error) {
+                console.error("Error processing Excel file:", error);
+                toast({
+                    variant: "destructive",
+                    title: "Import Failed",
+                    description: "Could not parse the Excel file. Please ensure it is in the correct format.",
+                });
+            } finally {
+                // Reset file input
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                }
+            }
+        };
+        reader.readAsArrayBuffer(file);
     };
 
     return (
         <Card>
             <CardHeader>
                 <CardTitle>Invigilator Details</CardTitle>
-                <CardDescription>Add or manage invigilators for duty allotment.</CardDescription>
+                <CardDescription>Add or manage invigilators for duty allotment. For bulk add, use an Excel file with columns: Name, Designation, Mobile, E-Mail ID, Part-time (Yes/No).</CardDescription>
             </CardHeader>
             <CardContent>
                 <Form {...form}>
@@ -83,10 +136,17 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
                         )}/>
                         <div className="md:col-span-3 lg:col-span-6 flex gap-2">
                            <Button type="submit">Add Invigilator</Button>
-                           <Button type="button" variant="outline" onClick={handleBulkUpload}>
+                           <Button type="button" variant="outline" onClick={handleBulkUploadClick}>
                                 <Upload className="mr-2" />
                                 Bulk Add
                             </Button>
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                onChange={handleFileChange}
+                                className="hidden"
+                                accept=".xlsx, .xls"
+                            />
                         </div>
                     </form>
                 </Form>
