@@ -28,19 +28,17 @@ const navItems = [
 export function SidebarNav() {
   const pathname = usePathname();
 
-  // Simple logic to match base path for dashboard
-  const cleanPathname = pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
-  const isDashboardActive = cleanPathname === '/dashboard';
-
   return (
     <SidebarMenu>
       {navItems.map((item) => {
-        // Special check for the main dashboard page
-        const isActive = item.href === '/dashboard' ? isDashboardActive : pathname.startsWith(item.href);
+        const isActive = pathname.startsWith(item.href) && (pathname === item.href || pathname.startsWith(`${item.href}/`));
+        // A special case for the dashboard since its URL is the base for others.
+        const isDashboardActive = item.href === '/dashboard' && pathname === '/dashboard';
+
         return (
           <SidebarMenuItem key={item.href}>
             <Link href={item.href} legacyBehavior passHref>
-              <SidebarMenuButton isActive={isActive} tooltip={item.label}>
+              <SidebarMenuButton isActive={item.href === '/dashboard' ? isDashboardActive : isActive} tooltip={item.label}>
                 <item.icon />
                 <span>{item.label}</span>
               </SidebarMenuButton>
