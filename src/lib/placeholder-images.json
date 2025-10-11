@@ -1,3 +1,10 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "about-us",
+      "description": "A team of educators collaborating around a table, illustrating teamwork and planning in an educational setting.",
+      "imageUrl": "https://picsum.photos/seed/about-dutyflow/600/400",
+      "imageHint": "team collaboration"
+    }
+  ]
 }
