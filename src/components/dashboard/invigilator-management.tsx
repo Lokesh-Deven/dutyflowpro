@@ -137,7 +137,7 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
                         <div className="md:col-span-3 lg:col-span-6 flex gap-2">
                            <Button type="submit">Add Invigilator</Button>
                            <Button type="button" variant="outline" onClick={handleBulkUploadClick}>
-                                <Upload className="mr-2" />
+                                <Upload className="mr-2 h-4 w-4" />
                                 Bulk Add
                             </Button>
                             <input

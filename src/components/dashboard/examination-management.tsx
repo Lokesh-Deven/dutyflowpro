@@ -146,7 +146,7 @@ export function ExaminationManagement({ examinations, setExaminations, onGenerat
               <FormItem><FormLabel>College Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
             )}/>
             <FormField control={form.control} name="subject" render={({ field }) => (
-              <FormItem><FormLabel>Subject</FormLabel><FormControl><Input {...field} placeholder="e.g. Advanced Calculus" /></FormControl><FormMessage /></Form.Item>
+              <FormItem><FormLabel>Subject</FormLabel><FormControl><Input {...field} placeholder="e.g. Advanced Calculus" /></FormControl><FormMessage /></FormItem>
             )}/>
             <FormField control={form.control} name="date" render={({ field }) => (
               <FormItem className="flex flex-col pt-2"><FormLabel className="mb-1.5">Date</FormLabel>
@@ -178,7 +178,7 @@ export function ExaminationManagement({ examinations, setExaminations, onGenerat
               <div className="flex gap-2">
                  <Button type="submit">Add Examination</Button>
                  <Button type="button" variant="outline" onClick={handleBulkUploadClick}>
-                    <Upload className="mr-2" />
+                    <Upload className="mr-2 h-4 w-4" />
                     Bulk Add
                 </Button>
                 <input
@@ -190,7 +190,7 @@ export function ExaminationManagement({ examinations, setExaminations, onGenerat
                 />
               </div>
               <Button type="button" variant="default" className="bg-accent hover:bg-accent/90" onClick={onGenerate}>
-                <Sparkles className="mr-2" />
+                <Sparkles className="mr-2 h-4 w-4" />
                 Generate Duty Allotment
               </Button>
             </div>
