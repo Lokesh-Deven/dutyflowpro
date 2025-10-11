@@ -13,9 +13,10 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Calendar as CalendarIcon, Upload, Sparkles } from 'lucide-react';
+import { Calendar as CalendarIcon, Upload, Sparkles, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const examSchema = z.object({
   date: z.date({ required_error: "A date is required." }),
@@ -54,6 +55,11 @@ export function ExaminationManagement({ examinations, setExaminations, onGenerat
     form.reset();
   }
   
+  const handleDelete = (id: string) => {
+    setExaminations(prev => prev.filter(exam => exam.id !== id));
+    toast({ title: "Examination Removed", variant: "destructive" });
+  }
+
   const handleBulkUploadClick = () => {
     fileInputRef.current?.click();
   };
@@ -138,7 +144,7 @@ export function ExaminationManagement({ examinations, setExaminations, onGenerat
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start mb-8">
             <FormField control={form.control} name="examName" render={({ field }) => (
               <FormItem><FormLabel>Examination Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
             )}/>
@@ -196,6 +202,39 @@ export function ExaminationManagement({ examinations, setExaminations, onGenerat
             </div>
           </form>
         </Form>
+        
+        <Table>
+            <TableHeader>
+                <TableRow>
+                    <TableHead>Subject</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Time</TableHead>
+                    <TableHead>Rooms</TableHead>
+                    <TableHead>Relievers</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {examinations.length === 0 ? (
+                    <TableRow><TableCell colSpan={6} className="text-center">No examinations added yet.</TableCell></TableRow>
+                ) : (
+                    examinations.map(exam => (
+                        <TableRow key={exam.id}>
+                            <TableCell className="font-medium">{exam.subject}</TableCell>
+                            <TableCell>{exam.date.toLocaleDateString()}</TableCell>
+                            <TableCell>{exam.startTime} - {exam.endTime}</TableCell>
+                            <TableCell>{exam.rooms}</TableCell>
+                            <TableCell>{exam.relievers}</TableCell>
+                            <TableCell className="text-right">
+                                <Button variant="ghost" size="icon" onClick={() => handleDelete(exam.id)}>
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                            </TableCell>
+                        </TableRow>
+                    ))
+                )}
+            </TableBody>
+        </Table>
       </CardContent>
     </Card>
   );
