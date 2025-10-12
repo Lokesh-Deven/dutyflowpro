@@ -124,8 +124,8 @@ export function ExaminationManagement({ examinations, setExaminations, onGenerat
       subject: sessionDetails.subject || 'None',
       startTime: formatTime(sessionDetails.startTimeHour, sessionDetails.startTimeMinute, sessionDetails.startTimePeriod),
       endTime: formatTime(sessionDetails.endTimeHour, sessionDetails.endTimeMinute, sessionDetails.endTimePeriod),
-      rooms: sessionDetails.rooms,
-      relievers: sessionDetails.relievers,
+      rooms: Number(sessionDetails.rooms),
+      relievers: Number(sessionDetails.relievers),
     };
 
     setExaminations(prev => [...prev, newExamination]);
@@ -160,7 +160,8 @@ export function ExaminationManagement({ examinations, setExaminations, onGenerat
                     dateValue = excelSerialDateToJSDate(dateValue);
                 } else if (typeof dateValue === 'string') {
                     dateValue = new Date(dateValue);
-                } else if (!(dateValue instanceof Date)) {
+                } else if (!(dateValue instanceof Date) || isNaN(dateValue.getTime())) {
+                    console.warn(`Invalid date for row ${index + 2}, using today's date.`);
                     dateValue = new Date(); // Fallback
                 }
 
@@ -174,6 +175,11 @@ export function ExaminationManagement({ examinations, setExaminations, onGenerat
                         const timeRegex = /(\d{1,2}:\d{2})/;
                         const match = timeValue.match(timeRegex);
                         if (match) return match[0];
+                        // Try to parse AM/PM format
+                        const dateFromPM = new Date(`1970-01-01 ${timeValue}`);
+                        if(!isNaN(dateFromPM.getTime())) {
+                           return format(dateFromPM, 'HH:mm');
+                        }
                         return timeValue;
                     }
                     if (typeof timeValue === 'number') { // Excel time is a fraction of a day
@@ -193,8 +199,8 @@ export function ExaminationManagement({ examinations, setExaminations, onGenerat
                     date: dateValue,
                     startTime: parseTime(getColumnValue(row, ['Start Time', 'startTime', 'start time', 'timings'])),
                     endTime: parseTime(getColumnValue(row, ['End Time', 'endTime', 'end time'])),
-                    rooms: Number(getColumnValue(row, ['Number of Rooms', 'No of Rooms', 'rooms', 'Number of rooms']) || 1),
-                    relievers: Number(getColumnValue(row, ['Number of Relievers', 'No of Relievers', 'relievers', 'Number of relievers']) || 0),
+                    rooms: Number(getColumnValue(row, ['Number of Rooms', 'No of Rooms', 'rooms', 'Number of rooms', 'no of rooms']) || 1),
+                    relievers: Number(getColumnValue(row, ['Number of Relievers', 'No of Relievers', 'relievers', 'Number of relievers', 'no of relievers']) || 0),
                 };
             }).filter(exam => exam.subject && exam.date && !isNaN(exam.date.getTime()));
 
