@@ -111,6 +111,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult }: 
             <TableBody>
               {invigilators.map((invigilator, index) => {
                 const duties = allotmentResult.assignments[invigilator.id] || [];
+                const dutyCount = duties.length;
                 return (
                   <TableRow key={invigilator.id}>
                     <TableCell className="sticky left-0 bg-card z-10">{index + 1}</TableCell>
@@ -124,7 +125,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult }: 
                           </TableCell>
                        )
                     })}
-                    <TableCell className="font-bold text-center sticky right-0 bg-card z-10">{duties.length}</TableCell>
+                    <TableCell className="font-bold text-center sticky right-0 bg-card z-10">{dutyCount}</TableCell>
                   </TableRow>
                 );
               })}
