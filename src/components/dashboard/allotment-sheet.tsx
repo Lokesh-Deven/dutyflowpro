@@ -255,7 +255,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                               <Tooltip>
                                 <TooltipTrigger className="w-full h-full flex items-center justify-center">
                                     {hasDuty ? (
-                                        <div className="bg-primary/20 text-black font-bold rounded-md w-6 h-6 flex items-center justify-center">1</div>
+                                        <div className="bg-primary/20 text-black rounded-md w-6 h-6 flex items-center justify-center">1</div>
                                     ) : (
                                         <span>0</span>
                                     )}
