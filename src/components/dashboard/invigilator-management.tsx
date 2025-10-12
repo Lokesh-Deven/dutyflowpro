@@ -14,7 +14,6 @@ import { Trash2, Upload, UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { SetAvailabilityDialog } from './set-availability-dialog';
-import { Checkbox } from '../ui/checkbox';
 
 const invigilatorSchema = z.object({
   name: z.string().min(1, "Name is required."),
@@ -45,6 +44,7 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
             id: `inv-${Date.now()}`,
             ...values,
             availableDays: [],
+            isPartTime: false,
         };
         setInvigilators(prev => [...prev, newInvigilator]);
         toast({ title: "Invigilator Added", description: `${values.name} has been added to the list.` });
@@ -94,8 +94,8 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
                         designation: String(getColumnValue(row, ['Designation']) || ''),
                         mobile: String(getColumnValue(row, ['Mobile', 'Mobile No']) || '').replace(/\D/g, ''),
                         email: String(getColumnValue(row, ['E-Mail ID', 'Email', 'E-Mail']) || ''),
-                        isPartTime,
-                        availableDays: isPartTime ? [] : undefined,
+                        isPartTime: false,
+                        availableDays: [],
                     };
                 }).filter(inv => inv.name && inv.email);
 
@@ -166,26 +166,6 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
                             <FormField control={form.control} name="email" render={({ field }) => (
                                <FormItem><FormLabel>E-Mail ID</FormLabel><FormControl><Input placeholder="e.g. lokesh@example.com" {...field} /></FormControl><FormMessage /></FormItem>
                             )}/>
-                             <FormField
-                                control={form.control}
-                                name="isPartTime"
-                                render={({ field }) => (
-                                    <FormItem className="flex flex-row items-end space-x-2 pb-1">
-                                        <FormControl>
-                                            <Checkbox
-                                                checked={field.value}
-                                                onCheckedChange={(checked) => {
-                                                    field.onChange(checked);
-                                                    if(checked) {
-                                                        toast({ title: 'Part-Time Selected', description: 'Click the availability button in the table to set available days.' });
-                                                    }
-                                                }}
-                                            />
-                                        </FormControl>
-                                        <FormLabel className="font-normal">Is Part-Time?</FormLabel>
-                                    </FormItem>
-                                )}
-                            />
                         </div>
                         <div className="flex items-center gap-4">
                            <Button type="submit"><UserPlus className="mr-2 h-4 w-4" /> Add Invigilator</Button>
@@ -212,8 +192,8 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
                                 <TableHead className="w-[50px]">Sl. No</TableHead>
                                 <TableHead>Invigilator's Name</TableHead>
                                 <TableHead>Designation</TableHead>
-                                <TableHead>Availability</TableHead>
                                 <TableHead>E-Mail ID</TableHead>
+                                <TableHead>Availability</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -226,12 +206,12 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
                                         <TableCell>{index + 1}</TableCell>
                                         <TableCell className="font-medium">{inv.name}</TableCell>
                                         <TableCell>{inv.designation}</TableCell>
+                                        <TableCell>{inv.email}</TableCell>
                                         <TableCell>
                                             <Button variant={inv.availableDays && inv.availableDays.length > 0 ? "secondary" : "outline"} size="sm" onClick={() => handleOpenAvailabilityDialog(inv)}>
                                                  {formatAvailableDays(inv.availableDays)}
                                             </Button>
                                         </TableCell>
-                                        <TableCell>{inv.email}</TableCell>
                                         <TableCell className="text-right">
                                             <Button variant="ghost" size="icon" onClick={() => handleDelete(inv.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                                         </TableCell>
