@@ -6,11 +6,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Edit, Trash2, Upload, UserPlus } from 'lucide-react';
+import { Trash2, Upload, UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { SetAvailabilityDialog } from './set-availability-dialog';
@@ -44,6 +44,7 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
         const newInvigilator: Invigilator = {
             id: `inv-${Date.now()}`,
             ...values,
+            availableDays: [],
         };
         setInvigilators(prev => [...prev, newInvigilator]);
         toast({ title: "Invigilator Added", description: `${values.name} has been added to the list.` });
@@ -72,25 +73,29 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
                 const worksheet = workbook.Sheets[sheetName];
                 const json = XLSX.utils.sheet_to_json(worksheet);
                 
-                const newInvigilators: Invigilator[] = json.map((row: any, index) => {
-                    const getColumnValue = (row: any, keys: string[]): any => {
-                        const rowKeys = Object.keys(row);
-                        for (const key of keys) {
-                            const foundKey = rowKeys.find(rk => rk.toLowerCase().trim() === key.toLowerCase().trim());
-                            if (foundKey && row[foundKey] !== null && row[foundKey] !== undefined) {
-                                return row[foundKey];
-                            }
+                const getColumnValue = (row: any, keys: string[]): any => {
+                    const rowKeys = Object.keys(row);
+                    for (const key of keys) {
+                        const foundKey = rowKeys.find(rk => rk.toLowerCase().trim() === key.toLowerCase().trim());
+                        if (foundKey && row[foundKey] !== null && row[foundKey] !== undefined) {
+                            return row[foundKey];
                         }
-                        return null;
-                    };
+                    }
+                    return null;
+                };
+
+                const newInvigilators: Invigilator[] = json.map((row: any, index) => {
+                    const availability = getColumnValue(row, ['Availability', 'available']) || 'Full-Time';
+                    const isPartTime = availability.toString().toLowerCase().trim() === 'part-time';
 
                     return {
                         id: `inv-bulk-${Date.now()}-${index}`,
-                        name: String(getColumnValue(row, ['Name', 'Invigilator\'s Name']) || ''),
+                        name: String(getColumnValue(row, ['Name', "Invigilator's Name"]) || ''),
                         designation: String(getColumnValue(row, ['Designation']) || ''),
                         mobile: String(getColumnValue(row, ['Mobile', 'Mobile No']) || '').replace(/\D/g, ''),
                         email: String(getColumnValue(row, ['E-Mail ID', 'Email', 'E-Mail']) || ''),
-                        isPartTime: (getColumnValue(row, ['Availability']) || '').toString().toLowerCase().trim() === 'part-time',
+                        isPartTime,
+                        availableDays: isPartTime ? [] : undefined,
                     };
                 }).filter(inv => inv.name && inv.email);
 
@@ -127,11 +132,16 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
     const handleSaveAvailability = (invigilatorId: string, availableDays: string[]) => {
         setInvigilators(prev =>
             prev.map(inv =>
-                inv.id === invigilatorId ? { ...inv, availableDays } : inv
+                inv.id === invigilatorId ? { ...inv, availableDays, isPartTime: availableDays.length > 0 } : inv
             )
         );
         toast({ title: "Availability Saved", description: `Availability for the selected invigilator has been updated.` });
     };
+    
+    const formatAvailableDays = (days?: string[]) => {
+        if (!days || days.length === 0) return 'Full-Time';
+        return days.map(day => day.substring(0, 3)).join(', ');
+    }
 
     return (
         <>
@@ -164,10 +174,15 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
                                         <FormControl>
                                             <Checkbox
                                                 checked={field.value}
-                                                onCheckedChange={field.onChange}
+                                                onCheckedChange={(checked) => {
+                                                    field.onChange(checked);
+                                                    if(checked) {
+                                                        toast({ title: 'Part-Time Selected', description: 'Click the availability button in the table to set available days.' });
+                                                    }
+                                                }}
                                             />
                                         </FormControl>
-                                        <FormLabel className="font-normal">Part-Time Invigilator</FormLabel>
+                                        <FormLabel className="font-normal">Is Part-Time?</FormLabel>
                                     </FormItem>
                                 )}
                             />
@@ -212,13 +227,12 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
                                         <TableCell className="font-medium">{inv.name}</TableCell>
                                         <TableCell>{inv.designation}</TableCell>
                                         <TableCell>
-                                            {inv.isPartTime ? 'Part-Time' : 'Full-Time'}
+                                            <Button variant={inv.availableDays && inv.availableDays.length > 0 ? "secondary" : "outline"} size="sm" onClick={() => handleOpenAvailabilityDialog(inv)}>
+                                                 {formatAvailableDays(inv.availableDays)}
+                                            </Button>
                                         </TableCell>
                                         <TableCell>{inv.email}</TableCell>
                                         <TableCell className="text-right">
-                                            <Button variant="ghost" size="icon" onClick={() => handleOpenAvailabilityDialog(inv)}>
-                                                <Edit className="h-4 w-4" />
-                                            </Button>
                                             <Button variant="ghost" size="icon" onClick={() => handleDelete(inv.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                                         </TableCell>
                                     </TableRow>
@@ -228,9 +242,6 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
                     </Table>
                 </div>
             </CardContent>
-            <CardFooter className="justify-end">
-                <Button variant="default">Continue to Examination Details &rarr;</Button>
-            </CardFooter>
         </Card>
         <SetAvailabilityDialog
             isOpen={isAvailabilityDialogOpen}
