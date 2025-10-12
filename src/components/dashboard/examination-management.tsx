@@ -76,23 +76,24 @@ export function ExaminationManagement({ examinations, setExaminations, onGenerat
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
             const json = XLSX.utils.sheet_to_json(worksheet, {
-                raw: false, // Use raw: false to get formatted text
-                dateNF: 'yyyy-mm-dd', // Specify date format
+                raw: false,
+                dateNF: 'yyyy-mm-dd',
             });
 
             const newExams: Examination[] = json.map((row: any, index) => {
+                const dateValue = row['Date'] || row['date'];
                 return {
                     id: `exam-bulk-${Date.now()}-${index}`,
-                    examName: String(row['Examination Name'] || ''),
-                    college: String(row['College Name'] || ''),
-                    subject: String(row['Subject'] || ''),
-                    date: new Date(row['Date']),
-                    startTime: String(row['Start Time'] || ''),
-                    endTime: String(row['End Time'] || ''),
-                    rooms: Number(row['Number of Rooms'] || 0),
-                    relievers: Number(row['Number of Relievers'] || 0),
+                    examName: String(row['Examination Name'] || row['examName'] || ''),
+                    college: String(row['College Name'] || row['college'] || ''),
+                    subject: String(row['Subject'] || row['subject'] || ''),
+                    date: dateValue instanceof Date ? dateValue : new Date(dateValue),
+                    startTime: String(row['Start Time'] || row['startTime'] || ''),
+                    endTime: String(row['End Time'] || row['endTime'] || ''),
+                    rooms: Number(row['Number of Rooms'] || row['rooms'] || 0),
+                    relievers: Number(row['Number of Relievers'] || row['relievers'] || 0),
                 };
-            }).filter(exam => exam.subject && exam.examName);
+            }).filter(exam => exam.subject && exam.examName && !isNaN(exam.date.getTime()));
 
             if (newExams.length > 0) {
                 setExaminations(prev => [...prev, ...newExams]);
@@ -101,14 +102,14 @@ export function ExaminationManagement({ examinations, setExaminations, onGenerat
                     description: `${newExams.length} examinations have been added.`,
                 });
             } else {
-                throw new Error("No valid examination data found in the file.");
+                throw new Error("No valid examination data found in the file. Please check column names and data types.");
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error processing Excel file:", error);
             toast({
                 variant: "destructive",
                 title: "Import Failed",
-                description: "Could not parse the Excel file. Please ensure it is in the correct format.",
+                description: error.message || "Could not parse the Excel file. Please ensure it is in the correct format.",
             });
         } finally {
             if (fileInputRef.current) {
