@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { Dispatch, SetStateAction, useRef, useState } from 'react';
+import React, { Dispatch, SetStateAction, useMemo, useRef, useState } from 'react';
 import type { Examination } from '@/lib/types';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Calendar as CalendarIcon, Upload, Sparkles, Trash2, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { useRouter } from 'next/navigation';
 
 const examSessionSchema = z.object({
@@ -50,7 +50,8 @@ type ExaminationManagementProps = {
 const getColumnValue = (row: any, keys: string[]): any => {
     const rowKeys = Object.keys(row);
     for (const key of keys) {
-        const foundKey = rowKeys.find(rk => rk.toLowerCase().replace(/[^a-z0-9]/gi, '') === key.toLowerCase().replace(/[^a-z0-9]/gi, ''));
+        const lowerKey = key.toLowerCase().replace(/[^a-z0-9]/gi, '');
+        const foundKey = rowKeys.find(rk => rk.toLowerCase().replace(/[^a-z0-9]/gi, '') === lowerKey);
         if (foundKey && row[foundKey] !== null && row[foundKey] !== undefined) {
             return row[foundKey];
         }
@@ -92,6 +93,9 @@ export function ExaminationManagement({ examinations, setExaminations, onGenerat
       examName: '',
     },
   });
+  
+  const totalRooms = useMemo(() => examinations.reduce((acc, exam) => acc + exam.rooms, 0), [examinations]);
+  const totalRelievers = useMemo(() => examinations.reduce((acc, exam) => acc + exam.relievers, 0), [examinations]);
 
   const formatTime = (hour: string, minute: string, period: string) => {
     let h = parseInt(hour, 10);
@@ -383,6 +387,16 @@ export function ExaminationManagement({ examinations, setExaminations, onGenerat
                       ))
                   )}
               </TableBody>
+              {examinations.length > 0 && (
+                <TableFooter>
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-right font-bold text-primary">Total</TableCell>
+                    <TableCell className="font-bold text-primary">{totalRooms}</TableCell>
+                    <TableCell className="font-bold text-primary">{totalRelievers}</TableCell>
+                    <TableCell />
+                  </TableRow>
+                </TableFooter>
+              )}
           </Table>
         </CardContent>
         <CardFooter className="justify-between">
@@ -399,5 +413,3 @@ export function ExaminationManagement({ examinations, setExaminations, onGenerat
     </div>
   );
 }
-
-    
