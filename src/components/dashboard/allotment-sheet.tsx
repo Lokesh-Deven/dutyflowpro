@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Invigilator, Examination } from '@/lib/types';
@@ -10,6 +11,9 @@ import { AllotmentResult } from '@/lib/allotment';
 import { format } from 'date-fns';
 import { useAllotment } from '@/lib/allotment-context';
 import { optimizeDutyAssignments } from '@/ai/flows/optimize-duty-assignments';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+
 
 type AllotmentSheetProps = {
   invigilators: Invigilator[];
@@ -31,9 +35,61 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult }: 
 
   const handleDownload = () => {
     toast({
-      title: "Downloading Allotment Sheet",
-      description: "Your download will begin shortly. (This is a demo action)",
+      title: "Generating PDF...",
+      description: "Your download will begin shortly.",
     });
+
+    const doc = new jsPDF({ orientation: 'landscape' });
+
+    const examInfo = examinations.length > 0 ? examinations[0] : null;
+    const title = `${examInfo?.college || 'Institution'}\n${examInfo?.examName || 'Examination'}\nInvigilation Duty Allotment Sheet`;
+    
+    doc.text(title, doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
+
+    const head = [
+        ['Sl.No', "Invigilator's Name", 'Designation', ...examinations.map(exam => `${format(exam.date, "dd/MM/yy")}\n${exam.subject}\n${exam.startTime} - ${exam.endTime}`), 'Total']
+    ];
+
+    const body = invigilators.map((invigilator, index) => {
+        const duties = allotmentResult.assignments[invigilator.id] || [];
+        const dutyCount = duties.length;
+        const row = [
+            index + 1,
+            invigilator.name,
+            invigilator.designation,
+            ...examinations.map(exam => {
+                const hasDuty = duties.includes(exam.id);
+                return hasDuty ? '1' : '0';
+            }),
+            dutyCount
+        ];
+        return row;
+    });
+
+    (doc as any).autoTable({
+        head: head,
+        body: body,
+        startY: 35,
+        theme: 'grid',
+        headStyles: {
+            fillColor: [22, 163, 74], // green-600
+            textColor: 255,
+            fontStyle: 'bold',
+            halign: 'center'
+        },
+        styles: {
+            cellPadding: 2,
+            fontSize: 8,
+            halign: 'center'
+        },
+        columnStyles: {
+            0: { halign: 'center', cellWidth: 15 },
+            1: { halign: 'left', cellWidth: 40 },
+            2: { halign: 'left', cellWidth: 40 },
+        }
+    });
+
+    doc.save('duty-allotment.pdf');
   };
 
   const handleOptimize = async () => {
