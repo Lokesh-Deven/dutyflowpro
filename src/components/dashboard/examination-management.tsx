@@ -1,8 +1,9 @@
 
+
 "use client";
 
 import React, { Dispatch, SetStateAction, useMemo, useRef, useState } from 'react';
-import type { Examination } from '@/lib/types';
+import type { Examination, Invigilator } from '@/lib/types';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -20,7 +21,7 @@ import { Calendar as CalendarIcon, Upload, Sparkles, Trash2, ArrowLeft } from 'l
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 const examSessionSchema = z.object({
   subject: z.string().min(1, "Subject is required."),
@@ -43,7 +44,7 @@ const examinationSchema = z.object({
 type ExaminationManagementProps = {
   examinations: Examination[];
   setExaminations: Dispatch<SetStateAction<Examination[]>>;
-  onGenerate: () => void;
+  invigilators: Invigilator[];
 };
 
 // Flexible data retrieval from a row object, case-insensitive and ignoring extra characters
@@ -69,7 +70,7 @@ const hours = Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2
 const minutes = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
 const periods = ['AM', 'PM'];
 
-export function ExaminationManagement({ examinations, setExaminations, onGenerate }: ExaminationManagementProps) {
+export function ExaminationManagement({ examinations, setExaminations, invigilators }: ExaminationManagementProps) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -238,6 +239,20 @@ export function ExaminationManagement({ examinations, setExaminations, onGenerat
     setSessionDetails(prev => ({...prev, [field]: value}));
   }
 
+  const handleGenerate = () => {
+    if (examinations.length > 0) {
+      const invigilatorsString = JSON.stringify(invigilators);
+      const examinationsString = JSON.stringify(examinations);
+      router.push(`/dashboard/allotment?invigilators=${encodeURIComponent(invigilatorsString)}&examinations=${encodeURIComponent(examinationsString)}`);
+    } else {
+      toast({
+        variant: "destructive",
+        title: "No Examinations",
+        description: "Please add at least one examination to generate the allotment.",
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -377,6 +392,7 @@ export function ExaminationManagement({ examinations, setExaminations, onGenerat
                               <TableCell className="font-medium">{exam.subject}</TableCell>
                               <TableCell>{exam.startTime} - {exam.endTime}</TableCell>
                               <TableCell>{exam.rooms}</TableCell>
+
                               <TableCell>{exam.relievers}</TableCell>
                               <TableCell className="text-right">
                                   <Button variant="ghost" size="icon" onClick={() => handleDelete(exam.id)}>
@@ -400,11 +416,11 @@ export function ExaminationManagement({ examinations, setExaminations, onGenerat
           </Table>
         </CardContent>
         <CardFooter className="justify-between">
-            <Button variant="outline" onClick={() => router.push('/dashboard/invigilators')}>
+            <Button variant="outline" onClick={() => router.back()}>
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Invigilators
             </Button>
-            <Button type="button" variant="default" className="bg-accent hover:bg-accent/90" onClick={onGenerate}>
+            <Button type="button" variant="default" className="bg-accent hover:bg-accent/90" onClick={handleGenerate}>
                 <Sparkles className="mr-2 h-4 w-4" />
                 Generate Duty Allotment
             </Button>

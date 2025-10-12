@@ -1,37 +1,57 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import type { Invigilator, Examination } from '@/lib/types';
+import { generateAllotment } from '@/lib/allotment';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AllotmentSheet } from '@/components/dashboard/allotment-sheet';
-
-// In a real app, you would fetch this data or get it from a state management solution
-const mockInvigilators: Invigilator[] = [
-    { id: 'inv-1', name: 'Dr. Alice', designation: 'Professor', email: 'alice@example.com', availableDays: [], isPartTime: false },
-    { id: 'inv-2', name: 'Prof. Bob', designation: 'Asst. Professor', email: 'bob@example.com', availableDays: [], isPartTime: false },
-];
-
-const mockExaminations: Examination[] = [
-    { id: 'exam-1', college: 'SIPUC', examName: 'Mid-Term', date: new Date('2024-08-10'), subject: 'Physics', startTime: '09:00', endTime: '12:00', rooms: 2, relievers: 1 },
-    { id: 'exam-2', college: 'SIPUC', examName: 'Mid-Term', date: new Date('2024-08-11'), subject: 'Chemistry', startTime: '14:00', endTime: '17:00', rooms: 3, relievers: 1 },
-];
-
+import IndividualDashboard from '@/components/dashboard/individual-dashboard';
 
 export default function AllotmentPage() {
-  // For this prototype, we'll use mock data on the allotment page.
-  // In a real app, this data would be passed from the previous steps.
-  const [invigilators, setInvigilators] = useState<Invigilator[]>([]);
-  const [examinations, setExaminations] = useState<Examination[]>([]);
+  const searchParams = useSearchParams();
+  const [invigilators, setInvigilators] = useState<Invigilator[]>(() => {
+    const invigilatorsData = searchParams.get('invigilators');
+    return invigilatorsData ? JSON.parse(invigilatorsData) : [];
+  });
+  const [examinations, setExaminations] = useState<Examination[]>(() => {
+    const examinationsData = searchParams.get('examinations');
+    if (!examinationsData) return [];
+    // Need to parse dates correctly
+    const parsedExams = JSON.parse(examinationsData);
+    return parsedExams.map((exam: any) => ({...exam, date: new Date(exam.date)}));
+  });
 
-  useEffect(() => {
-    // Simulate fetching or receiving data
-    setInvigilators(mockInvigilators);
-    setExaminations(mockExaminations);
-  }, []);
+  const allotment = generateAllotment(invigilators, examinations);
 
   return (
     <div className="flex-1 space-y-4">
-        <h1 className="text-3xl font-bold tracking-tight font-headline">Duty Allotment</h1>
-        <AllotmentSheet invigilators={invigilators} examinations={examinations} />
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight font-headline">Duty Allotment</h1>
+          <p className="text-muted-foreground">View and export the generated schedule.</p>
+        </div>
+      </div>
+      <Tabs defaultValue="allotment-sheet">
+        <TabsList>
+          <TabsTrigger value="allotment-sheet">Duty Allotment Sheet</TabsTrigger>
+          <TabsTrigger value="individual-dashboard">Individual Dashboard</TabsTrigger>
+        </TabsList>
+        <TabsContent value="allotment-sheet" className="mt-4">
+          <AllotmentSheet
+            invigilators={invigilators}
+            examinations={examinations}
+            allotmentResult={allotment}
+          />
+        </TabsContent>
+        <TabsContent value="individual-dashboard" className="mt-4">
+          <IndividualDashboard
+            invigilators={invigilators}
+            examinations={examinations}
+            allotmentResult={allotment}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trash2, Upload, UserPlus, ArrowRight } from 'lucide-react';
+import { Upload, UserPlus, ArrowRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { SetAvailabilityDialog } from './set-availability-dialog';
@@ -51,11 +51,6 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
         toast({ title: "Invigilator Added", description: `${values.name} has been added to the list.` });
         form.reset();
     }
-    
-    const handleDelete = (id: string) => {
-        setInvigilators(prev => prev.filter(inv => inv.id !== id));
-        toast({ title: "Invigilator Removed", variant: "destructive" });
-    }
 
     const handleBulkUploadClick = () => {
         fileInputRef.current?.click();
@@ -77,7 +72,8 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
                 const getColumnValue = (row: any, keys: string[]): any => {
                     const rowKeys = Object.keys(row);
                     for (const key of keys) {
-                        const foundKey = rowKeys.find(rk => rk.toLowerCase().trim() === key.toLowerCase().trim());
+                        const lowerKey = key.toLowerCase().replace(/[^a-z0-9]/gi, '');
+                        const foundKey = rowKeys.find(rk => rk.toLowerCase().replace(/[^a-z0-9]/gi, '') === lowerKey);
                         if (foundKey && row[foundKey] !== null && row[foundKey] !== undefined) {
                             return row[foundKey];
                         }
@@ -87,10 +83,10 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
 
                 const newInvigilators: Invigilator[] = json.map((row: any, index) => ({
                     id: `inv-bulk-${Date.now()}-${index}`,
-                    name: String(getColumnValue(row, ['Name', "Invigilator's Name"]) || ''),
-                    designation: String(getColumnValue(row, ['Designation']) || ''),
-                    mobile: String(getColumnValue(row, ['Mobile', 'Mobile No']) || '').replace(/\D/g, ''),
-                    email: String(getColumnValue(row, ['E-Mail ID', 'Email', 'E-Mail']) || ''),
+                    name: String(getColumnValue(row, ["Name", "Invigilator's Name"]) || ''),
+                    designation: String(getColumnValue(row, ["Designation"]) || ''),
+                    mobile: String(getColumnValue(row, ["Mobile", "Mobile No"]) || '').replace(/\D/g, ''),
+                    email: String(getColumnValue(row, ["E-Mail ID", "Email", "E-Mail"]) || ''),
                     isPartTime: false,
                     availableDays: [],
                 })).filter(inv => inv.name && inv.email);
@@ -128,16 +124,15 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
     const handleSaveAvailability = (invigilatorId: string, availableDays: string[]) => {
         setInvigilators(prev =>
             prev.map(inv =>
-                inv.id === invigilatorId ? { ...inv, availableDays, isPartTime: availableDays.length > 0 } : inv
+                inv.id === invigilatorId ? { ...inv, availableDays, isPartTime: availableDays.length > 0 && availableDays.length < 7 } : inv
             )
         );
         toast({ title: "Availability Saved", description: `Availability for ${selectedInvigilator?.name} has been updated.` });
     };
     
-    const formatAvailableDays = (days?: string[]) => {
-        if (!days || days.length === 0) return 'Full-Time';
-        if (days.length === 7) return 'Full-Time';
-        return days.map(day => day.substring(0, 3)).join(', ');
+    const formatAvailableDays = (inv: Invigilator) => {
+        if (!inv.isPartTime || !inv.availableDays || inv.availableDays.length === 0) return 'Full-Time';
+        return inv.availableDays.map(day => day.substring(0, 3)).join(', ');
     }
 
     const handleContinue = () => {
@@ -149,9 +144,8 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
             });
             return;
         }
-        // Here you would typically save the invigilators list to a global state or DB
-        // For this prototype, we'll just navigate
-        router.push('/dashboard/examinations');
+        const invigilatorsString = JSON.stringify(invigilators);
+        router.push(`/dashboard/examinations?invigilators=${encodeURIComponent(invigilatorsString)}`);
     };
 
     return (
@@ -205,12 +199,11 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
                                 <TableHead>Designation</TableHead>
                                 <TableHead>E-Mail ID</TableHead>
                                 <TableHead>Availability</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {invigilators.length === 0 ? (
-                                <TableRow><TableCell colSpan={6} className="text-center h-24">No invigilators added yet.</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={5} className="text-center h-24">No invigilators added yet.</TableCell></TableRow>
                             ) : (
                                 invigilators.map((inv, index) => (
                                     <TableRow key={inv.id}>
@@ -220,11 +213,8 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
                                         <TableCell>{inv.email}</TableCell>
                                         <TableCell>
                                             <Button variant={inv.isPartTime ? "secondary" : "outline"} size="sm" onClick={() => handleOpenAvailabilityDialog(inv)}>
-                                                 {formatAvailableDays(inv.availableDays)}
+                                                 {formatAvailableDays(inv)}
                                             </Button>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <Button variant="ghost" size="icon" onClick={() => handleDelete(inv.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                                         </TableCell>
                                     </TableRow>
                                 ))

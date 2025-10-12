@@ -1,59 +1,22 @@
 "use client";
 
-import { useState, useMemo } from 'react';
 import type { Invigilator, Examination } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
-import { Download, Mail, Send } from 'lucide-react';
+import { Download, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { AllotmentResult } from '@/lib/allotment';
+import { format } from 'date-fns';
 
 type AllotmentSheetProps = {
   invigilators: Invigilator[];
   examinations: Examination[];
+  allotmentResult: AllotmentResult;
 };
 
-type AllotmentState = Record<string, Record<string, boolean>>;
-
-export function AllotmentSheet({ invigilators, examinations }: AllotmentSheetProps) {
+export function AllotmentSheet({ invigilators, examinations, allotmentResult }: AllotmentSheetProps) {
   const { toast } = useToast();
-  const [allotment, setAllotment] = useState<AllotmentState>(() => {
-    const initialState: AllotmentState = {};
-    invigilators.forEach(inv => {
-      initialState[inv.id] = {};
-      examinations.forEach(exam => {
-        initialState[inv.id][exam.id] = false;
-      });
-    });
-    return initialState;
-  });
-
-  const handleToggle = (invigilatorId: string, examId: string) => {
-    setAllotment(prev => ({
-      ...prev,
-      [invigilatorId]: {
-        ...prev[invigilatorId],
-        [examId]: !prev[invigilatorId][examId],
-      },
-    }));
-  };
-
-  const invigilatorTotals = useMemo(() => {
-    const totals: Record<string, number> = {};
-    invigilators.forEach(inv => {
-      totals[inv.id] = examinations.reduce((acc, exam) => acc + (allotment[inv.id][exam.id] ? 1 : 0), 0);
-    });
-    return totals;
-  }, [allotment, invigilators, examinations]);
-
-  const examTotals = useMemo(() => {
-    const totals: Record<string, number> = {};
-    examinations.forEach(exam => {
-      totals[exam.id] = invigilators.reduce((acc, inv) => acc + (allotment[inv.id][exam.id] ? 1 : 0), 0);
-    });
-    return totals;
-  }, [allotment, invigilators, examinations]);
 
   const handleEmailAll = () => {
     toast({
@@ -68,63 +31,56 @@ export function AllotmentSheet({ invigilators, examinations }: AllotmentSheetPro
       description: "Your download will begin shortly. (This is a demo action)",
     });
   };
+  
+  const examInfo = examinations.length > 0 ? examinations[0] : null;
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Duty Allotment Sheet</CardTitle>
-        <CardDescription>Toggle the switches to assign duties. Totals are calculated automatically.</CardDescription>
+      <CardHeader className="text-center">
+        <CardTitle className="text-xl font-bold text-primary">{examInfo?.college}</CardTitle>
+        <CardDescription className="text-lg font-semibold">{examInfo?.examName}</CardDescription>
+        <p className="text-md text-muted-foreground">Invigilation Duty Allotment Sheet</p>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
           <Table className="min-w-full">
             <TableHeader>
               <TableRow>
-                <TableHead className="sticky left-0 bg-card z-10 w-48">Invigilator</TableHead>
+                <TableHead className="sticky left-0 bg-card z-10 w-12">Sl.No</TableHead>
+                <TableHead className="sticky left-12 bg-card z-10 w-48">Invigilator's Name</TableHead>
+                <TableHead className="w-48">Designation</TableHead>
                 {examinations.map(exam => (
-                  <TableHead key={exam.id} className="text-center">
-                    {exam.subject}<br />
-                    <span className="text-xs font-normal text-muted-foreground">{exam.date.toLocaleDateString()}</span>
+                  <TableHead key={exam.id} className="text-center whitespace-nowrap -rotate-90" style={{ writingMode: 'vertical-rl' }}>
+                    <span className="text-xs font-normal text-muted-foreground">{format(exam.date, "dd/MM/yy")}</span>
+                    <br />
+                    {exam.subject}
+                    <br/>
+                    <span className="text-xs font-normal text-muted-foreground">{exam.startTime} - {exam.endTime}</span>
                   </TableHead>
                 ))}
-                <TableHead className="text-center sticky right-0 bg-card z-10">Total Duties</TableHead>
+                <TableHead className="text-center sticky right-0 bg-card z-10">Total</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {invigilators.map(invigilator => (
-                <TableRow key={invigilator.id}>
-                  <TableCell className="font-medium sticky left-0 bg-card z-10">{invigilator.name}</TableCell>
-                  {examinations.map(exam => (
-                    <TableCell key={exam.id} className="text-center">
-                      <Switch
-                        checked={allotment[invigilator.id][exam.id]}
-                        onCheckedChange={() => handleToggle(invigilator.id, exam.id)}
-                        aria-label={`Assign ${invigilator.name} to ${exam.subject}`}
-                      />
-                    </TableCell>
-                  ))}
-                  <TableCell className="font-bold text-center sticky right-0 bg-card z-10">{invigilatorTotals[invigilator.id]}</TableCell>
-                </TableRow>
-              ))}
-              <TableRow className="bg-secondary hover:bg-secondary">
-                <TableHead className="sticky left-0 bg-secondary z-10">Invigilators Required</TableHead>
-                {examinations.map(exam => (
-                  <TableHead key={exam.id} className="text-center">{exam.relievers + exam.rooms}</TableHead>
-                ))}
-                <TableHead className="sticky right-0 bg-secondary z-10"></TableHead>
-              </TableRow>
-              <TableRow className="bg-secondary hover:bg-secondary">
-                <TableHead className="sticky left-0 bg-secondary z-10">Total Assigned</TableHead>
-                {examinations.map(exam => (
-                  <TableHead
-                    key={exam.id}
-                    className={`text-center font-bold ${examTotals[exam.id] !== (exam.relievers + exam.rooms) ? 'text-destructive' : 'text-accent-foreground'}`}
-                  >
-                    {examTotals[exam.id]}
-                  </TableHead>
-                ))}
-                <TableHead className="sticky right-0 bg-secondary z-10"></TableHead>
-              </TableRow>
+              {invigilators.map((invigilator, index) => {
+                const duties = allotmentResult.assignments[invigilator.id] || [];
+                return (
+                  <TableRow key={invigilator.id}>
+                    <TableCell className="sticky left-0 bg-card z-10">{index + 1}</TableCell>
+                    <TableCell className="font-medium sticky left-12 bg-card z-10">{invigilator.name}</TableCell>
+                    <TableCell>{invigilator.designation}</TableCell>
+                    {examinations.map(exam => {
+                       const dutyCount = duties.filter(dutyId => dutyId === exam.id).length;
+                       return (
+                          <TableCell key={exam.id} className="text-center">
+                            {dutyCount > 0 ? <span className="inline-block bg-primary/10 text-primary font-bold rounded-full h-6 w-6 text-center leading-6">{dutyCount}</span> : 0}
+                          </TableCell>
+                       )
+                    })}
+                    <TableCell className="font-bold text-center sticky right-0 bg-card z-10">{duties.length}</TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { Invigilator, Examination } from '@/lib/types';
+import { AllotmentResult } from '@/lib/allotment';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -9,20 +10,27 @@ import { Download, Mail } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
 
 type IndividualDashboardProps = {
   invigilators: Invigilator[];
   examinations: Examination[];
+  allotmentResult: AllotmentResult;
 };
 
-export default function IndividualDashboard({ invigilators, examinations }: IndividualDashboardProps) {
+export default function IndividualDashboard({ invigilators, examinations, allotmentResult }: IndividualDashboardProps) {
   const { toast } = useToast();
   const [selectedInvigilatorId, setSelectedInvigilatorId] = useState<string | null>(invigilators.length > 0 ? invigilators[0].id : null);
 
-  const selectedInvigilator = invigilators.find(inv => inv.id === selectedInvigilatorId);
+  const selectedInvigilator = useMemo(() => {
+    return invigilators.find(inv => inv.id === selectedInvigilatorId);
+  }, [selectedInvigilatorId, invigilators]);
 
-  // This is mock data. In a real app, this would be derived from the allotment state.
-  const assignedDuties = examinations.filter((_, index) => index % (invigilators.findIndex(i => i.id === selectedInvigilatorId) + 2) === 0);
+  const assignedDuties = useMemo(() => {
+    if (!selectedInvigilatorId) return [];
+    const dutyIds = allotmentResult.assignments[selectedInvigilatorId] || [];
+    return examinations.filter(exam => dutyIds.includes(exam.id));
+  }, [selectedInvigilatorId, allotmentResult, examinations]);
 
   const handleEmail = () => {
     if (!selectedInvigilator) return;
@@ -85,7 +93,7 @@ export default function IndividualDashboard({ invigilators, examinations }: Indi
                       <div>
                         <p className="font-medium">{duty.subject}</p>
                         <p className="text-sm text-muted-foreground">
-                          {duty.date.toLocaleDateString()} | {duty.startTime} - {duty.endTime}
+                          {format(duty.date, 'PPP')} | {duty.startTime} - {duty.endTime}
                         </p>
                       </div>
                       <Badge variant="outline">{duty.examName}</Badge>
