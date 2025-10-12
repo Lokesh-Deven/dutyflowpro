@@ -398,3 +398,5 @@ export function ExaminationManagement({ examinations, setExaminations, onGenerat
     </div>
   );
 }
+
+    
