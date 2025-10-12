@@ -1,28 +1,22 @@
+
 "use client";
 
-import { useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import type { Invigilator, Examination } from '@/lib/types';
+import { useAllotment } from '@/lib/allotment-context';
 import { generateAllotment } from '@/lib/allotment';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AllotmentSheet } from '@/components/dashboard/allotment-sheet';
 import IndividualDashboard from '@/components/dashboard/individual-dashboard';
 
 export default function AllotmentPage() {
-  const searchParams = useSearchParams();
-  const [invigilators, setInvigilators] = useState<Invigilator[]>(() => {
-    const invigilatorsData = searchParams.get('invigilators');
-    return invigilatorsData ? JSON.parse(invigilatorsData) : [];
-  });
-  const [examinations, setExaminations] = useState<Examination[]>(() => {
-    const examinationsData = searchParams.get('examinations');
-    if (!examinationsData) return [];
-    // Need to parse dates correctly
-    const parsedExams = JSON.parse(examinationsData);
-    return parsedExams.map((exam: any) => ({...exam, date: new Date(exam.date)}));
-  });
+  const { invigilators, examinations } = useAllotment();
 
-  const allotment = generateAllotment(invigilators, examinations);
+  // Ensure examinations have Date objects
+  const processedExaminations = examinations.map(exam => ({
+    ...exam,
+    date: new Date(exam.date),
+  }));
+
+  const allotment = generateAllotment(invigilators, processedExaminations);
 
   return (
     <div className="flex-1 space-y-4">
@@ -40,14 +34,14 @@ export default function AllotmentPage() {
         <TabsContent value="allotment-sheet" className="mt-4">
           <AllotmentSheet
             invigilators={invigilators}
-            examinations={examinations}
+            examinations={processedExaminations}
             allotmentResult={allotment}
           />
         </TabsContent>
         <TabsContent value="individual-dashboard" className="mt-4">
           <IndividualDashboard
             invigilators={invigilators}
-            examinations={examinations}
+            examinations={processedExaminations}
             allotmentResult={allotment}
           />
         </TabsContent>

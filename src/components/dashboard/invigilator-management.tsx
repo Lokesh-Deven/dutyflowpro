@@ -1,6 +1,7 @@
+
 "use client";
 
-import React, { Dispatch, SetStateAction, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import type { Invigilator } from '@/lib/types';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,6 +16,7 @@ import { Upload, UserPlus, ArrowRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { SetAvailabilityDialog } from './set-availability-dialog';
+import { useAllotment } from '@/lib/allotment-context';
 
 const invigilatorSchema = z.object({
   name: z.string().min(1, "Name is required."),
@@ -23,17 +25,14 @@ const invigilatorSchema = z.object({
   email: z.string().email("Invalid email address."),
 });
 
-type InvigilatorManagementProps = {
-  invigilators: Invigilator[];
-  setInvigilators: Dispatch<SetStateAction<Invigilator[]>>;
-};
-
-export function InvigilatorManagement({ invigilators, setInvigilators }: InvigilatorManagementProps) {
+export function InvigilatorManagement() {
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const router = useRouter();
     const [isAvailabilityDialogOpen, setIsAvailabilityDialogOpen] = useState(false);
     const [selectedInvigilator, setSelectedInvigilator] = useState<Invigilator | null>(null);
+
+    const { invigilators, setInvigilators } = useAllotment();
 
     const form = useForm<z.infer<typeof invigilatorSchema>>({
         resolver: zodResolver(invigilatorSchema),
@@ -56,6 +55,18 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
         fileInputRef.current?.click();
     };
 
+    const getColumnValue = (row: any, keys: string[]): any => {
+        const rowKeys = Object.keys(row);
+        for (const key of keys) {
+            const lowerKey = key.toLowerCase().replace(/[^a-z0-9]/gi, '');
+            const foundKey = rowKeys.find(rk => rk.toLowerCase().replace(/[^a-z0-9]/gi, '') === lowerKey);
+            if (foundKey && row[foundKey] !== null && row[foundKey] !== undefined) {
+                return row[foundKey];
+            }
+        }
+        return null;
+    };
+
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
@@ -68,18 +79,6 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
                 const sheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[sheetName];
                 const json = XLSX.utils.sheet_to_json(worksheet);
-                
-                const getColumnValue = (row: any, keys: string[]): any => {
-                    const rowKeys = Object.keys(row);
-                    for (const key of keys) {
-                        const lowerKey = key.toLowerCase().replace(/[^a-z0-9]/gi, '');
-                        const foundKey = rowKeys.find(rk => rk.toLowerCase().replace(/[^a-z0-9]/gi, '') === lowerKey);
-                        if (foundKey && row[foundKey] !== null && row[foundKey] !== undefined) {
-                            return row[foundKey];
-                        }
-                    }
-                    return null;
-                };
 
                 const newInvigilators: Invigilator[] = json.map((row: any, index) => ({
                     id: `inv-bulk-${Date.now()}-${index}`,
@@ -123,13 +122,17 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
 
     const handleSaveAvailability = (invigilatorId: string, availableDays: string[]) => {
         setInvigilators(prev =>
-            prev.map(inv =>
-                inv.id === invigilatorId ? { ...inv, availableDays, isPartTime: availableDays.length > 0 && availableDays.length < 7 } : inv
-            )
+            prev.map(inv => {
+                const isPartTime = availableDays.length > 0 && availableDays.length < 7;
+                if (inv.id === invigilatorId) {
+                    return { ...inv, availableDays, isPartTime };
+                }
+                return inv;
+            })
         );
         toast({ title: "Availability Saved", description: `Availability for ${selectedInvigilator?.name} has been updated.` });
     };
-    
+
     const formatAvailableDays = (inv: Invigilator) => {
         if (!inv.isPartTime || !inv.availableDays || inv.availableDays.length === 0) return 'Full-Time';
         return inv.availableDays.map(day => day.substring(0, 3)).join(', ');
@@ -144,8 +147,7 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
             });
             return;
         }
-        const invigilatorsString = JSON.stringify(invigilators);
-        router.push(`/dashboard/examinations?invigilators=${encodeURIComponent(invigilatorsString)}`);
+        router.push(`/dashboard/examinations`);
     };
 
     return (
@@ -236,6 +238,6 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
             invigilator={selectedInvigilator}
             onSave={handleSaveAvailability}
         />
-      </>
+        </>
     );
 }

@@ -1,10 +1,9 @@
 
-
 "use client";
 
-import React, { Dispatch, SetStateAction, useMemo, useRef, useState } from 'react';
-import type { Examination, Invigilator } from '@/lib/types';
-import { useForm, Controller } from 'react-hook-form';
+import React, { useMemo, useRef, useState } from 'react';
+import type { Examination } from '@/lib/types';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { format } from "date-fns";
@@ -21,7 +20,8 @@ import { Calendar as CalendarIcon, Upload, Sparkles, Trash2, ArrowLeft } from 'l
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import { useAllotment } from '@/lib/allotment-context';
 
 const examSessionSchema = z.object({
   subject: z.string().min(1, "Subject is required."),
@@ -41,12 +41,6 @@ const examinationSchema = z.object({
   date: z.date({ required_error: "A date is required." }),
 });
 
-type ExaminationManagementProps = {
-  examinations: Examination[];
-  setExaminations: Dispatch<SetStateAction<Examination[]>>;
-  invigilators: Invigilator[];
-};
-
 // Flexible data retrieval from a row object, case-insensitive and ignoring extra characters
 const getColumnValue = (row: any, keys: string[]): any => {
     const rowKeys = Object.keys(row);
@@ -60,7 +54,6 @@ const getColumnValue = (row: any, keys: string[]): any => {
     return null;
 };
 
-
 // Handles Excel's numeric date format
 const excelSerialDateToJSDate = (serial: number) => {
     return new Date(Date.UTC(0, 0, serial - 1));
@@ -70,10 +63,11 @@ const hours = Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2
 const minutes = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
 const periods = ['AM', 'PM'];
 
-export function ExaminationManagement({ examinations, setExaminations, invigilators }: ExaminationManagementProps) {
+export function ExaminationManagement() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const { invigilators, examinations, setExaminations } = useAllotment();
   
   const [sessionDetails, setSessionDetails] = useState({
     subject: '',
@@ -171,7 +165,6 @@ export function ExaminationManagement({ examinations, setExaminations, invigilat
                     dateValue = new Date(); // Fallback
                 }
 
-
                 const parseTime = (timeValue: any) => {
                     if (timeValue instanceof Date) {
                         return format(timeValue, 'HH:mm');
@@ -241,9 +234,7 @@ export function ExaminationManagement({ examinations, setExaminations, invigilat
 
   const handleGenerate = () => {
     if (examinations.length > 0) {
-      const invigilatorsString = JSON.stringify(invigilators);
-      const examinationsString = JSON.stringify(examinations);
-      router.push(`/dashboard/allotment?invigilators=${encodeURIComponent(invigilatorsString)}&examinations=${encodeURIComponent(examinationsString)}`);
+      router.push(`/dashboard/allotment`);
     } else {
       toast({
         variant: "destructive",
@@ -392,7 +383,6 @@ export function ExaminationManagement({ examinations, setExaminations, invigilat
                               <TableCell className="font-medium">{exam.subject}</TableCell>
                               <TableCell>{exam.startTime} - {exam.endTime}</TableCell>
                               <TableCell>{exam.rooms}</TableCell>
-
                               <TableCell>{exam.relievers}</TableCell>
                               <TableCell className="text-right">
                                   <Button variant="ghost" size="icon" onClick={() => handleDelete(exam.id)}>
