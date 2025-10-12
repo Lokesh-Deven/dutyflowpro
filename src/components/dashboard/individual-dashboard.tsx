@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useMemo } from 'react';
-import type { Invigilator, Examination } from '@/lib/types';
-import { AllotmentResult } from '@/lib/allotment';
+import { useState, useMemo, useEffect } from 'react';
+import type { Invigilator, Examination, AllotmentResult } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -20,14 +19,27 @@ type IndividualDashboardProps = {
 
 export default function IndividualDashboard({ invigilators, examinations, allotmentResult }: IndividualDashboardProps) {
   const { toast } = useToast();
-  const [selectedInvigilatorId, setSelectedInvigilatorId] = useState<string | null>(invigilators.length > 0 ? invigilators[0].id : null);
+  const [selectedInvigilatorId, setSelectedInvigilatorId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if(invigilators.length > 0 && !selectedInvigilatorId) {
+        setSelectedInvigilatorId(invigilators[0].id);
+    }
+    if (invigilators.length > 0 && selectedInvigilatorId && !invigilators.some(i => i.id === selectedInvigilatorId)) {
+        setSelectedInvigilatorId(invigilators[0].id);
+    }
+     if (invigilators.length === 0) {
+        setSelectedInvigilatorId(null);
+    }
+  }, [invigilators, selectedInvigilatorId]);
+
 
   const selectedInvigilator = useMemo(() => {
     return invigilators.find(inv => inv.id === selectedInvigilatorId);
   }, [selectedInvigilatorId, invigilators]);
 
   const assignedDuties = useMemo(() => {
-    if (!selectedInvigilatorId) return [];
+    if (!selectedInvigilatorId || !allotmentResult.assignments) return [];
     const dutyIds = allotmentResult.assignments[selectedInvigilatorId] || [];
     return examinations.filter(exam => dutyIds.includes(exam.id));
   }, [selectedInvigilatorId, allotmentResult, examinations]);
@@ -47,6 +59,17 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
       description: `Preparing PDF for ${selectedInvigilator.name}. (This is a demo action)`,
     });
   };
+  
+  if (invigilators.length === 0) {
+    return (
+        <Card className="text-center py-12">
+            <CardHeader>
+                <CardTitle>No Invigilators</CardTitle>
+                <CardDescription>No invigilators have been added for this allotment.</CardDescription>
+            </CardHeader>
+        </Card>
+    );
+  }
 
   return (
     <Card>
@@ -57,7 +80,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
       <CardContent className="space-y-6">
         <Select
           onValueChange={setSelectedInvigilatorId}
-          defaultValue={selectedInvigilatorId ?? undefined}
+          value={selectedInvigilatorId ?? undefined}
         >
           <SelectTrigger className="w-full md:w-72">
             <SelectValue placeholder="Select an invigilator" />

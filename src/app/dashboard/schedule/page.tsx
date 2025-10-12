@@ -1,63 +1,64 @@
 "use client"
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useAllotment } from "@/lib/allotment-context";
 import { Calendar } from "@/components/ui/calendar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-
-const scheduleData: { [key: string]: any[] } = {
-  "2024-07-20": [
-    { time: "09:00 - 12:00", subject: "Advanced Physics", rooms: 5 },
-    { time: "14:00 - 17:00", subject: "Organic Chemistry", rooms: 3 },
-  ],
-  "2024-07-22": [
-    { time: "10:00 - 13:00", subject: "Data Structures", rooms: 8 },
-  ],
-};
+import { format } from "date-fns";
 
 export default function SchedulePage() {
+  const { examinations } = useAllotment();
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const selectedDateString = date?.toISOString().split('T')[0];
-  const dutiesForDay = selectedDateString ? scheduleData[selectedDateString] || [] : [];
+
+  const dutiesForDay = useMemo(() => {
+    if (!date) return [];
+    const selectedDateString = format(date, 'yyyy-MM-dd');
+    return examinations.filter(exam => format(new Date(exam.date), 'yyyy-MM-dd') === selectedDateString);
+  }, [date, examinations]);
 
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold tracking-tight font-headline">Day-wise Schedule</h1>
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card className="md:col-span-1 flex justify-center items-start">
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={setDate}
-              className="p-0"
-            />
-        </Card>
+      <Card>
+        <CardHeader>
+            <CardTitle>Active Allotment Schedule</CardTitle>
+            <CardDescription>Select a date to see the examinations scheduled for that day from your currently active allotment.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <div className="grid gap-6 md:grid-cols-3">
+                <div className="md:col-span-1 flex justify-center items-start pt-4">
+                    <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={setDate}
+                    className="p-0"
+                    />
+                </div>
 
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle>
-              Duties for {date ? date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '...'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {dutiesForDay.length > 0 ? (
-              <ul className="space-y-4">
-                {dutiesForDay.map((duty, index) => (
-                  <li key={index} className="flex items-center justify-between p-3 rounded-md bg-secondary">
-                    <div>
-                      <p className="font-semibold">{duty.subject}</p>
-                      <p className="text-sm text-muted-foreground">{duty.time}</p>
-                    </div>
-                    <Badge variant="outline">Rooms: {duty.rooms}</Badge>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-center text-muted-foreground py-10">No duties scheduled for this day.</p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                <div className="md:col-span-2">
+                    <h3 className="font-semibold mb-4">
+                    Duties for {date ? format(date, 'PPP') : '...'}
+                    </h3>
+                    {dutiesForDay.length > 0 ? (
+                    <ul className="space-y-4">
+                        {dutiesForDay.map((duty, index) => (
+                        <li key={duty.id} className="flex items-center justify-between p-3 rounded-md bg-secondary">
+                            <div>
+                            <p className="font-semibold">{duty.subject}</p>
+                            <p className="text-sm text-muted-foreground">{duty.startTime} - {duty.endTime}</p>
+                            </div>
+                            <Badge variant="outline">Rooms: {duty.rooms}</Badge>
+                        </li>
+                        ))}
+                    </ul>
+                    ) : (
+                    <p className="text-center text-muted-foreground py-10">No duties scheduled for this day in the active allotment.</p>
+                    )}
+                </div>
+            </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

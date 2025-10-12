@@ -2,13 +2,12 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import type { Invigilator, Examination } from '@/lib/types';
+import type { Invigilator, Examination, AllotmentResult } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Download, Send, Sparkles } from 'lucide-react';
+import { Download, Send, Sparkles, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { AllotmentResult } from '@/lib/allotment';
 import { format } from 'date-fns';
 import { useAllotment } from '@/lib/allotment-context';
 import { optimizeDutyAssignments } from '@/ai/flows/optimize-duty-assignments';
@@ -21,43 +20,64 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
 
 
 type AllotmentSheetProps = {
   invigilators: Invigilator[];
   examinations: Examination[];
   allotmentResult: AllotmentResult;
+  onAllotmentChange: (newResult: AllotmentResult) => void;
 };
 
-export function AllotmentSheet({ invigilators, examinations, allotmentResult: initialAllotmentResult }: AllotmentSheetProps) {
+export function AllotmentSheet({ invigilators, examinations, allotmentResult: initialAllotmentResult, onAllotmentChange }: AllotmentSheetProps) {
   const { toast } = useToast();
+  const { activeAllotment, saveCurrentAllotment } = useAllotment();
   const [allotmentResult, setAllotmentResult] = useState<AllotmentResult>(initialAllotmentResult);
+  const [isSaveAlertOpen, setIsSaveAlertOpen] = useState(false);
+  const [saveName, setSaveName] = useState(activeAllotment?.name || 'New Allotment');
+
 
   useEffect(() => {
     setAllotmentResult(initialAllotmentResult);
   }, [initialAllotmentResult]);
 
+  useEffect(() => {
+    // When the context changes the name (e.g. loading a saved allotment), update it here.
+    setSaveName(activeAllotment?.name || 'New Allotment');
+  }, [activeAllotment]);
+
   const handleDutyToggle = (invigilatorId: string, examId: string) => {
-    setAllotmentResult(prevResult => {
-      const newAssignments = { ...prevResult.assignments };
-      const currentDuties = newAssignments[invigilatorId] || [];
-      
-      const dutyIndex = currentDuties.indexOf(examId);
+    const newResult = { ...allotmentResult };
+    const newAssignments = { ...newResult.assignments };
+    const currentDuties = newAssignments[invigilatorId] || [];
+    
+    const dutyIndex = currentDuties.indexOf(examId);
 
-      if (dutyIndex > -1) {
-        // Duty exists, remove it
-        const updatedDuties = [...currentDuties];
-        updatedDuties.splice(dutyIndex, 1);
-        newAssignments[invigilatorId] = updatedDuties;
-      } else {
-        // Duty doesn't exist, add it
-        newAssignments[invigilatorId] = [...currentDuties, examId];
-      }
-
-      return { ...prevResult, assignments: newAssignments };
-    });
+    if (dutyIndex > -1) {
+      const updatedDuties = [...currentDuties];
+      updatedDuties.splice(dutyIndex, 1);
+      newAssignments[invigilatorId] = updatedDuties;
+    } else {
+      newAssignments[invigilatorId] = [...currentDuties, examId];
+    }
+    
+    const updatedResult = { ...newResult, assignments: newAssignments };
+    setAllotmentResult(updatedResult);
+    onAllotmentChange(updatedResult);
   };
-
 
   const handleEmailAll = () => {
     toast({
@@ -65,6 +85,15 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
       description: "Preparing to email all individual summaries. (This is a demo action)",
     });
   };
+
+  const handleSave = () => {
+    saveCurrentAllotment(saveName, allotmentResult.assignments);
+    setIsSaveAlertOpen(false);
+    toast({
+        title: "Allotment Saved",
+        description: `"${saveName}" has been saved successfully.`
+    })
+  }
 
   const handleDownload = () => {
     toast({
@@ -75,7 +104,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
     const doc = new jsPDF({ orientation: 'landscape' });
 
     const examInfo = examinations.length > 0 ? examinations[0] : null;
-    const title = `${examInfo?.college || 'Institution'}\n${examInfo?.examName || 'Examination'}\nInvigilation Duty Allotment Sheet`;
+    const title = `${activeAllotment?.name || 'Invigilation Duty Allotment Sheet'}\n${examInfo?.college || 'Institution'}\n${examInfo?.examName || 'Examination'}`;
     
     doc.text(title, doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
 
@@ -99,9 +128,6 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
         return row;
     });
 
-    const totalRooms = examinations.reduce((acc, exam) => acc + exam.rooms, 0);
-    const totalRelievers = examinations.reduce((acc, exam) => acc + exam.relievers, 0);
-    const totalInvigilatorsRequired = examinations.reduce((acc, exam) => acc + exam.rooms + exam.relievers, 0);
     const dutiesPerExam = examinations.map(exam => {
         return invigilators.reduce((count, invigilator) => {
             const duties = allotmentResult.assignments[invigilator.id] || [];
@@ -109,6 +135,9 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
         }, 0);
     });
     const totalDutiesAllotted = dutiesPerExam.reduce((sum, count) => sum + count, 0);
+    const totalRooms = examinations.reduce((acc, exam) => acc + exam.rooms, 0);
+    const totalRelievers = examinations.reduce((acc, exam) => acc + exam.relievers, 0);
+    const totalInvigilatorsRequired = examinations.reduce((acc, exam) => acc + exam.rooms + exam.relievers, 0);
 
     (doc as any).autoTable({
         head: head,
@@ -122,13 +151,13 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
         startY: 35,
         theme: 'grid',
         headStyles: {
-            fillColor: [22, 163, 74], // green-600
+            fillColor: [22, 163, 74],
             textColor: 255,
             fontStyle: 'bold',
             halign: 'center'
         },
         footStyles: {
-            fillColor: [244, 244, 245], // zinc-100
+            fillColor: [244, 244, 245],
             textColor: [0, 0, 0],
             fontStyle: 'bold',
         },
@@ -142,69 +171,28 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
             1: { halign: 'left', cellWidth: 40 },
             2: { halign: 'left', cellWidth: 40 },
         },
-        didDrawPage: (data: any) => {
-          // In case of multiple pages, ensure the title is not repeated by default
-        }
+        didDrawPage: (data: any) => {}
     });
 
-    doc.save('duty-allotment.pdf');
+    doc.save(`${saveName.replace(/ /g, '_')}.pdf`);
   };
 
   const handleOptimize = async () => {
-    toast({
-      title: "Optimizing Allotment",
-      description: "AI is re-evaluating the duty assignments..."
-    });
-
+    toast({ title: "Optimizing Allotment", description: "AI is re-evaluating the duty assignments..." });
     try {
-      const result = await optimizeDutyAssignments({
-        invigilators,
-        exams: examinations,
-        constraints: {
-          hard: [
-            "Part-time lecturers can have a maximum of two duties.",
-            "Part-time lecturers must only be assigned duties on their available days."
-          ],
-          soft: [
-            "Senior invigilators should not be allotted more duties than junior invigilators.",
-            "Excess duties should be assigned to the most junior invigilators."
-          ]
-        }
-      });
-
-      toast({
-        title: "Optimization Complete",
-        description: result.message,
-      });
-
-      if (result.success && result.optimizedAllotment) {
-        // In a real scenario, you'd update your state with the optimized allotment.
-        // For this MVP, we are just showing a message.
-        // e.g., setAllotmentResult(result.optimizedAllotment)
-      }
-
+      const result = await optimizeDutyAssignments({ invigilators, exams: examinations, constraints: { hard: [], soft: [] } });
+      toast({ title: "Optimization Complete", description: result.message });
     } catch (error) {
       console.error("Optimization failed:", error);
-      toast({
-        variant: "destructive",
-        title: "Optimization Failed",
-        description: "The AI optimization process encountered an error.",
-      });
+      toast({ variant: "destructive", title: "Optimization Failed", description: "The AI optimization process encountered an error." });
     }
   };
   
   const examInfo = examinations.length > 0 ? examinations[0] : null;
-
   const totalRooms = examinations.reduce((acc, exam) => acc + exam.rooms, 0);
   const totalRelievers = examinations.reduce((acc, exam) => acc + exam.relievers, 0);
   const totalInvigilatorsRequired = examinations.reduce((acc, exam) => acc + exam.rooms + exam.relievers, 0);
-
-  const dutiesPerExam = examinations.map(exam => {
-    return invigilators.reduce((count, invigilator) => {
-        const duties = allotmentResult.assignments[invigilator.id] || [];
-        return count + (duties.includes(exam.id) ? 1 : 0);
-    }, 0);
-  });
+  const dutiesPerExam = examinations.map(exam => invigilators.reduce((count, invigilator) => count + ((allotmentResult.assignments[invigilator.id] || []).includes(exam.id) ? 1 : 0), 0));
   const totalDutiesAllotted = dutiesPerExam.reduce((sum, count) => sum + count, 0);
 
   return (
@@ -213,7 +201,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
         <CardHeader className="text-center">
           <CardTitle className="text-xl font-bold text-primary">{examInfo?.college}</CardTitle>
           <CardDescription className="text-lg font-semibold">{examInfo?.examName}</CardDescription>
-          <p className="text-md text-muted-foreground">Invigilation Duty Allotment Sheet</p>
+          <p className="text-md text-muted-foreground">{activeAllotment?.name || 'Invigilation Duty Allotment Sheet'}</p>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -247,22 +235,12 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                       {examinations.map(exam => {
                          const hasDuty = duties.includes(exam.id);
                          return (
-                            <TableCell 
-                              key={exam.id} 
-                              className="text-center cursor-pointer hover:bg-secondary"
-                              onClick={() => handleDutyToggle(invigilator.id, exam.id)}
-                            >
+                            <TableCell key={exam.id} className="text-center cursor-pointer hover:bg-secondary" onClick={() => handleDutyToggle(invigilator.id, exam.id)}>
                               <Tooltip>
                                 <TooltipTrigger className="w-full h-full flex items-center justify-center">
-                                    {hasDuty ? (
-                                        <div className="bg-primary/20 text-black rounded-md w-6 h-6 flex items-center justify-center">1</div>
-                                    ) : (
-                                        <span>0</span>
-                                    )}
+                                    {hasDuty ? (<div className="bg-primary/20 text-black rounded-md w-6 h-6 flex items-center justify-center">1</div>) : (<span>0</span>)}
                                 </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>{format(exam.date, 'PPP')} ({format(exam.date, 'EEEE')})</p>
-                                </TooltipContent>
+                                <TooltipContent><p>{format(exam.date, 'PPP')} ({format(exam.date, 'EEEE')})</p></TooltipContent>
                               </Tooltip>
                             </TableCell>
                          )
@@ -275,25 +253,9 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                 })}
               </TableBody>
                <TableFooter>
-                  <TableRow className="bg-secondary/50 font-bold">
-                      <TableCell colSpan={3} className="text-right text-primary">No of Rooms</TableCell>
-                      {examinations.map((exam) => (
-                          <TableCell key={`rooms-${exam.id}`} className="text-center text-primary">{exam.rooms}</TableCell>
-                      ))}
-                      <TableCell className="text-center text-primary sticky right-0 bg-secondary/50">{totalRooms}</TableCell>
-                  </TableRow>
-                  <TableRow className="bg-secondary/50 font-bold">
-                      <TableCell colSpan={3} className="text-right text-primary">No of Relievers</TableCell>
-                      {examinations.map((exam) => (
-                          <TableCell key={`relievers-${exam.id}`} className="text-center text-primary">{exam.relievers}</TableCell>
-                      ))}
-                      <TableCell className="text-center text-primary sticky right-0 bg-secondary/50">{totalRelievers}</TableCell>
-                  </TableRow>
-                   <TableRow className="bg-secondary/50 font-bold">
-                      <TableCell colSpan={3} className="text-right text-primary">No of Invigilators</TableCell>
-                      {examinations.map((exam) => (
-                          <TableCell key={`invigilators-${exam.id}`} className="text-center text-primary">{exam.rooms + exam.relievers}</TableCell>
-                      ))}
+                  <TableRow className="bg-secondary/50 font-bold"><TableCell colSpan={3} className="text-right text-primary">No of Rooms</TableCell>{examinations.map((exam) => (<TableCell key={`rooms-${exam.id}`} className="text-center text-primary">{exam.rooms}</TableCell>))}<TableCell className="text-center text-primary sticky right-0 bg-secondary/50">{totalRooms}</TableCell></TableRow>
+                  <TableRow className="bg-secondary/50 font-bold"><TableCell colSpan={3} className="text-right text-primary">No of Relievers</TableCell>{examinations.map((exam) => (<TableCell key={`relievers-${exam.id}`} className="text-center text-primary">{exam.relievers}</TableCell>))}<TableCell className="text-center text-primary sticky right-0 bg-secondary/50">{totalRelievers}</TableCell></TableRow>
+                   <TableRow className="bg-secondary/50 font-bold"><TableCell colSpan={3} className="text-right text-primary">No of Invigilators</TableCell>{examinations.map((exam) => (<TableCell key={`invigilators-${exam.id}`} className="text-center text-primary">{exam.rooms + exam.relievers}</TableCell>))}
                       <TableCell className="text-center text-primary sticky right-0 bg-secondary/50">{totalInvigilatorsRequired}</TableCell>
                   </TableRow>
                   <TableRow className="bg-accent/20 font-bold">
@@ -302,11 +264,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                           const exam = examinations[index];
                           const requiredInvigilators = exam.rooms + exam.relievers;
                           const isMismatch = count !== requiredInvigilators;
-                          return (
-                              <TableCell key={`total-duties-${exam.id}`} className={cn("text-center", isMismatch && "text-red-500 font-extrabold")}>
-                                  {count}
-                              </TableCell>
-                          )
+                          return (<TableCell key={`total-duties-${exam.id}`} className={cn("text-center", isMismatch && "text-red-500 font-extrabold")}>{count}</TableCell>)
                       })}
                       <TableCell className="text-center sticky right-0 bg-accent/20">{totalDutiesAllotted}</TableCell>
                   </TableRow>
@@ -315,18 +273,35 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
           </div>
         </CardContent>
         <CardFooter className="justify-end gap-2">
-           <Button variant="outline" onClick={handleOptimize}>
-            <Sparkles className="mr-2 h-4 w-4" />
-            Optimize
-          </Button>
-          <Button variant="outline" onClick={handleDownload}>
-            <Download className="mr-2 h-4 w-4" />
-            Download as PDF
-          </Button>
-          <Button onClick={handleEmailAll}>
-            <Send className="mr-2 h-4 w-4" />
-            Email All Summaries
-          </Button>
+           <AlertDialog open={isSaveAlertOpen} onOpenChange={setIsSaveAlertOpen}>
+            <AlertDialogTrigger asChild>
+                <Button variant="outline">
+                    <Save className="mr-2 h-4 w-4" />
+                    Save/Update
+                </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Save Allotment</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        You can save the current state of this allotment to access it later from the "Saved Allotments" page.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="name" className="text-right">Name</Label>
+                        <Input id="name" value={saveName} onChange={(e) => setSaveName(e.target.value)} className="col-span-3" />
+                    </div>
+                </div>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleSave}>Save</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+           </AlertDialog>
+           <Button variant="outline" onClick={handleOptimize}><Sparkles className="mr-2 h-4 w-4" />Optimize</Button>
+           <Button variant="outline" onClick={handleDownload}><Download className="mr-2 h-4 w-4" />Download as PDF</Button>
+           <Button onClick={handleEmailAll}><Send className="mr-2 h-4 w-4" />Email All Summaries</Button>
         </CardFooter>
       </Card>
     </TooltipProvider>

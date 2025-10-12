@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import type { Invigilator } from '@/lib/types';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -32,7 +32,13 @@ export function InvigilatorManagement() {
     const [isAvailabilityDialogOpen, setIsAvailabilityDialogOpen] = useState(false);
     const [selectedInvigilator, setSelectedInvigilator] = useState<Invigilator | null>(null);
 
-    const { invigilators, setInvigilators } = useAllotment();
+    const { invigilators, setInvigilators, clearCurrentAllotment } = useAllotment();
+
+    useEffect(() => {
+        // When user lands on this page, assume they are starting a new allotment
+        clearCurrentAllotment();
+    }, []);
+
 
     const form = useForm<z.infer<typeof invigilatorSchema>>({
         resolver: zodResolver(invigilatorSchema),

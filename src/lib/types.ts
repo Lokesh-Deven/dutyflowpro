@@ -19,3 +19,17 @@ export type Examination = {
   college: string;
   examName: string;
 };
+
+export interface AllotmentResult {
+  assignments: Record<string, string[]>; // invigilatorId -> examId[]
+}
+
+export type SavedAllotment = {
+  id: string;
+  name: string;
+  invigilators: Invigilator[];
+  examinations: Examination[];
+  assignments: AllotmentResult['assignments'];
+  createdAt: Date;
+  status: 'Draft' | 'Finalized';
+}
