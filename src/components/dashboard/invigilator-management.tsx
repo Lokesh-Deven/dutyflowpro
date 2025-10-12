@@ -10,8 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Switch } from '@/components/ui/switch';
-import { Edit, Trash2, Upload } from 'lucide-react';
+import { Edit, Trash2, Upload, UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 
@@ -67,22 +66,18 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
                 const workbook = XLSX.read(data, { type: 'array' });
                 const sheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[sheetName];
-                const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                const json = XLSX.utils.sheet_to_json(worksheet);
                 
-                // Assumes header row, skip it
-                const rows = json.slice(1);
-                
-                const newInvigilators: Invigilator[] = rows.map((row: any, index) => {
-                    const [name, designation, mobile, email, isPartTime] = row;
+                const newInvigilators: Invigilator[] = json.map((row: any, index) => {
                     return {
                         id: `inv-bulk-${Date.now()}-${index}`,
-                        name: String(name || ''),
-                        designation: String(designation || ''),
-                        mobile: String(mobile || '').replace(/\D/g, ''),
-                        email: String(email || ''),
-                        isPartTime: isPartTime === true || String(isPartTime).toLowerCase() === 'yes',
+                        name: String(row.Name || ''),
+                        designation: String(row.Designation || ''),
+                        mobile: String(row.Mobile || '').replace(/\D/g, ''),
+                        email: String(row['E-Mail ID'] || row.Email || ''),
+                        isPartTime: row.Availability?.toLowerCase() === 'part-time',
                     };
-                }).filter(inv => inv.name && inv.email); // Basic validation
+                }).filter(inv => inv.name && inv.email);
 
                 if (newInvigilators.length > 0) {
                     setInvigilators(prev => [...prev, ...newInvigilators]);
@@ -113,73 +108,77 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Invigilator Details</CardTitle>
-                <CardDescription>Add or manage invigilators for duty allotment. For bulk add, use an Excel file with columns: Name, Designation, Mobile, E-Mail ID, Part-time (Yes/No).</CardDescription>
+                <CardTitle>Invigilators' Details</CardTitle>
+                <CardDescription>Add all available invigilators.</CardDescription>
             </CardHeader>
             <CardContent>
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8 items-start">
-                        <FormField control={form.control} name="name" render={({ field }) => (
-                            <FormItem className="lg:col-span-2"><FormLabel>Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                        )}/>
-                        <FormField control={form.control} name="designation" render={({ field }) => (
-                            <FormItem><FormLabel>Designation</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                        )}/>
-                        <FormField control={form.control} name="mobile" render={({ field }) => (
-                            <FormItem><FormLabel>Mobile No</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                        )}/>
-                        <FormField control={form.control} name="email" render={({ field }) => (
-                           <FormItem><FormLabel>E-Mail ID</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                        )}/>
-                        <FormField control={form.control} name="isPartTime" render={({ field }) => (
-                            <FormItem className="flex flex-col pt-2"><FormLabel className="mb-2">Part-time</FormLabel><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>
-                        )}/>
-                        <div className="md:col-span-3 lg:col-span-6 flex gap-2">
-                           <Button type="submit">Add Invigilator</Button>
-                           <Button type="button" variant="outline" onClick={handleBulkUploadClick}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                            <FormField control={form.control} name="name" render={({ field }) => (
+                                <FormItem><FormLabel>Invigilator's Name</FormLabel><FormControl><Input placeholder="e.g. Lokesh D" {...field} /></FormControl><FormMessage /></FormItem>
+                            )}/>
+                            <FormField control={form.control} name="designation" render={({ field }) => (
+                                <FormItem><FormLabel>Designation</FormLabel><FormControl><Input placeholder="e.g. Lecturer in English" {...field} /></FormControl><FormMessage /></FormItem>
+                            )}/>
+                            <FormField control={form.control} name="mobile" render={({ field }) => (
+                                <FormItem><FormLabel>Mobile No</FormLabel><FormControl><Input placeholder="e.g. 9876543210" {...field} /></FormControl><FormMessage /></FormItem>
+                            )}/>
+                            <FormField control={form.control} name="email" render={({ field }) => (
+                               <FormItem><FormLabel>E-Mail ID</FormLabel><FormControl><Input placeholder="e.g. lokesh@example.com" {...field} /></FormControl><FormMessage /></FormItem>
+                            )}/>
+                        </div>
+                        <div className="flex items-center gap-4">
+                           <Button type="submit"><UserPlus className="mr-2 h-4 w-4" /> Add Invigilator</Button>
+                           <span className="text-sm text-muted-foreground">or</span>
+                           <Button type="button" variant="secondary" onClick={handleBulkUploadClick}>
                                 <Upload className="mr-2 h-4 w-4" />
-                                Bulk Add
+                                Import from Excel
                             </Button>
                             <input
                                 type="file"
                                 ref={fileInputRef}
                                 onChange={handleFileChange}
                                 className="hidden"
-                                accept=".xlsx, .xls"
+                                accept=".xlsx, .xls, .csv"
                             />
                         </div>
                     </form>
                 </Form>
 
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Designation</TableHead>
-                            <TableHead>Contact</TableHead>
-                            <TableHead>Part-time</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {invigilators.length === 0 ? (
-                            <TableRow><TableCell colSpan={5} className="text-center">No invigilators added yet.</TableCell></TableRow>
-                        ) : (
-                            invigilators.map(inv => (
-                                <TableRow key={inv.id}>
-                                    <TableCell className="font-medium">{inv.name}</TableCell>
-                                    <TableCell>{inv.designation}</TableCell>
-                                    <TableCell>{inv.email}</TableCell>
-                                    <TableCell>{inv.isPartTime ? 'Yes' : 'No'}</TableCell>
-                                    <TableCell className="text-right">
-                                        <Button variant="ghost" size="icon"><Edit className="h-4 w-4" /></Button>
-                                        <Button variant="ghost" size="icon" onClick={() => handleDelete(inv.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                                    </TableCell>
-                                </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
+                <div className="mt-8">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="w-[50px]">Sl. No</TableHead>
+                                <TableHead>Invigilator's Name</TableHead>
+                                <TableHead>Designation</TableHead>
+                                <TableHead>Availability</TableHead>
+                                <TableHead>E-Mail ID</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {invigilators.length === 0 ? (
+                                <TableRow><TableCell colSpan={6} className="text-center h-24">No invigilators added yet.</TableCell></TableRow>
+                            ) : (
+                                invigilators.map((inv, index) => (
+                                    <TableRow key={inv.id}>
+                                        <TableCell>{index + 1}</TableCell>
+                                        <TableCell className="font-medium">{inv.name}</TableCell>
+                                        <TableCell>{inv.designation}</TableCell>
+                                        <TableCell>{inv.isPartTime ? 'Part-Time' : 'Full-Time'}</TableCell>
+                                        <TableCell>{inv.email}</TableCell>
+                                        <TableCell className="text-right">
+                                            <Button variant="ghost" size="icon"><Edit className="h-4 w-4" /></Button>
+                                            <Button variant="ghost" size="icon" onClick={() => handleDelete(inv.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
             </CardContent>
         </Card>
     );
