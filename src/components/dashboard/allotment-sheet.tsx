@@ -66,9 +66,26 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult }: 
         return row;
     });
 
+    const totalRooms = examinations.reduce((acc, exam) => acc + exam.rooms, 0);
+    const totalRelievers = examinations.reduce((acc, exam) => acc + exam.relievers, 0);
+    const totalInvigilators = examinations.reduce((acc, exam) => acc + exam.rooms + exam.relievers, 0);
+    const dutiesPerExam = examinations.map(exam => {
+        return invigilators.reduce((count, invigilator) => {
+            const duties = allotmentResult.assignments[invigilator.id] || [];
+            return count + (duties.includes(exam.id) ? 1 : 0);
+        }, 0);
+    });
+    const totalDutiesAllotted = dutiesPerExam.reduce((sum, count) => sum + count, 0);
+
     (doc as any).autoTable({
         head: head,
         body: body,
+        foot: [
+            ['', 'No of Rooms', '', ...examinations.map(exam => exam.rooms), totalRooms],
+            ['', 'No of Relievers', '', ...examinations.map(exam => exam.relievers), totalRelievers],
+            ['', 'No of Invigilators', '', ...examinations.map(exam => exam.rooms + exam.relievers), totalInvigilators],
+            ['', 'Total Duties Allotted', '', ...dutiesPerExam, totalDutiesAllotted],
+        ],
         startY: 35,
         theme: 'grid',
         headStyles: {
@@ -76,6 +93,11 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult }: 
             textColor: 255,
             fontStyle: 'bold',
             halign: 'center'
+        },
+        footStyles: {
+            fillColor: [244, 244, 245], // zinc-100
+            textColor: [0, 0, 0],
+            fontStyle: 'bold',
         },
         styles: {
             cellPadding: 2,
@@ -86,6 +108,9 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult }: 
             0: { halign: 'center', cellWidth: 15 },
             1: { halign: 'left', cellWidth: 40 },
             2: { halign: 'left', cellWidth: 40 },
+        },
+        didDrawPage: (data: any) => {
+          // In case of multiple pages, ensure the title is not repeated by default
         }
     });
 
@@ -139,6 +164,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult }: 
 
   const totalRooms = examinations.reduce((acc, exam) => acc + exam.rooms, 0);
   const totalRelievers = examinations.reduce((acc, exam) => acc + exam.relievers, 0);
+  const totalInvigilators = examinations.reduce((acc, exam) => acc + exam.rooms + exam.relievers, 0);
 
   const dutiesPerExam = examinations.map(exam => {
     return invigilators.reduce((count, invigilator) => {
@@ -199,7 +225,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult }: 
             </TableBody>
              <TableFooter>
                 <TableRow className="bg-secondary/50 font-bold">
-                    <TableCell colSpan={3} className="text-right text-primary">No of Rooms/Invigilators</TableCell>
+                    <TableCell colSpan={3} className="text-right text-primary">No of Rooms</TableCell>
                     {examinations.map((exam) => (
                         <TableCell key={`rooms-${exam.id}`} className="text-center text-primary">{exam.rooms}</TableCell>
                     ))}
@@ -211,6 +237,13 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult }: 
                         <TableCell key={`relievers-${exam.id}`} className="text-center text-primary">{exam.relievers}</TableCell>
                     ))}
                     <TableCell className="text-center text-primary sticky right-0 bg-secondary/50">{totalRelievers}</TableCell>
+                </TableRow>
+                 <TableRow className="bg-secondary/50 font-bold">
+                    <TableCell colSpan={3} className="text-right text-primary">No of Invigilators</TableCell>
+                    {examinations.map((exam) => (
+                        <TableCell key={`invigilators-${exam.id}`} className="text-center text-primary">{exam.rooms + exam.relievers}</TableCell>
+                    ))}
+                    <TableCell className="text-center text-primary sticky right-0 bg-secondary/50">{totalInvigilators}</TableCell>
                 </TableRow>
                 <TableRow className="bg-accent/20 font-bold">
                     <TableCell colSpan={3} className="text-right">Total Duties Allotted</TableCell>
