@@ -5,6 +5,7 @@ export type Invigilator = {
   mobile: string;
   email: string;
   isPartTime: boolean;
+  availableDays?: string[];
 };
 
 export type Examination = {

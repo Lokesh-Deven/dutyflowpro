@@ -1,18 +1,20 @@
 "use client";
 
-import React, { Dispatch, SetStateAction, useRef } from 'react';
+import React, { Dispatch, SetStateAction, useRef, useState } from 'react';
 import type { Invigilator } from '@/lib/types';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Edit, Trash2, Upload, UserPlus } from 'lucide-react';
+import { Edit, Trash2, Upload, UserPlus, CalendarCog } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
+import { SetAvailabilityDialog } from './set-availability-dialog';
+import { Checkbox } from '../ui/checkbox';
 
 const invigilatorSchema = z.object({
   name: z.string().min(1, "Name is required."),
@@ -30,6 +32,8 @@ type InvigilatorManagementProps = {
 export function InvigilatorManagement({ invigilators, setInvigilators }: InvigilatorManagementProps) {
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isAvailabilityDialogOpen, setIsAvailabilityDialogOpen] = useState(false);
+    const [selectedInvigilator, setSelectedInvigilator] = useState<Invigilator | null>(null);
 
     const form = useForm<z.infer<typeof invigilatorSchema>>({
         resolver: zodResolver(invigilatorSchema),
@@ -75,7 +79,7 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
                         designation: String(row.Designation || ''),
                         mobile: String(row.Mobile || '').replace(/\D/g, ''),
                         email: String(row['E-Mail ID'] || row.Email || ''),
-                        isPartTime: row.Availability?.toLowerCase() === 'part-time',
+                        isPartTime: row.Availability?.toLowerCase().trim() === 'part-time',
                     };
                 }).filter(inv => inv.name && inv.email);
 
@@ -96,7 +100,6 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
                     description: "Could not parse the Excel file. Please ensure it is in the correct format.",
                 });
             } finally {
-                // Reset file input
                 if (fileInputRef.current) {
                     fileInputRef.current.value = '';
                 }
@@ -105,11 +108,26 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
         reader.readAsArrayBuffer(file);
     };
 
+    const handleOpenAvailabilityDialog = (invigilator: Invigilator) => {
+        setSelectedInvigilator(invigilator);
+        setIsAvailabilityDialogOpen(true);
+    };
+
+    const handleSaveAvailability = (invigilatorId: string, availableDays: string[]) => {
+        setInvigilators(prev =>
+            prev.map(inv =>
+                inv.id === invigilatorId ? { ...inv, availableDays } : inv
+            )
+        );
+        toast({ title: "Availability Saved", description: `Availability for the selected invigilator has been updated.` });
+    };
+
     return (
+      <>
         <Card>
             <CardHeader>
                 <CardTitle>Invigilators' Details</CardTitle>
-                <CardDescription>Add all available invigilators.</CardDescription>
+                <CardDescription>Add all available invigilators. For bulk add, use an Excel file with columns: Name, Designation, Mobile, E-Mail ID, Availability (optional: "Part-Time").</CardDescription>
             </CardHeader>
             <CardContent>
                 <Form {...form}>
@@ -127,6 +145,21 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
                             <FormField control={form.control} name="email" render={({ field }) => (
                                <FormItem><FormLabel>E-Mail ID</FormLabel><FormControl><Input placeholder="e.g. lokesh@example.com" {...field} /></FormControl><FormMessage /></FormItem>
                             )}/>
+                             <FormField
+                                control={form.control}
+                                name="isPartTime"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-row items-end space-x-2 pb-1">
+                                        <FormControl>
+                                            <Checkbox
+                                                checked={field.value}
+                                                onCheckedChange={field.onChange}
+                                            />
+                                        </FormControl>
+                                        <FormLabel className="font-normal">Part-Time Invigilator</FormLabel>
+                                    </FormItem>
+                                )}
+                            />
                         </div>
                         <div className="flex items-center gap-4">
                            <Button type="submit"><UserPlus className="mr-2 h-4 w-4" /> Add Invigilator</Button>
@@ -167,7 +200,14 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
                                         <TableCell>{index + 1}</TableCell>
                                         <TableCell className="font-medium">{inv.name}</TableCell>
                                         <TableCell>{inv.designation}</TableCell>
-                                        <TableCell>{inv.isPartTime ? 'Part-Time' : 'Full-Time'}</TableCell>
+                                        <TableCell>
+                                            {inv.isPartTime ? (
+                                                <div className="flex items-center gap-2">
+                                                    <span>Part-Time</span>
+                                                    <Button variant="outline" size="sm" onClick={() => handleOpenAvailabilityDialog(inv)}>Set Availability</Button>
+                                                </div>
+                                            ) : 'Full-Time'}
+                                        </TableCell>
                                         <TableCell>{inv.email}</TableCell>
                                         <TableCell className="text-right">
                                             <Button variant="ghost" size="icon"><Edit className="h-4 w-4" /></Button>
@@ -180,6 +220,16 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
                     </Table>
                 </div>
             </CardContent>
+            <CardFooter className="justify-end">
+                <Button variant="default">Continue to Examination Details &rarr;</Button>
+            </CardFooter>
         </Card>
+        <SetAvailabilityDialog
+            isOpen={isAvailabilityDialogOpen}
+            onClose={() => setIsAvailabilityDialogOpen(false)}
+            invigilator={selectedInvigilator}
+            onSave={handleSaveAvailability}
+        />
+      </>
     );
 }
