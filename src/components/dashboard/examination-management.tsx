@@ -72,20 +72,17 @@ export function ExaminationManagement({ examinations, setExaminations, onGenerat
     reader.onload = (e) => {
         try {
             const data = new Uint8Array(e.target?.result as ArrayBuffer);
-            const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+            const workbook = XLSX.read(data, { type: 'array' });
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
-            const json = XLSX.utils.sheet_to_json(worksheet, {
-                raw: false,
-                dateNF: 'yyyy-mm-dd',
-            });
+            const json = XLSX.utils.sheet_to_json(worksheet);
 
             const newExams: Examination[] = json.map((row: any, index) => {
                 const dateValue = row['Date'] || row['date'];
                 return {
                     id: `exam-bulk-${Date.now()}-${index}`,
-                    examName: String(row['Examination Name'] || row['examName'] || ''),
-                    college: String(row['College Name'] || row['college'] || ''),
+                    examName: String(row['Examination Name'] || row['examName'] || 'Finals'),
+                    college: String(row['College Name'] || row['college'] || 'University'),
                     subject: String(row['Subject'] || row['subject'] || ''),
                     date: dateValue instanceof Date ? dateValue : new Date(dateValue),
                     startTime: String(row['Start Time'] || row['startTime'] || ''),
@@ -93,7 +90,7 @@ export function ExaminationManagement({ examinations, setExaminations, onGenerat
                     rooms: Number(row['Number of Rooms'] || row['rooms'] || 0),
                     relievers: Number(row['Number of Relievers'] || row['relievers'] || 0),
                 };
-            }).filter(exam => exam.subject && exam.examName && !isNaN(exam.date.getTime()));
+            }).filter(exam => exam.subject && exam.examName && exam.date && !isNaN(exam.date.getTime()));
 
             if (newExams.length > 0) {
                 setExaminations(prev => [...prev, ...newExams]);
