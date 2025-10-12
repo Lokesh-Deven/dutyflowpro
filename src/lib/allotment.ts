@@ -1,3 +1,4 @@
+
 import type { Invigilator, Examination } from './types';
 import { format } from 'date-fns';
 
@@ -13,65 +14,84 @@ export function generateAllotment(invigilators: Invigilator[], examinations: Exa
     assignments[inv.id] = [];
   });
 
-  // Create a pool of duties for each exam
+  // Create a pool of all available duties from the examinations
   const dutyPool: string[] = [];
   examinations.forEach(exam => {
-    const totalDuties = exam.rooms + exam.relievers;
-    for (let i = 0; i < totalDuties; i++) {
+    const totalDutiesForExam = exam.rooms + exam.relievers;
+    for (let i = 0; i < totalDutiesForExam; i++) {
       dutyPool.push(exam.id);
     }
   });
 
-  // Separate part-time and full-time invigilators
   const partTimeInvigilators = invigilators.filter(inv => inv.isPartTime);
   const fullTimeInvigilators = invigilators.filter(inv => !inv.isPartTime);
 
-  // Assign duties to part-time invigilators first
+  // 1. Assign duties to part-time invigilators first, respecting their constraints
   partTimeInvigilators.forEach(inv => {
-    const invigilatorDayNames = inv.availableDays?.map(dayIndex => daysOfWeek[parseInt(dayIndex, 10)]) || [];
+    const invigilatorDayIndexes = inv.availableDays?.map(day => daysOfWeek.indexOf(day));
 
-    examinations.forEach(exam => {
-        const examDayName = format(exam.date, 'EEEE');
-        
-        // Check if invigilator is available and has less than 2 duties
-        if (
-            (inv.availableDays?.includes(exam.date.getDay().toString()) || invigilatorDayNames.includes(examDayName)) &&
-            assignments[inv.id].length < 2
-        ) {
-            const dutyIndex = dutyPool.indexOf(exam.id);
-            if (dutyIndex !== -1) {
-                assignments[inv.id].push(exam.id);
-                dutyPool.splice(dutyIndex, 1);
-            }
-        }
+    // Find exams that match the invigilator's available days
+    const availableExams = examinations.filter(exam => {
+      const examDayIndex = exam.date.getDay();
+      return invigilatorDayIndexes?.includes(examDayIndex);
     });
+
+    let dutiesAssignedToPartTimer = 0;
+    for (const exam of availableExams) {
+      if (dutiesAssignedToPartTimer >= 2) break;
+
+      const dutyIndexInPool = dutyPool.indexOf(exam.id);
+      if (dutyIndexInPool !== -1) {
+        assignments[inv.id].push(exam.id);
+        dutyPool.splice(dutyIndexInPool, 1);
+        dutiesAssignedToPartTimer++;
+      }
+    }
   });
 
-  // Assign duties to full-time invigilators
+  // 2. Distribute remaining duties among full-time invigilators
   if (fullTimeInvigilators.length > 0) {
-    let currentInvigilatorIndex = 0;
-    while(dutyPool.length > 0) {
-      const invigilator = fullTimeInvigilators[currentInvigilatorIndex % fullTimeInvigilators.length];
-      const duty = dutyPool.shift();
-      if(duty) {
-        assignments[invigilator.id].push(duty);
+    const remainingDuties = dutyPool.length;
+    const baseDutiesPerInvigilator = Math.floor(remainingDuties / fullTimeInvigilators.length);
+    let excessDuties = remainingDuties % fullTimeInvigilators.length;
+
+    // 2a. Assign base duties evenly using round-robin
+    for (let i = 0; i < baseDutiesPerInvigilator; i++) {
+      for (const inv of fullTimeInvigilators) {
+        const duty = dutyPool.shift();
+        if (duty) {
+          assignments[inv.id].push(duty);
+        }
       }
-      currentInvigilatorIndex++;
+    }
+
+    // 2b. Assign excess duties to the most junior invigilators
+    // The invigilator list is senior-first, so we iterate from the end of the full-time list.
+    if (excessDuties > 0) {
+      const juniorInvigilators = [...fullTimeInvigilators].reverse(); // Junior-most first
+      for (let i = 0; i < excessDuties; i++) {
+        const invigilator = juniorInvigilators[i];
+        const duty = dutyPool.shift();
+        if (duty) {
+          assignments[invigilator.id].push(duty);
+        }
+      }
     }
   }
-
-  // Final check for unassigned duties and re-distribution if any (simple round-robin for remaining)
+  
+  // If any duties are still unassigned (e.g., only part-timers available but constraints met),
+  // distribute them to the most junior invigilators overall.
   if (dutyPool.length > 0 && invigilators.length > 0) {
-    let allInvigilatorIndex = 0;
+     const juniorInvigilators = [...invigilators.filter(inv => !inv.isPartTime)].reverse();
+     let i = 0;
      while(dutyPool.length > 0) {
-      const invigilator = invigilators[allInvigilatorIndex % invigilators.length];
-      // simplified check, ignores part-time constraints for remaining duties
-      const duty = dutyPool.shift();
-       if(duty) {
-        assignments[invigilator.id].push(duty);
-      }
-      allInvigilatorIndex++;
-    }
+        const inv = juniorInvigilators[i % juniorInvigilators.length];
+        const duty = dutyPool.shift();
+        if(duty) {
+            assignments[inv.id].push(duty);
+        }
+        i++;
+     }
   }
 
 
