@@ -15,6 +15,12 @@ import { optimizeDutyAssignments } from '@/ai/flows/optimize-duty-assignments';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { cn } from '@/lib/utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 
 type AllotmentSheetProps = {
@@ -202,112 +208,129 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
   const totalDutiesAllotted = dutiesPerExam.reduce((sum, count) => sum + count, 0);
 
   return (
-    <Card>
-      <CardHeader className="text-center">
-        <CardTitle className="text-xl font-bold text-primary">{examInfo?.college}</CardTitle>
-        <CardDescription className="text-lg font-semibold">{examInfo?.examName}</CardDescription>
-        <p className="text-md text-muted-foreground">Invigilation Duty Allotment Sheet</p>
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <Table className="min-w-full">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="sticky left-0 bg-card z-10 w-12">Sl.No</TableHead>
-                <TableHead className="sticky left-12 bg-card z-10 w-48">Invigilator's Name</TableHead>
-                <TableHead className="w-48">Designation</TableHead>
-                {examinations.map(exam => (
-                  <TableHead key={exam.id} className="text-center whitespace-nowrap h-48" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
-                    <span className="text-xs font-normal text-muted-foreground">{format(exam.date, "dd/MM/yy")}</span>
-                    <br />
-                    {exam.subject}
-                    <br/>
-                    <span className="text-xs font-normal text-muted-foreground">{exam.startTime} - {exam.endTime}</span>
-                  </TableHead>
-                ))}
-                <TableHead className="text-center sticky right-0 bg-card z-10">Total</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {invigilators.map((invigilator, index) => {
-                const duties = allotmentResult.assignments[invigilator.id] || [];
-                const dutyCount = duties.length;
-                return (
-                  <TableRow key={invigilator.id}>
-                    <TableCell className="sticky left-0 bg-card z-10">{index + 1}</TableCell>
-                    <TableCell className="font-medium sticky left-12 bg-card z-10">{invigilator.name}</TableCell>
-                    <TableCell>{invigilator.designation}</TableCell>
-                    {examinations.map(exam => {
-                       const hasDuty = duties.includes(exam.id);
-                       return (
-                          <TableCell 
-                            key={exam.id} 
-                            className="text-center cursor-pointer hover:bg-secondary"
-                            onClick={() => handleDutyToggle(invigilator.id, exam.id)}
-                          >
-                            {hasDuty ? 1 : 0}
-                          </TableCell>
-                       )
-                    })}
-                    <TableCell className="font-bold text-center sticky right-0 bg-card z-10">{dutyCount}</TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-             <TableFooter>
-                <TableRow className="bg-secondary/50 font-bold">
-                    <TableCell colSpan={3} className="text-right text-primary">No of Rooms</TableCell>
-                    {examinations.map((exam) => (
-                        <TableCell key={`rooms-${exam.id}`} className="text-center text-primary">{exam.rooms}</TableCell>
-                    ))}
-                    <TableCell className="text-center text-primary sticky right-0 bg-secondary/50">{totalRooms}</TableCell>
+    <TooltipProvider>
+      <Card>
+        <CardHeader className="text-center">
+          <CardTitle className="text-xl font-bold text-primary">{examInfo?.college}</CardTitle>
+          <CardDescription className="text-lg font-semibold">{examInfo?.examName}</CardDescription>
+          <p className="text-md text-muted-foreground">Invigilation Duty Allotment Sheet</p>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table className="min-w-full">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="sticky left-0 bg-card z-10 w-12">Sl.No</TableHead>
+                  <TableHead className="sticky left-12 bg-card z-10 w-48">Invigilator's Name</TableHead>
+                  <TableHead className="w-48">Designation</TableHead>
+                  {examinations.map(exam => (
+                    <TableHead key={exam.id} className="text-center whitespace-nowrap h-48" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+                      <span className="text-xs font-normal text-muted-foreground">{format(exam.date, "dd/MM/yy")}</span>
+                      <br />
+                      {exam.subject}
+                      <br/>
+                      <span className="text-xs font-normal text-muted-foreground">{exam.startTime} - {exam.endTime}</span>
+                    </TableHead>
+                  ))}
+                  <TableHead className="text-center sticky right-0 bg-card z-10">Total</TableHead>
                 </TableRow>
-                <TableRow className="bg-secondary/50 font-bold">
-                    <TableCell colSpan={3} className="text-right text-primary">No of Relievers</TableCell>
-                    {examinations.map((exam) => (
-                        <TableCell key={`relievers-${exam.id}`} className="text-center text-primary">{exam.relievers}</TableCell>
-                    ))}
-                    <TableCell className="text-center text-primary sticky right-0 bg-secondary/50">{totalRelievers}</TableCell>
-                </TableRow>
-                 <TableRow className="bg-secondary/50 font-bold">
-                    <TableCell colSpan={3} className="text-right text-primary">No of Invigilators</TableCell>
-                    {examinations.map((exam) => (
-                        <TableCell key={`invigilators-${exam.id}`} className="text-center text-primary">{exam.rooms + exam.relievers}</TableCell>
-                    ))}
-                    <TableCell className="text-center text-primary sticky right-0 bg-secondary/50">{totalInvigilatorsRequired}</TableCell>
-                </TableRow>
-                <TableRow className="bg-accent/20 font-bold">
-                    <TableCell colSpan={3} className="text-right">Total Duties Allotted</TableCell>
-                    {dutiesPerExam.map((count, index) => {
-                        const exam = examinations[index];
-                        const requiredInvigilators = exam.rooms + exam.relievers;
-                        const isMismatch = count !== requiredInvigilators;
-                        return (
-                            <TableCell key={`total-duties-${exam.id}`} className={cn("text-center", isMismatch && "text-red-500 font-extrabold")}>
-                                {count}
+              </TableHeader>
+              <TableBody>
+                {invigilators.map((invigilator, index) => {
+                  const duties = allotmentResult.assignments[invigilator.id] || [];
+                  const dutyCount = duties.length;
+                  return (
+                    <TableRow key={invigilator.id}>
+                      <TableCell className="sticky left-0 bg-card z-10">{index + 1}</TableCell>
+                      <TableCell className="font-medium sticky left-12 bg-card z-10">{invigilator.name}</TableCell>
+                      <TableCell>{invigilator.designation}</TableCell>
+                      {examinations.map(exam => {
+                         const hasDuty = duties.includes(exam.id);
+                         return (
+                            <TableCell 
+                              key={exam.id} 
+                              className={cn(
+                                "text-center cursor-pointer hover:bg-secondary p-0",
+                                hasDuty && "bg-primary/20"
+                              )}
+                              onClick={() => handleDutyToggle(invigilator.id, exam.id)}
+                            >
+                              <Tooltip>
+                                <TooltipTrigger className="w-full h-full flex items-center justify-center">
+                                    <div className={cn(
+                                        "w-full h-full flex items-center justify-center",
+                                        hasDuty && "bg-primary text-primary-foreground"
+                                    )}>
+                                        {hasDuty ? 1 : 0}
+                                    </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>{format(exam.date, 'PPP')} ({format(exam.date, 'EEEE')})</p>
+                                </TooltipContent>
+                              </Tooltip>
                             </TableCell>
-                        )
-                    })}
-                    <TableCell className="text-center sticky right-0 bg-accent/20">{totalDutiesAllotted}</TableCell>
-                </TableRow>
-            </TableFooter>
-          </Table>
-        </div>
-      </CardContent>
-      <CardFooter className="justify-end gap-2">
-         <Button variant="outline" onClick={handleOptimize}>
-          <Sparkles className="mr-2 h-4 w-4" />
-          Optimize
-        </Button>
-        <Button variant="outline" onClick={handleDownload}>
-          <Download className="mr-2 h-4 w-4" />
-          Download as PDF
-        </Button>
-        <Button onClick={handleEmailAll}>
-          <Send className="mr-2 h-4 w-4" />
-          Email All Summaries
-        </Button>
-      </CardFooter>
-    </Card>
+                         )
+                      })}
+                      <TableCell className="font-bold text-center sticky right-0 bg-card z-10">{dutyCount}</TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+               <TableFooter>
+                  <TableRow className="bg-secondary/50 font-bold">
+                      <TableCell colSpan={3} className="text-right text-primary">No of Rooms</TableCell>
+                      {examinations.map((exam) => (
+                          <TableCell key={`rooms-${exam.id}`} className="text-center text-primary">{exam.rooms}</TableCell>
+                      ))}
+                      <TableCell className="text-center text-primary sticky right-0 bg-secondary/50">{totalRooms}</TableCell>
+                  </TableRow>
+                  <TableRow className="bg-secondary/50 font-bold">
+                      <TableCell colSpan={3} className="text-right text-primary">No of Relievers</TableCell>
+                      {examinations.map((exam) => (
+                          <TableCell key={`relievers-${exam.id}`} className="text-center text-primary">{exam.relievers}</TableCell>
+                      ))}
+                      <TableCell className="text-center text-primary sticky right-0 bg-secondary/50">{totalRelievers}</TableCell>
+                  </TableRow>
+                   <TableRow className="bg-secondary/50 font-bold">
+                      <TableCell colSpan={3} className="text-right text-primary">No of Invigilators</TableCell>
+                      {examinations.map((exam) => (
+                          <TableCell key={`invigilators-${exam.id}`} className="text-center text-primary">{exam.rooms + exam.relievers}</TableCell>
+                      ))}
+                      <TableCell className="text-center text-primary sticky right-0 bg-secondary/50">{totalInvigilatorsRequired}</TableCell>
+                  </TableRow>
+                  <TableRow className="bg-accent/20 font-bold">
+                      <TableCell colSpan={3} className="text-right">Total Duties Allotted</TableCell>
+                      {dutiesPerExam.map((count, index) => {
+                          const exam = examinations[index];
+                          const requiredInvigilators = exam.rooms + exam.relievers;
+                          const isMismatch = count !== requiredInvigilators;
+                          return (
+                              <TableCell key={`total-duties-${exam.id}`} className={cn("text-center", isMismatch && "text-red-500 font-extrabold")}>
+                                  {count}
+                              </TableCell>
+                          )
+                      })}
+                      <TableCell className="text-center sticky right-0 bg-accent/20">{totalDutiesAllotted}</TableCell>
+                  </TableRow>
+              </TableFooter>
+            </Table>
+          </div>
+        </CardContent>
+        <CardFooter className="justify-end gap-2">
+           <Button variant="outline" onClick={handleOptimize}>
+            <Sparkles className="mr-2 h-4 w-4" />
+            Optimize
+          </Button>
+          <Button variant="outline" onClick={handleDownload}>
+            <Download className="mr-2 h-4 w-4" />
+            Download as PDF
+          </Button>
+          <Button onClick={handleEmailAll}>
+            <Send className="mr-2 h-4 w-4" />
+            Email All Summaries
+          </Button>
+        </CardFooter>
+      </Card>
+    </TooltipProvider>
   );
 }
