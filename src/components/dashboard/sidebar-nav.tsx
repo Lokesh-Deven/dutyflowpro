@@ -1,3 +1,4 @@
+
 "use client";
 
 import { usePathname } from 'next/navigation';
@@ -16,7 +17,7 @@ import {
   Info,
 } from 'lucide-react';
 
-const navItems = [
+export const navItems = [
   { href: '/dashboard', label: 'New Allotment', icon: LayoutGrid },
   { href: '/dashboard/saved', label: 'Saved Allotments', icon: Save },
   { href: '/dashboard/history', label: 'History', icon: History },
@@ -49,34 +50,3 @@ export function SidebarNav() {
     </SidebarMenu>
   );
 }
-
-// Update Next.js Link usage in `sidebar-nav.tsx` to align with App Router best practices.
-const OriginalSidebarNav = () => {
-  const pathname = usePathname();
-  const getPath = (href: string) => {
-    // For App Router, we handle root path differently
-    if (href === '/dashboard' && (pathname === '/dashboard' || pathname === '/')) {
-      return '/';
-    }
-    return href;
-  }
-  
-  return (
-    <SidebarMenu>
-      {navItems.map((item) => {
-        const path = getPath(item.href);
-        const isActive = pathname === path || (path !== '/' && pathname.startsWith(path));
-        return (
-          <SidebarMenuItem key={item.href}>
-            <Link href={path} passHref>
-              <SidebarMenuButton isActive={isActive} tooltip={item.label}>
-                <item.icon />
-                <span>{item.label}</span>
-              </SidebarMenuButton>
-            </Link>
-          </SidebarMenuItem>
-        );
-      })}
-    </SidebarMenu>
-  );
-};
