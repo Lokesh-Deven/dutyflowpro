@@ -64,19 +64,6 @@ export function ExaminationManagement({ examinations, setExaminations, onGenerat
     fileInputRef.current?.click();
   };
 
-  const excelSerialDateToJSDate = (serial: number) => {
-    const utc_days = Math.floor(serial - 25569);
-    const utc_value = utc_days * 86400;
-    const date_info = new Date(utc_value * 1000);
-    const fractional_day = serial - Math.floor(serial) + 0.0000001;
-    let total_seconds = Math.floor(86400 * fractional_day);
-    const seconds = total_seconds % 60;
-    total_seconds -= seconds;
-    const hours = Math.floor(total_seconds / (60 * 60));
-    const minutes = Math.floor(total_seconds / 60) % 60;
-    return new Date(date_info.getFullYear(), date_info.getMonth(), date_info.getDate(), hours, minutes, seconds);
-  }
-
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -88,34 +75,22 @@ export function ExaminationManagement({ examinations, setExaminations, onGenerat
             const workbook = XLSX.read(data, { type: 'array', cellDates: true });
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
-            const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-            
-            const rows = json.slice(1);
-            
-            const newExams: Examination[] = rows.map((row: any, index) => {
-                const [examName, college, subject, date, startTime, endTime, rooms, relievers] = row;
-                
-                let examDate;
-                if (typeof date === 'number') {
-                  examDate = excelSerialDateToJSDate(date);
-                } else if (typeof date === 'string') {
-                  examDate = new Date(date);
-                } else if (date instanceof Date) {
-                  examDate = date;
-                } else {
-                  examDate = new Date();
-                }
+            const json = XLSX.utils.sheet_to_json(worksheet, {
+                raw: false, // Use raw: false to get formatted text
+                dateNF: 'yyyy-mm-dd', // Specify date format
+            });
 
+            const newExams: Examination[] = json.map((row: any, index) => {
                 return {
                     id: `exam-bulk-${Date.now()}-${index}`,
-                    examName: String(examName || ''),
-                    college: String(college || ''),
-                    subject: String(subject || ''),
-                    date: examDate,
-                    startTime: String(startTime || ''),
-                    endTime: String(endTime || ''),
-                    rooms: Number(rooms || 0),
-                    relievers: Number(relievers || 0),
+                    examName: String(row['Examination Name'] || ''),
+                    college: String(row['College Name'] || ''),
+                    subject: String(row['Subject'] || ''),
+                    date: new Date(row['Date']),
+                    startTime: String(row['Start Time'] || ''),
+                    endTime: String(row['End Time'] || ''),
+                    rooms: Number(row['Number of Rooms'] || 0),
+                    relievers: Number(row['Number of Relievers'] || 0),
                 };
             }).filter(exam => exam.subject && exam.examName);
 
