@@ -73,13 +73,24 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
                 const json = XLSX.utils.sheet_to_json(worksheet);
                 
                 const newInvigilators: Invigilator[] = json.map((row: any, index) => {
+                    const getColumnValue = (row: any, keys: string[]): any => {
+                        const rowKeys = Object.keys(row);
+                        for (const key of keys) {
+                            const foundKey = rowKeys.find(rk => rk.toLowerCase().trim() === key.toLowerCase().trim());
+                            if (foundKey && row[foundKey] !== null && row[foundKey] !== undefined) {
+                                return row[foundKey];
+                            }
+                        }
+                        return null;
+                    };
+
                     return {
                         id: `inv-bulk-${Date.now()}-${index}`,
-                        name: String(row.Name || ''),
-                        designation: String(row.Designation || ''),
-                        mobile: String(row.Mobile || '').replace(/\D/g, ''),
-                        email: String(row['E-Mail ID'] || row.Email || ''),
-                        isPartTime: row.Availability?.toLowerCase().trim() === 'part-time',
+                        name: String(getColumnValue(row, ['Name', 'Invigilator\'s Name']) || ''),
+                        designation: String(getColumnValue(row, ['Designation']) || ''),
+                        mobile: String(getColumnValue(row, ['Mobile', 'Mobile No']) || '').replace(/\D/g, ''),
+                        email: String(getColumnValue(row, ['E-Mail ID', 'Email', 'E-Mail']) || ''),
+                        isPartTime: (getColumnValue(row, ['Availability']) || '').toString().toLowerCase().trim() === 'part-time',
                     };
                 }).filter(inv => inv.name && inv.email);
 
@@ -123,7 +134,7 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
     };
 
     return (
-      <>
+        <>
         <Card>
             <CardHeader>
                 <CardTitle>Invigilators' Details</CardTitle>
