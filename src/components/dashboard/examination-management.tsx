@@ -35,6 +35,26 @@ type ExaminationManagementProps = {
   onGenerate: () => void;
 };
 
+// Flexible data retrieval from a row object, case-insensitive
+const getColumnValue = (row: any, keys: string[]): any => {
+    const rowKeys = Object.keys(row);
+    for (const key of keys) {
+        const foundKey = rowKeys.find(rk => rk.toLowerCase() === key.toLowerCase());
+        if (foundKey && row[foundKey] !== null && row[foundKey] !== undefined) {
+            return row[foundKey];
+        }
+    }
+    return null;
+};
+
+// Handles Excel's numeric date format
+const excelSerialDateToJSDate = (serial: number) => {
+    if (serial > 60) {
+        serial = serial - 1;
+    }
+    return new Date(Math.round((serial - 25569) * 86400 * 1000));
+};
+
 export function ExaminationManagement({ examinations, setExaminations, onGenerate }: ExaminationManagementProps) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -72,25 +92,31 @@ export function ExaminationManagement({ examinations, setExaminations, onGenerat
     reader.onload = (e) => {
         try {
             const data = new Uint8Array(e.target?.result as ArrayBuffer);
-            const workbook = XLSX.read(data, { type: 'array' });
+            const workbook = XLSX.read(data, { type: 'array', cellDates: true });
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
             const json = XLSX.utils.sheet_to_json(worksheet);
 
             const newExams: Examination[] = json.map((row: any, index) => {
-                const dateValue = row['Date'] || row['date'];
+                let dateValue = getColumnValue(row, ['Date', 'date']);
+                if(typeof dateValue === 'number') {
+                    dateValue = excelSerialDateToJSDate(dateValue);
+                } else if (typeof dateValue === 'string') {
+                    dateValue = new Date(dateValue);
+                }
+
                 return {
                     id: `exam-bulk-${Date.now()}-${index}`,
-                    examName: String(row['Examination Name'] || row['examName'] || 'Finals'),
-                    college: String(row['College Name'] || row['college'] || 'University'),
-                    subject: String(row['Subject'] || row['subject'] || ''),
-                    date: dateValue instanceof Date ? dateValue : new Date(dateValue),
-                    startTime: String(row['Start Time'] || row['startTime'] || ''),
-                    endTime: String(row['End Time'] || row['endTime'] || ''),
-                    rooms: Number(row['Number of Rooms'] || row['rooms'] || 0),
-                    relievers: Number(row['Number of Relievers'] || row['relievers'] || 0),
+                    examName: String(getColumnValue(row, ['Examination Name', 'examName', 'exam name']) || 'Finals'),
+                    college: String(getColumnValue(row, ['College Name', 'collegeName', 'college name']) || 'University'),
+                    subject: String(getColumnValue(row, ['Subject', 'subject']) || ''),
+                    date: dateValue,
+                    startTime: String(getColumnValue(row, ['Start Time', 'startTime', 'start time']) || '09:00'),
+                    endTime: String(getColumnValue(row, ['End Time', 'endTime', 'end time']) || '12:00'),
+                    rooms: Number(getColumnValue(row, ['Number of Rooms', 'rooms', 'No. of Rooms']) || 1),
+                    relievers: Number(getColumnValue(row, ['Number of Relievers', 'relievers', 'No. of Relievers']) || 0),
                 };
-            }).filter(exam => exam.subject && exam.examName && exam.date && !isNaN(exam.date.getTime()));
+            }).filter(exam => exam.subject && exam.date && !isNaN(exam.date.getTime()));
 
             if (newExams.length > 0) {
                 setExaminations(prev => [...prev, ...newExams]);
@@ -175,7 +201,7 @@ export function ExaminationManagement({ examinations, setExaminations, onGenerat
                     ref={fileInputRef}
                     onChange={handleFileChange}
                     className="hidden"
-                    accept=".xlsx, .xls"
+                    accept=".xlsx, .xls, .csv"
                 />
               </div>
               <Button type="button" variant="default" className="bg-accent hover:bg-accent/90" onClick={onGenerate}>
