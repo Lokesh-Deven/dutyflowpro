@@ -3,7 +3,7 @@
 
 import type { Invigilator, Examination } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Download, Send, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -137,6 +137,17 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult }: 
   
   const examInfo = examinations.length > 0 ? examinations[0] : null;
 
+  const totalRooms = examinations.reduce((acc, exam) => acc + exam.rooms, 0);
+  const totalRelievers = examinations.reduce((acc, exam) => acc + exam.relievers, 0);
+
+  const dutiesPerExam = examinations.map(exam => {
+    return invigilators.reduce((count, invigilator) => {
+        const duties = allotmentResult.assignments[invigilator.id] || [];
+        return count + (duties.includes(exam.id) ? 1 : 0);
+    }, 0);
+  });
+  const totalDutiesAllotted = dutiesPerExam.reduce((sum, count) => sum + count, 0);
+
   return (
     <Card>
       <CardHeader className="text-center">
@@ -186,6 +197,29 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult }: 
                 );
               })}
             </TableBody>
+             <TableFooter>
+                <TableRow className="bg-secondary/50 font-bold">
+                    <TableCell colSpan={3} className="text-right text-primary">No of Rooms/Invigilators</TableCell>
+                    {examinations.map((exam) => (
+                        <TableCell key={`rooms-${exam.id}`} className="text-center text-primary">{exam.rooms}</TableCell>
+                    ))}
+                    <TableCell className="text-center text-primary sticky right-0 bg-secondary/50">{totalRooms}</TableCell>
+                </TableRow>
+                <TableRow className="bg-secondary/50 font-bold">
+                    <TableCell colSpan={3} className="text-right text-primary">No of Relievers</TableCell>
+                    {examinations.map((exam) => (
+                        <TableCell key={`relievers-${exam.id}`} className="text-center text-primary">{exam.relievers}</TableCell>
+                    ))}
+                    <TableCell className="text-center text-primary sticky right-0 bg-secondary/50">{totalRelievers}</TableCell>
+                </TableRow>
+                <TableRow className="bg-accent/20 font-bold">
+                    <TableCell colSpan={3} className="text-right">Total Duties Allotted</TableCell>
+                    {dutiesPerExam.map((count, index) => (
+                        <TableCell key={`total-duties-${examinations[index].id}`} className="text-center">{count}</TableCell>
+                    ))}
+                    <TableCell className="text-center sticky right-0 bg-accent/20">{totalDutiesAllotted}</TableCell>
+                </TableRow>
+            </TableFooter>
           </Table>
         </div>
       </CardContent>
