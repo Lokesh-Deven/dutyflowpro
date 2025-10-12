@@ -249,20 +249,16 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                          return (
                             <TableCell 
                               key={exam.id} 
-                              className={cn(
-                                "text-center cursor-pointer hover:bg-secondary p-0",
-                                hasDuty && "bg-primary/20"
-                              )}
+                              className="text-center cursor-pointer hover:bg-secondary"
                               onClick={() => handleDutyToggle(invigilator.id, exam.id)}
                             >
                               <Tooltip>
                                 <TooltipTrigger className="w-full h-full flex items-center justify-center">
-                                    <div className={cn(
-                                        "w-full h-full flex items-center justify-center",
-                                        hasDuty && "bg-primary text-primary-foreground"
-                                    )}>
-                                        {hasDuty ? 1 : 0}
-                                    </div>
+                                    {hasDuty ? (
+                                        <div className="bg-primary/20 text-primary-foreground font-bold rounded-md w-6 h-6 flex items-center justify-center">1</div>
+                                    ) : (
+                                        <span>0</span>
+                                    )}
                                 </TooltipTrigger>
                                 <TooltipContent>
                                     <p>{format(exam.date, 'PPP')} ({format(exam.date, 'EEEE')})</p>
