@@ -15,15 +15,22 @@ import {
   CalendarDays,
   BarChart2,
   Info,
+  Users,
+  FileText
 } from 'lucide-react';
 
 export const navItems = [
-  { href: '/dashboard', label: 'New Allotment', icon: LayoutGrid },
+  { href: '/dashboard/invigilators', label: 'New Allotment', icon: LayoutGrid },
   { href: '/dashboard/saved', label: 'Saved Allotments', icon: Save },
   { href: '/dashboard/history', label: 'History', icon: History },
   { href: '/dashboard/schedule', label: 'Day-wise Schedule', icon: CalendarDays },
   { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart2 },
   { href: '/dashboard/about', label: 'About', icon: Info },
+];
+
+export const newAllotmentSteps = [
+    { href: '/dashboard/invigilators', label: 'Invigilators', icon: Users },
+    { href: '/dashboard/examinations', label: 'Examinations', icon: FileText },
 ];
 
 export function SidebarNav() {
@@ -33,12 +40,11 @@ export function SidebarNav() {
     <SidebarMenu>
       {navItems.map((item) => {
         const isActive = pathname.startsWith(item.href) && (pathname === item.href || pathname.startsWith(`${item.href}/`));
-        // A special case for the dashboard since its URL is the base for others.
-        const isDashboardActive = item.href === '/dashboard' && pathname === '/dashboard';
+        const isNewAllotmentActive = item.href === '/dashboard/invigilators' && (pathname.startsWith('/dashboard/invigilators') || pathname.startsWith('/dashboard/examinations'));
 
         return (
           <SidebarMenuItem key={item.href}>
-            <SidebarMenuButton asChild isActive={item.href === '/dashboard' ? isDashboardActive : isActive} tooltip={item.label}>
+            <SidebarMenuButton asChild isActive={isNewAllotmentActive || isActive} tooltip={item.label}>
               <Link href={item.href}>
                 <item.icon />
                 <span>{item.label}</span>

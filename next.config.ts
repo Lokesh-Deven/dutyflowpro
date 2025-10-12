@@ -40,7 +40,12 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/',
-        destination: '/dashboard',
+        destination: '/dashboard/invigilators',
+        permanent: true,
+      },
+       {
+        source: '/dashboard',
+        destination: '/dashboard/invigilators',
         permanent: true,
       },
     ]

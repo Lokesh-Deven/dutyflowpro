@@ -59,8 +59,6 @@ const getColumnValue = (row: any, keys: string[]): any => {
 
 // Handles Excel's numeric date format
 const excelSerialDateToJSDate = (serial: number) => {
-    // Excel's epoch starts on 1900-01-01, but it incorrectly thinks 1900 was a leap year.
-    // JavaScript's epoch is 1970-01-01. The difference is 25569 days.
     return new Date(Date.UTC(0, 0, serial - 1));
 };
 
@@ -232,7 +230,7 @@ export function ExaminationManagement({ examinations, setExaminations, onGenerat
       <Card>
         <CardHeader>
           <CardTitle>Examination Details</CardTitle>
-          <CardDescription>Enter the details for all exams.</CardDescription>
+          <CardDescription>Enter the details for all exams. For bulk upload, ensure your Excel file includes columns for: `Examination Name`, `College Name`, `Subject`, `Date`, `Start Time`, `End Time`, `Number of Rooms`, `Number of Relievers`.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>

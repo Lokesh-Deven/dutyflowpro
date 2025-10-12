@@ -5,12 +5,13 @@ import type { Invigilator } from '@/lib/types';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trash2, Upload, UserPlus } from 'lucide-react';
+import { Trash2, Upload, UserPlus, ArrowRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { SetAvailabilityDialog } from './set-availability-dialog';
@@ -20,7 +21,6 @@ const invigilatorSchema = z.object({
   designation: z.string().min(1, "Designation is required."),
   mobile: z.string().regex(/^\d{10}$/, "Must be a 10-digit number."),
   email: z.string().email("Invalid email address."),
-  isPartTime: z.boolean().default(false),
 });
 
 type InvigilatorManagementProps = {
@@ -31,12 +31,13 @@ type InvigilatorManagementProps = {
 export function InvigilatorManagement({ invigilators, setInvigilators }: InvigilatorManagementProps) {
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const router = useRouter();
     const [isAvailabilityDialogOpen, setIsAvailabilityDialogOpen] = useState(false);
     const [selectedInvigilator, setSelectedInvigilator] = useState<Invigilator | null>(null);
 
     const form = useForm<z.infer<typeof invigilatorSchema>>({
         resolver: zodResolver(invigilatorSchema),
-        defaultValues: { name: '', designation: '', mobile: '', email: '', isPartTime: false },
+        defaultValues: { name: '', designation: '', mobile: '', email: '' },
     });
 
     function onSubmit(values: z.infer<typeof invigilatorSchema>) {
@@ -84,20 +85,15 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
                     return null;
                 };
 
-                const newInvigilators: Invigilator[] = json.map((row: any, index) => {
-                    const availability = getColumnValue(row, ['Availability', 'available']) || 'Full-Time';
-                    const isPartTime = availability.toString().toLowerCase().trim() === 'part-time';
-
-                    return {
-                        id: `inv-bulk-${Date.now()}-${index}`,
-                        name: String(getColumnValue(row, ['Name', "Invigilator's Name"]) || ''),
-                        designation: String(getColumnValue(row, ['Designation']) || ''),
-                        mobile: String(getColumnValue(row, ['Mobile', 'Mobile No']) || '').replace(/\D/g, ''),
-                        email: String(getColumnValue(row, ['E-Mail ID', 'Email', 'E-Mail']) || ''),
-                        isPartTime: false,
-                        availableDays: [],
-                    };
-                }).filter(inv => inv.name && inv.email);
+                const newInvigilators: Invigilator[] = json.map((row: any, index) => ({
+                    id: `inv-bulk-${Date.now()}-${index}`,
+                    name: String(getColumnValue(row, ['Name', "Invigilator's Name"]) || ''),
+                    designation: String(getColumnValue(row, ['Designation']) || ''),
+                    mobile: String(getColumnValue(row, ['Mobile', 'Mobile No']) || '').replace(/\D/g, ''),
+                    email: String(getColumnValue(row, ['E-Mail ID', 'Email', 'E-Mail']) || ''),
+                    isPartTime: false,
+                    availableDays: [],
+                })).filter(inv => inv.name && inv.email);
 
                 if (newInvigilators.length > 0) {
                     setInvigilators(prev => [...prev, ...newInvigilators]);
@@ -135,20 +131,35 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
                 inv.id === invigilatorId ? { ...inv, availableDays, isPartTime: availableDays.length > 0 } : inv
             )
         );
-        toast({ title: "Availability Saved", description: `Availability for the selected invigilator has been updated.` });
+        toast({ title: "Availability Saved", description: `Availability for ${selectedInvigilator?.name} has been updated.` });
     };
     
     const formatAvailableDays = (days?: string[]) => {
         if (!days || days.length === 0) return 'Full-Time';
+        if (days.length === 7) return 'Full-Time';
         return days.map(day => day.substring(0, 3)).join(', ');
     }
+
+    const handleContinue = () => {
+        if (invigilators.length === 0) {
+            toast({
+                variant: 'destructive',
+                title: 'No Invigilators Added',
+                description: 'Please add at least one invigilator before proceeding.',
+            });
+            return;
+        }
+        // Here you would typically save the invigilators list to a global state or DB
+        // For this prototype, we'll just navigate
+        router.push('/dashboard/examinations');
+    };
 
     return (
         <>
         <Card>
             <CardHeader>
                 <CardTitle>Invigilators' Details</CardTitle>
-                <CardDescription>Add all available invigilators. For bulk add, use an Excel file with columns: Name, Designation, Mobile, E-Mail ID, Availability (optional: "Part-Time").</CardDescription>
+                <CardDescription>Add all available invigilators. For bulk add, use an Excel file with columns: Name, Designation, Mobile, E-Mail ID.</CardDescription>
             </CardHeader>
             <CardContent>
                 <Form {...form}>
@@ -208,7 +219,7 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
                                         <TableCell>{inv.designation}</TableCell>
                                         <TableCell>{inv.email}</TableCell>
                                         <TableCell>
-                                            <Button variant={inv.availableDays && inv.availableDays.length > 0 ? "secondary" : "outline"} size="sm" onClick={() => handleOpenAvailabilityDialog(inv)}>
+                                            <Button variant={inv.isPartTime ? "secondary" : "outline"} size="sm" onClick={() => handleOpenAvailabilityDialog(inv)}>
                                                  {formatAvailableDays(inv.availableDays)}
                                             </Button>
                                         </TableCell>
@@ -222,6 +233,12 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
                     </Table>
                 </div>
             </CardContent>
+            <CardFooter className="justify-end">
+                <Button onClick={handleContinue} size="lg">
+                    Continue to Examination Details
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+            </CardFooter>
         </Card>
         <SetAvailabilityDialog
             isOpen={isAvailabilityDialogOpen}
