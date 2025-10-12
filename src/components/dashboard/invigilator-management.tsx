@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Edit, Trash2, Upload, UserPlus, CalendarCog } from 'lucide-react';
+import { Edit, Trash2, Upload, UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { SetAvailabilityDialog } from './set-availability-dialog';
@@ -201,16 +201,13 @@ export function InvigilatorManagement({ invigilators, setInvigilators }: Invigil
                                         <TableCell className="font-medium">{inv.name}</TableCell>
                                         <TableCell>{inv.designation}</TableCell>
                                         <TableCell>
-                                            {inv.isPartTime ? (
-                                                <div className="flex items-center gap-2">
-                                                    <span>Part-Time</span>
-                                                    <Button variant="outline" size="sm" onClick={() => handleOpenAvailabilityDialog(inv)}>Set Availability</Button>
-                                                </div>
-                                            ) : 'Full-Time'}
+                                            {inv.isPartTime ? 'Part-Time' : 'Full-Time'}
                                         </TableCell>
                                         <TableCell>{inv.email}</TableCell>
                                         <TableCell className="text-right">
-                                            <Button variant="ghost" size="icon"><Edit className="h-4 w-4" /></Button>
+                                            <Button variant="ghost" size="icon" onClick={() => handleOpenAvailabilityDialog(inv)}>
+                                                <Edit className="h-4 w-4" />
+                                            </Button>
                                             <Button variant="ghost" size="icon" onClick={() => handleDelete(inv.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                                         </TableCell>
                                     </TableRow>
