@@ -1,32 +1,42 @@
+
 "use client";
 
-import React, { Dispatch, SetStateAction, useRef } from 'react';
+import React, { Dispatch, SetStateAction, useRef, useState } from 'react';
 import type { Examination } from '@/lib/types';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { Calendar as CalendarIcon, Upload, Sparkles, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
-const examSchema = z.object({
-  date: z.date({ required_error: "A date is required." }),
+const examSessionSchema = z.object({
   subject: z.string().min(1, "Subject is required."),
-  startTime: z.string().min(1, "Start time is required."),
-  endTime: z.string().min(1, "End time is required."),
+  startTimeHour: z.string().min(1),
+  startTimeMinute: z.string().min(1),
+  startTimePeriod: z.string().min(1),
+  endTimeHour: z.string().min(1),
+  endTimeMinute: z.string().min(1),
+  endTimePeriod: z.string().min(1),
   rooms: z.coerce.number().min(1, "At least one room is required."),
   relievers: z.coerce.number().min(0),
-  college: z.string().min(1, "College name is required.").default("University of Excellence"),
+});
+
+const examinationSchema = z.object({
+  college: z.string().min(1, "College name is required.").default("SIPUC"),
   examName: z.string().min(1, "Examination name is required."),
+  date: z.date({ required_error: "A date is required." }),
 });
 
 type ExaminationManagementProps = {
@@ -39,7 +49,7 @@ type ExaminationManagementProps = {
 const getColumnValue = (row: any, keys: string[]): any => {
     const rowKeys = Object.keys(row);
     for (const key of keys) {
-        const foundKey = rowKeys.find(rk => rk.toLowerCase() === key.toLowerCase());
+        const foundKey = rowKeys.find(rk => rk.toLowerCase().trim() === key.toLowerCase().trim());
         if (foundKey && row[foundKey] !== null && row[foundKey] !== undefined) {
             return row[foundKey];
         }
@@ -49,30 +59,77 @@ const getColumnValue = (row: any, keys: string[]): any => {
 
 // Handles Excel's numeric date format
 const excelSerialDateToJSDate = (serial: number) => {
-    if (serial > 60) {
-        serial = serial - 1;
-    }
-    return new Date(Math.round((serial - 25569) * 86400 * 1000));
+    // Excel's epoch starts on 1900-01-01, but it incorrectly thinks 1900 was a leap year.
+    // JavaScript's epoch is 1970-01-01. The difference is 25569 days.
+    return new Date(Date.UTC(0, 0, serial - 1));
 };
+
+const hours = Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, '0'));
+const minutes = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
+const periods = ['AM', 'PM'];
 
 export function ExaminationManagement({ examinations, setExaminations, onGenerate }: ExaminationManagementProps) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const form = useForm<z.infer<typeof examSchema>>({
-    resolver: zodResolver(examSchema),
+  
+  const [sessionDetails, setSessionDetails] = useState({
+    subject: '',
+    startTimeHour: '09',
+    startTimeMinute: '00',
+    startTimePeriod: 'AM',
+    endTimeHour: '12',
+    endTimeMinute: '00',
+    endTimePeriod: 'PM',
+    rooms: 1,
+    relievers: 0,
+  });
+
+  const form = useForm<z.infer<typeof examinationSchema>>({
+    resolver: zodResolver(examinationSchema),
     defaultValues: {
-      subject: '', startTime: '09:00', endTime: '12:00', rooms: 1, relievers: 1, college: 'University of Excellence', examName: 'Final Examinations Spring 2024'
+      college: 'SIPUC',
+      examName: '',
     },
   });
 
-  function onSubmit(values: z.infer<typeof examSchema>) {
+  const formatTime = (hour: string, minute: string, period: string) => {
+    let h = parseInt(hour, 10);
+    if (period === 'PM' && h < 12) h += 12;
+    if (period === 'AM' && h === 12) h = 0;
+    return `${h.toString().padStart(2, '0')}:${minute}`;
+  }
+
+  function onAddExamination() {
+    const examinationData = form.getValues();
+    const validation = examinationSchema.safeParse(examinationData);
+    const sessionValidation = examSessionSchema.safeParse({ ...sessionDetails, subject: sessionDetails.subject || 'None', rooms: Number(sessionDetails.rooms), relievers: Number(sessionDetails.relievers) });
+
+    if (!validation.success || !sessionValidation.success) {
+      if (!validation.success) {
+        validation.error.errors.forEach(err => {
+          form.setError(err.path[0] as keyof z.infer<typeof examinationSchema>, { message: err.message });
+        });
+      }
+      if (!sessionValidation.success) {
+         toast({ title: "Session Details Invalid", description: sessionValidation.error.errors[0].message, variant: "destructive" });
+      }
+      return;
+    }
+    
     const newExamination: Examination = {
       id: `exam-${Date.now()}`,
-      ...values,
+      college: examinationData.college,
+      examName: examinationData.examName,
+      date: examinationData.date,
+      subject: sessionDetails.subject || 'None',
+      startTime: formatTime(sessionDetails.startTimeHour, sessionDetails.startTimeMinute, sessionDetails.startTimePeriod),
+      endTime: formatTime(sessionDetails.endTimeHour, sessionDetails.endTimeMinute, sessionDetails.endTimePeriod),
+      rooms: sessionDetails.rooms,
+      relievers: sessionDetails.relievers,
     };
+
     setExaminations(prev => [...prev, newExamination]);
-    toast({ title: "Examination Added", description: `${values.subject} has been added to the list.` });
-    form.reset();
+    toast({ title: "Examination Added", description: `${sessionDetails.subject} on ${format(examinationData.date, "PPP")} has been added.` });
   }
   
   const handleDelete = (id: string) => {
@@ -92,7 +149,7 @@ export function ExaminationManagement({ examinations, setExaminations, onGenerat
     reader.onload = (e) => {
         try {
             const data = new Uint8Array(e.target?.result as ArrayBuffer);
-            const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+            const workbook = XLSX.read(data, { type: 'array' });
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
             const json = XLSX.utils.sheet_to_json(worksheet);
@@ -103,18 +160,41 @@ export function ExaminationManagement({ examinations, setExaminations, onGenerat
                     dateValue = excelSerialDateToJSDate(dateValue);
                 } else if (typeof dateValue === 'string') {
                     dateValue = new Date(dateValue);
+                } else if (!(dateValue instanceof Date)) {
+                    dateValue = new Date(); // Fallback
                 }
 
+
+                const parseTime = (timeValue: any) => {
+                    if (timeValue instanceof Date) {
+                        return format(timeValue, 'HH:mm');
+                    }
+                    if(typeof timeValue === 'string') {
+                        // Attempt to parse various string formats, return as is if simple HH:mm
+                        const timeRegex = /(\d{1,2}:\d{2})/;
+                        const match = timeValue.match(timeRegex);
+                        if (match) return match[0];
+                        return timeValue;
+                    }
+                    if (typeof timeValue === 'number') { // Excel time is a fraction of a day
+                        const totalSeconds = Math.round(timeValue * 86400);
+                        const hours = Math.floor(totalSeconds / 3600);
+                        const minutes = Math.floor((totalSeconds % 3600) / 60);
+                        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+                    }
+                    return '00:00';
+                };
+                
                 return {
                     id: `exam-bulk-${Date.now()}-${index}`,
-                    examName: String(getColumnValue(row, ['Examination Name', 'examName', 'exam name']) || 'Finals'),
-                    college: String(getColumnValue(row, ['College Name', 'collegeName', 'college name']) || 'University'),
-                    subject: String(getColumnValue(row, ['Subject', 'subject']) || ''),
+                    examName: String(getColumnValue(row, ['Examination Name', 'examName', 'exam name']) || form.getValues('examName') || 'Imported Exam'),
+                    college: String(getColumnValue(row, ['College Name', 'collegeName', 'college name']) || form.getValues('college') || 'Imported College'),
+                    subject: String(getColumnValue(row, ['Subject', 'subject']) || 'None'),
                     date: dateValue,
-                    startTime: String(getColumnValue(row, ['Start Time', 'startTime', 'start time']) || '09:00'),
-                    endTime: String(getColumnValue(row, ['End Time', 'endTime', 'end time']) || '12:00'),
-                    rooms: Number(getColumnValue(row, ['Number of Rooms', 'rooms', 'No. of Rooms']) || 1),
-                    relievers: Number(getColumnValue(row, ['Number of Relievers', 'relievers', 'No. of Relievers']) || 0),
+                    startTime: parseTime(getColumnValue(row, ['Start Time', 'startTime', 'start time', 'timings'])),
+                    endTime: parseTime(getColumnValue(row, ['End Time', 'endTime', 'end time'])),
+                    rooms: Number(getColumnValue(row, ['Number of Rooms', 'No of Rooms', 'rooms', 'Number of rooms']) || 1),
+                    relievers: Number(getColumnValue(row, ['Number of Relievers', 'No of Relievers', 'relievers', 'Number of relievers']) || 0),
                 };
             }).filter(exam => exam.subject && exam.date && !isNaN(exam.date.getTime()));
 
@@ -142,109 +222,171 @@ export function ExaminationManagement({ examinations, setExaminations, onGenerat
     };
     reader.readAsArrayBuffer(file);
   };
+  
+  const handleSessionDetailChange = (field: keyof typeof sessionDetails, value: string | number) => {
+    setSessionDetails(prev => ({...prev, [field]: value}));
+  }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Examination Details</CardTitle>
-        <CardDescription>Add examination details individually or use the bulk upload feature. For bulk uploads, please ensure your Excel file contains the following columns: <br />
-        <code className="font-code text-sm p-1 bg-muted rounded-sm">Examination Name</code>, <code className="font-code text-sm p-1 bg-muted rounded-sm">College Name</code>, <code className="font-code text-sm p-1 bg-muted rounded-sm">Subject</code>, <code className="font-code text-sm p-1 bg-muted rounded-sm">Date</code>, <code className="font-code text-sm p-1 bg-muted rounded-sm">Start Time</code>, <code className="font-code text-sm p-1 bg-muted rounded-sm">End Time</code>, <code className="font-code text-sm p-1 bg-muted rounded-sm">Number of Rooms</code>, <code className="font-code text-sm p-1 bg-muted rounded-sm">Number of Relievers</code>
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start mb-8">
-            <FormField control={form.control} name="examName" render={({ field }) => (
-              <FormItem><FormLabel>Examination Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-            )}/>
-            <FormField control={form.control} name="college" render={({ field }) => (
-              <FormItem><FormLabel>College Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-            )}/>
-            <FormField control={form.control} name="subject" render={({ field }) => (
-              <FormItem><FormLabel>Subject</FormLabel><FormControl><Input {...field} placeholder="e.g. Advanced Calculus" /></FormControl><FormMessage /></FormItem>
-            )}/>
-            <FormField control={form.control} name="date" render={({ field }) => (
-              <FormItem className="flex flex-col pt-2"><FormLabel className="mb-1.5">Date</FormLabel>
-                <Popover><PopoverTrigger asChild>
-                    <FormControl>
-                      <Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
-                        {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent>
-                </Popover><FormMessage />
-              </FormItem>
-            )}/>
-            <FormField control={form.control} name="startTime" render={({ field }) => (
-              <FormItem><FormLabel>Start Time</FormLabel><FormControl><Input type="time" {...field} /></FormControl><FormMessage /></FormItem>
-            )}/>
-            <FormField control={form.control} name="endTime" render={({ field }) => (
-              <FormItem><FormLabel>End Time</FormLabel><FormControl><Input type="time" {...field} /></FormControl><FormMessage /></FormItem>
-            )}/>
-            <FormField control={form.control} name="rooms" render={({ field }) => (
-              <FormItem><FormLabel>Number of Rooms</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-            )}/>
-            <FormField control={form.control} name="relievers" render={({ field }) => (
-              <FormItem><FormLabel>Number of Relievers</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-            )}/>
-            <div className="md:col-span-2 lg:col-span-4 flex justify-between items-end gap-4 pt-4">
-              <div className="flex gap-2">
-                 <Button type="submit">Add Examination</Button>
-                 <Button type="button" variant="outline" onClick={handleBulkUploadClick}>
-                    <Upload className="mr-2 h-4 w-4" />
-                    Bulk Add
-                </Button>
-                <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    className="hidden"
-                    accept=".xlsx, .xls, .csv"
-                />
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Examination Details</CardTitle>
+          <CardDescription>Enter the details for all exams.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField control={form.control} name="college" render={({ field }) => (
+                  <FormItem><FormLabel>Name of the College</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                )}/>
+                <FormField control={form.control} name="examName" render={({ field }) => (
+                  <FormItem><FormLabel>Name of the Examination</FormLabel><FormControl><Input {...field} placeholder="e.g. Annual Examination, March 2025" /></FormControl><FormMessage /></FormItem>
+                )}/>
               </div>
-              <Button type="button" variant="default" className="bg-accent hover:bg-accent/90" onClick={onGenerate}>
+
+              <Card className="border">
+                <CardContent className="pt-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 items-center gap-4">
+                        <FormField control={form.control} name="date" render={({ field }) => (
+                          <FormItem className="flex flex-col"><FormLabel className="mb-1">Date for Session</FormLabel>
+                            <Popover><PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
+                                    {field.value ? format(field.value, "PPP") : <span>Select a date</span>}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent>
+                            </Popover><FormMessage />
+                          </FormItem>
+                        )}/>
+                        <div className="flex items-center gap-2 self-end mb-2">
+                            <span className="text-sm text-muted-foreground">or</span>
+                            <Button type="button" variant="default" onClick={handleBulkUploadClick}>
+                                <Upload className="mr-2 h-4 w-4" />
+                                Import from Excel
+                            </Button>
+                            <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".xlsx, .xls, .csv" />
+                        </div>
+                    </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                    <CardTitle className="text-lg text-primary">Session Details</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                        <div className="md:col-span-2">
+                           <Label>Subject</Label>
+                            <Select value={sessionDetails.subject} onValueChange={(value) => handleSessionDetailChange('subject', value)}>
+                                <SelectTrigger><SelectValue placeholder="None"/></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="None">None</SelectItem>
+                                  <SelectItem value="Physics">Physics</SelectItem>
+                                  <SelectItem value="Chemistry">Chemistry</SelectItem>
+                                  <SelectItem value="Biology">Biology</SelectItem>
+                                  <SelectItem value="Mathematics">Mathematics</SelectItem>
+                                  <SelectItem value="Computer Science">Computer Science</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        
+                        <div>
+                            <Label>No of Rooms</Label>
+                             <Select value={sessionDetails.rooms.toString()} onValueChange={(value) => handleSessionDetailChange('rooms', parseInt(value, 10))}>
+                                <SelectTrigger><SelectValue/></SelectTrigger>
+                                <SelectContent>{Array.from({ length: 20 }, (_, i) => i + 1).map(n => <SelectItem key={n} value={n.toString()}>{n}</SelectItem>)}</SelectContent>
+                            </Select>
+                        </div>
+                        <div>
+                           <Label>No of Relievers</Label>
+                            <Select value={sessionDetails.relievers.toString()} onValueChange={(value) => handleSessionDetailChange('relievers', parseInt(value, 10))}>
+                                <SelectTrigger><SelectValue/></SelectTrigger>
+                                <SelectContent>{Array.from({ length: 10 }, (_, i) => i).map(n => <SelectItem key={n} value={n.toString()}>{n}</SelectItem>)}</SelectContent>
+                            </Select>
+                        </div>
+                        
+                        <div className="md:col-span-2">
+                           <Label>Time</Label>
+                            <div className="grid grid-cols-3 gap-2">
+                                <Select value={sessionDetails.startTimeHour} onValueChange={(v) => handleSessionDetailChange('startTimeHour', v)}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{hours.map(h => <SelectItem key={`st-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent></Select>
+                                <Select value={sessionDetails.startTimeMinute} onValueChange={(v) => handleSessionDetailChange('startTimeMinute', v)}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{minutes.map(m => <SelectItem key={`st-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent></Select>
+                                <Select value={sessionDetails.startTimePeriod} onValueChange={(v) => handleSessionDetailChange('startTimePeriod', v)}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{periods.map(p => <SelectItem key={`st-p-${p}`} value={p}>{p}</SelectItem>)}</SelectContent></Select>
+                            </div>
+                            <div className="grid grid-cols-3 gap-2 mt-2">
+                                <Select value={sessionDetails.endTimeHour} onValueChange={(v) => handleSessionDetailChange('endTimeHour', v)}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{hours.map(h => <SelectItem key={`et-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent></Select>
+                                <Select value={sessionDetails.endTimeMinute} onValueChange={(v) => handleSessionDetailChange('endTimeMinute', v)}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{minutes.map(m => <SelectItem key={`et-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent></Select>
+                                <Select value={sessionDetails.endTimePeriod} onValueChange={(v) => handleSessionDetailChange('endTimePeriod', v)}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{periods.map(p => <SelectItem key={`et-p-${p}`} value={p}>{p}</SelectItem>)}</SelectContent></Select>
+                            </div>
+                        </div>
+                    </div>
+                     <div className="flex justify-end">
+                        <Button type="button" onClick={onAddExamination}>+ Add Examination</Button>
+                    </div>
+                </CardContent>
+              </Card>
+
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Added Examinations</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+              <TableHeader>
+                  <TableRow>
+                      <TableHead>Sl.No</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Day</TableHead>
+                      <TableHead>Subject</TableHead>
+                      <TableHead>Timings</TableHead>
+                      <TableHead>No of Rooms</TableHead>
+                      <TableHead>No of Relievers</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+              </TableHeader>
+              <TableBody>
+                  {examinations.length === 0 ? (
+                      <TableRow><TableCell colSpan={8} className="text-center h-24">No examinations added yet.</TableCell></TableRow>
+                  ) : (
+                      examinations.map((exam, index) => (
+                          <TableRow key={exam.id}>
+                              <TableCell>{index + 1}</TableCell>
+                              <TableCell>{format(exam.date, "dd/MM/yyyy")}</TableCell>
+                              <TableCell>{format(exam.date, "EEEE")}</TableCell>
+                              <TableCell className="font-medium">{exam.subject}</TableCell>
+                              <TableCell>{exam.startTime} - {exam.endTime}</TableCell>
+                              <TableCell>{exam.rooms}</TableCell>
+                              <TableCell>{exam.relievers}</TableCell>
+                              <TableCell className="text-right">
+                                  <Button variant="ghost" size="icon" onClick={() => handleDelete(exam.id)}>
+                                      <Trash2 className="h-4 w-4 text-destructive" />
+                                  </Button>
+                              </TableCell>
+                          </TableRow>
+                      ))
+                  )}
+              </TableBody>
+          </Table>
+        </CardContent>
+        <CardFooter className="justify-end">
+            <Button type="button" variant="default" className="bg-accent hover:bg-accent/90" onClick={onGenerate}>
                 <Sparkles className="mr-2 h-4 w-4" />
                 Generate Duty Allotment
-              </Button>
-            </div>
-          </form>
-        </Form>
-        
-        <Table>
-            <TableHeader>
-                <TableRow>
-                    <TableHead>Subject</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Time</TableHead>
-                    <TableHead>Rooms</TableHead>
-                    <TableHead>Relievers</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {examinations.length === 0 ? (
-                    <TableRow><TableCell colSpan={6} className="text-center">No examinations added yet.</TableCell></TableRow>
-                ) : (
-                    examinations.map(exam => (
-                        <TableRow key={exam.id}>
-                            <TableCell className="font-medium">{exam.subject}</TableCell>
-                            <TableCell>{exam.date.toLocaleDateString()}</TableCell>
-                            <TableCell>{exam.startTime} - {exam.endTime}</TableCell>
-                            <TableCell>{exam.rooms}</TableCell>
-                            <TableCell>{exam.relievers}</TableCell>
-                            <TableCell className="text-right">
-                                <Button variant="ghost" size="icon" onClick={() => handleDelete(exam.id)}>
-                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
-                            </TableCell>
-                        </TableRow>
-                    ))
-                )}
-            </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+            </Button>
+        </CardFooter>
+      </Card>
+    </div>
   );
 }
+
+    
