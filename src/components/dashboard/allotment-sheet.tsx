@@ -4,10 +4,12 @@ import type { Invigilator, Examination } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Download, Send } from 'lucide-react';
+import { Download, Send, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AllotmentResult } from '@/lib/allotment';
 import { format } from 'date-fns';
+import { useAllotment } from '@/lib/allotment-context';
+import { optimizeDutyAssignments } from '@/ai/flows/optimize-duty-assignments';
 
 type AllotmentSheetProps = {
   invigilators: Invigilator[];
@@ -17,6 +19,8 @@ type AllotmentSheetProps = {
 
 export function AllotmentSheet({ invigilators, examinations, allotmentResult }: AllotmentSheetProps) {
   const { toast } = useToast();
+  const { setExaminations, setInvigilators } = useAllotment();
+
 
   const handleEmailAll = () => {
     toast({
@@ -30,6 +34,49 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult }: 
       title: "Downloading Allotment Sheet",
       description: "Your download will begin shortly. (This is a demo action)",
     });
+  };
+
+  const handleOptimize = async () => {
+    toast({
+      title: "Optimizing Allotment",
+      description: "AI is re-evaluating the duty assignments..."
+    });
+
+    try {
+      const result = await optimizeDutyAssignments({
+        invigilators,
+        exams: examinations,
+        constraints: {
+          hard: [
+            "Part-time lecturers can have a maximum of two duties.",
+            "Part-time lecturers must only be assigned duties on their available days."
+          ],
+          soft: [
+            "Senior invigilators should not be allotted more duties than junior invigilators.",
+            "Excess duties should be assigned to the most junior invigilators."
+          ]
+        }
+      });
+
+      toast({
+        title: "Optimization Complete",
+        description: result.message,
+      });
+
+      if (result.success && result.optimizedAllotment) {
+        // In a real scenario, you'd update your state with the optimized allotment.
+        // For this MVP, we are just showing a message.
+        // e.g., setInvigilators(result.optimizedAllotment.invigilators)
+      }
+
+    } catch (error) {
+      console.error("Optimization failed:", error);
+      toast({
+        variant: "destructive",
+        title: "Optimization Failed",
+        description: "The AI optimization process encountered an error.",
+      });
+    }
   };
   
   const examInfo = examinations.length > 0 ? examinations[0] : null;
@@ -70,10 +117,10 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult }: 
                     <TableCell className="font-medium sticky left-12 bg-card z-10">{invigilator.name}</TableCell>
                     <TableCell>{invigilator.designation}</TableCell>
                     {examinations.map(exam => {
-                       const dutyCount = duties.filter(dutyId => dutyId === exam.id).length;
+                       const hasDuty = duties.includes(exam.id);
                        return (
                           <TableCell key={exam.id} className="text-center">
-                            {dutyCount > 0 ? <span className="inline-block bg-primary/10 text-primary font-bold rounded-full h-6 w-6 text-center leading-6">{dutyCount}</span> : 0}
+                            {hasDuty ? 1 : 0}
                           </TableCell>
                        )
                     })}
@@ -86,6 +133,10 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult }: 
         </div>
       </CardContent>
       <CardFooter className="justify-end gap-2">
+         <Button variant="outline" onClick={handleOptimize}>
+          <Sparkles className="mr-2" />
+          Optimize
+        </Button>
         <Button variant="outline" onClick={handleDownload}>
           <Download className="mr-2" />
           Download as PDF
