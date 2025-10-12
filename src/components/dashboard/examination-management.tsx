@@ -121,7 +121,9 @@ export function ExaminationManagement({ examinations, setExaminations, onGenerat
     <Card>
       <CardHeader>
         <CardTitle>Examination Details</CardTitle>
-        <CardDescription>Add the details for each examination to be scheduled. For bulk add, use an Excel file with columns: Examination Name, College Name, Subject, Date, Start Time, End Time, Number of Rooms, Number of Relievers.</CardDescription>
+        <CardDescription>Add examination details individually or use the bulk upload feature. For bulk uploads, please ensure your Excel file contains the following columns: <br />
+        <code className="font-code text-sm p-1 bg-muted rounded-sm">Examination Name</code>, <code className="font-code text-sm p-1 bg-muted rounded-sm">College Name</code>, <code className="font-code text-sm p-1 bg-muted rounded-sm">Subject</code>, <code className="font-code text-sm p-1 bg-muted rounded-sm">Date</code>, <code className="font-code text-sm p-1 bg-muted rounded-sm">Start Time</code>, <code className="font-code text-sm p-1 bg-muted rounded-sm">End Time</code>, <code className="font-code text-sm p-1 bg-muted rounded-sm">Number of Rooms</code>, <code className="font-code text-sm p-1 bg-muted rounded-sm">Number of Relievers</code>
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
