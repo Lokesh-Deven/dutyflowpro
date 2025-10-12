@@ -224,12 +224,12 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                   <TableHead className="sticky left-12 bg-card z-10 w-48">Invigilator's Name</TableHead>
                   <TableHead className="w-48">Designation</TableHead>
                   {examinations.map(exam => (
-                    <TableHead key={exam.id} className="text-center whitespace-nowrap h-48" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
-                      <span className="text-xs font-normal text-muted-foreground">{format(exam.date, "dd/MM/yy")}</span>
-                      <br />
-                      {exam.subject}
-                      <br/>
-                      <span className="text-xs font-normal text-muted-foreground">{exam.startTime} - {exam.endTime}</span>
+                    <TableHead key={exam.id} className="whitespace-nowrap h-48 p-2" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+                      <div className="flex flex-col items-start w-full">
+                        <span className="text-xs font-normal text-muted-foreground">{format(exam.date, "dd/MM/yy")}</span>
+                        <span className="font-bold">{exam.subject}</span>
+                        <span className="text-xs font-normal text-muted-foreground">{exam.startTime} - {exam.endTime}</span>
+                      </div>
                     </TableHead>
                   ))}
                   <TableHead className="text-center sticky right-0 bg-card z-10">Total</TableHead>
