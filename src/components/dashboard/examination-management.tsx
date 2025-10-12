@@ -46,17 +46,18 @@ type ExaminationManagementProps = {
   onGenerate: () => void;
 };
 
-// Flexible data retrieval from a row object, case-insensitive
+// Flexible data retrieval from a row object, case-insensitive and ignoring extra characters
 const getColumnValue = (row: any, keys: string[]): any => {
     const rowKeys = Object.keys(row);
     for (const key of keys) {
-        const foundKey = rowKeys.find(rk => rk.toLowerCase().trim() === key.toLowerCase().trim());
+        const foundKey = rowKeys.find(rk => rk.toLowerCase().replace(/[^a-z0-9]/gi, '') === key.toLowerCase().replace(/[^a-z0-9]/gi, ''));
         if (foundKey && row[foundKey] !== null && row[foundKey] !== undefined) {
             return row[foundKey];
         }
     }
     return null;
 };
+
 
 // Handles Excel's numeric date format
 const excelSerialDateToJSDate = (serial: number) => {
