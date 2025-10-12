@@ -158,22 +158,27 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
             fillColor: [0, 51, 102], // Dark Blue
             textColor: 255,
             fontStyle: 'bold',
-            halign: 'center'
+            halign: 'center',
+            fontSize: 6,
         },
         footStyles: {
             fillColor: [240, 240, 240], // Light Grey
             textColor: [0, 0, 0],
             fontStyle: 'bold',
-        },
-        styles: {
-            cellPadding: 2,
-            fontSize: 8,
+            fontSize: 7,
             halign: 'center'
         },
+        styles: {
+            cellPadding: 1,
+            fontSize: 7,
+            halign: 'center',
+            minCellHeight: 5,
+        },
         columnStyles: {
-            0: { halign: 'center', cellWidth: 15 },
-            1: { halign: 'left', cellWidth: 40 },
-            2: { halign: 'left', cellWidth: 40 },
+            0: { halign: 'center', cellWidth: 10 },
+            1: { halign: 'left', cellWidth: 35 },
+            2: { halign: 'left', cellWidth: 35 },
+            [examinations.length + 3]: { halign: 'center', cellWidth: 10, fontStyle: 'bold' } // Total column
         },
         didDrawPage: (data: any) => {
             // Add page numbers
