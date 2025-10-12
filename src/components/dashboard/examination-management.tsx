@@ -16,10 +16,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Calendar as CalendarIcon, Upload, Sparkles, Trash2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Upload, Sparkles, Trash2, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useRouter } from 'next/navigation';
 
 const examSessionSchema = z.object({
   subject: z.string().min(1, "Subject is required."),
@@ -69,6 +70,7 @@ const periods = ['AM', 'PM'];
 export function ExaminationManagement({ examinations, setExaminations, onGenerate }: ExaminationManagementProps) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
   
   const [sessionDetails, setSessionDetails] = useState({
     subject: '',
@@ -376,7 +378,11 @@ export function ExaminationManagement({ examinations, setExaminations, onGenerat
               </TableBody>
           </Table>
         </CardContent>
-        <CardFooter className="justify-end">
+        <CardFooter className="justify-between">
+            <Button variant="outline" onClick={() => router.push('/dashboard/invigilators')}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Invigilators
+            </Button>
             <Button type="button" variant="default" className="bg-accent hover:bg-accent/90" onClick={onGenerate}>
                 <Sparkles className="mr-2 h-4 w-4" />
                 Generate Duty Allotment
@@ -386,5 +392,3 @@ export function ExaminationManagement({ examinations, setExaminations, onGenerat
     </div>
   );
 }
-
-    
