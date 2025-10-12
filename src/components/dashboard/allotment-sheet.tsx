@@ -104,12 +104,16 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
     const doc = new jsPDF({ orientation: 'landscape' });
 
     const examInfo = examinations.length > 0 ? examinations[0] : null;
-    const title = `${activeAllotment?.name || 'Invigilation Duty Allotment Sheet'}\n${examInfo?.college || 'Institution'}\n${examInfo?.examName || 'Examination'}`;
+    const title = `${examInfo?.college || 'Institution'}`;
+    const subtitle = `${activeAllotment?.name || 'Invigilation Duty Allotment Sheet'}`;
     
+    doc.setFontSize(16);
     doc.text(title, doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
+    doc.setFontSize(12);
+    doc.text(subtitle, doc.internal.pageSize.getWidth() / 2, 22, { align: 'center' });
 
     const head = [
-        ['Sl.No', "Invigilator's Name", 'Designation', ...examinations.map(exam => `${format(exam.date, "dd/MM/yy")}\n${exam.subject}\n${exam.startTime} - ${exam.endTime}`), 'Total']
+        ['Sl.No', "Invigilator's Name", 'Designation', ...examinations.map(exam => `${format(exam.date, "dd-Oct-yy")}\n${exam.subject}\n${exam.startTime} - ${exam.endTime}`), 'Total']
     ];
 
     const body = invigilators.map((invigilator, index) => {
@@ -145,19 +149,19 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
         foot: [
             ['', 'No of Rooms', '', ...examinations.map(exam => exam.rooms), totalRooms],
             ['', 'No of Relievers', '', ...examinations.map(exam => exam.relievers), totalRelievers],
-            ['', 'No of Invigilators', '', ...examinations.map(exam => exam.rooms + exam.relievers), totalInvigilatorsRequired],
+            ['', 'Total Invigilators', '', ...examinations.map(exam => exam.rooms + exam.relievers), totalInvigilatorsRequired],
             ['', 'Total Duties Allotted', '', ...dutiesPerExam, totalDutiesAllotted],
         ],
-        startY: 35,
+        startY: 30,
         theme: 'grid',
         headStyles: {
-            fillColor: [22, 163, 74],
+            fillColor: [0, 51, 102], // Dark Blue
             textColor: 255,
             fontStyle: 'bold',
             halign: 'center'
         },
         footStyles: {
-            fillColor: [244, 244, 245],
+            fillColor: [240, 240, 240], // Light Grey
             textColor: [0, 0, 0],
             fontStyle: 'bold',
         },
@@ -171,7 +175,15 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
             1: { halign: 'left', cellWidth: 40 },
             2: { halign: 'left', cellWidth: 40 },
         },
-        didDrawPage: (data: any) => {}
+        didDrawPage: (data: any) => {
+            // Add page numbers
+            doc.setFontSize(10);
+            doc.text(
+                `Page ${data.pageNumber} of ${doc.getNumberOfPages()}`,
+                doc.internal.pageSize.getWidth() - 30,
+                doc.internal.pageSize.getHeight() - 10
+            );
+        }
     });
 
     doc.save(`${saveName.replace(/ /g, '_')}.pdf`);
