@@ -14,8 +14,7 @@ export default function Header() {
             <LeafyGreen className="w-6 h-6 text-primary" />
             </div>
             <div className="flex flex-col">
-            <span className="text-lg font-bold font-headline text-primary-foreground">DutyFlow</span>
-            <span className="text-xs text-muted-foreground -mt-1">The AI-Powered Allotments</span>
+            <span className="text-lg font-bold font-headline" style={{color: 'navy'}}>DutyFlow</span>
             </div>
         </Link>
         <div className="hidden md:flex">
