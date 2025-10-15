@@ -68,21 +68,60 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     });
 
     const doc = new jsPDF();
-    const collegeName = activeAllotment?.examinations[0]?.college || "DutyFlow Institution";
-    const examName = activeAllotment?.examinations[0]?.examName || "Duty Allotment";
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const pageWidth = doc.internal.pageSize.getWidth();
     
-    doc.setFontSize(16);
-    doc.text(collegeName, doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
-    doc.setFontSize(12);
-    doc.text(examName, doc.internal.pageSize.getWidth() / 2, 22, { align: 'center' });
+    // Colors
+    const primaryColor = '#003366'; // Navy Blue
+    const secondaryColor = '#00a8e8'; // Bright Blue
+    const textColor = '#333333';
+    const headerTextColor = '#ffffff';
+
+    // -- Header --
+    doc.setFillColor(primaryColor);
+    doc.rect(0, 0, pageWidth, 50, 'F');
+    doc.setFillColor(secondaryColor);
+    doc.triangle(0, 55, 0, 35, pageWidth, 50, 'F');
+
+    // Header Text
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(22);
+    doc.setTextColor(headerTextColor);
+    doc.text('INVIGILATION DUTY', pageWidth - 15, 25, { align: 'right' });
     doc.setFontSize(14);
-    doc.text("Invigilation Duty Summary", doc.internal.pageSize.getWidth() / 2, 30, { align: 'center' });
+    doc.text('SUMMARY REPORT', pageWidth - 15, 35, { align: 'right' });
+    
+    // Logo Placeholder
+    doc.setFillColor(headerTextColor);
+    doc.circle(25, 25, 10, 'F');
+    doc.setFontSize(8);
+    doc.setTextColor(primaryColor);
+    doc.text('DF', 25, 26, { align: 'center'});
 
-    doc.setFontSize(11);
-    doc.text(`Name: ${selectedInvigilator.name}`, 14, 45);
-    doc.text(`Designation: ${selectedInvigilator.designation}`, 14, 52);
-    doc.text(`E-Mail: ${selectedInvigilator.email}`, 14, 59);
 
+    // -- Invigilator Details Card --
+    const cardX = 15;
+    const cardY = 65;
+    const cardWidth = pageWidth - 30;
+    const cardHeight = 30;
+    doc.setFillColor('#ffffff');
+    doc.setDrawColor('#e0e0e0');
+    doc.roundedRect(cardX, cardY, cardWidth, cardHeight, 3, 3, 'FD');
+    
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.setTextColor(primaryColor);
+    doc.text('Invigilator Details', cardX + 10, cardY + 10);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(textColor);
+    doc.text(`Name: ${selectedInvigilator.name}`, cardX + 10, cardY + 20);
+    doc.text(`Designation: ${selectedInvigilator.designation}`, cardX + 10, cardY + 25);
+    doc.text(`Email: ${selectedInvigilator.email}`, cardX + 80, cardY + 20);
+
+    
+    // -- Table --
     const head = [['Sl.No', 'Date', 'Day', 'Subject', 'Timings']];
     const body = assignedDuties.map((duty, index) => [
       index + 1,
@@ -95,23 +134,45 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     (doc as any).autoTable({
         head: head,
         body: body,
-        startY: 65,
+        startY: cardY + cardHeight + 10,
         theme: 'grid',
         headStyles: {
-            fillColor: [0, 51, 102], // Dark Blue
-            textColor: 255,
+            fillColor: primaryColor,
+            textColor: headerTextColor,
             fontStyle: 'bold',
+            halign: 'center'
         },
-        didDrawPage: (data: any) => {
-            doc.setFontSize(10);
-            const pageCount = doc.getNumberOfPages();
-            doc.text(
-                `Page ${data.pageNumber} of ${pageCount}`,
-                doc.internal.pageSize.getWidth() - 20,
-                doc.internal.pageSize.getHeight() - 10
-            );
+        styles: {
+            cellPadding: 2,
+            fontSize: 9,
+            textColor: textColor
+        },
+        alternateRowStyles: {
+            fillColor: '#f5f5f5'
+        },
+        columnStyles: {
+            0: { halign: 'center', cellWidth: 15 },
+            1: { halign: 'center' },
+            2: { halign: 'center' },
+            3: { halign: 'left' },
+            4: { halign: 'center' }
         }
     });
+
+    // -- Footer --
+    const finalY = (doc as any).lastAutoTable.finalY || pageHeight - 40;
+    doc.setFillColor(primaryColor);
+    doc.rect(0, pageHeight - 25, pageWidth, 25, 'F');
+    doc.setFillColor(secondaryColor);
+    doc.triangle(0, pageHeight - 25, pageWidth, pageHeight - 30, pageWidth, pageHeight - 25, 'F');
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(headerTextColor);
+    const collegeName = activeAllotment?.examinations[0]?.college || "DutyFlow Institution";
+    doc.text(collegeName, 15, pageHeight - 12);
+    doc.text(`Generated: ${format(new Date(), 'PPP')}`, pageWidth - 15, pageHeight - 12, { align: 'right' });
+
 
     doc.save(`Duty_Summary_${selectedInvigilator.name.replace(/ /g, '_')}.pdf`);
   };
@@ -197,3 +258,5 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     </Card>
   );
 }
+
+    
