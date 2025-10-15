@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Upload, UserPlus, ArrowRight } from 'lucide-react';
+import { Upload, UserPlus, ArrowRight, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { SetAvailabilityDialog } from './set-availability-dialog';
@@ -156,6 +156,14 @@ export function InvigilatorManagement() {
         router.push(`/dashboard/examinations`);
     };
 
+    const handleDelete = (id: string) => {
+        setInvigilators(prev => prev.filter(inv => inv.id !== id));
+        toast({
+            title: "Invigilator Removed",
+            variant: "destructive"
+        });
+    };
+
     return (
         <>
         <Card>
@@ -207,11 +215,12 @@ export function InvigilatorManagement() {
                                 <TableHead>Designation</TableHead>
                                 <TableHead>E-Mail ID</TableHead>
                                 <TableHead>Availability</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {invigilators.length === 0 ? (
-                                <TableRow><TableCell colSpan={5} className="text-center h-24">No invigilators added yet.</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={6} className="text-center h-24">No invigilators added yet.</TableCell></TableRow>
                             ) : (
                                 invigilators.map((inv, index) => (
                                     <TableRow key={inv.id}>
@@ -222,6 +231,11 @@ export function InvigilatorManagement() {
                                         <TableCell>
                                             <Button variant={inv.isPartTime ? "secondary" : "outline"} size="sm" onClick={() => handleOpenAvailabilityDialog(inv)}>
                                                  {formatAvailableDays(inv)}
+                                            </Button>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <Button variant="ghost" size="icon" onClick={() => handleDelete(inv.id)}>
+                                                <Trash2 className="h-4 w-4 text-destructive" />
                                             </Button>
                                         </TableCell>
                                     </TableRow>
@@ -247,3 +261,5 @@ export function InvigilatorManagement() {
         </>
     );
 }
+
+    
