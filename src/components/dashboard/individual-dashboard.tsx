@@ -108,27 +108,21 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     doc.setTextColor(textColor);
 
     const startY = 80;
-    const details = [
-        { label: 'Name', value: selectedInvigilator.name, x: 15 },
-        { label: 'Designation', value: selectedInvigilator.designation, x: pageWidth / 2 },
-        { label: 'Mobile No', value: selectedInvigilator.mobile, x: 15 },
-        { label: 'E-Mail ID', value: selectedInvigilator.email, x: pageWidth / 2 },
-        { label: 'No of Duties Allotted', value: assignedDuties.length.toString().padStart(2, '0'), x: pageWidth / 2 }
-    ];
-
+    
     doc.setFont('helvetica', 'bold');
-    doc.text('Name:', details[0].x, startY);
-    doc.text('Designation:', details[1].x, startY);
-    doc.text('Mobile No:', details[2].x, startY + 5);
-    doc.text('E-Mail ID:', details[3].x, startY + 5);
-    doc.text('No of Duties Allotted:', details[4].x, startY + 10);
+    doc.text('Name:', 15, startY);
+    doc.text('Designation:', pageWidth / 2, startY);
+    doc.text('Mobile No:', 15, startY + 5);
+    doc.text('E-Mail ID:', pageWidth / 2, startY + 5);
+    doc.text('No of Duties Allotted:', 15, startY + 10);
     
     doc.setFont('helvetica', 'normal');
-    doc.text(selectedInvigilator.name, details[0].x + 10, startY);
-    doc.text(selectedInvigilator.designation, details[1].x + 20, startY);
-    doc.text(selectedInvigilator.mobile, details[2].x + 15, startY + 5);
-    doc.text(selectedInvigilator.email, details[3].x + 15, startY + 5);
-    doc.text(assignedDuties.length.toString().padStart(2, '0'), details[4].x + 35, startY + 10);
+    doc.text(selectedInvigilator.name, 35, startY);
+    doc.text(selectedInvigilator.designation, (pageWidth / 2) + 20, startY);
+    doc.text(selectedInvigilator.mobile, 35, startY + 5);
+    doc.text(selectedInvigilator.email, (pageWidth / 2) + 15, startY + 5);
+    doc.setFont('helvetica', 'bold');
+    doc.text(assignedDuties.length.toString().padStart(2, '0'), 45, startY + 10);
 
 
     // -- Table --
@@ -240,9 +234,9 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
                   {assignedDuties.map(duty => (
                     <li key={duty.id} className="flex justify-between items-center p-3 rounded-md bg-background">
                       <div>
-                        <p className="font-medium">{duty.subject}</p>
+                        <p className="font-medium">{format(duty.date, 'PPP')}</p>
                         <p className="text-sm text-muted-foreground">
-                          {format(duty.date, 'PPP')} | {duty.startTime} - {duty.endTime}
+                          {duty.subject} | {duty.startTime} - {duty.endTime}
                         </p>
                       </div>
                       <Badge variant="outline">{duty.examName}</Badge>
@@ -271,3 +265,4 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     
 
     
+
