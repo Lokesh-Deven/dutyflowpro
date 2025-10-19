@@ -72,57 +72,49 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     const pageWidth = doc.internal.pageSize.getWidth();
     
     const primaryColor = '#003366'; 
-    const secondaryColor = '#00a8e8';
+    const secondaryColor = '#00A8E8';
     const textColor = '#333333';
-    const headerTextColor = '#ffffff';
+    const headerTextColor = '#FFFFFF';
 
     // -- Header --
     doc.setFillColor(primaryColor);
     doc.rect(0, 0, pageWidth, 40, 'F');
-    doc.setFillColor(secondaryColor);
-    doc.rect(0, 40, pageWidth, 5, 'F');
-
+    
     // Header Text
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(16);
     doc.setTextColor(headerTextColor);
     const collegeName = activeAllotment?.examinations[0]?.college || "Seshadripuram Independent Pre-University College";
-    const collegeNameLines = doc.splitTextToSize(collegeName, 80);
-    doc.text(collegeNameLines, 45, 18);
-
-    
-    // Logo Placeholder
-    doc.setFillColor(headerTextColor);
-    doc.circle(25, 20, 10, 'F');
+    const collegeNameLines = doc.splitTextToSize(collegeName, pageWidth - 30);
+    doc.text(collegeNameLines, pageWidth / 2, 18, { align: 'center' });
     
     // -- Title --
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(18);
     doc.setTextColor(primaryColor);
-    doc.text("Invigilator's Duty Summary", pageWidth / 2, 65, { align: 'center' });
+    doc.text("Invigilator's Duty Summary", pageWidth / 2, 55, { align: 'center' });
 
 
     // -- Invigilator Details --
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(textColor);
-
-    const startY = 80;
+    const startY = 70;
     
     doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(textColor);
+    
     doc.text('Name:', 15, startY);
     doc.text('Designation:', pageWidth / 2, startY);
-    doc.text('Mobile No:', 15, startY + 5);
-    doc.text('E-Mail ID:', pageWidth / 2, startY + 5);
-    doc.text('No of Duties Allotted:', 15, startY + 10);
+    doc.text('Mobile No:', 15, startY + 7);
+    doc.text('E-Mail ID:', pageWidth / 2, startY + 7);
+    doc.text('No of Duties:', 15, startY + 14);
     
     doc.setFont('helvetica', 'normal');
-    doc.text(selectedInvigilator.name, 35, startY);
-    doc.text(selectedInvigilator.designation, (pageWidth / 2) + 20, startY);
-    doc.text(selectedInvigilator.mobile, 35, startY + 5);
-    doc.text(selectedInvigilator.email, (pageWidth / 2) + 15, startY + 5);
+    doc.text(selectedInvigilator.name, 40, startY);
+    doc.text(selectedInvigilator.designation, (pageWidth / 2) + 25, startY);
+    doc.text(selectedInvigilator.mobile, 40, startY + 7);
+    doc.text(selectedInvigilator.email, (pageWidth / 2) + 25, startY + 7);
     doc.setFont('helvetica', 'bold');
-    doc.text(assignedDuties.length.toString().padStart(2, '0'), 45, startY + 10);
+    doc.text(assignedDuties.length.toString().padStart(2, '0'), 40, startY + 14);
 
 
     // -- Table --
@@ -138,10 +130,10 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     (doc as any).autoTable({
         head: head,
         body: body,
-        startY: startY + 18,
+        startY: startY + 22,
         theme: 'grid',
         headStyles: {
-            fillColor: [230, 230, 230], // Light Grey
+            fillColor: [230, 230, 230],
             textColor: [30, 30, 30],
             fontStyle: 'bold',
             halign: 'center',
@@ -157,7 +149,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
             0: { halign: 'center', cellWidth: 10 },
             1: { halign: 'center' },
             2: { halign: 'left' },
-            3: { halign: 'left' },
+            3: { halign: 'left', fontStyle: 'bold', textColor: [0, 122, 255] },
             4: { halign: 'center' }
         },
         margin: { left: 15, right: 15 }
@@ -167,9 +159,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     const finalY = (doc as any).lastAutoTable.finalY || pageHeight - 30;
     doc.setFillColor(primaryColor);
     doc.rect(0, pageHeight - 20, pageWidth, 20, 'F');
-    doc.setFillColor(secondaryColor);
-    doc.rect(0, pageHeight - 25, pageWidth, 5, 'F');
-
+    
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(headerTextColor);
@@ -236,7 +226,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
                       <div>
                         <p className="font-medium">{format(duty.date, 'PPP')} ({format(duty.date, 'EEEE')})</p>
                         <p className="text-sm text-muted-foreground">
-                          {duty.subject} | {duty.startTime} - {duty.endTime}
+                          <span className="text-primary font-semibold">{duty.subject}</span> | {duty.startTime} - {duty.endTime}
                         </p>
                       </div>
                       <Badge variant="outline">{duty.examName}</Badge>
@@ -261,9 +251,3 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     </Card>
   );
 }
-
-    
-
-    
-
-
