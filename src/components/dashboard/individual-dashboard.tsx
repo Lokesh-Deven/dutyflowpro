@@ -234,7 +234,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
                   {assignedDuties.map(duty => (
                     <li key={duty.id} className="flex justify-between items-center p-3 rounded-md bg-background">
                       <div>
-                        <p className="font-medium">{format(duty.date, 'PPP')}</p>
+                        <p className="font-medium">{format(duty.date, 'PPP')} ({format(duty.date, 'EEEE')})</p>
                         <p className="text-sm text-muted-foreground">
                           {duty.subject} | {duty.startTime} - {duty.endTime}
                         </p>
@@ -265,4 +265,5 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     
 
     
+
 
