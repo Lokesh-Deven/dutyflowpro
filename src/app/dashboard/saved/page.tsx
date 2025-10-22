@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAllotment } from "@/lib/allotment-context";
@@ -6,8 +7,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { MoreVertical, Edit, Trash2 } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MoreVertical, Edit, Trash2, CheckCircle } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,10 +20,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { useToast } from "@/hooks/use-toast";
 
 export default function SavedAllotmentsPage() {
-  const { savedAllotments, setActiveAllotment, deleteSavedAllotment } = useAllotment();
+  const { savedAllotments, setActiveAllotment, deleteSavedAllotment, updateSavedAllotment } = useAllotment();
   const router = useRouter();
+  const { toast } = useToast();
 
   const handleOpen = (allotmentId: string) => {
     const allotmentToOpen = savedAllotments.find(a => a.id === allotmentId);
@@ -31,21 +34,31 @@ export default function SavedAllotmentsPage() {
       router.push("/dashboard/allotment");
     }
   };
+  
+  const handleFinalize = (allotmentId: string) => {
+    updateSavedAllotment(allotmentId, { status: 'Finalized' });
+    toast({
+        title: "Allotment Finalized",
+        description: "The allotment has been moved to History."
+    })
+  }
+  
+  const draftAllotments = savedAllotments.filter(a => a.status === 'Draft');
 
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold tracking-tight font-headline">Saved Allotments</h1>
       
-      {savedAllotments.length === 0 ? (
+      {draftAllotments.length === 0 ? (
         <Card className="text-center py-12">
           <CardHeader>
-            <CardTitle>No Saved Allotments</CardTitle>
+            <CardTitle>No Saved Drafts</CardTitle>
             <CardDescription>You haven't saved any allotment sheets yet. Once you save one, it will appear here.</CardDescription>
           </CardHeader>
         </Card>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {savedAllotments.map((allotment) => (
+          {draftAllotments.map((allotment) => (
             <Card key={allotment.id}>
               <CardHeader>
                 <div className="flex justify-between items-start">
@@ -64,6 +77,10 @@ export default function SavedAllotmentsPage() {
                                 <DropdownMenuItem onClick={() => handleOpen(allotment.id)}>
                                     <Edit className="mr-2 h-4 w-4" /> Open
                                 </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleFinalize(allotment.id)}>
+                                    <CheckCircle className="mr-2 h-4 w-4" /> Finalize
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
                                 <AlertDialogTrigger asChild>
                                     <DropdownMenuItem className="text-destructive">
                                         <Trash2 className="mr-2 h-4 w-4" /> Delete
