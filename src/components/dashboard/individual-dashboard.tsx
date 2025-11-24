@@ -85,6 +85,12 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     doc.setTextColor(headerTextColor);
     const collegeName = activeAllotment?.examinations[0]?.college || "Seshadripuram Independent Pre-University College";
     doc.text(collegeName, pageWidth / 2, 18, { align: 'center' });
+
+    doc.setFontSize(10);
+    doc.setTextColor(headerTextColor);
+    const examName = assignedDuties.length > 0 ? assignedDuties[0].examName : 'No duties assigned';
+    doc.text(examName, pageWidth / 2, 26, { align: 'center' });
+
     
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(18);
@@ -111,9 +117,11 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     doc.setFont('helvetica', 'bold');
     doc.text(assignedDuties.length.toString().padStart(2, '0'), 40, startY + 14);
 
-    const head = [['Date', 'Day', 'Subject', 'Timings']];
+    const head = [['Sl.No', 'Date', 'Day', 'Subject', 'Timings']];
     const body = assignedDuties.map((duty, index) => [
-      `${format(duty.date, "dd.MM.yyyy")} (${format(duty.date, "EEEE")})`,
+      index + 1,
+      format(duty.date, "dd.MM.yyyy"),
+      format(duty.date, "EEEE"),
       duty.subject,
       `${duty.startTime} - ${duty.endTime}`,
     ]);
@@ -137,12 +145,14 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
             textColor: textColor
         },
         columnStyles: {
-            0: { halign: 'left', fontStyle: 'bold' },
-            1: { halign: 'left', fontStyle: 'bold', textColor: [29, 171, 226] },
-            2: { halign: 'center' },
+            0: { halign: 'center', cellWidth: 10 },
+            1: { halign: 'left', fontStyle: 'bold' },
+            2: { halign: 'left' },
+            3: { halign: 'left', fontStyle: 'bold', textColor: [29, 171, 226] },
+            4: { halign: 'center' },
         },
         didParseCell: function(data: any) {
-            if (data.column.index === 1 && data.cell.section === 'body') {
+            if (data.column.index === 3 && data.cell.section === 'body') {
                 data.cell.styles.textColor = '#1DABE2';
             }
         },
@@ -212,10 +222,10 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
                 </div>
                  <div className="text-right">
                     <h3 className="font-semibold mb-1">Assigned Duties ({assignedDuties.length})</h3>
+                    <h4 className="font-medium text-muted-foreground mb-2">{examName}</h4>
                 </div>
             </CardHeader>
             <CardContent>
-               <h4 className="font-medium text-muted-foreground mb-2">{examName}</h4>
               {assignedDuties.length > 0 ? (
                 <ul className="space-y-2">
                   {assignedDuties.map(duty => (
