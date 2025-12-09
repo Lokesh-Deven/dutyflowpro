@@ -116,9 +116,9 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
     const title = `${examInfo?.college || 'Institution'}`;
     const subtitle = `${examInfo?.examName || 'Invigilation Duty Allotment'}`;
     
-    doc.setFontSize(16);
+    doc.setFontSize(20);
     doc.text(title, doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
-    doc.setFontSize(12);
+    doc.setFontSize(15);
     doc.text(subtitle, doc.internal.pageSize.getWidth() / 2, 22, { align: 'center' });
 
     const head = [
@@ -167,18 +167,18 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
             textColor: 255,
             fontStyle: 'bold',
             halign: 'center',
-            fontSize: 6,
+            fontSize: 8,
         },
         footStyles: {
             fillColor: [240, 240, 240], // Light Grey
             textColor: [0, 0, 0],
             fontStyle: 'bold',
-            fontSize: 7,
+            fontSize: 9,
             halign: 'center'
         },
         styles: {
             cellPadding: 1,
-            fontSize: 7,
+            fontSize: 9,
             halign: 'center',
             minCellHeight: 5,
         },

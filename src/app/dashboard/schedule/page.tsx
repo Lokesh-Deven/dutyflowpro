@@ -72,11 +72,11 @@ export default function SchedulePage() {
     const doc = new jsPDF();
     const examDetails = dailyDuties.duties.length > 0 ? dailyDuties.duties[0] : (examinations.length > 0 ? examinations[0] : null);
     
-    doc.setFontSize(18);
+    doc.setFontSize(22);
     doc.text(examDetails?.college || 'Seshadripuram Independent Pre-University College', doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
-    doc.setFontSize(14);
+    doc.setFontSize(18);
     doc.text(examDetails?.examName || 'Examination Duty', doc.internal.pageSize.getWidth() / 2, 28, { align: 'center' });
-    doc.setFontSize(12);
+    doc.setFontSize(15);
     doc.text(`Invigilation Duty List for ${format(date, "MMMM do, yyyy")}`, doc.internal.pageSize.getWidth() / 2, 36, { align: 'center' });
 
     const head = [["Sl No", "Name of the Invigilators", "Designation", "Examination Timings"]];
@@ -93,7 +93,8 @@ export default function SchedulePage() {
         body: body,
         startY: 45,
         theme: 'grid',
-        headStyles: { fillColor: [0, 51, 102], textColor: 255, fontStyle: 'bold' }
+        headStyles: { fillColor: [0, 51, 102], textColor: 255, fontStyle: 'bold', fontSize: 12 },
+        styles: { fontSize: 12 }
     });
 
     doc.save(`Duty_Schedule_${format(date, "yyyy-MM-dd")}.pdf`);
