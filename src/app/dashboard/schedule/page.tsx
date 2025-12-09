@@ -48,6 +48,15 @@ export default function SchedulePage() {
     }
 
   }, [date, examinations, invigilators, activeAllotment]);
+
+  const formatTimeTo12Hour = (time: string) => {
+    if (!time) return '';
+    const [hours, minutes] = time.split(':');
+    const h = parseInt(hours, 10);
+    const period = h >= 12 ? 'PM' : 'AM';
+    const adjustedHour = h % 12 || 12;
+    return `${adjustedHour.toString().padStart(2, '0')}:${minutes} ${period}`;
+  };
   
   const handleDownload = () => {
     if (!date || dailyDuties.invigilators.length === 0) {
@@ -71,7 +80,7 @@ export default function SchedulePage() {
     doc.text(`Invigilation Duty List for ${format(date, "MMMM do, yyyy")}`, doc.internal.pageSize.getWidth() / 2, 36, { align: 'center' });
 
     const head = [["Sl No", "Name of the Invigilators", "Designation", "Examination Timings"]];
-    const timings = dailyDuties.duties.length > 0 ? `${dailyDuties.duties[0].startTime} - ${dailyDuties.duties[0].endTime}` : '';
+    const timings = dailyDuties.duties.length > 0 ? `${formatTimeTo12Hour(dailyDuties.duties[0].startTime)} - ${formatTimeTo12Hour(dailyDuties.duties[0].endTime)}` : '';
     const body = dailyDuties.invigilators.map((inv, index) => [
         index + 1,
         inv.name,
@@ -103,7 +112,7 @@ export default function SchedulePage() {
 
   const examDetails = dailyDuties.duties.length > 0 ? dailyDuties.duties[0] : (examinations.length > 0 ? examinations[0] : null);
   const subjects = dailyDuties.duties.map(d => d.subject).join(' | ');
-  const timings = dailyDuties.duties.length > 0 ? `${dailyDuties.duties[0].startTime} - ${dailyDuties.duties[0].endTime}` : '';
+  const timings = dailyDuties.duties.length > 0 ? `${formatTimeTo12Hour(dailyDuties.duties[0].startTime)} - ${formatTimeTo12Hour(dailyDuties.duties[0].endTime)}` : '';
 
   return (
     <div className="space-y-6">
@@ -183,3 +192,5 @@ export default function SchedulePage() {
     </div>
   );
 }
+
+    

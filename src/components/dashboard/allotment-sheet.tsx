@@ -95,6 +95,15 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
     })
   }
 
+  const formatTimeTo12Hour = (time: string) => {
+    if (!time) return '';
+    const [hours, minutes] = time.split(':');
+    const h = parseInt(hours, 10);
+    const period = h >= 12 ? 'PM' : 'AM';
+    const adjustedHour = h % 12 || 12;
+    return `${adjustedHour.toString().padStart(2, '0')}:${minutes} ${period}`;
+  };
+
   const handleDownload = () => {
     toast({
       title: "Generating PDF...",
@@ -113,7 +122,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
     doc.text(subtitle, doc.internal.pageSize.getWidth() / 2, 22, { align: 'center' });
 
     const head = [
-        ['Sl.No', "Invigilator's Name", 'Designation', ...examinations.map(exam => `${format(exam.date, "dd-Oct-yy")}\n${exam.subject}\n${exam.startTime} - ${exam.endTime}`), 'Total']
+        ['Sl.No', "Invigilator's Name", 'Designation', ...examinations.map(exam => `${format(new Date(exam.date), "dd/MM/yy")}\n${exam.subject}\n${formatTimeTo12Hour(exam.startTime)} - ${formatTimeTo12Hour(exam.endTime)}`), 'Total']
     ];
 
     const body = invigilators.map((invigilator, index) => {
@@ -138,7 +147,6 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
             return count + (duties.includes(exam.id) ? 1 : 0);
         }, 0);
     });
-    const totalDutiesAllotted = dutiesPerExam.reduce((sum, count) => sum + count, 0);
     const totalRooms = examinations.reduce((acc, exam) => acc + exam.rooms, 0);
     const totalRelievers = examinations.reduce((acc, exam) => acc + exam.relievers, 0);
     const totalInvigilatorsRequired = examinations.reduce((acc, exam) => acc + exam.rooms + exam.relievers, 0);
@@ -231,7 +239,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                   {examinations.map(exam => (
                     <TableHead key={exam.id} className="whitespace-nowrap h-48 p-2" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
                       <div className="flex flex-col items-start w-full">
-                        <span className="text-xs font-normal text-muted-foreground">{format(exam.date, "dd/MM/yy")}</span>
+                        <span className="text-xs font-normal text-muted-foreground">{format(new Date(exam.date), "dd/MM/yy")}</span>
                         <span className="font-bold">{exam.subject}</span>
                         <span className="text-xs font-normal text-muted-foreground">{exam.startTime} - {exam.endTime}</span>
                       </div>
@@ -257,7 +265,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                                 <TooltipTrigger className="w-full h-full flex items-center justify-center">
                                     {hasDuty ? (<div className="bg-primary/20 text-black rounded-md w-6 h-6 flex items-center justify-center">1</div>) : (<span>0</span>)}
                                 </TooltipTrigger>
-                                <TooltipContent><p>{format(exam.date, 'PPP')} ({format(exam.date, 'EEEE')})</p></TooltipContent>
+                                <TooltipContent><p>{format(new Date(exam.date), 'PPP')} ({format(new Date(exam.date), 'EEEE')})</p></TooltipContent>
                               </Tooltip>
                             </TableCell>
                          )
@@ -324,5 +332,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
     </TooltipProvider>
   );
 }
+
+    
 
     
