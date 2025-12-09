@@ -198,8 +198,8 @@ export function ExaminationManagement() {
                     date: dateValue,
                     startTime: parseTime(getColumnValue(row, ['Start Time', 'startTime', 'start time', 'timings'])),
                     endTime: parseTime(getColumnValue(row, ['End Time', 'endTime', 'end time'])),
-                    rooms: Number(getColumnValue(row, ['Number of Rooms', 'No of Rooms', 'rooms', 'Number of rooms', 'no of rooms']) || 1),
-                    relievers: Number(getColumnValue(row, ['Number of Relievers', 'No of Relievers', 'relievers', 'Number of relievers', 'no of relievers']) || 0),
+                    rooms: Number(getColumnValue(row, ['Number of Rooms', 'No of Rooms', 'rooms', 'No. of Rooms Alloted']) || 1),
+                    relievers: Number(getColumnValue(row, ['Number of Relievers', 'No of Relievers', 'relievers', 'Relievers Required']) || 0),
                 };
             }).filter(exam => exam.subject && exam.date && !isNaN(exam.date.getTime()));
 
@@ -249,7 +249,7 @@ export function ExaminationManagement() {
       <Card>
         <CardHeader>
           <CardTitle>Examination Details</CardTitle>
-          <CardDescription>Enter the details for all exams. For bulk upload, ensure your Excel file includes columns for: `Examination Name`, `College Name`, `Subject`, `Date`, `Start Time`, `End Time`, `Number of Rooms`, `Number of Relievers`.</CardDescription>
+          <CardDescription>Enter the details for all exams. For bulk upload, ensure your Excel file includes columns for: `Examination Name`, `College Name`, `Subject`, `Date`, `Start Time`, `End Time`, `No. of Rooms Alloted`, `Relievers Required`.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
