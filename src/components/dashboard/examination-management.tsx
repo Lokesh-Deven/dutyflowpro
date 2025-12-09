@@ -250,10 +250,26 @@ export function ExaminationManagement() {
         <CardHeader>
           <CardTitle>Examination Details</CardTitle>
           <CardDescription>
-            For bulk upload, your Excel sheet must contain the following columns: 
-            <span className="font-semibold text-foreground">Date</span>, <span className="font-semibold text-foreground">Subject</span>, <span className="font-semibold text-foreground">Timings</span> (e.g., 9:00 AM - 12:00 PM), and <span className="font-semibold text-foreground">No. of Rooms Alloted</span>. 
-            Optional columns are <span className="text-foreground">Relievers Required</span>, <span className="text-foreground">Examination Name</span>, and <span className="text-foreground">College Name</span>.
+            For bulk upload, your Excel sheet should be formatted like the example below. The column titles are flexible, but the data format is important.
           </CardDescription>
+           <div className="text-sm text-muted-foreground pt-2">
+            <p className="font-semibold text-foreground">Example Excel Format:</p>
+            <pre className="mt-2 p-2 bg-secondary rounded-md font-code text-xs">
+              {`
+| Date       | Subject    | Timings             | No. of Rooms Alloted | Relievers Required |
+|------------|------------|---------------------|----------------------|--------------------|
+| 25/07/2024 | Physics    | 10:00 AM - 01:00 PM | 5                    | 1                  |
+| 26/07/2024 | Chemistry  | 10.00 AM - 1.00 PM  | 4                    | 1                  |
+| 27-07-2024 | Biology    | 02:00 PM - 05:00 PM | 3                    | 0                  |
+              `}
+            </pre>
+             <p className="mt-2">
+              <span className="font-semibold text-foreground">Required Columns:</span> Date, Subject, Timings, No. of Rooms Alloted.
+             </p>
+             <p>
+               <span className="font-semibold text-foreground">Optional Columns:</span> Relievers Required, Examination Name, College Name.
+             </p>
+          </div>
         </CardHeader>
         <CardContent>
           <Form {...form}>
