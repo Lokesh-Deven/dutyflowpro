@@ -4,14 +4,20 @@
 import { useState, useMemo } from "react";
 import { useAllotment } from "@/lib/allotment-context";
 import { Calendar } from "@/components/ui/calendar";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import type { Invigilator, Examination } from "@/lib/types";
+import { Button } from "@/components/ui/button";
+import { Download, Mail } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 export default function SchedulePage() {
   const { invigilators, examinations, activeAllotment } = useAllotment();
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const { toast } = useToast();
 
   const dailyDuties = useMemo(() => {
     if (!date || !activeAllotment) return { duties: [], invigilators: [] };
@@ -42,12 +48,62 @@ export default function SchedulePage() {
     }
 
   }, [date, examinations, invigilators, activeAllotment]);
+  
+  const handleDownload = () => {
+    if (!date || dailyDuties.invigilators.length === 0) {
+        toast({
+            variant: "destructive",
+            title: "No data to export",
+            description: "There are no duties scheduled for the selected date."
+        });
+        return;
+    }
+    toast({ title: "Generating PDF...", description: "Your download will begin shortly." });
+    
+    const doc = new jsPDF();
+    const examDetails = dailyDuties.duties.length > 0 ? dailyDuties.duties[0] : (examinations.length > 0 ? examinations[0] : null);
+    
+    doc.setFontSize(18);
+    doc.text(examDetails?.college || 'Seshadripuram Independent Pre-University College', doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+    doc.setFontSize(14);
+    doc.text(examDetails?.examName || 'Examination Duty', doc.internal.pageSize.getWidth() / 2, 28, { align: 'center' });
+    doc.setFontSize(12);
+    doc.text(`Invigilation Duty List for ${format(date, "MMMM do, yyyy")}`, doc.internal.pageSize.getWidth() / 2, 36, { align: 'center' });
+
+    const head = [["Sl No", "Name of the Invigilators", "Designation", "Examination Timings"]];
+    const timings = dailyDuties.duties.length > 0 ? `${dailyDuties.duties[0].startTime} - ${dailyDuties.duties[0].endTime}` : '';
+    const body = dailyDuties.invigilators.map((inv, index) => [
+        index + 1,
+        inv.name,
+        inv.designation,
+        timings
+    ]);
+
+    (doc as any).autoTable({
+        head: head,
+        body: body,
+        startY: 45,
+        theme: 'grid',
+        headStyles: { fillColor: [0, 51, 102], textColor: 255, fontStyle: 'bold' }
+    });
+
+    doc.save(`Duty_Schedule_${format(date, "yyyy-MM-dd")}.pdf`);
+  };
+
+  const handleEmail = () => {
+    if (dailyDuties.invigilators.length === 0) {
+        toast({ variant: "destructive", title: "No one to email!" });
+        return;
+    }
+    toast({
+        title: "Emailing Invigilators",
+        description: `Sending notifications to ${dailyDuties.invigilators.length} invigilator(s). (This is a demo action)`
+    });
+  };
 
   const examDetails = dailyDuties.duties.length > 0 ? dailyDuties.duties[0] : (examinations.length > 0 ? examinations[0] : null);
-
   const subjects = dailyDuties.duties.map(d => d.subject).join(' | ');
   const timings = dailyDuties.duties.length > 0 ? `${dailyDuties.duties[0].startTime} - ${dailyDuties.duties[0].endTime}` : '';
-
 
   return (
     <div className="space-y-6">
@@ -109,6 +165,18 @@ export default function SchedulePage() {
                         <p className="text-center text-muted-foreground py-16">No invigilators assigned for duty on this day.</p>
                     )}
                 </CardContent>
+                {dailyDuties.invigilators.length > 0 && (
+                    <CardFooter className="justify-end gap-2">
+                        <Button variant="outline" onClick={handleDownload}>
+                            <Download className="mr-2 h-4 w-4" />
+                            Download as PDF
+                        </Button>
+                        <Button onClick={handleEmail}>
+                            <Mail className="mr-2 h-4 w-4" />
+                            Email Invigilators
+                        </Button>
+                    </CardFooter>
+                )}
             </Card>
         </div>
       </div>
