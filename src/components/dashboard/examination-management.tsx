@@ -167,6 +167,7 @@ export function ExaminationManagement() {
                 
                 const parseTimeTo24hr = (timeStr: string) => {
                   if (!timeStr) return '00:00';
+                  // Handles formats like "10.00 AM" or "10:00"
                   const date = new Date(`01/01/1970 ${timeStr.replace(/\./g, ':')}`);
                   return isNaN(date.getTime()) ? '00:00' : format(date, 'HH:mm');
                 }
@@ -184,8 +185,8 @@ export function ExaminationManagement() {
                 } else {
                     const startTimeRaw = getColumnValue(row, ['Start Time', 'startTime', 'start time']);
                     const endTimeRaw = getColumnValue(row, ['End Time', 'endTime', 'end time']);
-                    if (startTimeRaw) startTime = parseTimeTo24hr(startTimeRaw);
-                    if (endTimeRaw) endTime = parseTimeTo24hr(endTimeRaw);
+                    if (startTimeRaw) startTime = parseTimeTo24hr(String(startTimeRaw));
+                    if (endTimeRaw) endTime = parseTimeTo24hr(String(endTimeRaw));
                 }
 
                 
@@ -248,7 +249,11 @@ export function ExaminationManagement() {
       <Card>
         <CardHeader>
           <CardTitle>Examination Details</CardTitle>
-          <CardDescription>Enter the details for all exams. For bulk upload, ensure your Excel file includes columns for: `Examination Name`, `College Name`, `Subject`, `Date`, `Timings` (e.g. 10.00 AM - 01.00 PM), `No. of Rooms Alloted`, `Relievers Required`.</CardDescription>
+          <CardDescription>
+            For bulk upload, your Excel sheet must contain the following columns: 
+            <span className="font-semibold text-foreground">Date</span>, <span className="font-semibold text-foreground">Subject</span>, <span className="font-semibold text-foreground">Timings</span> (e.g., 9:00 AM - 12:00 PM), and <span className="font-semibold text-foreground">No. of Rooms Alloted</span>. 
+            Optional columns are <span className="text-foreground">Relievers Required</span>, <span className="text-foreground">Examination Name</span>, and <span className="text-foreground">College Name</span>.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -418,3 +423,5 @@ export function ExaminationManagement() {
     </div>
   );
 }
+
+    
