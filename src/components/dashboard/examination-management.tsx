@@ -164,31 +164,30 @@ export function ExaminationManagement() {
                     console.warn(`Invalid date for row ${index + 2}, using today's date.`);
                     dateValue = new Date(); // Fallback
                 }
+                
+                const parseTimeTo24hr = (timeStr: string) => {
+                  if (!timeStr) return '00:00';
+                  const date = new Date(`01/01/1970 ${timeStr.replace(/\./g, ':')}`);
+                  return isNaN(date.getTime()) ? '00:00' : format(date, 'HH:mm');
+                }
 
-                const parseTime = (timeValue: any) => {
-                    if (timeValue instanceof Date) {
-                        return format(timeValue, 'HH:mm');
+                const timingsValue = getColumnValue(row, ['Timings', 'Time']);
+                let startTime = '00:00';
+                let endTime = '00:00';
+
+                if (typeof timingsValue === 'string') {
+                    const times = timingsValue.split('-').map(t => t.trim());
+                    if (times.length === 2) {
+                        startTime = parseTimeTo24hr(times[0]);
+                        endTime = parseTimeTo24hr(times[1]);
                     }
-                    if(typeof timeValue === 'string') {
-                        // Attempt to parse various string formats, return as is if simple HH:mm
-                        const timeRegex = /(\d{1,2}:\d{2})/;
-                        const match = timeValue.match(timeRegex);
-                        if (match) return match[0];
-                        // Try to parse AM/PM format
-                        const dateFromPM = new Date(`1970-01-01 ${timeValue}`);
-                        if(!isNaN(dateFromPM.getTime())) {
-                           return format(dateFromPM, 'HH:mm');
-                        }
-                        return timeValue;
-                    }
-                    if (typeof timeValue === 'number') { // Excel time is a fraction of a day
-                        const totalSeconds = Math.round(timeValue * 86400);
-                        const hours = Math.floor(totalSeconds / 3600);
-                        const minutes = Math.floor((totalSeconds % 3600) / 60);
-                        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-                    }
-                    return '00:00';
-                };
+                } else {
+                    const startTimeRaw = getColumnValue(row, ['Start Time', 'startTime', 'start time']);
+                    const endTimeRaw = getColumnValue(row, ['End Time', 'endTime', 'end time']);
+                    if (startTimeRaw) startTime = parseTimeTo24hr(startTimeRaw);
+                    if (endTimeRaw) endTime = parseTimeTo24hr(endTimeRaw);
+                }
+
                 
                 return {
                     id: `exam-bulk-${Date.now()}-${index}`,
@@ -196,8 +195,8 @@ export function ExaminationManagement() {
                     college: String(getColumnValue(row, ['College Name', 'collegeName', 'college name']) || form.getValues('college') || 'Imported College'),
                     subject: String(getColumnValue(row, ['Subject', 'subject']) || 'None'),
                     date: dateValue,
-                    startTime: parseTime(getColumnValue(row, ['Start Time', 'startTime', 'start time', 'timings'])),
-                    endTime: parseTime(getColumnValue(row, ['End Time', 'endTime', 'end time'])),
+                    startTime: startTime,
+                    endTime: endTime,
                     rooms: Number(getColumnValue(row, ['Number of Rooms', 'No of Rooms', 'rooms', 'No. of Rooms Alloted']) || 1),
                     relievers: Number(getColumnValue(row, ['Number of Relievers', 'No of Relievers', 'relievers', 'Relievers Required']) || 0),
                 };
@@ -249,7 +248,7 @@ export function ExaminationManagement() {
       <Card>
         <CardHeader>
           <CardTitle>Examination Details</CardTitle>
-          <CardDescription>Enter the details for all exams. For bulk upload, ensure your Excel file includes columns for: `Examination Name`, `College Name`, `Subject`, `Date`, `Start Time`, `End Time`, `No. of Rooms Alloted`, `Relievers Required`.</CardDescription>
+          <CardDescription>Enter the details for all exams. For bulk upload, ensure your Excel file includes columns for: `Examination Name`, `College Name`, `Subject`, `Date`, `Timings` (e.g. 10.00 AM - 01.00 PM), `No. of Rooms Alloted`, `Relievers Required`.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
