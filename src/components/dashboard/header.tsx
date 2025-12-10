@@ -1,8 +1,26 @@
+
+"use client";
+
 import { UserNav } from './user-nav';
 import Link from 'next/link';
 import { LeafyGreen } from 'lucide-react';
 import { HeaderNav } from './header-nav';
 import { ThemeToggle } from '../theme-toggle';
+import { useEffect, useState } from 'react';
+
+const ClientThemeToggle = () => {
+    const [isMounted, setIsMounted] = useState(false);
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    if (!isMounted) {
+        return null;
+    }
+
+    return <ThemeToggle />;
+}
+
 
 export default function Header() {
   return (
@@ -22,7 +40,7 @@ export default function Header() {
       </div>
       
       <div className="flex items-center gap-4 ml-auto">
-        <ThemeToggle />
+        <ClientThemeToggle />
         <UserNav />
       </div>
     </header>
