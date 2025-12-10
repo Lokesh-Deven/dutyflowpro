@@ -2,8 +2,7 @@ import { UserNav } from './user-nav';
 import Link from 'next/link';
 import { LeafyGreen } from 'lucide-react';
 import { HeaderNav } from './header-nav';
-import { Button } from '../ui/button';
-import { Sun } from 'lucide-react';
+import { ThemeToggle } from '../theme-toggle';
 
 export default function Header() {
   return (
@@ -23,10 +22,7 @@ export default function Header() {
       </div>
       
       <div className="flex items-center gap-4 ml-auto">
-        <Button variant="ghost" size="icon">
-            <Sun className="h-5 w-5" />
-            <span className="sr-only">Toggle theme</span>
-        </Button>
+        <ThemeToggle />
         <UserNav />
       </div>
     </header>
