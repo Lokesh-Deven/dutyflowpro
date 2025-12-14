@@ -21,6 +21,19 @@ const ClientThemeToggle = () => {
     return <ThemeToggle />;
 }
 
+const ClientHeaderNav = () => {
+    const [isMounted, setIsMounted] = useState(false);
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    if (!isMounted) {
+        return null; // Or a placeholder/skeleton
+    }
+
+    return <HeaderNav />;
+}
+
 
 export default function Header() {
   return (
@@ -35,7 +48,7 @@ export default function Header() {
             </div>
         </Link>
         <div className="hidden md:flex">
-            <HeaderNav />
+            <ClientHeaderNav />
         </div>
       </div>
       
