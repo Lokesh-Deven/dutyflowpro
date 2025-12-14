@@ -18,8 +18,11 @@ export function HeaderNav() {
           <Button
             key={item.href}
             asChild
-            variant={isActive ? "secondary" : "ghost"}
-            className={cn("gap-2", isActive && "font-semibold")}
+            variant={isActive ? "default" : "ghost"}
+            className={cn(
+              "gap-2",
+              isActive ? "font-semibold text-white" : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+            )}
           >
             <Link href={item.href}>
               <item.icon className="h-4 w-4" />

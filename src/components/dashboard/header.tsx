@@ -24,14 +24,14 @@ const ClientThemeToggle = () => {
 
 export default function Header() {
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-card px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-card px-4 sm:px-6 lg:px-8 dark:bg-slate-900">
       <div className="flex items-center gap-6">
         <Link href="/dashboard" className="flex items-center gap-2">
             <div className="p-2 rounded-lg bg-primary/10">
             <LeafyGreen className="w-6 h-6 text-primary" />
             </div>
             <div className="flex flex-col">
-            <span className="text-lg font-bold font-headline" style={{color: 'navy'}}>DutyFlow</span>
+            <span className="text-lg font-bold font-headline text-slate-800 dark:text-white">DutyFlow</span>
             </div>
         </Link>
         <div className="hidden md:flex">

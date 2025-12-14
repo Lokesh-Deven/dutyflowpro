@@ -166,9 +166,9 @@ export function InvigilatorManagement() {
 
     return (
         <>
-        <Card>
+        <Card className="shadow-lg">
             <CardHeader>
-                <CardTitle>Invigilators' Details</CardTitle>
+                <CardTitle className="text-xl font-bold">Invigilators' Details</CardTitle>
                 <CardDescription>Add all available invigilators. For bulk add, use an Excel file with columns: Name, Designation, Mobile, E-Mail ID.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -176,16 +176,16 @@ export function InvigilatorManagement() {
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                             <FormField control={form.control} name="name" render={({ field }) => (
-                                <FormItem><FormLabel>Invigilator's Name</FormLabel><FormControl><Input placeholder="e.g. Lokesh D" {...field} /></FormControl><FormMessage /></FormItem>
+                                <FormItem><FormLabel>Invigilator's Name</FormLabel><FormControl><Input placeholder="e.g. Lokesh D" {...field} className="bg-slate-100 dark:bg-slate-800" /></FormControl><FormMessage /></FormItem>
                             )}/>
                             <FormField control={form.control} name="designation" render={({ field }) => (
-                                <FormItem><FormLabel>Designation</FormLabel><FormControl><Input placeholder="e.g. Lecturer in English" {...field} /></FormControl><FormMessage /></FormItem>
+                                <FormItem><FormLabel>Designation</FormLabel><FormControl><Input placeholder="e.g. Lecturer in English" {...field} className="bg-slate-100 dark:bg-slate-800" /></FormControl><FormMessage /></FormItem>
                             )}/>
                             <FormField control={form.control} name="mobile" render={({ field }) => (
-                                <FormItem><FormLabel>Mobile No</FormLabel><FormControl><Input placeholder="e.g. 9876543210" {...field} /></FormControl><FormMessage /></FormItem>
+                                <FormItem><FormLabel>Mobile No</FormLabel><FormControl><Input placeholder="e.g. 9876543210" {...field} className="bg-slate-100 dark:bg-slate-800" /></FormControl><FormMessage /></FormItem>
                             )}/>
                             <FormField control={form.control} name="email" render={({ field }) => (
-                               <FormItem><FormLabel>E-Mail ID</FormLabel><FormControl><Input placeholder="e.g. lokesh@example.com" {...field} /></FormControl><FormMessage /></FormItem>
+                               <FormItem><FormLabel>E-Mail ID</FormLabel><FormControl><Input placeholder="e.g. lokesh@example.com" {...field} className="bg-slate-100 dark:bg-slate-800" /></FormControl><FormMessage /></FormItem>
                             )}/>
                         </div>
                         <div className="flex items-center gap-4">
@@ -246,7 +246,7 @@ export function InvigilatorManagement() {
                 </div>
             </CardContent>
             <CardFooter className="justify-end">
-                <Button onClick={handleContinue} size="lg">
+                <Button onClick={handleContinue} size="lg" variant="secondary" className="bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white">
                     Continue to Examination Details
                     <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
@@ -261,7 +261,3 @@ export function InvigilatorManagement() {
         </>
     );
 }
-
-    
-
-    
