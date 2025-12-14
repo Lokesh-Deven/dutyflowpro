@@ -21,7 +21,9 @@ export function HeaderNav() {
             variant={isActive ? "default" : "ghost"}
             className={cn(
               "gap-2",
-              isActive ? "font-semibold text-white" : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+              isActive 
+                ? "font-semibold text-primary-foreground" 
+                : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
             )}
           >
             <Link href={item.href}>
