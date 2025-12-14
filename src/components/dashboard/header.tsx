@@ -28,10 +28,14 @@ const ClientHeaderNav = () => {
     }, []);
 
     if (!isMounted) {
-        return null; // Or a placeholder/skeleton
+        return <div className="hidden md:flex" />; // Render the container but empty
     }
 
-    return <HeaderNav />;
+    return (
+        <div className="hidden md:flex">
+            <HeaderNav />
+        </div>
+    );
 }
 
 
@@ -47,9 +51,7 @@ export default function Header() {
             <span className="text-lg font-bold font-headline text-slate-800 dark:text-white">DutyFlow</span>
             </div>
         </Link>
-        <div className="hidden md:flex">
-            <ClientHeaderNav />
-        </div>
+        <ClientHeaderNav />
       </div>
       
       <div className="flex items-center gap-4 ml-auto">
