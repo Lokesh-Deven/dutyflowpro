@@ -54,20 +54,25 @@ export default function SchedulePage() {
         }
         slots[timeSlot].duties.push(exam);
     }
+    
+    // Find invigilators for each exam on that day
+    const examsOnDayIds = new Set(examsOnDay.map(e => e.id));
 
-    // Find invigilators for each slot
     for (const invigilatorId in activeAllotment.assignments) {
         const assignedExamIds = activeAllotment.assignments[invigilatorId];
         for (const examId of assignedExamIds) {
-            const exam = examinations.find(e => e.id === examId);
-            if (exam && format(new Date(exam.date), 'yyyy-MM-dd') === selectedDateString) {
-                const timeSlot = `${formatTimeTo12Hour(exam.startTime)} - ${formatTimeTo12Hour(exam.endTime)}`;
-                if (slots[timeSlot]) {
-                    slots[timeSlot].invigilatorIds.add(invigilatorId);
+           if (examsOnDayIds.has(examId)) {
+                const exam = examinations.find(e => e.id === examId);
+                if (exam) {
+                    const timeSlot = `${formatTimeTo12Hour(exam.startTime)} - ${formatTimeTo12Hour(exam.endTime)}`;
+                    if (slots[timeSlot]) {
+                        slots[timeSlot].invigilatorIds.add(invigilatorId);
+                    }
                 }
-            }
+           }
         }
     }
+
 
     // Map to final structure
     return Object.entries(slots).map(([time, data]): DutySlot => ({
@@ -75,7 +80,7 @@ export default function SchedulePage() {
         duties: data.duties,
         invigilators: invigilators.filter(inv => data.invigilatorIds.has(inv.id)),
         subjects: data.duties.map(d => d.subject).join(' | '),
-    }));
+    })).sort((a,b) => a.time.localeCompare(b.time)); // Sort slots by time
 
   }, [date, examinations, invigilators, activeAllotment]);
 
