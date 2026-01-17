@@ -163,7 +163,7 @@ export function InvigilatorManagement() {
         <Card className="shadow-lg">
             <CardHeader>
                 <CardTitle className="text-xl font-bold">Invigilators' Details</CardTitle>
-                <CardDescription>Add all available invigilators. For bulk add, use an Excel file with columns: Name, Designation, Mobile, E-Mail ID.</CardDescription>
+                <CardDescription>Add all available invigilators.</CardDescription>
             </CardHeader>
             <CardContent>
                 <Form {...form}>
