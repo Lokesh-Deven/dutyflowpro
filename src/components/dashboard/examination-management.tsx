@@ -250,7 +250,7 @@ export function ExaminationManagement() {
         <CardHeader>
           <CardTitle>Examination Details</CardTitle>
           <CardDescription>
-            Add examination sessions manually or import them from an Excel file. For bulk upload, your Excel sheet should have columns for: Date, Subject, Timings, and No. of Rooms.
+            Add examination sessions manually or import from an Excel file.
           </CardDescription>
         </CardHeader>
         <CardContent>
