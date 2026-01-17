@@ -6,9 +6,17 @@ import Link from 'next/link';
 import { navItems } from './sidebar-nav';
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
+import { useAllotment } from '@/lib/allotment-context';
 
 export function HeaderNav() {
   const pathname = usePathname();
+  const { clearCurrentAllotment } = useAllotment();
+
+  const handleNavClick = (href: string) => {
+    if (href === '/dashboard/invigilators') {
+      clearCurrentAllotment();
+    }
+  };
 
   return (
     <nav className="flex items-center space-x-2">
@@ -26,7 +34,7 @@ export function HeaderNav() {
                 : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
             )}
           >
-            <Link href={item.href}>
+            <Link href={item.href} onClick={() => handleNavClick(item.href)}>
               <item.icon className="h-4 w-4" />
               {item.label}
             </Link>

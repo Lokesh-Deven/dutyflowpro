@@ -32,13 +32,7 @@ export function InvigilatorManagement() {
     const [isAvailabilityDialogOpen, setIsAvailabilityDialogOpen] = useState(false);
     const [selectedInvigilator, setSelectedInvigilator] = useState<Invigilator | null>(null);
 
-    const { invigilators, setInvigilators, clearCurrentAllotment } = useAllotment();
-
-    useEffect(() => {
-        // When user lands on this page, assume they are starting a new allotment
-        clearCurrentAllotment();
-    }, []);
-
+    const { invigilators, setInvigilators } = useAllotment();
 
     const form = useForm<z.infer<typeof invigilatorSchema>>({
         resolver: zodResolver(invigilatorSchema),
