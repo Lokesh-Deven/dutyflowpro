@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
@@ -133,7 +134,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
     const doc = new jsPDF({ orientation: 'landscape' });
 
     const examInfo = examinations.length > 0 ? examinations[0] : null;
-    const title = `${examInfo?.college || 'Institution'}`;
+    const title = `${examInfo?.college || 'College Name'}`;
     const subtitle = `${examInfo?.examName || 'Invigilation Duty Allotment'}`;
     
     doc.setFontSize(20);
@@ -244,7 +245,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
     <TooltipProvider>
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-xl font-bold text-primary">{examInfo?.college}</CardTitle>
+          <CardTitle className="text-xl font-bold text-primary">{examInfo?.college || 'College Name'}</CardTitle>
           <CardDescription className="text-lg font-semibold">{examInfo?.examName}</CardDescription>
           <p className="text-md text-muted-foreground">{activeAllotment?.name || 'Invigilation Duty Allotment Sheet'}</p>
         </CardHeader>

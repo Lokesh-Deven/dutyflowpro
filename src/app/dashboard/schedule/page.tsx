@@ -37,9 +37,10 @@ export default function SchedulePage() {
   };
 
   const dailySlots = useMemo(() => {
-    if (!date || !activeAllotment) return [];
+    if (!date || !activeAllotment?.assignments) return [];
 
     const selectedDateString = format(date, 'yyyy-MM-dd');
+    
     const examsOnDay = examinations.filter(exam => format(new Date(exam.date), 'yyyy-MM-dd') === selectedDateString);
 
     if (examsOnDay.length === 0) return [];
@@ -55,24 +56,20 @@ export default function SchedulePage() {
         slots[timeSlot].duties.push(exam);
     }
     
-    // Find invigilators for each exam on that day
-    const examsOnDayIds = new Set(examsOnDay.map(e => e.id));
+    // Find invigilators for each exam in each slot
+    for(const timeSlot in slots) {
+        const examsInSlot = slots[timeSlot].duties;
+        const examIdsInSlot = new Set(examsInSlot.map(e => e.id));
 
-    for (const invigilatorId in activeAllotment.assignments) {
-        const assignedExamIds = activeAllotment.assignments[invigilatorId];
-        for (const examId of assignedExamIds) {
-           if (examsOnDayIds.has(examId)) {
-                const exam = examinations.find(e => e.id === examId);
-                if (exam) {
-                    const timeSlot = `${formatTimeTo12Hour(exam.startTime)} - ${formatTimeTo12Hour(exam.endTime)}`;
-                    if (slots[timeSlot]) {
-                        slots[timeSlot].invigilatorIds.add(invigilatorId);
-                    }
+        for (const invigilatorId in activeAllotment.assignments) {
+            const assignedExamIds = activeAllotment.assignments[invigilatorId];
+            for (const examId of assignedExamIds) {
+                if(examIdsInSlot.has(examId)) {
+                    slots[timeSlot].invigilatorIds.add(invigilatorId);
                 }
-           }
+            }
         }
     }
-
 
     // Map to final structure
     return Object.entries(slots).map(([time, data]): DutySlot => ({
@@ -100,7 +97,7 @@ export default function SchedulePage() {
     const examInfo = examinations.length > 0 ? examinations[0] : null;
     
     doc.setFontSize(22);
-    doc.text(examInfo?.college || 'Seshadripuram Independent Pre-University College', doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+    doc.text(examInfo?.college || 'College Name', doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
     doc.setFontSize(18);
     doc.text(examInfo?.examName || 'Examination Duty', doc.internal.pageSize.getWidth() / 2, 28, { align: 'center' });
     doc.setFontSize(15);
@@ -178,7 +175,7 @@ export default function SchedulePage() {
         <div className="md:col-span-2">
             <Card>
                 <CardHeader className="text-center space-y-2">
-                    <h2 className="text-2xl font-bold text-primary font-headline">{examDetails?.college || 'Seshadripuram Independent Pre-University College'}</h2>
+                    <h2 className="text-2xl font-bold text-primary font-headline">{examDetails?.college || 'College Name'}</h2>
                     <h3 className="text-xl font-semibold">{examDetails?.examName || 'Examination Name'}</h3>
                     <p className="text-lg font-medium">Invigilation Duty</p>
                     <p className="text-muted-foreground">{date ? format(date, "MMMM do, yyyy (EEEE)") : 'Select a date'}</p>

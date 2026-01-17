@@ -83,7 +83,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(16);
     doc.setTextColor(headerTextColor);
-    const collegeName = activeAllotment?.examinations[0]?.college || "Seshadripuram Independent Pre-University College";
+    const collegeName = activeAllotment?.examinations[0]?.college || "College Name";
     doc.text(collegeName, pageWidth / 2, 18, { align: 'center' });
 
     doc.setFontSize(10);
