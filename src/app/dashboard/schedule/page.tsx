@@ -103,8 +103,8 @@ export default function SchedulePage() {
     doc.text(examDetails?.college || 'College Name', pageWidth / 2, currentY, { align: 'center' });
     currentY += 8;
 
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(21);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(18);
     doc.text(examDetails?.examName || 'Examination Name', pageWidth / 2, currentY, { align: 'center' });
     currentY += 7;
 
