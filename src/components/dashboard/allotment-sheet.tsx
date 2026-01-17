@@ -280,13 +280,14 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                       {examinations.map(exam => {
                          const hasDuty = duties.includes(exam.id);
                          const examDate = format(new Date(exam.date), 'yyyy-MM-dd');
-                         const colorClass = hasDuty ? (dateColorMap[examDate] || 'bg-primary/20') : '';
                          
                          return (
-                            <TableCell key={exam.id} className={cn("text-center cursor-pointer transition-colors", hasDuty ? 'hover:brightness-95' : 'hover:bg-secondary' , colorClass)} onClick={() => handleDutyToggle(invigilator.id, exam.id)}>
+                            <TableCell key={exam.id} className={cn("text-center cursor-pointer transition-colors hover:bg-secondary")} onClick={() => handleDutyToggle(invigilator.id, exam.id)}>
                               <Tooltip>
                                 <TooltipTrigger className="w-full h-full flex items-center justify-center">
-                                    {hasDuty ? (<div className="font-bold">1</div>) : (<span className="text-muted-foreground">0</span>)}
+                                    {hasDuty ? (
+                                      <div className={cn("font-bold rounded-md w-6 h-6 flex items-center justify-center", dateColorMap[examDate] || 'bg-primary/20')}>1</div>
+                                    ) : (<span className="text-muted-foreground">0</span>)}
                                 </TooltipTrigger>
                                 <TooltipContent>
                                     <div className="flex items-center gap-2">
@@ -306,19 +307,6 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                 })}
               </TableBody>
                <TableFooter>
-                  <TableRow>
-                    <TableCell colSpan={3} className="text-right font-medium">Color Key</TableCell>
-                    <TableCell colSpan={examinations.length + 1} className="bg-card">
-                        <div className="flex flex-wrap gap-x-4 gap-y-2 py-2">
-                            {uniqueDates.map(date => (
-                                <div key={date} className="flex items-center gap-2">
-                                    <div className={cn("w-3 h-3 rounded-full", dateColorMap[date])}></div>
-                                    <span className="text-xs text-muted-foreground">{format(new Date(date), "PPP")}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </TableCell>
-                  </TableRow>
                   <TableRow className="bg-secondary/50 font-bold"><TableCell colSpan={3} className="text-right text-primary">No of Rooms</TableCell>{examinations.map((exam) => (<TableCell key={`rooms-${exam.id}`} className="text-center text-primary">{exam.rooms}</TableCell>))}<TableCell className="text-center text-primary sticky right-0 bg-secondary/50">{totalRooms}</TableCell></TableRow>
                   <TableRow className="bg-secondary/50 font-bold"><TableCell colSpan={3} className="text-right text-primary">No of Relievers</TableCell>{examinations.map((exam) => (<TableCell key={`relievers-${exam.id}`} className="text-center text-primary">{exam.relievers}</TableCell>))}<TableCell className="text-center text-primary sticky right-0 bg-secondary/50">{totalRelievers}</TableCell></TableRow>
                    <TableRow className="bg-secondary/50 font-bold"><TableCell colSpan={3} className="text-right text-primary">No of Invigilators</TableCell>{examinations.map((exam) => (<TableCell key={`invigilators-${exam.id}`} className="text-center text-primary">{exam.rooms + exam.relievers}</TableCell>))}
@@ -373,5 +361,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
     </TooltipProvider>
   );
 }
+
+    
 
     
