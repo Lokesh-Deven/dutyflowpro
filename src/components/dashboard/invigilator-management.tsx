@@ -162,7 +162,7 @@ export function InvigilatorManagement() {
         <>
         <Card className="shadow-lg">
             <CardHeader>
-                <CardTitle className="text-xl font-bold">Invigilators' Details</CardTitle>
+                <CardTitle className="text-3xl font-bold">Invigilators' Details</CardTitle>
                 <CardDescription>Add all available invigilators.</CardDescription>
             </CardHeader>
             <CardContent>
