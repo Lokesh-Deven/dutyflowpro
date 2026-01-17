@@ -136,11 +136,14 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
     const examInfo = examinations.length > 0 ? examinations[0] : null;
     const title = `${examInfo?.college || 'College Name'}`;
     const subtitle = `${examInfo?.examName || 'Invigilation Duty Allotment'}`;
+    const staticTitle = "Examination Duty Allotment Sheet";
     
     doc.setFontSize(20);
     doc.text(title, doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
     doc.setFontSize(15);
     doc.text(subtitle, doc.internal.pageSize.getWidth() / 2, 22, { align: 'center' });
+    doc.setFontSize(13);
+    doc.text(staticTitle, doc.internal.pageSize.getWidth() / 2, 28, { align: 'center' });
 
     const head = [
         ['Sl.No', "Invigilator's Name", 'Designation', ...examinations.map(exam => `${format(new Date(exam.date), "dd/MM/yy")}\n${exam.subject}\n${formatTimeTo12Hour(exam.startTime)} - ${formatTimeTo12Hour(exam.endTime)}`), 'Total']
@@ -171,6 +174,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
     const totalRooms = examinations.reduce((acc, exam) => acc + exam.rooms, 0);
     const totalRelievers = examinations.reduce((acc, exam) => acc + exam.relievers, 0);
     const totalInvigilatorsRequired = examinations.reduce((acc, exam) => acc + exam.rooms + exam.relievers, 0);
+    const totalDutiesAllotted = dutiesPerExam.reduce((sum, count) => sum + count, 0);
 
     (doc as any).autoTable({
         head: head,
@@ -181,7 +185,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
             ['', 'Total Invigilators', '', ...examinations.map(exam => exam.rooms + exam.relievers), totalInvigilatorsRequired],
             ['', 'Total Duties Allotted', '', ...dutiesPerExam, totalDutiesAllotted],
         ],
-        startY: 30,
+        startY: 35,
         theme: 'grid',
         headStyles: {
             fillColor: [0, 51, 102], // Dark Blue
@@ -366,3 +370,4 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
     
 
     
+
