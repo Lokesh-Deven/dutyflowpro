@@ -248,7 +248,7 @@ export function ExaminationManagement() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Examination Details</CardTitle>
+          <CardTitle className="text-primary">Examination Details</CardTitle>
           <CardDescription>
             Add examination sessions manually or import from an Excel file.
           </CardDescription>
