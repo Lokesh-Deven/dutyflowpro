@@ -11,7 +11,7 @@ export default {
     extend: {
       fontFamily: {
         body: ['Roboto', 'sans-serif'],
-        headline: ['Space Grotesk', 'sans-serif'],
+        headline: ['Montserrat', 'sans-serif'],
         code: ['Source Code Pro', 'monospace'],
       },
       colors: {
