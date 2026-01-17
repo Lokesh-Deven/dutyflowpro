@@ -136,7 +136,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
     const examInfo = examinations.length > 0 ? examinations[0] : null;
     const title = `${examInfo?.college || 'College Name'}`;
     const subtitle = `${examInfo?.examName || 'Invigilation Duty Allotment'}`;
-    const staticTitle = "Examination Duty Allotment Sheet";
+    const staticTitle = "Invigilation Duty Allotment Sheet";
     
     doc.setFontSize(20);
     doc.text(title, doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
@@ -370,4 +370,5 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
     
 
     
+
 
