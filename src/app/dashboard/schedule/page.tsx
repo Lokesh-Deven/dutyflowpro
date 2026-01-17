@@ -103,11 +103,12 @@ export default function SchedulePage() {
     doc.text(examDetails?.college || 'College Name', pageWidth / 2, currentY, { align: 'center' });
     currentY += 8;
 
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(21);
     doc.text(examDetails?.examName || 'Examination Name', pageWidth / 2, currentY, { align: 'center' });
     currentY += 7;
 
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(15);
     doc.text('Invigilation Duty', pageWidth / 2, currentY, { align: 'center' });
     currentY += 7;
@@ -131,7 +132,7 @@ export default function SchedulePage() {
         doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(0);
-        doc.text('Subjects:', 15, startY);
+        doc.text('Subject:', 15, startY);
         doc.setFont('helvetica', 'normal');
         
         const subjectLines = doc.splitTextToSize(slot.subjects, pageWidth - 30 - 20);
