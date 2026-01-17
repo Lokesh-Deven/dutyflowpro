@@ -99,12 +99,12 @@ export default function SchedulePage() {
     let currentY = 20;
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(22);
+    doc.setFontSize(20);
     doc.text(examDetails?.college || 'College Name', pageWidth / 2, currentY, { align: 'center' });
     currentY += 8;
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(18);
+    doc.setFontSize(16);
     doc.text(examDetails?.examName || 'Examination Name', pageWidth / 2, currentY, { align: 'center' });
     currentY += 7;
 
