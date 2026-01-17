@@ -94,22 +94,50 @@ export default function SchedulePage() {
     toast({ title: "Generating PDF...", description: "Your download will begin shortly." });
     
     const doc = new jsPDF();
-    const examInfo = examinations.length > 0 ? examinations[0] : null;
-    
-    doc.setFontSize(22);
-    doc.text(examInfo?.college || 'College Name', doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
-    doc.setFontSize(18);
-    doc.text(examInfo?.examName || 'Examination Duty', doc.internal.pageSize.getWidth() / 2, 28, { align: 'center' });
-    doc.setFontSize(15);
-    doc.text(`Invigilation Duty List for ${format(date, "MMMM do, yyyy")}`, doc.internal.pageSize.getWidth() / 2, 36, { align: 'center' });
+    const examDetails = examinations.length > 0 ? examinations[0] : null;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let currentY = 20;
 
-    let startY = 45;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(22);
+    doc.text(examDetails?.college || 'College Name', pageWidth / 2, currentY, { align: 'center' });
+    currentY += 8;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(18);
+    doc.text(examDetails?.examName || 'Examination Name', pageWidth / 2, currentY, { align: 'center' });
+    currentY += 7;
+
+    doc.setFontSize(15);
+    doc.text('Invigilation Duty', pageWidth / 2, currentY, { align: 'center' });
+    currentY += 7;
+
+    doc.setFontSize(12);
+    doc.setTextColor(100);
+    doc.text(format(date, "MMMM do, yyyy (EEEE)"), pageWidth / 2, currentY, { align: 'center' });
+    currentY += 12;
+
+    let startY = currentY;
 
     dailySlots.forEach((slot, slotIndex) => {
-        if(slotIndex > 0) {
+        if (slotIndex > 0) {
             startY = (doc as any).lastAutoTable.finalY + 15;
+            if (startY > doc.internal.pageSize.getHeight() - 40) {
+                doc.addPage();
+                startY = 20;
+            }
         }
-
+        
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0);
+        doc.text('Subjects:', 15, startY);
+        doc.setFont('helvetica', 'normal');
+        
+        const subjectLines = doc.splitTextToSize(slot.subjects, pageWidth - 30 - 20);
+        doc.text(subjectLines, 15 + 20, startY);
+        startY += (subjectLines.length * 5) + 5;
+        
         const head = [["Sl No", "Name of the Invigilators", "Designation", "Examination Timings"]];
         const body = slot.invigilators.map((inv, index) => [
             index + 1,
@@ -125,12 +153,6 @@ export default function SchedulePage() {
             theme: 'grid',
             headStyles: { fillColor: [0, 51, 102], textColor: 255, fontStyle: 'bold', fontSize: 12 },
             styles: { fontSize: 12 },
-            didDrawPage: function(data: any) {
-                if (data.pageNumber === 1 && slotIndex === 0) {
-                    doc.setFontSize(15);
-                    doc.text(`Invigilation Duty List for ${format(date, "MMMM do, yyyy")}`, doc.internal.pageSize.getWidth() / 2, 36, { align: 'center' });
-                }
-            }
         });
     });
 
