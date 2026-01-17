@@ -357,7 +357,7 @@ export function ExaminationManagement() {
       
       <Card>
         <CardHeader>
-          <CardTitle>Added Examinations</CardTitle>
+          <CardTitle className="text-primary">Added Examinations</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
