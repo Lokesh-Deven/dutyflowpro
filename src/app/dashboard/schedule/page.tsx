@@ -103,7 +103,7 @@ export default function SchedulePage() {
     doc.text(examDetails?.college || 'College Name', pageWidth / 2, currentY, { align: 'center' });
     currentY += 8;
 
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(21);
     doc.text(examDetails?.examName || 'Examination Name', pageWidth / 2, currentY, { align: 'center' });
     currentY += 7;
@@ -209,7 +209,7 @@ export default function SchedulePage() {
                             {dailySlots.map((slot, index) => (
                                 <div key={index}>
                                     <div className="mb-4">
-                                        <span className="font-semibold">Subjects: </span><span>{slot.subjects}</span>
+                                        <span className="font-semibold">Subject: </span><span>{slot.subjects}</span>
                                     </div>
                                     <Table>
                                         <TableHeader>
