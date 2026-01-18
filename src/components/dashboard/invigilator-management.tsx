@@ -240,7 +240,7 @@ export function InvigilatorManagement() {
                 </div>
             </CardContent>
             <CardFooter className="justify-end">
-                <Button onClick={handleContinue} size="lg" variant="secondary" className="bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white">
+                <Button onClick={handleContinue} size="lg" className="bg-primary text-primary-foreground hover:bg-gradient-to-r from-purple-500 to-indigo-600">
                     Continue to Examination Details
                     <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
