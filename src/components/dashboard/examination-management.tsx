@@ -408,7 +408,7 @@ export function ExaminationManagement() {
           </Table>
         </CardContent>
         <CardFooter className="justify-between">
-            <Button variant="outline" onClick={() => router.back()}>
+            <Button onClick={() => router.back()}>
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Invigilators
             </Button>
