@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { LeafyGreen } from "lucide-react";
+import { Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -29,7 +29,7 @@ export function SignupForm() {
     <Card className="w-full max-w-sm">
       <CardHeader className="text-center">
         <div className="flex justify-center mb-4">
-          <LeafyGreen className="w-12 h-12 text-primary" />
+          <Users className="w-12 h-12 text-primary" />
         </div>
         <CardTitle className="text-2xl font-headline">Create an Account</CardTitle>
         <CardDescription>Join DutyFlow to streamline your workflow.</CardDescription>

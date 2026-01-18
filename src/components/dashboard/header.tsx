@@ -1,9 +1,8 @@
-
 "use client";
 
 import { UserNav } from './user-nav';
 import Link from 'next/link';
-import { LeafyGreen } from 'lucide-react';
+import { Users } from 'lucide-react';
 import { HeaderNav } from './header-nav';
 import { ThemeToggle } from '../theme-toggle';
 import { useEffect, useState } from 'react';
@@ -45,7 +44,7 @@ export default function Header() {
       <div className="flex items-center gap-6">
         <Link href="/dashboard" className="flex items-center gap-2">
             <div className="p-2 rounded-lg bg-primary/10">
-            <LeafyGreen className="w-6 h-6 text-primary" />
+            <Users className="w-6 h-6 text-primary" />
             </div>
             <div className="flex flex-col">
             <span className="text-lg font-bold font-headline text-slate-800 dark:text-white">DutyFlow</span>
