@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAllotment } from "@/lib/allotment-context";
@@ -7,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { useMemo } from "react";
 import { Bar, BarChart, Pie, PieChart, Cell, Line, LineChart, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { format } from "date-fns";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Expand } from "lucide-react";
 
 const PIE_COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#AF19FF", "#FF4560", "#775DD0", "#546E7A"];
 
@@ -151,9 +154,34 @@ export default function AnalyticsPage() {
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <Card className="col-span-1">
-                    <CardHeader>
-                        <CardTitle>Invigilators' Allocation Per Subject</CardTitle>
-                        <CardDescription>Number of duties assigned for each subject.</CardDescription>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                            <CardTitle>Invigilators' Allocation Per Subject</CardTitle>
+                            <CardDescription>Number of duties assigned for each subject.</CardDescription>
+                        </div>
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button variant="outline" size="icon" className="h-8 w-8">
+                                    <Expand className="h-4 w-4" />
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-4xl h-[70vh] flex flex-col">
+                                <h2 className="text-lg font-semibold">Invigilators' Allocation Per Subject</h2>
+                                <div className="flex-1">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <Pie data={subjectAllocationData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius="80%" label>
+                                                {subjectAllocationData.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                                                ))}
+                                            </Pie>
+                                            <Tooltip content={<CustomTooltip />} />
+                                            <Legend />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
                     </CardHeader>
                     <CardContent>
                         <ResponsiveContainer width="100%" height={300}>
@@ -171,9 +199,33 @@ export default function AnalyticsPage() {
                 </Card>
 
                 <Card className="col-span-1">
-                    <CardHeader>
-                        <CardTitle>Duties Per Invigilator</CardTitle>
-                        <CardDescription>Total duties allocated to each staff member.</CardDescription>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                            <CardTitle>Duties Per Invigilator</CardTitle>
+                            <CardDescription>Total duties allocated to each staff member.</CardDescription>
+                        </div>
+                         <Dialog>
+                            <DialogTrigger asChild>
+                                <Button variant="outline" size="icon" className="h-8 w-8">
+                                    <Expand className="h-4 w-4" />
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-4xl h-[70vh] flex flex-col">
+                                <h2 className="text-lg font-semibold">Duties Per Invigilator</h2>
+                                <div className="flex-1">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={dutiesPerInvigilatorData} margin={{ top: 5, right: 30, left: 20, bottom: 60 }}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                            <XAxis dataKey="name" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" />
+                                            <YAxis allowDecimals={false} />
+                                            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted))' }} />
+                                            <Legend />
+                                            <Bar dataKey="duties" name="Duties" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
                     </CardHeader>
                     <CardContent>
                         <ResponsiveContainer width="100%" height={300}>
@@ -191,9 +243,35 @@ export default function AnalyticsPage() {
             </div>
             
             <Card>
-                <CardHeader>
-                    <CardTitle>Duties Required per Exam Date</CardTitle>
-                    <CardDescription>Rooms, relievers, and total invigilators needed each day.</CardDescription>
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                        <CardTitle>Duties Required per Exam Date</CardTitle>
+                        <CardDescription>Rooms, relievers, and total invigilators needed each day.</CardDescription>
+                    </div>
+                     <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" size="icon" className="h-8 w-8">
+                                <Expand className="h-4 w-4" />
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl h-[70vh] flex flex-col">
+                            <h2 className="text-lg font-semibold">Duties Required per Exam Date</h2>
+                            <div className="flex-1">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={dutiesRequiredData} margin={{ top: 5, right: 30, left: 20, bottom: 20 }}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                        <XAxis dataKey="date" />
+                                        <YAxis />
+                                        <Tooltip content={<CustomTooltip />} />
+                                        <Legend />
+                                        <Bar dataKey="No of Rooms" fill="#ffc658" name="Rooms" />
+                                        <Bar dataKey="No of Relievers" fill="#fb8c00" name="Relievers" />
+                                        <Bar dataKey="Total Invigilators" fill="#e53935" name="Total Required" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
                 </CardHeader>
                 <CardContent>
                     <ResponsiveContainer width="100%" height={350}>
@@ -213,9 +291,34 @@ export default function AnalyticsPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <Card>
-                    <CardHeader>
-                        <CardTitle>Daily Invigilator Workload</CardTitle>
-                        <CardDescription>Number of invigilators assigned vs. free for each exam day.</CardDescription>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                            <CardTitle>Daily Invigilator Workload</CardTitle>
+                            <CardDescription>Number of invigilators assigned vs. free for each exam day.</CardDescription>
+                        </div>
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button variant="outline" size="icon" className="h-8 w-8">
+                                    <Expand className="h-4 w-4" />
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-4xl h-[70vh] flex flex-col">
+                                <h2 className="text-lg font-semibold">Daily Invigilator Workload</h2>
+                                <div className="flex-1">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart layout="vertical" data={dailyWorkloadData} margin={{ top: 5, right: 30, left: 20, bottom: 20 }}>
+                                            <CartesianGrid strokeDasharray="3 3" horizontal={false}/>
+                                            <XAxis type="number" />
+                                            <YAxis dataKey="date" type="category" tick={{ fontSize: 12 }} width={50} />
+                                            <Tooltip content={<CustomTooltip />} />
+                                            <Legend />
+                                            <Bar dataKey="Assigned" stackId="a" fill="#4c51bf" name="Assigned" />
+                                            <Bar dataKey="Free" stackId="a" fill="#a8b2d1" name="Free" radius={[0, 4, 4, 0]} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
                     </CardHeader>
                     <CardContent>
                          <ResponsiveContainer width="100%" height={300}>
@@ -233,9 +336,34 @@ export default function AnalyticsPage() {
                 </Card>
 
                 <Card>
-                    <CardHeader>
-                        <CardTitle>Day-wise Session Trends</CardTitle>
-                        <CardDescription>Total duties and relievers over the exam period.</CardDescription>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                            <CardTitle>Day-wise Session Trends</CardTitle>
+                            <CardDescription>Total duties and relievers over the exam period.</CardDescription>
+                        </div>
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button variant="outline" size="icon" className="h-8 w-8">
+                                    <Expand className="h-4 w-4" />
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-4xl h-[70vh] flex flex-col">
+                                <h2 className="text-lg font-semibold">Day-wise Session Trends</h2>
+                                <div className="flex-1">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <LineChart data={sessionTrendsData} margin={{ top: 5, right: 30, left: 20, bottom: 20 }}>
+                                            <CartesianGrid strokeDasharray="3 3" />
+                                            <XAxis dataKey="date" />
+                                            <YAxis />
+                                            <Tooltip content={<CustomTooltip />} />
+                                            <Legend />
+                                            <Line type="monotone" dataKey="Total Duties" stroke="#38bdf8" strokeWidth={3} activeDot={{ r: 8 }} />
+                                            <Line type="monotone" dataKey="Total Relievers" stroke="#f472b6" strokeWidth={2} />
+                                        </LineChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
                     </CardHeader>
                     <CardContent>
                         <ResponsiveContainer width="100%" height={300}>
@@ -256,4 +384,6 @@ export default function AnalyticsPage() {
         </div>
     );
 }
+    
+
     
