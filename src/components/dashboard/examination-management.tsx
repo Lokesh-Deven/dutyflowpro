@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo, useRef, useState } from 'react';
@@ -307,7 +306,7 @@ export function ExaminationManagement() {
 
               <Card>
                 <CardHeader>
-                    <CardTitle className="text-2xl text-black dark:text-white">Session Details</CardTitle>
+                    <CardTitle className="font-headline text-2xl text-black dark:text-white font-extrabold">Session Details</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
