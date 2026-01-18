@@ -258,10 +258,10 @@ export function ExaminationManagement() {
             <form className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField control={form.control} name="college" render={({ field }) => (
-                  <FormItem><FormLabel>Name of the College</FormLabel><FormControl><Input placeholder="e.g. Seshadripuram Independent Pre-UIniversity College" {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>Name of the College</FormLabel><FormControl><Input placeholder="e.g. Seshadripuram Independent Pre-UIniversity College" {...field} className="bg-slate-100 dark:bg-slate-800" /></FormControl><FormMessage /></FormItem>
                 )}/>
                 <FormField control={form.control} name="examName" render={({ field }) => (
-                  <FormItem><FormLabel>Name of the Examination</FormLabel><FormControl><Input {...field} placeholder="e.g. Annual Examination, March 2025" /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>Name of the Examination</FormLabel><FormControl><Input {...field} placeholder="e.g. Annual Examination, March 2025" className="bg-slate-100 dark:bg-slate-800" /></FormControl><FormMessage /></FormItem>
                 )}/>
               </div>
 
