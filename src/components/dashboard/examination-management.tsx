@@ -284,7 +284,7 @@ export function ExaminationManagement() {
                         )}/>
                         <div className="flex items-center gap-2 self-end mb-2">
                             <span className="text-sm text-muted-foreground">or</span>
-                            <Button type="button" variant="default" onClick={handleBulkUploadClick}>
+                            <Button type="button" onClick={handleBulkUploadClick} className="text-white bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700">
                                 <Upload className="mr-2 h-4 w-4" />
                                 Import from Excel
                             </Button>

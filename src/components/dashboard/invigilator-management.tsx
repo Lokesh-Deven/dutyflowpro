@@ -185,7 +185,7 @@ export function InvigilatorManagement() {
                         <div className="flex items-center gap-4">
                            <Button type="submit"><UserPlus className="mr-2 h-4 w-4" /> Add Invigilator</Button>
                            <span className="text-sm text-muted-foreground">or</span>
-                           <Button type="button" variant="outline" onClick={handleBulkUploadClick} className="text-primary border-primary hover:bg-primary/10 hover:text-primary">
+                           <Button type="button" onClick={handleBulkUploadClick} className="text-white bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700">
                                 <Upload className="mr-2 h-4 w-4" />
                                 Import from Excel
                             </Button>
