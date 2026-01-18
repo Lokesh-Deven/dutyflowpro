@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useRef, useState, useEffect } from 'react';
@@ -223,7 +224,7 @@ export function InvigilatorManagement() {
                                         <TableCell>{inv.designation}</TableCell>
                                         <TableCell>{inv.email}</TableCell>
                                         <TableCell>
-                                            <Button variant="secondary" size="sm" onClick={() => handleOpenAvailabilityDialog(inv)}>
+                                            <Button variant="secondary" size="sm" className="h-7" onClick={() => handleOpenAvailabilityDialog(inv)}>
                                                  {formatAvailableDays(inv)}
                                             </Button>
                                         </TableCell>
