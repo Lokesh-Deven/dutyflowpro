@@ -1,4 +1,3 @@
-
 "use client";
 
 import { usePathname } from 'next/navigation';
@@ -26,12 +25,12 @@ export function HeaderNav() {
           <Button
             key={item.href}
             asChild
-            variant={isActive ? "default" : "ghost"}
+            variant="default"
             className={cn(
-              "gap-2",
+              "gap-2 transition-all",
               isActive 
-                ? "font-semibold text-primary-foreground" 
-                : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                ? "font-semibold bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700" 
+                : "hover:bg-gradient-to-r hover:from-purple-500 hover:to-indigo-600"
             )}
           >
             <Link href={item.href} onClick={() => handleNavClick(item.href)}>
