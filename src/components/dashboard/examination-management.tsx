@@ -68,6 +68,7 @@ export function ExaminationManagement() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const { invigilators, examinations, setExaminations } = useAllotment();
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   
   const [sessionDetails, setSessionDetails] = useState({
     subject: '',
@@ -270,7 +271,7 @@ export function ExaminationManagement() {
                     <div className="grid grid-cols-1 md:grid-cols-3 items-center gap-4">
                         <FormField control={form.control} name="date" render={({ field }) => (
                           <FormItem className="flex flex-col"><FormLabel className="mb-1">Date for Session</FormLabel>
-                            <Popover><PopoverTrigger asChild>
+                            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}><PopoverTrigger asChild>
                                 <FormControl>
                                   <Button variant={"outline"} className={cn("pl-3 text-left font-normal bg-slate-100 dark:bg-slate-800", !field.value && "text-muted-foreground")}>
                                     {field.value ? format(field.value, "PPP") : <span>Select a date</span>}
@@ -278,7 +279,17 @@ export function ExaminationManagement() {
                                   </Button>
                                 </FormControl>
                               </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar 
+                                  mode="single" 
+                                  selected={field.value} 
+                                  onSelect={(date) => {
+                                    field.onChange(date);
+                                    setIsCalendarOpen(false);
+                                  }} 
+                                  initialFocus 
+                                />
+                              </PopoverContent>
                             </Popover><FormMessage />
                           </FormItem>
                         )}/>
@@ -408,7 +419,7 @@ export function ExaminationManagement() {
           </Table>
         </CardContent>
         <CardFooter className="justify-between">
-            <Button onClick={() => router.back()}>
+            <Button onClick={() => router.back()} variant="default">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Invigilators
             </Button>
