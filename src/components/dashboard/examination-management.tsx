@@ -316,7 +316,6 @@ export function ExaminationManagement() {
                             <Select value={sessionDetails.subject} onValueChange={(value) => handleSessionDetailChange('subject', value)}>
                                 <SelectTrigger className="bg-slate-100 dark:bg-slate-800"><SelectValue placeholder="Select a subject..."/></SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="None">None</SelectItem>
                                   <SelectItem value="Accountancy">Accountancy</SelectItem>
                                   <SelectItem value="Basic Mathematics">Basic Mathematics</SelectItem>
                                   <SelectItem value="Biology">Biology</SelectItem>
@@ -332,6 +331,7 @@ export function ExaminationManagement() {
                                   <SelectItem value="Home Science">Home Science</SelectItem>
                                   <SelectItem value="Kannada">Kannada</SelectItem>
                                   <SelectItem value="Logic">Logic</SelectItem>
+                                  <SelectItem value="None">None</SelectItem>
                                   <SelectItem value="Political Science">Political Science</SelectItem>
                                   <SelectItem value="Sanskrit">Sanskrit</SelectItem>
                                   <SelectItem value="Sociology">Sociology</SelectItem>
@@ -344,14 +344,14 @@ export function ExaminationManagement() {
                             <Label>No of Rooms</Label>
                              <Select value={sessionDetails.rooms.toString()} onValueChange={(value) => handleSessionDetailChange('rooms', parseInt(value, 10))}>
                                 <SelectTrigger className="bg-slate-100 dark:bg-slate-800"><SelectValue/></SelectTrigger>
-                                <SelectContent>{Array.from({ length: 20 }, (_, i) => i + 1).map(n => <SelectItem key={n} value={n.toString()}>{n}</SelectItem>)}</SelectContent>
+                                <SelectContent>{Array.from({ length: 50 }, (_, i) => i + 1).map(n => <SelectItem key={n} value={n.toString()}>{n}</SelectItem>)}</SelectContent>
                             </Select>
                         </div>
                         <div>
                            <Label>No of Relievers</Label>
                             <Select value={sessionDetails.relievers.toString()} onValueChange={(value) => handleSessionDetailChange('relievers', parseInt(value, 10))}>
                                 <SelectTrigger className="bg-slate-100 dark:bg-slate-800"><SelectValue/></SelectTrigger>
-                                <SelectContent>{Array.from({ length: 10 }, (_, i) => i).map(n => <SelectItem key={n} value={n.toString()}>{n}</SelectItem>)}</SelectContent>
+                                <SelectContent>{Array.from({ length: 26 }, (_, i) => i).map(n => <SelectItem key={n} value={n.toString()}>{n}</SelectItem>)}</SelectContent>
                             </Select>
                         </div>
                         
@@ -433,7 +433,7 @@ export function ExaminationManagement() {
           </Table>
         </CardContent>
         <CardFooter className="justify-between">
-            <Button onClick={() => router.back()} variant="default">
+            <Button onClick={() => router.push('/dashboard/invigilators')} variant="default">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Invigilators
             </Button>
@@ -446,3 +446,5 @@ export function ExaminationManagement() {
     </div>
   );
 }
+
+    
