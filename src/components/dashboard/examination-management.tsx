@@ -314,14 +314,28 @@ export function ExaminationManagement() {
                         <div className="md:col-span-2">
                            <Label>Subject</Label>
                             <Select value={sessionDetails.subject} onValueChange={(value) => handleSessionDetailChange('subject', value)}>
-                                <SelectTrigger className="bg-slate-100 dark:bg-slate-800"><SelectValue placeholder="None"/></SelectTrigger>
+                                <SelectTrigger className="bg-slate-100 dark:bg-slate-800"><SelectValue placeholder="Select a subject..."/></SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="None">None</SelectItem>
-                                  <SelectItem value="Physics">Physics</SelectItem>
-                                  <SelectItem value="Chemistry">Chemistry</SelectItem>
+                                  <SelectItem value="Accountancy">Accountancy</SelectItem>
+                                  <SelectItem value="Basic Mathematics">Basic Mathematics</SelectItem>
                                   <SelectItem value="Biology">Biology</SelectItem>
-                                  <SelectItem value="Mathematics">Mathematics</SelectItem>
+                                  <SelectItem value="Business Studies">Business Studies</SelectItem>
+                                  <SelectItem value="Chemistry">Chemistry</SelectItem>
                                   <SelectItem value="Computer Science">Computer Science</SelectItem>
+                                  <SelectItem value="Economics">Economics</SelectItem>
+                                  <SelectItem value="Electronics">Electronics</SelectItem>
+                                  <SelectItem value="English">English</SelectItem>
+                                  <SelectItem value="Geography">Geography</SelectItem>
+                                  <SelectItem value="Hindi">Hindi</SelectItem>
+                                  <SelectItem value="History">History</SelectItem>
+                                  <SelectItem value="Home Science">Home Science</SelectItem>
+                                  <SelectItem value="Kannada">Kannada</SelectItem>
+                                  <SelectItem value="Logic">Logic</SelectItem>
+                                  <SelectItem value="Political Science">Political Science</SelectItem>
+                                  <SelectItem value="Sanskrit">Sanskrit</SelectItem>
+                                  <SelectItem value="Sociology">Sociology</SelectItem>
+                                  <SelectItem value="Statistics">Statistics</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
