@@ -437,7 +437,7 @@ export function ExaminationManagement() {
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Invigilators
             </Button>
-            <Button type="button" variant="default" className="bg-accent hover:bg-accent/90" onClick={handleGenerate}>
+            <Button type="button" className="text-white bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700" onClick={handleGenerate}>
                 <Sparkles className="mr-2 h-4 w-4" />
                 Generate Duty Allotment
             </Button>
@@ -446,5 +446,6 @@ export function ExaminationManagement() {
     </div>
   );
 }
+    
 
     
