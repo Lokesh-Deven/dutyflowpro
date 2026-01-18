@@ -13,6 +13,7 @@ export default {
         body: ['Inter', 'sans-serif'],
         headline: ['Open Sans', 'sans-serif'],
         code: ['Source Code Pro', 'monospace'],
+        roboto: ['Roboto', 'sans-serif'],
       },
       colors: {
         background: 'hsl(var(--background))',

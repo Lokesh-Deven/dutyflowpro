@@ -47,7 +47,7 @@ export default function Header() {
             <Users className="w-6 h-6 text-primary" />
             </div>
             <div className="flex flex-col">
-            <span className="text-2xl font-bold font-headline text-primary">DutyFlow</span>
+            <span className="text-2xl font-black font-roboto text-primary">DutyFlow</span>
             </div>
         </Link>
         <ClientHeaderNav />
