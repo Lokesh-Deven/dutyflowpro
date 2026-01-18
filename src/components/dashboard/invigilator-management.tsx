@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useRef, useState, useEffect } from 'react';
@@ -17,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { SetAvailabilityDialog } from './set-availability-dialog';
 import { useAllotment } from '@/lib/allotment-context';
+import { cn } from '@/lib/utils';
 
 const invigilatorSchema = z.object({
   name: z.string().min(1, "Name is required."),
@@ -162,7 +162,7 @@ export function InvigilatorManagement() {
         <>
         <Card className="shadow-lg">
             <CardHeader>
-                <CardTitle className="font-headline text-[25px] font-extrabold text-primary">Invigilators' Details</CardTitle>
+                <CardTitle className="font-headline text-3xl font-extrabold text-primary">Invigilators' Details</CardTitle>
                 <CardDescription>Add all available invigilators.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -223,7 +223,7 @@ export function InvigilatorManagement() {
                                         <TableCell>{inv.designation}</TableCell>
                                         <TableCell>{inv.email}</TableCell>
                                         <TableCell>
-                                            <Button variant={inv.isPartTime ? "secondary" : "outline"} size="sm" onClick={() => handleOpenAvailabilityDialog(inv)}>
+                                            <Button variant="secondary" size="sm" onClick={() => handleOpenAvailabilityDialog(inv)}>
                                                  {formatAvailableDays(inv)}
                                             </Button>
                                         </TableCell>
@@ -240,7 +240,14 @@ export function InvigilatorManagement() {
                 </div>
             </CardContent>
             <CardFooter className="justify-end">
-                <Button onClick={handleContinue} size="lg" className="bg-primary text-primary-foreground hover:bg-gradient-to-r from-purple-500 to-indigo-600">
+                <Button
+                  onClick={handleContinue}
+                  size="lg"
+                  className={cn(
+                    "bg-primary text-primary-foreground",
+                    "hover:bg-gradient-to-r hover:from-purple-500 hover:to-indigo-600"
+                  )}
+                >
                     Continue to Examination Details
                     <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
@@ -255,3 +262,4 @@ export function InvigilatorManagement() {
         </>
     );
 }
+    
