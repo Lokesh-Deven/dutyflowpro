@@ -334,7 +334,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
         <CardFooter className="justify-end gap-2">
            <AlertDialog open={isSaveAlertOpen} onOpenChange={setIsSaveAlertOpen}>
             <AlertDialogTrigger asChild>
-                <Button variant="outline">
+                <Button>
                     <Save className="mr-2 h-4 w-4" />
                     Save/Update
                 </Button>
@@ -358,8 +358,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                 </AlertDialogFooter>
             </AlertDialogContent>
            </AlertDialog>
-           <Button variant="outline" onClick={handleOptimize}><Sparkles className="mr-2 h-4 w-4" />Optimize</Button>
-           <Button variant="outline" onClick={handleDownload}><Download className="mr-2 h-4 w-4" />Download as PDF</Button>
+           <Button onClick={handleDownload}><Download className="mr-2 h-4 w-4" />Download as PDF</Button>
            <Button onClick={handleEmailAll}><Send className="mr-2 h-4 w-4" />Email All Summaries</Button>
         </CardFooter>
       </Card>
@@ -370,5 +369,6 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
     
 
     
+
 
 
