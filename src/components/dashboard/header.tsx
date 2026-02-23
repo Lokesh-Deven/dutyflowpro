@@ -6,6 +6,7 @@ import { Users } from 'lucide-react';
 import { HeaderNav } from './header-nav';
 import { ThemeToggle } from '../theme-toggle';
 import { useEffect, useState } from 'react';
+import { useAllotment } from '@/lib/allotment-context';
 
 const ClientThemeToggle = () => {
     const [isMounted, setIsMounted] = useState(false);
@@ -39,10 +40,12 @@ const ClientHeaderNav = () => {
 
 
 export default function Header() {
+  const { clearCurrentAllotment } = useAllotment();
+
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-card px-4 sm:px-6 lg:px-8 dark:bg-slate-900">
       <div className="flex items-center gap-6">
-        <Link href="/dashboard" className="flex items-center gap-2">
+        <Link href="/dashboard/examinations" onClick={clearCurrentAllotment} className="flex items-center gap-2">
             <div className="p-2 rounded-lg bg-primary/10">
             <Users className="w-6 h-6 text-primary" />
             </div>

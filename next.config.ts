@@ -38,11 +38,6 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      {
-        source: '/',
-        destination: '/dashboard/examinations',
-        permanent: true,
-      },
        {
         source: '/dashboard',
         destination: '/dashboard/examinations',
