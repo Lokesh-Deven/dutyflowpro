@@ -40,12 +40,12 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/',
-        destination: '/dashboard/invigilators',
+        destination: '/dashboard/examinations',
         permanent: true,
       },
        {
         source: '/dashboard',
-        destination: '/dashboard/invigilators',
+        destination: '/dashboard/examinations',
         permanent: true,
       },
     ]

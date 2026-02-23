@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Upload, UserPlus, ArrowRight, Trash2 } from 'lucide-react';
+import { Upload, UserPlus, ArrowLeft, Trash2, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { SetAvailabilityDialog } from './set-availability-dialog';
@@ -33,7 +33,7 @@ export function InvigilatorManagement() {
     const [isAvailabilityDialogOpen, setIsAvailabilityDialogOpen] = useState(false);
     const [selectedInvigilator, setSelectedInvigilator] = useState<Invigilator | null>(null);
 
-    const { invigilators, setInvigilators } = useAllotment();
+    const { invigilators, setInvigilators, examinations } = useAllotment();
 
     const form = useForm<z.infer<typeof invigilatorSchema>>({
         resolver: zodResolver(invigilatorSchema),
@@ -139,7 +139,7 @@ export function InvigilatorManagement() {
         return inv.availableDays.map(day => day.substring(0, 3)).join(', ');
     }
 
-    const handleContinue = () => {
+    const handleGenerate = () => {
         if (invigilators.length === 0) {
             toast({
                 variant: 'destructive',
@@ -148,7 +148,15 @@ export function InvigilatorManagement() {
             });
             return;
         }
-        router.push(`/dashboard/examinations`);
+        if (examinations.length === 0) {
+            toast({
+                variant: "destructive",
+                title: "No Examinations Added",
+                description: "Please go back and add examinations before proceeding.",
+            });
+            return;
+        }
+        router.push(`/dashboard/allotment`);
     };
 
     const handleDelete = (id: string) => {
@@ -164,7 +172,7 @@ export function InvigilatorManagement() {
         <Card className="shadow-lg">
             <CardHeader>
                 <CardTitle className="font-headline text-2xl font-extrabold text-black dark:text-white">Invigilators' Details</CardTitle>
-                <CardDescription>Add all available invigilators.</CardDescription>
+                <CardDescription>Add all available invigilators. This is the second step.</CardDescription>
             </CardHeader>
             <CardContent>
                 <Form {...form}>
@@ -240,17 +248,21 @@ export function InvigilatorManagement() {
                     </Table>
                 </div>
             </CardContent>
-            <CardFooter className="justify-end">
+            <CardFooter className="justify-between">
+                <Button onClick={() => router.push('/dashboard/examinations')} variant="outline">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Examinations
+                </Button>
                 <Button
-                  onClick={handleContinue}
+                  onClick={handleGenerate}
                   size="lg"
                   className={cn(
                     "bg-primary text-primary-foreground",
                     "hover:bg-gradient-to-r hover:from-purple-500 hover:to-indigo-600"
                   )}
                 >
-                    Continue to Examination Details
-                    <ArrowRight className="ml-2 h-4 w-4" />
+                    Generate Duty Allotment
+                    <Sparkles className="ml-2 h-4 w-4" />
                 </Button>
             </CardFooter>
         </Card>

@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 
 export const navItems = [
-  { href: '/dashboard/invigilators', label: 'New Allotment', icon: LayoutGrid },
+  { href: '/dashboard/examinations', label: 'New Allotment', icon: LayoutGrid },
   { href: '/dashboard/saved', label: 'Saved Allotments', icon: Save },
   { href: '/dashboard/history', label: 'History', icon: History },
   { href: '/dashboard/schedule', label: 'Day-wise Schedule', icon: CalendarDays },
@@ -29,8 +29,8 @@ export const navItems = [
 ];
 
 export const newAllotmentSteps = [
-    { href: '/dashboard/invigilators', label: 'Invigilators', icon: Users },
     { href: '/dashboard/examinations', label: 'Examinations', icon: FileText },
+    { href: '/dashboard/invigilators', label: 'Invigilators', icon: Users },
 ];
 
 export function SidebarNav() {
@@ -40,7 +40,7 @@ export function SidebarNav() {
     <SidebarMenu>
       {navItems.map((item) => {
         const isActive = pathname.startsWith(item.href) && (pathname === item.href || pathname.startsWith(`${item.href}/`));
-        const isNewAllotmentActive = item.href === '/dashboard/invigilators' && (pathname.startsWith('/dashboard/invigilators') || pathname.startsWith('/dashboard/examinations'));
+        const isNewAllotmentActive = item.href === '/dashboard/examinations' && (pathname.startsWith('/dashboard/invigilators') || pathname.startsWith('/dashboard/examinations'));
 
         return (
           <SidebarMenuItem key={item.href}>

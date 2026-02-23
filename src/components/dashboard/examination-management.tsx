@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, useRef, useState } from 'react';
@@ -15,7 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Calendar as CalendarIcon, Upload, Sparkles, Trash2, ArrowLeft } from 'lucide-react';
+import { Calendar as CalendarIcon, Upload, Trash2, ArrowRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
@@ -66,7 +67,7 @@ export function ExaminationManagement() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
-  const { invigilators, examinations, setExaminations } = useAllotment();
+  const { examinations, setExaminations } = useAllotment();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   
   const [sessionDetails, setSessionDetails] = useState({
@@ -232,14 +233,14 @@ export function ExaminationManagement() {
     setSessionDetails(prev => ({...prev, [field]: value}));
   }
 
-  const handleGenerate = () => {
+  const handleContinue = () => {
     if (examinations.length > 0) {
-      router.push(`/dashboard/allotment`);
+      router.push(`/dashboard/invigilators`);
     } else {
       toast({
         variant: "destructive",
         title: "No Examinations",
-        description: "Please add at least one examination to generate the allotment.",
+        description: "Please add at least one examination to continue.",
       });
     }
   };
@@ -248,9 +249,9 @@ export function ExaminationManagement() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline text-black dark:text-white font-extrabold">Examination Details</CardTitle>
+          <CardTitle className="font-headline text-black dark:text-white font-extrabold text-2xl">Examination Details</CardTitle>
           <CardDescription>
-            Add examination sessions manually or import from an Excel file.
+            Add examination sessions manually or import from an Excel file. This is the first step.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -431,14 +432,10 @@ export function ExaminationManagement() {
               )}
           </Table>
         </CardContent>
-        <CardFooter className="justify-between">
-            <Button onClick={() => router.push('/dashboard/invigilators')} variant="default">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Invigilators
-            </Button>
-            <Button type="button" className="text-white bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700" onClick={handleGenerate}>
-                <Sparkles className="mr-2 h-4 w-4" />
-                Generate Duty Allotment
+        <CardFooter className="justify-end">
+            <Button type="button" className="text-white bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700" onClick={handleContinue}>
+                Continue to Invigilator Details
+                <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
         </CardFooter>
       </Card>

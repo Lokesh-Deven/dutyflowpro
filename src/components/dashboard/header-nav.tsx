@@ -12,7 +12,7 @@ export function HeaderNav() {
   const { clearCurrentAllotment } = useAllotment();
 
   const handleNavClick = (href: string) => {
-    if (href === '/dashboard/invigilators') {
+    if (href === '/dashboard/examinations') {
       clearCurrentAllotment();
     }
   };
