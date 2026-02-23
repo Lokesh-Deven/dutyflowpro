@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Upload, UserPlus, ArrowLeft, Trash2, Sparkles } from 'lucide-react';
+import { Upload, UserPlus, ArrowLeft, Trash2, Sparkles, ArrowRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { SetAvailabilityDialog } from './set-availability-dialog';
@@ -44,8 +44,8 @@ export function InvigilatorManagement() {
         const newInvigilator: Invigilator = {
             id: `inv-${Date.now()}`,
             ...values,
-            availableDays: [],
-            isPartTime: false,
+            isAvailableAllDays: true,
+            availableExamIds: [],
         };
         setInvigilators(prev => [...prev, newInvigilator]);
         toast({ title: "Invigilator Added", description: `${values.name} has been added to the list.` });
@@ -87,8 +87,8 @@ export function InvigilatorManagement() {
                     designation: String(getColumnValue(row, ["Designation"]) || ''),
                     mobile: String(getColumnValue(row, ["Mobile", "Mobile No"]) || '').replace(/\D/g, ''),
                     email: String(getColumnValue(row, ["E-Mail ID", "Email", "E-Mail"]) || ''),
-                    isPartTime: false,
-                    availableDays: [],
+                    isAvailableAllDays: true,
+                    availableExamIds: [],
                 })).filter(inv => inv.name && inv.email);
 
                 if (newInvigilators.length > 0) {
@@ -121,12 +121,11 @@ export function InvigilatorManagement() {
         setIsAvailabilityDialogOpen(true);
     };
 
-    const handleSaveAvailability = (invigilatorId: string, availableDays: string[]) => {
+    const handleSaveAvailability = (invigilatorId: string, availability: { isAvailableAllDays: boolean, availableExamIds: string[] }) => {
         setInvigilators(prev =>
             prev.map(inv => {
-                const isPartTime = availableDays.length > 0 && availableDays.length < 7;
                 if (inv.id === invigilatorId) {
-                    return { ...inv, availableDays, isPartTime };
+                    return { ...inv, ...availability };
                 }
                 return inv;
             })
@@ -134,9 +133,12 @@ export function InvigilatorManagement() {
         toast({ title: "Availability Saved", description: `Availability for ${selectedInvigilator?.name} has been updated.` });
     };
 
-    const formatAvailableDays = (inv: Invigilator) => {
-        if (!inv.isPartTime || !inv.availableDays || inv.availableDays.length === 0) return 'Full-Time';
-        return inv.availableDays.map(day => day.substring(0, 3)).join(', ');
+    const formatAvailability = (inv: Invigilator) => {
+        if (inv.isAvailableAllDays) return 'All Days';
+        if (inv.availableExamIds && inv.availableExamIds.length > 0) {
+            return `${inv.availableExamIds.length} Day(s)`;
+        }
+        return 'Not Available';
     }
 
     const handleGenerate = () => {
@@ -233,7 +235,7 @@ export function InvigilatorManagement() {
                                         <TableCell>{inv.email}</TableCell>
                                         <TableCell>
                                             <Button variant="secondary" size="sm" className="h-7" onClick={() => handleOpenAvailabilityDialog(inv)}>
-                                                 {formatAvailableDays(inv)}
+                                                 {formatAvailability(inv)}
                                             </Button>
                                         </TableCell>
                                         <TableCell className="text-right">
@@ -258,7 +260,7 @@ export function InvigilatorManagement() {
                   size="lg"
                   className={cn(
                     "bg-primary text-primary-foreground",
-                    "hover:bg-gradient-to-r hover:from-purple-500 hover:to-indigo-600"
+                    "bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700"
                   )}
                 >
                     Generate Duty Allotment
@@ -271,6 +273,7 @@ export function InvigilatorManagement() {
             onClose={() => setIsAvailabilityDialogOpen(false)}
             invigilator={selectedInvigilator}
             onSave={handleSaveAvailability}
+            examinations={examinations}
         />
         </>
     );

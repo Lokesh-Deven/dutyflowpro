@@ -4,8 +4,8 @@ export type Invigilator = {
   designation: string;
   mobile: string;
   email: string;
-  isPartTime: boolean;
-  availableDays?: string[];
+  isAvailableAllDays: boolean;
+  availableExamIds: string[];
 };
 
 export type Examination = {
