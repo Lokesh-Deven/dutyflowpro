@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -159,7 +157,14 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
         margin: { left: 15, right: 15 }
     });
 
-    const finalY = (doc as any).lastAutoTable.finalY || pageHeight - 30;
+    const finalY = (doc as any).lastAutoTable.finalY || startY + 40;
+
+    // Add the wishing message
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(10);
+    doc.setTextColor(textColor);
+    doc.text("Wishing you a smooth and successful examination duty.", pageWidth / 2, finalY + 15, { align: 'center' });
+
     doc.setFillColor(primaryColor);
     doc.rect(0, pageHeight - 20, pageWidth, 20, 'F');
     
