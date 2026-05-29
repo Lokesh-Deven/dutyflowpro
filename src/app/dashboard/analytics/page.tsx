@@ -6,12 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useMemo } from "react";
-import { Bar, BarChart, Pie, PieChart, Cell, Line, LineChart, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { Bar, BarChart, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Line, LineChart } from "recharts";
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Expand } from "lucide-react";
-
-const PIE_COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#AF19FF", "#FF4560", "#775DD0", "#546E7A"];
 
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -29,40 +27,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     return null;
 };
 
-const RADIAN = Math.PI / 180;
-const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name, value }: any) => {
-  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-  const x = cx + radius * Math.cos(-midAngle * RADIAN);
-  const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-  return (
-    <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central">
-      {`${(percent * 100).toFixed(0)}%`}
-    </text>
-  );
-};
-
-
 export default function AnalyticsPage() {
     const { invigilators, examinations, activeAllotment } = useAllotment();
-
-    const subjectAllocationData = useMemo(() => {
-        if (!examinations || examinations.length === 0) return [];
-        const subjectDuties = examinations.reduce((acc, exam) => {
-            const duties = exam.rooms + exam.relievers;
-            acc[exam.subject] = (acc[exam.subject] || 0) + duties;
-            return acc;
-        }, {} as Record<string, number>);
-        return Object.entries(subjectDuties).map(([name, value]) => ({ name, value }));
-    }, [examinations]);
-
-    const dutiesPerInvigilatorData = useMemo(() => {
-        if (!invigilators || !activeAllotment?.assignments) return [];
-        return invigilators.map(inv => ({
-            name: inv.name.split(' ').slice(0, 2).join(' '),
-            duties: activeAllotment.assignments[inv.id]?.length || 0,
-        })).sort((a, b) => b.duties - a.duties);
-    }, [invigilators, activeAllotment]);
 
     const dailyWorkloadData = useMemo(() => {
         if (!examinations.length || !invigilators.length || !activeAllotment) return [];
@@ -140,7 +106,7 @@ export default function AnalyticsPage() {
                 </CardHeader>
                 <CardContent>
                     <Button asChild>
-                        <Link href="/dashboard/invigilators">Start New Allotment</Link>
+                        <Link href="/dashboard/examinations">Start New Allotment</Link>
                     </Button>
                 </CardContent>
             </Card>
@@ -151,96 +117,6 @@ export default function AnalyticsPage() {
     return (
         <div className="space-y-8">
             <h1 className="text-3xl font-bold tracking-tight font-headline">Allotment Analytics</h1>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <Card className="col-span-1">
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <div>
-                            <CardTitle>Invigilators' Allocation Per Subject</CardTitle>
-                            <CardDescription>Number of duties assigned for each subject.</CardDescription>
-                        </div>
-                        <Dialog>
-                            <DialogTrigger asChild>
-                                <Button variant="outline" size="icon" className="h-8 w-8">
-                                    <Expand className="h-4 w-4" />
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-4xl h-[70vh] flex flex-col">
-                                <h2 className="text-lg font-semibold">Invigilators' Allocation Per Subject</h2>
-                                <div className="flex-1">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <PieChart>
-                                            <Pie data={subjectAllocationData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius="80%" label>
-                                                {subjectAllocationData.map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                                                ))}
-                                            </Pie>
-                                            <Tooltip content={<CustomTooltip />} />
-                                            <Legend />
-                                        </PieChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </DialogContent>
-                        </Dialog>
-                    </CardHeader>
-                    <CardContent>
-                        <ResponsiveContainer width="100%" height={300}>
-                            <PieChart>
-                                <Pie data={subjectAllocationData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={120} labelLine={false} label={renderCustomizedLabel}>
-                                    {subjectAllocationData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip content={<CustomTooltip />} />
-                                <Legend layout="vertical" verticalAlign="middle" align="right" />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </CardContent>
-                </Card>
-
-                <Card className="col-span-1">
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <div>
-                            <CardTitle>Duties Per Invigilator</CardTitle>
-                            <CardDescription>Total duties allocated to each staff member.</CardDescription>
-                        </div>
-                         <Dialog>
-                            <DialogTrigger asChild>
-                                <Button variant="outline" size="icon" className="h-8 w-8">
-                                    <Expand className="h-4 w-4" />
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-4xl h-[70vh] flex flex-col">
-                                <h2 className="text-lg font-semibold">Duties Per Invigilator</h2>
-                                <div className="flex-1">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={dutiesPerInvigilatorData} margin={{ top: 5, right: 30, left: 20, bottom: 60 }}>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                            <XAxis dataKey="name" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" />
-                                            <YAxis allowDecimals={false} />
-                                            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted))' }} />
-                                            <Legend />
-                                            <Bar dataKey="duties" name="Duties" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </DialogContent>
-                        </Dialog>
-                    </CardHeader>
-                    <CardContent>
-                        <ResponsiveContainer width="100%" height={300}>
-                            <BarChart data={dutiesPerInvigilatorData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                <XAxis dataKey="name" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" height={60} />
-                                <YAxis allowDecimals={false} />
-                                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted))' }} />
-                                <Legend />
-                                <Bar dataKey="duties" name="Duties" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </CardContent>
-                </Card>
-            </div>
             
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
@@ -384,6 +260,3 @@ export default function AnalyticsPage() {
         </div>
     );
 }
-    
-
-    
