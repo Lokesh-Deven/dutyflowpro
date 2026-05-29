@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Download, Mail } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -217,8 +217,9 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
           <Card className="bg-secondary">
             <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <Avatar className="h-16 w-16">
-                  <AvatarImage src={`https://i.pravatar.cc/150?u=${selectedInvigilator.id}`} />
-                  <AvatarFallback>{selectedInvigilator.name.charAt(0)}</AvatarFallback>
+                  <AvatarFallback className="text-2xl bg-primary text-primary-foreground font-bold flex items-center justify-center">
+                    {selectedInvigilator.name.charAt(0).toUpperCase()}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
                   <CardTitle className="text-2xl font-headline">{selectedInvigilator.name}</CardTitle>
