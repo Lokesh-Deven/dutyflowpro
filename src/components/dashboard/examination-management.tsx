@@ -41,7 +41,6 @@ const examinationSchema = z.object({
   date: z.date({ required_error: "A date is required." }),
 });
 
-// Flexible data retrieval from a row object, case-insensitive and ignoring extra characters
 const getColumnValue = (row: any, keys: string[]): any => {
     const rowKeys = Object.keys(row);
     for (const key of keys) {
@@ -54,7 +53,6 @@ const getColumnValue = (row: any, keys: string[]): any => {
     return null;
 };
 
-// Handles Excel's numeric date format
 const excelSerialDateToJSDate = (serial: number) => {
     return new Date(Date.UTC(0, 0, serial - 1));
 };
@@ -162,13 +160,11 @@ export function ExaminationManagement() {
                 } else if (typeof dateValue === 'string') {
                     dateValue = new Date(dateValue);
                 } else if (!(dateValue instanceof Date) || isNaN(dateValue.getTime())) {
-                    console.warn(`Invalid date for row ${index + 2}, using today's date.`);
-                    dateValue = new Date(); // Fallback
+                    dateValue = new Date();
                 }
                 
                 const parseTimeTo24hr = (timeStr: string) => {
                   if (!timeStr) return '00:00';
-                  // Handles formats like "10.00 AM" or "10:00"
                   const date = new Date(`01/01/1970 ${timeStr.replace(/\./g, ':')}`);
                   return isNaN(date.getTime()) ? '00:00' : format(date, 'HH:mm');
                 }
@@ -190,7 +186,6 @@ export function ExaminationManagement() {
                     if (endTimeRaw) endTime = parseTimeTo24hr(String(endTimeRaw));
                 }
 
-                
                 return {
                     id: `exam-bulk-${Date.now()}-${index}`,
                     examName: String(getColumnValue(row, ['Examination Name', 'examName', 'exam name']) || form.getValues('examName') || 'Imported Exam'),
@@ -211,14 +206,14 @@ export function ExaminationManagement() {
                     description: `${newExams.length} examinations have been added.`,
                 });
             } else {
-                throw new Error("No valid examination data found in the file. Please check column names and data types.");
+                throw new Error("No valid examination data found in the file.");
             }
         } catch (error: any) {
             console.error("Error processing Excel file:", error);
             toast({
                 variant: "destructive",
                 title: "Import Failed",
-                description: error.message || "Could not parse the Excel file. Please ensure it is in the correct format.",
+                description: error.message || "Could not parse the Excel file.",
             });
         } finally {
             if (fileInputRef.current) {
@@ -266,51 +261,52 @@ export function ExaminationManagement() {
                 )}/>
               </div>
 
-              <Card className="border">
-                <CardContent className="pt-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 items-center gap-4">
-                        <FormField control={form.control} name="date" render={({ field }) => (
-                          <FormItem className="flex flex-col"><FormLabel className="mb-1">Date for Session</FormLabel>
-                            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}><PopoverTrigger asChild>
-                                <FormControl>
-                                  <Button variant={"outline"} className={cn("pl-3 text-left font-normal bg-slate-100 dark:bg-slate-800", !field.value && "text-muted-foreground")}>
-                                    {field.value ? format(field.value, "PPP") : <span>Select a date</span>}
-                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                  </Button>
-                                </FormControl>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar 
-                                  mode="single" 
-                                  selected={field.value} 
-                                  onSelect={(date) => {
-                                    field.onChange(date);
-                                    setIsCalendarOpen(false);
-                                  }} 
-                                  initialFocus 
-                                />
-                              </PopoverContent>
-                            </Popover><FormMessage />
-                          </FormItem>
-                        )}/>
-                        <div className="flex items-center gap-2 self-end mb-2">
-                            <span className="text-sm text-muted-foreground">or</span>
-                            <Button type="button" onClick={handleBulkUploadClick} className="text-white bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700">
+              <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline text-2xl text-black dark:text-white font-extrabold" style={{ fontSize: '1.5rem' }}>Session Details</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+                        {/* Row 1: Date and Bulk Upload */}
+                        <div className="md:col-span-2">
+                             <FormField control={form.control} name="date" render={({ field }) => (
+                                <FormItem className="flex flex-col">
+                                    <FormLabel>Date for Session</FormLabel>
+                                    <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                                        <PopoverTrigger asChild>
+                                            <FormControl>
+                                                <Button variant={"outline"} className={cn("pl-3 text-left font-normal bg-slate-100 dark:bg-slate-800", !field.value && "text-muted-foreground")}>
+                                                    {field.value ? format(field.value, "PPP") : <span>Select a date</span>}
+                                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                </Button>
+                                            </FormControl>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0" align="start">
+                                            <Calendar 
+                                                mode="single" 
+                                                selected={field.value} 
+                                                onSelect={(date) => {
+                                                    field.onChange(date);
+                                                    setIsCalendarOpen(false);
+                                                }} 
+                                                initialFocus 
+                                            />
+                                        </PopoverContent>
+                                    </Popover>
+                                    <FormMessage />
+                                </FormItem>
+                            )}/>
+                        </div>
+                        <div className="md:col-span-2 flex items-center gap-2 pb-1">
+                             <span className="text-sm text-muted-foreground">or</span>
+                             <Button type="button" onClick={handleBulkUploadClick} className="text-white bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700">
                                 <Upload className="mr-2 h-4 w-4" />
                                 Import from Excel
                             </Button>
                             <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".xlsx, .xls, .csv" />
                         </div>
-                    </div>
-                </CardContent>
-              </Card>
 
-              <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline text-2xl text-black dark:text-white font-extrabold">Session Details</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                        {/* Row 2: Subject, Rooms, Relievers */}
                         <div className="md:col-span-2">
                            <Label>Subject</Label>
                             <Select value={sessionDetails.subject} onValueChange={(value) => handleSessionDetailChange('subject', value)}>
@@ -355,6 +351,7 @@ export function ExaminationManagement() {
                             </Select>
                         </div>
                         
+                        {/* Row 3: Timings */}
                         <div className="md:col-span-2">
                            <Label>Time</Label>
                             <div className="grid grid-cols-3 gap-2">
@@ -369,7 +366,7 @@ export function ExaminationManagement() {
                             </div>
                         </div>
                     </div>
-                     <div className="flex justify-end">
+                     <div className="flex justify-end pt-4">
                         <Button type="button" onClick={onAddExamination}>+ Add Examination</Button>
                     </div>
                 </CardContent>
@@ -442,8 +439,3 @@ export function ExaminationManagement() {
     </div>
   );
 }
-    
-
-    
-
-    
