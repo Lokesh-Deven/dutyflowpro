@@ -14,12 +14,27 @@ import { Label } from "@/components/ui/label";
 import { Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export function SignupForm() {
   const router = useRouter();
+  const { toast } = useToast();
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (password !== confirmPassword) {
+      toast({
+        variant: "destructive",
+        title: "Passwords do not match",
+        description: "Please make sure both password fields are identical.",
+      });
+      return;
+    }
+
     // In a real app, you'd handle Firebase registration here.
     // We'll just redirect to the dashboard.
     router.push("/dashboard");
@@ -45,8 +60,24 @@ export function SignupForm() {
             <Input id="email" type="email" placeholder="admin@university.edu" required />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" required />
+            <Label htmlFor="create-password">Create Password</Label>
+            <Input 
+              id="create-password" 
+              type="password" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required 
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="confirm-password">Confirm Password</Label>
+            <Input 
+              id="confirm-password" 
+              type="password" 
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required 
+            />
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
