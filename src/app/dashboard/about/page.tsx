@@ -18,6 +18,17 @@ export default function AboutPage() {
           </p>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Origin</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-muted-foreground">
+            DutyFlow was envisioned by Lokesh D, a dedicated educator from Bangalore and an aspiring web developer, driven by a passion for creating meaningful solutions to academic challenges. With almost 20 years of experience in the education sector, Lokesh deeply understands the complexities institutions face during exam seasons. By fusing his academic expertise with cutting-edge web technologies, he created DutyFlow—a forward-thinking platform that reimagines how institutions manage invigilation duties through automation, intelligence, and precision.
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }
