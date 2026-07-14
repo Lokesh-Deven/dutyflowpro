@@ -245,9 +245,6 @@ export function ExaminationManagement() {
       <Card>
         <CardHeader>
           <CardTitle className="font-headline text-black dark:text-white font-extrabold text-2xl">Examination Details</CardTitle>
-          <CardDescription>
-            Add examination sessions manually or import from an Excel file. This is the first step.
-          </CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
