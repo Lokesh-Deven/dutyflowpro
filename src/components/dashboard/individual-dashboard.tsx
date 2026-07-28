@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -70,57 +71,69 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     const doc = new jsPDF({ orientation: 'portrait', format: 'a5' });
     const pageWidth = doc.internal.pageSize.getWidth();
     
+    // Theme Colors
     const primaryColor = '#115DA9'; 
     const textColor = '#1C304A';
     const headerTextColor = '#FFFFFF';
+    const lightBlue = [230, 240, 255]; // Light blue for alternating rows/headers
 
-    // Header bar
+    // --- Option 1: Premium Header Style ---
+
+    // 1. Solid Header Banner
     doc.setFillColor(primaryColor);
-    doc.rect(0, 0, pageWidth, 35, 'F');
+    doc.rect(0, 0, pageWidth, 40, 'F');
     
+    // 2. Header Text (College & Exam Name)
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(14);
     doc.setTextColor(headerTextColor);
     const collegeName = activeAllotment?.examinations[0]?.college || "College Name";
-    doc.text(collegeName, pageWidth / 2, 15, { align: 'center' });
+    const collegeLines = doc.splitTextToSize(collegeName.toUpperCase(), pageWidth - 20);
+    doc.text(collegeLines, pageWidth / 2, 15, { align: 'center' });
 
     doc.setFontSize(10);
-    doc.setTextColor(headerTextColor);
-    const examName = assignedDuties.length > 0 ? assignedDuties[0].examName : 'No duties assigned';
-    doc.text(examName, pageWidth / 2, 22, { align: 'center' });
-
-    // Document Title
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(16);
-    doc.setTextColor(primaryColor);
-    doc.text("Invigilator's Duty Summary", pageWidth / 2, 48, { align: 'center' });
-
-    const startY = 60;
+    doc.setFont('helvetica', 'normal');
+    const examName = assignedDuties.length > 0 ? assignedDuties[0].examName : (activeAllotment?.examinations[0]?.examName || 'Examination Name');
+    doc.text(examName, pageWidth / 2, 28, { align: 'center' });
     
-    // Personal Details
+    doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
+    doc.text("INVIGILATOR'S DUTY SUMMARY", pageWidth / 2, 35, { align: 'center' });
+
+    // 3. Personal Details Section
+    const startY = 52;
     doc.setTextColor(textColor);
     
-    doc.text('Name:', 15, startY);
-    doc.text('Designation:', pageWidth / 2, startY);
-    doc.text('Mobile No:', 15, startY + 7);
-    doc.text('E-Mail ID:', pageWidth / 2, startY + 7);
-    doc.text('No of Duties:', 15, startY + 14);
-    
-    doc.setFont('helvetica', 'normal');
-    doc.text(selectedInvigilator.name, 40, startY);
-    doc.text(selectedInvigilator.designation, (pageWidth / 2) + 25, startY);
-    doc.text(selectedInvigilator.mobile, 40, startY + 7);
-    doc.text(selectedInvigilator.email, (pageWidth / 2) + 25, startY + 7);
+    // Label Column
     doc.setFont('helvetica', 'bold');
-    doc.text(assignedDuties.length.toString().padStart(2, '0'), 40, startY + 14);
+    doc.setFontSize(9);
+    doc.text('Name:', 15, startY);
+    doc.text('Designation:', 15, startY + 7);
+    doc.text('Mobile:', 15, startY + 14);
+    doc.text('E-Mail:', 15, startY + 21);
+    
+    // Value Column
+    doc.setFont('helvetica', 'normal');
+    doc.text(selectedInvigilator.name, 45, startY);
+    doc.text(selectedInvigilator.designation, 45, startY + 7);
+    doc.text(selectedInvigilator.mobile, 45, startY + 14);
+    doc.text(selectedInvigilator.email, 45, startY + 21);
 
-    const head = [['Sl.No', 'Date', 'Day', 'Subject', 'Timings']];
+    // Load Counter (Right side)
+    doc.setFillColor(240, 240, 240);
+    doc.roundedRect(pageWidth - 45, startY - 4, 30, 28, 2, 2, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.text('TOTAL DUTIES', pageWidth - 30, startY + 2, { align: 'center' });
+    doc.setFontSize(18);
+    doc.setTextColor(primaryColor);
+    doc.text(assignedDuties.length.toString().padStart(2, '0'), pageWidth - 30, startY + 15, { align: 'center' });
+
+    // 4. Duties Table
+    const head = [['Sl.No', 'Date / Day', 'Subject', 'Timings']];
     const body = assignedDuties.map((duty, index) => [
       index + 1,
-      format(duty.date, "dd.MM.yyyy"),
-      format(duty.date, "EEEE"),
+      `${format(duty.date, "dd.MM.yyyy")}\n${format(duty.date, "EEEE")}`,
       duty.subject,
       `${duty.startTime} - ${duty.endTime}`,
     ]);
@@ -128,39 +141,44 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     (doc as any).autoTable({
         head: head,
         body: body,
-        startY: startY + 20,
+        startY: startY + 32,
         theme: 'grid',
         headStyles: {
-            fillColor: [240, 240, 240],
-            textColor: [30, 30, 30],
+            fillColor: [17, 93, 169], // Primary Blue
+            textColor: 255,
             fontStyle: 'bold',
             halign: 'center',
             fontSize: 8,
-            cellPadding: 2,
+            cellPadding: 3,
         },
         styles: {
-            cellPadding: 2,
+            cellPadding: 3,
             fontSize: 8,
-            textColor: textColor
+            textColor: textColor,
+            valign: 'middle'
         },
         columnStyles: {
             0: { halign: 'center', cellWidth: 10 },
-            1: { halign: 'left', fontStyle: 'bold' },
-            2: { halign: 'left' },
-            3: { halign: 'left', fontStyle: 'bold', textColor: [17, 93, 169] },
-            4: { halign: 'center' },
+            1: { halign: 'left', cellWidth: 25 },
+            2: { halign: 'left', fontStyle: 'bold', textColor: [17, 93, 169] },
+            3: { halign: 'center' },
         },
-        margin: { left: 15, right: 15 }
+        margin: { left: 15, right: 15 },
+        alternateRowStyles: {
+            fillColor: [245, 250, 255]
+        }
     });
 
-    const finalY = (doc as any).lastAutoTable.finalY || startY + 40;
+    const finalY = (doc as any).lastAutoTable.finalY || startY + 60;
 
-    // Wishing message
+    // 5. Closing Message
     doc.setFont('helvetica', 'italic');
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setTextColor(textColor);
-    doc.text("Wishing you a smooth and successful examination duty.", pageWidth / 2, finalY + 12, { align: 'center' });
+    const closingText = "Wishing you a smooth and successful examination duty.";
+    doc.text(closingText, pageWidth / 2, finalY + 15, { align: 'center' });
 
+    // Save PDF
     doc.save(`Duty_Summary_${selectedInvigilator.name.replace(/ /g, '_')}.pdf`);
   };
   
@@ -175,7 +193,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     );
   }
 
-  const examName = assignedDuties.length > 0 ? assignedDuties[0].examName : 'No duties assigned';
+  const examName = assignedDuties.length > 0 ? assignedDuties[0].examName : (activeAllotment?.examinations[0]?.examName || 'No duties assigned');
 
   return (
     <Card>
