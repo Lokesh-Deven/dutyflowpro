@@ -67,8 +67,8 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
       description: `Preparing summary for ${selectedInvigilator.name}.`,
     });
 
-    // A5 is standard half-page (148 x 210 mm)
-    const doc = new jsPDF({ orientation: 'portrait', format: 'a5' });
+    // A4 is standard page (210 x 297 mm)
+    const doc = new jsPDF({ orientation: 'portrait', format: 'a4' });
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     
@@ -84,7 +84,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     
     // 2. Header Text (College & Exam Name)
     doc.setFont('helvetica', 'bold');
-    let collegeFontSize = 14;
+    let collegeFontSize = 18; // Increased for A4
     doc.setFontSize(collegeFontSize);
     doc.setTextColor(headerTextColor);
     
@@ -97,43 +97,43 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     }
     doc.text(collegeName, pageWidth / 2, 15, { align: 'center' });
 
-    doc.setFontSize(10);
+    doc.setFontSize(12);
     doc.setFont('helvetica', 'normal');
     const examName = assignedDuties.length > 0 ? assignedDuties[0].examName : (activeAllotment?.examinations[0]?.examName || 'Examination Name');
     doc.text(examName, pageWidth / 2, 28, { align: 'center' });
     
-    doc.setFontSize(12);
+    doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.text("INVIGILATOR'S DUTY SUMMARY", pageWidth / 2, 35, { align: 'center' });
 
     // 3. Personal Details Section
-    const startY = 52;
+    const startY = 60; // Adjusted for A4
     doc.setTextColor(textColor);
     
     // Label Column
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
-    doc.text('Name:', 15, startY);
-    doc.text('Designation:', 15, startY + 7);
-    doc.text('Mobile:', 15, startY + 14);
-    doc.text('E-Mail:', 15, startY + 21);
+    doc.setFontSize(11);
+    doc.text('Name:', 20, startY);
+    doc.text('Designation:', 20, startY + 10);
+    doc.text('Mobile:', 20, startY + 20);
+    doc.text('E-Mail:', 20, startY + 30);
     
     // Value Column
     doc.setFont('helvetica', 'normal');
-    doc.text(selectedInvigilator.name, 45, startY);
-    doc.text(selectedInvigilator.designation, 45, startY + 7);
-    doc.text(selectedInvigilator.mobile, 45, startY + 14);
-    doc.text(selectedInvigilator.email, 45, startY + 21);
+    doc.text(selectedInvigilator.name, 55, startY);
+    doc.text(selectedInvigilator.designation, 55, startY + 10);
+    doc.text(selectedInvigilator.mobile, 55, startY + 20);
+    doc.text(selectedInvigilator.email, 55, startY + 30);
 
     // Load Counter (Right side)
     doc.setFillColor(240, 240, 240);
-    doc.roundedRect(pageWidth - 45, startY - 4, 30, 28, 2, 2, 'F');
+    doc.roundedRect(pageWidth - 60, startY - 5, 40, 38, 3, 3, 'F');
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
-    doc.text('TOTAL DUTIES', pageWidth - 30, startY + 2, { align: 'center' });
-    doc.setFontSize(18);
+    doc.setFontSize(10);
+    doc.text('TOTAL DUTIES', pageWidth - 40, startY + 5, { align: 'center' });
+    doc.setFontSize(24);
     doc.setTextColor(secondaryBlue);
-    doc.text(assignedDuties.length.toString().padStart(2, '0'), pageWidth - 30, startY + 15, { align: 'center' });
+    doc.text(assignedDuties.length.toString().padStart(2, '0'), pageWidth - 40, startY + 22, { align: 'center' });
 
     // 4. Duties Table
     const head = [['Sl.No', 'Date / Day', 'Subject', 'Timings']];
@@ -147,42 +147,42 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     (doc as any).autoTable({
         head: head,
         body: body,
-        startY: startY + 32,
+        startY: startY + 45,
         theme: 'grid',
         headStyles: {
             fillColor: [17, 93, 169], // Secondary Blue
             textColor: 255,
             fontStyle: 'bold',
             halign: 'center',
-            fontSize: 8,
-            cellPadding: 3,
+            fontSize: 10,
+            cellPadding: 5,
         },
         styles: {
-            cellPadding: 3,
-            fontSize: 8,
+            cellPadding: 4,
+            fontSize: 10,
             textColor: textColor,
             valign: 'middle'
         },
         columnStyles: {
-            0: { halign: 'center', cellWidth: 10 },
-            1: { halign: 'left', cellWidth: 25 },
+            0: { halign: 'center', cellWidth: 15 },
+            1: { halign: 'left', cellWidth: 35 },
             2: { halign: 'left', fontStyle: 'bold', textColor: [17, 93, 169] },
             3: { halign: 'center' },
         },
-        margin: { left: 15, right: 15 },
+        margin: { left: 20, right: 20 },
         alternateRowStyles: {
             fillColor: [245, 250, 255]
         }
     });
 
-    const finalY = (doc as any).lastAutoTable.finalY || startY + 60;
+    const finalY = (doc as any).lastAutoTable.finalY || startY + 80;
 
     // 5. Closing Message
     doc.setFont('helvetica', 'italic');
-    doc.setFontSize(9);
+    doc.setFontSize(11);
     doc.setTextColor(textColor);
     const closingText = "Wishing you a smooth and successful examination duty.";
-    doc.text(closingText, pageWidth / 2, finalY + 15, { align: 'center' });
+    doc.text(closingText, pageWidth / 2, finalY + 20, { align: 'center' });
 
     // 6. Solid Footer Banner
     const footerHeight = 10;
