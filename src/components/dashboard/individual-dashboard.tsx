@@ -70,26 +70,32 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     // A5 is standard half-page (148 x 210 mm)
     const doc = new jsPDF({ orientation: 'portrait', format: 'a5' });
     const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
     
     // Theme Colors
-    const primaryColor = '#115DA9'; 
+    const midnightBlue = '#1C304A'; // Midnight Blue
+    const secondaryBlue = '#115DA9'; // Interface Blue
     const textColor = '#1C304A';
     const headerTextColor = '#FFFFFF';
-    const lightBlue = [230, 240, 255]; // Light blue for alternating rows/headers
-
-    // --- Option 1: Premium Header Style ---
 
     // 1. Solid Header Banner
-    doc.setFillColor(primaryColor);
+    doc.setFillColor(midnightBlue);
     doc.rect(0, 0, pageWidth, 40, 'F');
     
     // 2. Header Text (College & Exam Name)
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
+    let collegeFontSize = 14;
+    doc.setFontSize(collegeFontSize);
     doc.setTextColor(headerTextColor);
-    const collegeName = activeAllotment?.examinations[0]?.college || "College Name";
-    const collegeLines = doc.splitTextToSize(collegeName.toUpperCase(), pageWidth - 20);
-    doc.text(collegeLines, pageWidth / 2, 15, { align: 'center' });
+    
+    const collegeName = (activeAllotment?.examinations[0]?.college || "College Name").toUpperCase();
+    
+    // Ensure college name fits on one line
+    while (doc.getTextWidth(collegeName) > (pageWidth - 20) && collegeFontSize > 8) {
+        collegeFontSize -= 0.5;
+        doc.setFontSize(collegeFontSize);
+    }
+    doc.text(collegeName, pageWidth / 2, 15, { align: 'center' });
 
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
@@ -126,7 +132,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     doc.setFontSize(8);
     doc.text('TOTAL DUTIES', pageWidth - 30, startY + 2, { align: 'center' });
     doc.setFontSize(18);
-    doc.setTextColor(primaryColor);
+    doc.setTextColor(secondaryBlue);
     doc.text(assignedDuties.length.toString().padStart(2, '0'), pageWidth - 30, startY + 15, { align: 'center' });
 
     // 4. Duties Table
@@ -144,7 +150,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
         startY: startY + 32,
         theme: 'grid',
         headStyles: {
-            fillColor: [17, 93, 169], // Primary Blue
+            fillColor: [17, 93, 169], // Secondary Blue
             textColor: 255,
             fontStyle: 'bold',
             halign: 'center',
@@ -177,6 +183,11 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     doc.setTextColor(textColor);
     const closingText = "Wishing you a smooth and successful examination duty.";
     doc.text(closingText, pageWidth / 2, finalY + 15, { align: 'center' });
+
+    // 6. Solid Footer Banner
+    const footerHeight = 10;
+    doc.setFillColor(midnightBlue);
+    doc.rect(0, pageHeight - footerHeight, pageWidth, footerHeight, 'F');
 
     // Save PDF
     doc.save(`Duty_Summary_${selectedInvigilator.name.replace(/ /g, '_')}.pdf`);
