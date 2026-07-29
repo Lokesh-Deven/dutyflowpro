@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
@@ -76,7 +75,6 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
   }, [initialAllotmentResult]);
 
   useEffect(() => {
-    // When the context changes the name (e.g. loading a saved allotment), update it here.
     setSaveName(activeAllotment?.name || 'New Allotment');
   }, [activeAllotment]);
 
@@ -145,8 +143,14 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
     doc.setFontSize(13);
     doc.text(staticTitle, doc.internal.pageSize.getWidth() / 2, 28, { align: 'center' });
 
+    // Prepare vertical header content for drawing later
+    const examHeaderLabels = examinations.map(exam => 
+      `${format(new Date(exam.date), "dd/MM/yy")} | ${exam.subject} | ${formatTimeTo12Hour(exam.startTime)} - ${formatTimeTo12Hour(exam.endTime)}`
+    );
+
+    // Create the header row for AutoTable, using empty strings for exams to draw manually
     const head = [
-        ['Sl.No', "Invigilator's Name", 'Designation', ...examinations.map(exam => `${format(new Date(exam.date), "dd/MM/yy")}\n${exam.subject}\n${formatTimeTo12Hour(exam.startTime)} - ${formatTimeTo12Hour(exam.endTime)}`), 'Total']
+        ['Sl.No', "Invigilator's Name", 'Designation', ...examinations.map(() => ''), 'Total']
     ];
 
     const body = invigilators.map((invigilator, index) => {
@@ -192,7 +196,9 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
             textColor: 255,
             fontStyle: 'bold',
             halign: 'center',
+            valign: 'middle',
             fontSize: 8,
+            minCellHeight: 50, // Added height to accommodate vertical text
         },
         footStyles: {
             fillColor: [240, 240, 240], // Light Grey
@@ -213,8 +219,27 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
             2: { halign: 'left', cellWidth: 35 },
             [examinations.length + 3]: { halign: 'center', cellWidth: 10, fontStyle: 'bold' } // Total column
         },
+        didDrawCell: (data: any) => {
+            // Handle vertical headers for examinations
+            if (data.section === 'head' && data.column.index >= 3 && data.column.index < head[0].length - 1) {
+                const doc = data.doc;
+                const cell = data.cell;
+                const text = examHeaderLabels[data.column.index - 3];
+                
+                doc.setFontSize(7);
+                doc.setTextColor(255);
+                doc.setFont('helvetica', 'bold');
+                
+                // Draw rotated text.
+                // 90 degrees rotation points upwards.
+                // Center horizontally in the cell and align slightly above the bottom.
+                const x = cell.x + (cell.width / 2) + 1.5;
+                const y = cell.y + cell.height - 4;
+                
+                doc.text(text, x, y, { angle: 90 });
+            }
+        },
         didDrawPage: (data: any) => {
-            // Add page numbers
             doc.setFontSize(10);
             doc.text(
                 `Page ${data.pageNumber} of ${doc.getNumberOfPages()}`,
@@ -365,10 +390,3 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
     </TooltipProvider>
   );
 }
-
-    
-
-    
-
-
-
