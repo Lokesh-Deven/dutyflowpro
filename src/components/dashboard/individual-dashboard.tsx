@@ -72,7 +72,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     
-    // Theme Colors
+    // Theme Colors (Midnight Blue)
     const midnightBlue = '#1C304A';
     const secondaryBlue = '#115DA9';
     const textColor = '#1C304A';
@@ -98,13 +98,13 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     }
     doc.text(collegeName, pageWidth / 2, 15, { align: 'center' });
 
-    // Name of the exam: 14 (Normal)
+    // Name of the exam: 14 (Normal) - Positioned closer to college (Y=22)
     doc.setFontSize(14);
     doc.setFont('helvetica', 'normal');
     const examName = assignedDuties.length > 0 ? assignedDuties[0].examName : (activeAllotment?.examinations[0]?.examName || 'Examination Name');
-    doc.text(examName, pageWidth / 2, 28, { align: 'center' });
+    doc.text(examName, pageWidth / 2, 22, { align: 'center' });
     
-    // INVIGILATOR'S DUTY SUMMARY: 14 (Bold)
+    // INVIGILATOR'S DUTY SUMMARY: 14 (Bold) - Positioned further away (Y=35)
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.text("INVIGILATOR'S DUTY SUMMARY", pageWidth / 2, 35, { align: 'center' });
