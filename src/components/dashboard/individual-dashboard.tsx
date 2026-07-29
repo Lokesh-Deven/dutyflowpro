@@ -181,7 +181,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     doc.setFillColor(midnightBlue);
     doc.rect(0, pageHeight - 10, pageWidth, 10, 'F');
 
-    doc.save(`Duty_Summary_${selectedInvigilator.name.replace(/ /g, '_')}.pdf`);
+    doc.save(`${selectedInvigilator.name.replace(/ /g, '_')}.pdf`);
   };
   
   if (invigilators.length === 0) {
