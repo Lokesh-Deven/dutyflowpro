@@ -77,7 +77,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
 
     // Header Banner
     doc.setFillColor(midnightBlue);
-    doc.rect(0, 0, pageWidth, 50, 'F'); // Increased height to 50 to accommodate spacing
+    doc.rect(0, 0, pageWidth, 50, 'F');
     
     doc.setFont('helvetica', 'bold');
     let collegeFontSize = 18;
@@ -93,17 +93,18 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     }
     doc.text(collegeName, pageWidth / 2, 15, { align: 'center' });
 
-    doc.setFontSize(16); // Increased font size for exam name to 16
+    doc.setFontSize(16);
     doc.setFont('helvetica', 'normal');
     const examName = assignedDuties.length > 0 ? assignedDuties[0].examName : (activeAllotment?.examinations[0]?.examName || 'Examination Name');
-    doc.text(examName, pageWidth / 2, 28, { align: 'center' });
+    // Space 1.0 from college (approx 7-8 units)
+    doc.text(examName, pageWidth / 2, 23, { align: 'center' });
     
-    doc.setFontSize(16); // Increased title font size to 16
+    doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    // Positioned at 46 to leave approx 2.0 (approx 18 units) space from exam name (at 28)
-    doc.text("INVIGILATOR'S DUTY SUMMARY", pageWidth / 2, 46, { align: 'center' });
+    // Space 1.5 from exam (approx 12 units)
+    doc.text("INVIGILATOR'S DUTY SUMMARY", pageWidth / 2, 35, { align: 'center' });
 
-    const startY = 70; // Pushed down content to account for taller header
+    const startY = 60; // Slightly pulled up content
     doc.setTextColor(textColor);
     
     doc.setFont('helvetica', 'bold');
@@ -143,7 +144,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
         startY: startY + 45,
         theme: 'grid',
         headStyles: {
-            fillColor: [28, 48, 74], // Midnight blue
+            fillColor: [28, 48, 74],
             textColor: 255,
             fontStyle: 'bold',
             halign: 'center',
