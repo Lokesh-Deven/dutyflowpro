@@ -136,12 +136,21 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
     const subtitle = `${examInfo?.examName || 'Invigilation Duty Allotment'}`;
     const staticTitle = "Invigilation Duty Allotment Sheet";
     
+    doc.setFont('helvetica', 'bold');
     doc.setFontSize(20);
     doc.text(title, doc.internal.pageSize.getWidth() / 2, 12, { align: 'center' });
+    
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(15);
     doc.text(subtitle, doc.internal.pageSize.getWidth() / 2, 19, { align: 'center' });
+    
+    // Add space and bold style for the static title
+    doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
-    doc.text(staticTitle, doc.internal.pageSize.getWidth() / 2, 25, { align: 'center' });
+    doc.text(staticTitle, doc.internal.pageSize.getWidth() / 2, 28, { align: 'center' });
+    
+    // Reset to normal for table
+    doc.setFont('helvetica', 'normal');
 
     // Prepare vertical header data for 3-line rotation
     const examHeaderData = examinations.map(exam => ({
@@ -191,7 +200,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
             ['', 'Total Invigilators', '', ...examinations.map(exam => exam.rooms + exam.relievers), totalInvigilatorsRequired],
             ['', 'Total Duties Allotted', '', ...dutiesPerExam, totalDutiesAllotted],
         ],
-        startY: 32,
+        startY: 35, // Adjusted slightly lower due to increased title spacing
         theme: 'grid',
         headStyles: {
             fillColor: [17, 93, 169], // Interface Blue (#115DA9)
@@ -200,7 +209,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
             halign: 'center',
             valign: 'middle',
             fontSize: 8,
-            minCellHeight: 45, // Reduced from 60 to remove empty space
+            minCellHeight: 45,
         },
         footStyles: {
             fillColor: [240, 240, 240], // Light Grey
