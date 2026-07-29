@@ -93,14 +93,14 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     }
     doc.text(collegeName, pageWidth / 2, 18, { align: 'center' });
 
-    doc.setFontSize(14);
+    doc.setFontSize(14); // Increased font size for exam name
     doc.setFont('helvetica', 'normal');
     const examName = assignedDuties.length > 0 ? assignedDuties[0].examName : (activeAllotment?.examinations[0]?.examName || 'Examination Name');
-    doc.text(examName, pageWidth / 2, 24, { align: 'center' });
+    // Positioned at 28 to leave approx 1.5 line height space from college name (at 18)
+    doc.text(examName, pageWidth / 2, 28, { align: 'center' });
     
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    // Spacing adjustment: move title down by increasing Y
     doc.text("INVIGILATOR'S DUTY SUMMARY", pageWidth / 2, 36, { align: 'center' });
 
     const startY = 60;
