@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { cn, formatTimeTo12Hour } from "@/lib/utils";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -251,7 +251,7 @@ export function ExaminationManagement() {
             <form className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField control={form.control} name="college" render={({ field }) => (
-                  <FormItem><FormLabel>Name of the College</FormLabel><FormControl><Input placeholder="e.g. Seshadripuram Independent Pre-UIniversity College" {...field} className="bg-slate-100 dark:bg-slate-800" /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>Name of the College</FormLabel><FormControl><Input placeholder="e.g. Seshadripuram College" {...field} className="bg-slate-100 dark:bg-slate-800" /></FormControl><FormMessage /></FormItem>
                 )}/>
                 <FormField control={form.control} name="examName" render={({ field }) => (
                   <FormItem><FormLabel>Name of the Examination</FormLabel><FormControl><Input {...field} placeholder="e.g. Annual Examination, March 2025" className="bg-slate-100 dark:bg-slate-800" /></FormControl><FormMessage /></FormItem>
@@ -264,7 +264,6 @@ export function ExaminationManagement() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
-                        {/* Row 1: Date and Bulk Upload */}
                         <div className="md:col-span-2">
                              <FormField control={form.control} name="date" render={({ field }) => (
                                 <FormItem className="flex flex-col">
@@ -303,7 +302,6 @@ export function ExaminationManagement() {
                             <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".xlsx, .xls, .csv" />
                         </div>
 
-                        {/* Row 2: Subject, Rooms, Relievers */}
                         <div className="md:col-span-2">
                            <Label>Subject</Label>
                             <Select value={sessionDetails.subject} onValueChange={(value) => handleSessionDetailChange('subject', value)}>
@@ -348,7 +346,6 @@ export function ExaminationManagement() {
                             </Select>
                         </div>
                         
-                        {/* Row 3: Timings */}
                         <div className="md:col-span-2">
                            <Label>Time</Label>
                             <div className="grid grid-cols-3 gap-2">
@@ -402,7 +399,7 @@ export function ExaminationManagement() {
                               <TableCell>{format(exam.date, "dd/MM/yyyy")}</TableCell>
                               <TableCell>{format(exam.date, "EEEE")}</TableCell>
                               <TableCell className="font-medium">{exam.subject}</TableCell>
-                              <TableCell>{exam.startTime} - {exam.endTime}</TableCell>
+                              <TableCell>{formatTimeTo12Hour(exam.startTime)} to {formatTimeTo12Hour(exam.endTime)}</TableCell>
                               <TableCell>{exam.rooms}</TableCell>
                               <TableCell>{exam.relievers}</TableCell>
                               <TableCell className="text-right">

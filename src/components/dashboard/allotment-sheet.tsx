@@ -13,7 +13,7 @@ import { useAllotment } from '@/lib/allotment-context';
 import { optimizeDutyAssignments } from '@/ai/flows/optimize-duty-assignments';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { cn } from '@/lib/utils';
+import { cn, formatTimeTo12Hour } from '@/lib/utils';
 import {
   Tooltip,
   TooltipContent,
@@ -114,15 +114,6 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
     })
   }
 
-  const formatTimeTo12Hour = (time: string) => {
-    if (!time) return '';
-    const [hours, minutes] = time.split(':');
-    const h = parseInt(hours, 10);
-    const period = h >= 12 ? 'PM' : 'AM';
-    const adjustedHour = h % 12 || 12;
-    return `${adjustedHour.toString().padStart(2, '0')}:${minutes} ${period}`;
-  };
-
   const handleDownload = () => {
     toast({
       title: "Generating PDF...",
@@ -144,22 +135,18 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
     doc.setFontSize(15);
     doc.text(subtitle, doc.internal.pageSize.getWidth() / 2, 19, { align: 'center' });
     
-    // Add space and bold style for the static title
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
     doc.text(staticTitle, doc.internal.pageSize.getWidth() / 2, 28, { align: 'center' });
     
-    // Reset to normal for table
     doc.setFont('helvetica', 'normal');
 
-    // Prepare vertical header data for 3-line rotation
     const examHeaderData = examinations.map(exam => ({
         date: format(new Date(exam.date), "dd/MM/yy"),
         subject: exam.subject,
-        time: `${formatTimeTo12Hour(exam.startTime)} - ${formatTimeTo12Hour(exam.endTime)}`
+        time: `${formatTimeTo12Hour(exam.startTime)} to ${formatTimeTo12Hour(exam.endTime)}`
     }));
 
-    // Create the header row for AutoTable, using empty strings for exams to draw manually
     const head = [
         ['Sl.No', "Invigilator's Name", 'Designation', ...examinations.map(() => ''), 'Total']
     ];
@@ -200,10 +187,10 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
             ['', 'Total Invigilators', '', ...examinations.map(exam => exam.rooms + exam.relievers), totalInvigilatorsRequired],
             ['', 'Total Duties Allotted', '', ...dutiesPerExam, totalDutiesAllotted],
         ],
-        startY: 35, // Adjusted slightly lower due to increased title spacing
+        startY: 35,
         theme: 'grid',
         headStyles: {
-            fillColor: [17, 93, 169], // Interface Blue (#115DA9)
+            fillColor: [17, 93, 169],
             textColor: 255,
             fontStyle: 'bold',
             halign: 'center',
@@ -212,7 +199,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
             minCellHeight: 45,
         },
         footStyles: {
-            fillColor: [240, 240, 240], // Light Grey
+            fillColor: [240, 240, 240],
             textColor: [0, 0, 0],
             fontStyle: 'bold',
             fontSize: 9,
@@ -228,10 +215,9 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
             0: { halign: 'center', cellWidth: 10 },
             1: { halign: 'left', cellWidth: 35 },
             2: { halign: 'left', cellWidth: 35 },
-            [examinations.length + 3]: { halign: 'center', cellWidth: 10, fontStyle: 'bold' } // Total column
+            [examinations.length + 3]: { halign: 'center', cellWidth: 10, fontStyle: 'bold' }
         },
         didDrawCell: (data: any) => {
-            // Handle vertical headers for examinations with 3 lines
             if (data.section === 'head' && data.column.index >= 3 && data.column.index < head[0].length - 1) {
                 const doc = data.doc;
                 const cell = data.cell;
@@ -241,19 +227,12 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                 doc.setTextColor(255);
                 doc.setFont('helvetica', 'bold');
                 
-                // Draw rotated text lines.
-                // 90 degrees rotation points upwards.
                 const centerX = cell.x + (cell.width / 2);
                 const startY = cell.y + cell.height - 3;
                 
-                // Line 1: Date
                 doc.text(info.date, centerX - 3, startY, { angle: 90 });
-                
-                // Line 2: Subject
                 doc.setFontSize(7);
                 doc.text(info.subject, centerX, startY, { angle: 90 });
-                
-                // Line 3: Timings
                 doc.setFontSize(6);
                 doc.text(info.time, centerX + 3, startY, { angle: 90 });
             }
@@ -310,7 +289,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                       <div className="flex flex-col items-start w-full">
                         <span className="text-xs font-normal text-muted-foreground">{format(new Date(exam.date), "dd/MM/yy")}</span>
                         <span className="font-bold">{exam.subject}</span>
-                        <span className="text-xs font-normal text-muted-foreground">{exam.startTime} - {exam.endTime}</span>
+                        <span className="text-xs font-normal text-muted-foreground">{formatTimeTo12Hour(exam.startTime)} to {formatTimeTo12Hour(exam.endTime)}</span>
                       </div>
                     </TableHead>
                   ))}

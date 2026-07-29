@@ -1,5 +1,4 @@
 
-
 "use client"
 
 import { useState, useMemo } from "react";
@@ -14,6 +13,7 @@ import { Download, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { formatTimeTo12Hour } from "@/lib/utils";
 
 interface DutySlot {
     time: string;
@@ -27,15 +27,6 @@ export default function SchedulePage() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const { toast } = useToast();
 
-  const formatTimeTo12Hour = (time: string) => {
-    if (!time) return '';
-    const [hours, minutes] = time.split(':');
-    const h = parseInt(hours, 10);
-    const period = h >= 12 ? 'PM' : 'AM';
-    const adjustedHour = h % 12 || 12;
-    return `${adjustedHour.toString().padStart(2, '0')}:${minutes} ${period}`;
-  };
-
   const dailySlots = useMemo(() => {
     if (!date || !activeAllotment?.assignments) return [];
 
@@ -47,16 +38,14 @@ export default function SchedulePage() {
 
     const slots: Record<string, { duties: Examination[], invigilatorIds: Set<string> }> = {};
 
-    // Group exams by time slot
     for (const exam of examsOnDay) {
-        const timeSlot = `${formatTimeTo12Hour(exam.startTime)} - ${formatTimeTo12Hour(exam.endTime)}`;
+        const timeSlot = `${formatTimeTo12Hour(exam.startTime)} to ${formatTimeTo12Hour(exam.endTime)}`;
         if (!slots[timeSlot]) {
             slots[timeSlot] = { duties: [], invigilatorIds: new Set<string>() };
         }
         slots[timeSlot].duties.push(exam);
     }
     
-    // Find invigilators for each exam in each slot
     for(const timeSlot in slots) {
         const examsInSlot = slots[timeSlot].duties;
         const examIdsInSlot = new Set(examsInSlot.map(e => e.id));
@@ -71,13 +60,12 @@ export default function SchedulePage() {
         }
     }
 
-    // Map to final structure
     return Object.entries(slots).map(([time, data]): DutySlot => ({
         time,
         duties: data.duties,
         invigilators: invigilators.filter(inv => data.invigilatorIds.has(inv.id)),
         subjects: data.duties.map(d => d.subject).join(' | '),
-    })).sort((a,b) => a.time.localeCompare(b.time)); // Sort slots by time
+    })).sort((a,b) => a.time.localeCompare(b.time));
 
   }, [date, examinations, invigilators, activeAllotment]);
 
