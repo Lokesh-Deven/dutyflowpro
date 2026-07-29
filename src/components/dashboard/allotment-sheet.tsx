@@ -137,11 +137,11 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
     const staticTitle = "Invigilation Duty Allotment Sheet";
     
     doc.setFontSize(20);
-    doc.text(title, doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
+    doc.text(title, doc.internal.pageSize.getWidth() / 2, 12, { align: 'center' });
     doc.setFontSize(15);
-    doc.text(subtitle, doc.internal.pageSize.getWidth() / 2, 22, { align: 'center' });
+    doc.text(subtitle, doc.internal.pageSize.getWidth() / 2, 19, { align: 'center' });
     doc.setFontSize(13);
-    doc.text(staticTitle, doc.internal.pageSize.getWidth() / 2, 28, { align: 'center' });
+    doc.text(staticTitle, doc.internal.pageSize.getWidth() / 2, 25, { align: 'center' });
 
     // Prepare vertical header data for 3-line rotation
     const examHeaderData = examinations.map(exam => ({
@@ -191,16 +191,16 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
             ['', 'Total Invigilators', '', ...examinations.map(exam => exam.rooms + exam.relievers), totalInvigilatorsRequired],
             ['', 'Total Duties Allotted', '', ...dutiesPerExam, totalDutiesAllotted],
         ],
-        startY: 35,
+        startY: 32,
         theme: 'grid',
         headStyles: {
-            fillColor: [0, 51, 102], // Dark Blue
+            fillColor: [17, 93, 169], // Interface Blue (#115DA9)
             textColor: 255,
             fontStyle: 'bold',
             halign: 'center',
             valign: 'middle',
             fontSize: 8,
-            minCellHeight: 60, // Increased to fit 3 lines clearly
+            minCellHeight: 45, // Reduced from 60 to remove empty space
         },
         footStyles: {
             fillColor: [240, 240, 240], // Light Grey
@@ -234,18 +234,17 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                 
                 // Draw rotated text lines.
                 // 90 degrees rotation points upwards.
-                // We draw 3 lines side by side by adjusting the x-coordinate.
                 const centerX = cell.x + (cell.width / 2);
-                const startY = cell.y + cell.height - 4;
+                const startY = cell.y + cell.height - 3;
                 
-                // Line 1: Date (drawn left-most relative to the text block)
+                // Line 1: Date
                 doc.text(info.date, centerX - 3, startY, { angle: 90 });
                 
-                // Line 2: Subject (drawn in the center)
+                // Line 2: Subject
                 doc.setFontSize(7);
                 doc.text(info.subject, centerX, startY, { angle: 90 });
                 
-                // Line 3: Timings (drawn right-most)
+                // Line 3: Timings
                 doc.setFontSize(6);
                 doc.text(info.time, centerX + 3, startY, { angle: 90 });
             }
