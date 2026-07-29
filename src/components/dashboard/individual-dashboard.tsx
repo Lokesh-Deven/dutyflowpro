@@ -77,7 +77,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
 
     // Header Banner
     doc.setFillColor(midnightBlue);
-    doc.rect(0, 0, pageWidth, 40, 'F');
+    doc.rect(0, 0, pageWidth, 50, 'F'); // Increased height to 50 to accommodate spacing
     
     doc.setFont('helvetica', 'bold');
     let collegeFontSize = 18;
@@ -91,19 +91,19 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
         collegeFontSize -= 0.5;
         doc.setFontSize(collegeFontSize);
     }
-    doc.text(collegeName, pageWidth / 2, 18, { align: 'center' });
+    doc.text(collegeName, pageWidth / 2, 15, { align: 'center' });
 
-    doc.setFontSize(14); // Increased font size for exam name
+    doc.setFontSize(16); // Increased font size for exam name to 16
     doc.setFont('helvetica', 'normal');
     const examName = assignedDuties.length > 0 ? assignedDuties[0].examName : (activeAllotment?.examinations[0]?.examName || 'Examination Name');
-    // Positioned at 28 to leave approx 1.5 line height space from college name (at 18)
     doc.text(examName, pageWidth / 2, 28, { align: 'center' });
     
-    doc.setFontSize(14);
+    doc.setFontSize(16); // Increased title font size to 16
     doc.setFont('helvetica', 'bold');
-    doc.text("INVIGILATOR'S DUTY SUMMARY", pageWidth / 2, 36, { align: 'center' });
+    // Positioned at 46 to leave approx 2.0 (approx 18 units) space from exam name (at 28)
+    doc.text("INVIGILATOR'S DUTY SUMMARY", pageWidth / 2, 46, { align: 'center' });
 
-    const startY = 60;
+    const startY = 70; // Pushed down content to account for taller header
     doc.setTextColor(textColor);
     
     doc.setFont('helvetica', 'bold');
@@ -173,7 +173,6 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(11);
     doc.setTextColor(textColor);
-    // Removed period and set size to 11 as requested
     const closingText = "Wishing you a smooth and successful examination duty";
     doc.text(closingText, pageWidth / 2, finalY + 20, { align: 'center' });
 
