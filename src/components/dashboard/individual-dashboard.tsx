@@ -101,7 +101,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    // Space 1.5 from exam (approx 12 units)
+    // Space 2.0 from exam (approx 12 units)
     doc.text("INVIGILATOR'S DUTY SUMMARY", pageWidth / 2, 35, { align: 'center' });
 
     const startY = 60; // Slightly pulled up content
