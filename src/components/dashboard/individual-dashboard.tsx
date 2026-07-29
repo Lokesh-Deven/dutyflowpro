@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -77,6 +76,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     const textColor = '#1C304A';
     const headerTextColor = '#FFFFFF';
 
+    // Header Banner
     doc.setFillColor(midnightBlue);
     doc.rect(0, 0, pageWidth, 40, 'F');
     
@@ -87,20 +87,21 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     
     const collegeName = activeAllotment?.examinations[0]?.college || "College Name";
     
+    // Auto-fit college name on one line
     while (doc.getTextWidth(collegeName) > (pageWidth - 20) && collegeFontSize > 8) {
         collegeFontSize -= 0.5;
         doc.setFontSize(collegeFontSize);
     }
-    doc.text(collegeName, pageWidth / 2, 15, { align: 'center' });
+    doc.text(collegeName, pageWidth / 2, 18, { align: 'center' });
 
     doc.setFontSize(14);
     doc.setFont('helvetica', 'normal');
     const examName = assignedDuties.length > 0 ? assignedDuties[0].examName : (activeAllotment?.examinations[0]?.examName || 'Examination Name');
-    doc.text(examName, pageWidth / 2, 22, { align: 'center' });
+    doc.text(examName, pageWidth / 2, 25, { align: 'center' });
     
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text("INVIGILATOR'S DUTY SUMMARY", pageWidth / 2, 35, { align: 'center' });
+    doc.text("INVIGILATOR'S DUTY SUMMARY", pageWidth / 2, 38, { align: 'center' });
 
     const startY = 60;
     doc.setTextColor(textColor);
@@ -118,6 +119,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     doc.text(selectedInvigilator.mobile, 55, startY + 20);
     doc.text(selectedInvigilator.email, 55, startY + 30);
 
+    // Summary Card
     doc.setFillColor(240, 240, 240);
     doc.roundedRect(pageWidth - 60, startY - 5, 40, 38, 3, 3, 'F');
     doc.setFont('helvetica', 'bold');
@@ -132,7 +134,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
       index + 1,
       `${format(duty.date, "dd.MM.yyyy")}\n${format(duty.date, "EEEE")}`,
       duty.subject,
-      `${formatTimeTo12Hour(duty.startTime)} to ${formatTimeTo12Hour(duty.endTime)}`,
+      `${formatTimeTo12Hour(duty.startTime)} - ${formatTimeTo12Hour(duty.endTime)}`,
     ]);
 
     (doc as any).autoTable({
@@ -174,6 +176,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     const closingText = "Wishing you a smooth and successful examination duty.";
     doc.text(closingText, pageWidth / 2, finalY + 20, { align: 'center' });
 
+    // Footer
     const footerHeight = 10;
     doc.setFillColor(midnightBlue);
     doc.rect(0, pageHeight - footerHeight, pageWidth, footerHeight, 'F');
@@ -244,7 +247,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
                         <p className="font-medium">{format(duty.date, 'PPP')} ({format(duty.date, 'EEEE')})</p>
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        <span className="text-primary font-semibold">{duty.subject}</span> | {formatTimeTo12Hour(duty.startTime)} to {formatTimeTo12Hour(duty.endTime)}
+                        <span className="text-primary font-semibold">{duty.subject}</span> | {formatTimeTo12Hour(duty.startTime)} - {formatTimeTo12Hour(duty.endTime)}
                       </p>
                     </li>
                   ))}

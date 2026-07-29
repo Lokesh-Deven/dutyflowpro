@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo } from "react";
@@ -39,7 +38,7 @@ export default function SchedulePage() {
     const slots: Record<string, { duties: Examination[], invigilatorIds: Set<string> }> = {};
 
     for (const exam of examsOnDay) {
-        const timeSlot = `${formatTimeTo12Hour(exam.startTime)} to ${formatTimeTo12Hour(exam.endTime)}`;
+        const timeSlot = `${formatTimeTo12Hour(exam.startTime)} - ${formatTimeTo12Hour(exam.endTime)}`;
         if (!slots[timeSlot]) {
             slots[timeSlot] = { duties: [], invigilatorIds: new Set<string>() };
         }

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
@@ -127,24 +126,28 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
     const subtitle = `${examInfo?.examName || 'Invigilation Duty Allotment'}`;
     const staticTitle = "Invigilation Duty Allotment Sheet";
     
+    // Tighten layout by reducing initial Y and title spacing
+    let currentY = 12;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(20);
-    doc.text(title, doc.internal.pageSize.getWidth() / 2, 12, { align: 'center' });
+    doc.text(title, doc.internal.pageSize.getWidth() / 2, currentY, { align: 'center' });
     
+    currentY += 8;
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(15);
-    doc.text(subtitle, doc.internal.pageSize.getWidth() / 2, 19, { align: 'center' });
+    doc.text(subtitle, doc.internal.pageSize.getWidth() / 2, currentY, { align: 'center' });
     
+    currentY += 10; // Extra space as requested
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
-    doc.text(staticTitle, doc.internal.pageSize.getWidth() / 2, 28, { align: 'center' });
+    doc.text(staticTitle, doc.internal.pageSize.getWidth() / 2, currentY, { align: 'center' });
     
     doc.setFont('helvetica', 'normal');
 
     const examHeaderData = examinations.map(exam => ({
         date: format(new Date(exam.date), "dd/MM/yy"),
         subject: exam.subject,
-        time: `${formatTimeTo12Hour(exam.startTime)} to ${formatTimeTo12Hour(exam.endTime)}`
+        time: `${formatTimeTo12Hour(exam.startTime)} - ${formatTimeTo12Hour(exam.endTime)}`
     }));
 
     const head = [
@@ -187,7 +190,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
             ['', 'Total Invigilators', '', ...examinations.map(exam => exam.rooms + exam.relievers), totalInvigilatorsRequired],
             ['', 'Total Duties Allotted', '', ...dutiesPerExam, totalDutiesAllotted],
         ],
-        startY: 35,
+        startY: currentY + 7,
         theme: 'grid',
         headStyles: {
             fillColor: [17, 93, 169],
@@ -196,7 +199,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
             halign: 'center',
             valign: 'middle',
             fontSize: 8,
-            minCellHeight: 45,
+            minCellHeight: 35, // Reduced from 45 for tighter header
         },
         footStyles: {
             fillColor: [240, 240, 240],
@@ -223,18 +226,18 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                 const cell = data.cell;
                 const info = examHeaderData[data.column.index - 3];
                 
-                doc.setFontSize(6.5);
+                doc.setFontSize(7);
                 doc.setTextColor(255);
                 doc.setFont('helvetica', 'bold');
                 
                 const centerX = cell.x + (cell.width / 2);
-                const startY = cell.y + cell.height - 3;
+                const baselineY = cell.y + cell.height - 3;
                 
-                doc.text(info.date, centerX - 3, startY, { angle: 90 });
-                doc.setFontSize(7);
-                doc.text(info.subject, centerX, startY, { angle: 90 });
+                // Draw headers in 3 vertical lines: Date, Subject, Time
+                doc.text(info.date, centerX - 3, baselineY, { angle: 90 });
+                doc.text(info.subject, centerX, baselineY, { angle: 90 });
                 doc.setFontSize(6);
-                doc.text(info.time, centerX + 3, startY, { angle: 90 });
+                doc.text(info.time, centerX + 3, baselineY, { angle: 90 });
             }
         },
         didDrawPage: (data: any) => {
@@ -289,7 +292,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                       <div className="flex flex-col items-start w-full">
                         <span className="text-xs font-normal text-muted-foreground">{format(new Date(exam.date), "dd/MM/yy")}</span>
                         <span className="font-bold">{exam.subject}</span>
-                        <span className="text-xs font-normal text-muted-foreground">{formatTimeTo12Hour(exam.startTime)} to {formatTimeTo12Hour(exam.endTime)}</span>
+                        <span className="text-xs font-normal text-muted-foreground">{formatTimeTo12Hour(exam.startTime)} - {formatTimeTo12Hour(exam.endTime)}</span>
                       </div>
                     </TableHead>
                   ))}

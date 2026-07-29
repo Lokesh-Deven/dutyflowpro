@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo, useRef, useState } from 'react';
@@ -399,7 +398,7 @@ export function ExaminationManagement() {
                               <TableCell>{format(exam.date, "dd/MM/yyyy")}</TableCell>
                               <TableCell>{format(exam.date, "EEEE")}</TableCell>
                               <TableCell className="font-medium">{exam.subject}</TableCell>
-                              <TableCell>{formatTimeTo12Hour(exam.startTime)} to {formatTimeTo12Hour(exam.endTime)}</TableCell>
+                              <TableCell>{formatTimeTo12Hour(exam.startTime)} - {formatTimeTo12Hour(exam.endTime)}</TableCell>
                               <TableCell>{exam.rooms}</TableCell>
                               <TableCell>{exam.relievers}</TableCell>
                               <TableCell className="text-right">
