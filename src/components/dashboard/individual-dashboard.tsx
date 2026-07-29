@@ -96,7 +96,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     doc.setFontSize(16);
     doc.setFont('helvetica', 'normal');
     const examName = assignedDuties.length > 0 ? assignedDuties[0].examName : (activeAllotment?.examinations[0]?.examName || 'Examination Name');
-    // Space 1.0 from college (approx 7-8 units)
+    // Space 1.0 from college
     doc.text(examName, pageWidth / 2, 23, { align: 'center' });
     
     doc.setFontSize(16);
@@ -104,7 +104,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     // Space 2.0 from exam (approx 12 units)
     doc.text("INVIGILATOR'S DUTY SUMMARY", pageWidth / 2, 35, { align: 'center' });
 
-    const startY = 60; // Slightly pulled up content
+    const startY = 60;
     doc.setTextColor(textColor);
     
     doc.setFont('helvetica', 'bold');
@@ -172,7 +172,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     const finalY = (doc as any).lastAutoTable.finalY || startY + 80;
 
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(11);
+    doc.setFontSize(12);
     doc.setTextColor(textColor);
     const closingText = "Wishing you a smooth and successful examination duty";
     doc.text(closingText, pageWidth / 2, finalY + 20, { align: 'center' });
@@ -181,7 +181,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     doc.setFillColor(midnightBlue);
     doc.rect(0, pageHeight - 10, pageWidth, 10, 'F');
 
-    doc.save(`${selectedInvigilator.name.replace(/ /g, '_')}.pdf`);
+    doc.save(`Duty_Summary_${selectedInvigilator.name.replace(/ /g, '_')}.pdf`);
   };
   
   if (invigilators.length === 0) {
