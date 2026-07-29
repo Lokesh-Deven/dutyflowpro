@@ -143,10 +143,12 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
     doc.setFontSize(13);
     doc.text(staticTitle, doc.internal.pageSize.getWidth() / 2, 28, { align: 'center' });
 
-    // Prepare vertical header content for drawing later
-    const examHeaderLabels = examinations.map(exam => 
-      `${format(new Date(exam.date), "dd/MM/yy")} | ${exam.subject} | ${formatTimeTo12Hour(exam.startTime)} - ${formatTimeTo12Hour(exam.endTime)}`
-    );
+    // Prepare vertical header data for 3-line rotation
+    const examHeaderData = examinations.map(exam => ({
+        date: format(new Date(exam.date), "dd/MM/yy"),
+        subject: exam.subject,
+        time: `${formatTimeTo12Hour(exam.startTime)} - ${formatTimeTo12Hour(exam.endTime)}`
+    }));
 
     // Create the header row for AutoTable, using empty strings for exams to draw manually
     const head = [
@@ -198,7 +200,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
             halign: 'center',
             valign: 'middle',
             fontSize: 8,
-            minCellHeight: 50, // Added height to accommodate vertical text
+            minCellHeight: 60, // Increased to fit 3 lines clearly
         },
         footStyles: {
             fillColor: [240, 240, 240], // Light Grey
@@ -220,23 +222,32 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
             [examinations.length + 3]: { halign: 'center', cellWidth: 10, fontStyle: 'bold' } // Total column
         },
         didDrawCell: (data: any) => {
-            // Handle vertical headers for examinations
+            // Handle vertical headers for examinations with 3 lines
             if (data.section === 'head' && data.column.index >= 3 && data.column.index < head[0].length - 1) {
                 const doc = data.doc;
                 const cell = data.cell;
-                const text = examHeaderLabels[data.column.index - 3];
+                const info = examHeaderData[data.column.index - 3];
                 
-                doc.setFontSize(7);
+                doc.setFontSize(6.5);
                 doc.setTextColor(255);
                 doc.setFont('helvetica', 'bold');
                 
-                // Draw rotated text.
+                // Draw rotated text lines.
                 // 90 degrees rotation points upwards.
-                // Center horizontally in the cell and align slightly above the bottom.
-                const x = cell.x + (cell.width / 2) + 1.5;
-                const y = cell.y + cell.height - 4;
+                // We draw 3 lines side by side by adjusting the x-coordinate.
+                const centerX = cell.x + (cell.width / 2);
+                const startY = cell.y + cell.height - 4;
                 
-                doc.text(text, x, y, { angle: 90 });
+                // Line 1: Date (drawn left-most relative to the text block)
+                doc.text(info.date, centerX - 3, startY, { angle: 90 });
+                
+                // Line 2: Subject (drawn in the center)
+                doc.setFontSize(7);
+                doc.text(info.subject, centerX, startY, { angle: 90 });
+                
+                // Line 3: Timings (drawn right-most)
+                doc.setFontSize(6);
+                doc.text(info.time, centerX + 3, startY, { angle: 90 });
             }
         },
         didDrawPage: (data: any) => {
