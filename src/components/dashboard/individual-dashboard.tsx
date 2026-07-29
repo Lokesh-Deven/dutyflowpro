@@ -73,8 +73,8 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     const pageHeight = doc.internal.pageSize.getHeight();
     
     // Theme Colors
-    const midnightBlue = '#1C304A'; // Midnight Blue
-    const secondaryBlue = '#115DA9'; // Interface Blue
+    const midnightBlue = '#1C304A';
+    const secondaryBlue = '#115DA9';
     const textColor = '#1C304A';
     const headerTextColor = '#FFFFFF';
 
@@ -84,11 +84,12 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     
     // 2. Header Text (College & Exam Name)
     doc.setFont('helvetica', 'bold');
-    let collegeFontSize = 18; // Increased for A4
+    let collegeFontSize = 18;
     doc.setFontSize(collegeFontSize);
     doc.setTextColor(headerTextColor);
     
-    const collegeName = (activeAllotment?.examinations[0]?.college || "College Name").toUpperCase();
+    // Name of the college: 18 (Bold but not all capital letters)
+    const collegeName = activeAllotment?.examinations[0]?.college || "College Name";
     
     // Ensure college name fits on one line
     while (doc.getTextWidth(collegeName) > (pageWidth - 20) && collegeFontSize > 8) {
@@ -97,17 +98,19 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     }
     doc.text(collegeName, pageWidth / 2, 15, { align: 'center' });
 
-    doc.setFontSize(12);
+    // Name of the exam: 14 (Normal)
+    doc.setFontSize(14);
     doc.setFont('helvetica', 'normal');
     const examName = assignedDuties.length > 0 ? assignedDuties[0].examName : (activeAllotment?.examinations[0]?.examName || 'Examination Name');
     doc.text(examName, pageWidth / 2, 28, { align: 'center' });
     
+    // INVIGILATOR'S DUTY SUMMARY: 14 (Bold)
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.text("INVIGILATOR'S DUTY SUMMARY", pageWidth / 2, 35, { align: 'center' });
 
     // 3. Personal Details Section
-    const startY = 60; // Adjusted for A4
+    const startY = 60;
     doc.setTextColor(textColor);
     
     // Label Column
@@ -150,7 +153,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
         startY: startY + 45,
         theme: 'grid',
         headStyles: {
-            fillColor: [17, 93, 169], // Secondary Blue
+            fillColor: [17, 93, 169],
             textColor: 255,
             fontStyle: 'bold',
             halign: 'center',
@@ -177,9 +180,9 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
 
     const finalY = (doc as any).lastAutoTable.finalY || startY + 80;
 
-    // 5. Closing Message
-    doc.setFont('helvetica', 'italic');
-    doc.setFontSize(11);
+    // 5. Closing Message: 12 (Normal)
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(12);
     doc.setTextColor(textColor);
     const closingText = "Wishing you a smooth and successful examination duty.";
     doc.text(closingText, pageWidth / 2, finalY + 20, { align: 'center' });
