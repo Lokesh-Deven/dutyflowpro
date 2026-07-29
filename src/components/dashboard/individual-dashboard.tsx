@@ -72,7 +72,6 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     const pageHeight = doc.internal.pageSize.getHeight();
     
     const midnightBlue = '#1C304A';
-    const secondaryBlue = '#115DA9';
     const textColor = '#1C304A';
     const headerTextColor = '#FFFFFF';
 
@@ -97,11 +96,12 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     doc.setFontSize(14);
     doc.setFont('helvetica', 'normal');
     const examName = assignedDuties.length > 0 ? assignedDuties[0].examName : (activeAllotment?.examinations[0]?.examName || 'Examination Name');
-    doc.text(examName, pageWidth / 2, 25, { align: 'center' });
+    doc.text(examName, pageWidth / 2, 24, { align: 'center' });
     
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text("INVIGILATOR'S DUTY SUMMARY", pageWidth / 2, 38, { align: 'center' });
+    // Spacing adjustment: move title down by increasing Y
+    doc.text("INVIGILATOR'S DUTY SUMMARY", pageWidth / 2, 36, { align: 'center' });
 
     const startY = 60;
     doc.setTextColor(textColor);
@@ -126,7 +126,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     doc.setFontSize(10);
     doc.text('TOTAL DUTIES', pageWidth - 40, startY + 5, { align: 'center' });
     doc.setFontSize(24);
-    doc.setTextColor(secondaryBlue);
+    doc.setTextColor(midnightBlue);
     doc.text(assignedDuties.length.toString().padStart(2, '0'), pageWidth - 40, startY + 22, { align: 'center' });
 
     const head = [['Sl.No', 'Date / Day', 'Subject', 'Timings']];
@@ -143,7 +143,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
         startY: startY + 45,
         theme: 'grid',
         headStyles: {
-            fillColor: [17, 93, 169],
+            fillColor: [28, 48, 74], // Midnight blue
             textColor: 255,
             fontStyle: 'bold',
             halign: 'center',
@@ -159,7 +159,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
         columnStyles: {
             0: { halign: 'center', cellWidth: 15 },
             1: { halign: 'left', cellWidth: 35 },
-            2: { halign: 'left', fontStyle: 'bold', textColor: [17, 93, 169] },
+            2: { halign: 'left', fontStyle: 'bold', textColor: [28, 48, 74] },
             3: { halign: 'center' },
         },
         margin: { left: 20, right: 20 },
@@ -171,15 +171,15 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     const finalY = (doc as any).lastAutoTable.finalY || startY + 80;
 
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(12);
+    doc.setFontSize(11);
     doc.setTextColor(textColor);
-    const closingText = "Wishing you a smooth and successful examination duty.";
+    // Removed period and set size to 11 as requested
+    const closingText = "Wishing you a smooth and successful examination duty";
     doc.text(closingText, pageWidth / 2, finalY + 20, { align: 'center' });
 
-    // Footer
-    const footerHeight = 10;
+    // Footer banner
     doc.setFillColor(midnightBlue);
-    doc.rect(0, pageHeight - footerHeight, pageWidth, footerHeight, 'F');
+    doc.rect(0, pageHeight - 10, pageWidth, 10, 'F');
 
     doc.save(`Duty_Summary_${selectedInvigilator.name.replace(/ /g, '_')}.pdf`);
   };
