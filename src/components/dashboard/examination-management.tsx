@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, useRef, useState } from 'react';
@@ -303,31 +304,35 @@ export function ExaminationManagement() {
 
                         <div className="md:col-span-2">
                            <Label>Subject</Label>
-                            <Select value={sessionDetails.subject} onValueChange={(value) => handleSessionDetailChange('subject', value)}>
-                                <SelectTrigger className="bg-slate-100 dark:bg-slate-800"><SelectValue placeholder="Select a subject..."/></SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="Accountancy">Accountancy</SelectItem>
-                                  <SelectItem value="Basic Mathematics">Basic Mathematics</SelectItem>
-                                  <SelectItem value="Biology">Biology</SelectItem>
-                                  <SelectItem value="Business Studies">Business Studies</SelectItem>
-                                  <SelectItem value="Chemistry">Chemistry</SelectItem>
-                                  <SelectItem value="Computer Science">Computer Science</SelectItem>
-                                  <SelectItem value="Economics">Economics</SelectItem>
-                                  <SelectItem value="Electronics">Electronics</SelectItem>
-                                  <SelectItem value="English">English</SelectItem>
-                                  <SelectItem value="Geography">Geography</SelectItem>
-                                  <SelectItem value="Hindi">Hindi</SelectItem>
-                                  <SelectItem value="History">History</SelectItem>
-                                  <SelectItem value="Home Science">Home Science</SelectItem>
-                                  <SelectItem value="Kannada">Kannada</SelectItem>
-                                  <SelectItem value="Logic">Logic</SelectItem>
-                                  <SelectItem value="None">None</SelectItem>
-                                  <SelectItem value="Political Science">Political Science</SelectItem>
-                                  <SelectItem value="Sanskrit">Sanskrit</SelectItem>
-                                  <SelectItem value="Sociology">Sociology</SelectItem>
-                                  <SelectItem value="Statistics">Statistics</SelectItem>
-                                </SelectContent>
-                            </Select>
+                           <Input 
+                              placeholder="Type or select a subject..." 
+                              value={sessionDetails.subject} 
+                              onChange={(e) => handleSessionDetailChange('subject', e.target.value)}
+                              list="subject-options"
+                              className="bg-slate-100 dark:bg-slate-800"
+                           />
+                           <datalist id="subject-options">
+                              <option value="Accountancy" />
+                              <option value="Basic Mathematics" />
+                              <option value="Biology" />
+                              <option value="Business Studies" />
+                              <option value="Chemistry" />
+                              <option value="Computer Science" />
+                              <option value="Economics" />
+                              <option value="Electronics" />
+                              <option value="English" />
+                              <option value="Geography" />
+                              <option value="Hindi" />
+                              <option value="History" />
+                              <option value="Home Science" />
+                              <option value="Kannada" />
+                              <option value="Logic" />
+                              <option value="None" />
+                              <option value="Political Science" />
+                              <option value="Sanskrit" />
+                              <option value="Sociology" />
+                              <option value="Statistics" />
+                           </datalist>
                         </div>
                         
                         <div>
@@ -432,3 +437,4 @@ export function ExaminationManagement() {
     </div>
   );
 }
+
