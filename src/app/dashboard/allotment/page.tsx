@@ -34,18 +34,18 @@ export default function AllotmentPage() {
     } else {
         setAllotment({ assignments: {} });
     }
-  }, [invigilators, examinations, activeAllotment]);
+  }, [invigilators, examinations, activeAllotment, processedExaminations, saveCurrentAllotment]);
 
   if (invigilators.length === 0 || examinations.length === 0) {
     return (
         <Card className="m-auto mt-10 max-w-lg text-center">
             <CardHeader>
                 <CardTitle>Missing Data</CardTitle>
-                <CardDescription>You need to add invigilators and examinations before an allotment can be shown.</CardDescription>
+                <CardDescription>You need to add examinations and invigilators before an allotment can be shown.</CardDescription>
             </CardHeader>
             <CardContent>
                 <Button asChild>
-                    <Link href="/dashboard/invigilators">Start New Allotment</Link>
+                    <Link href="/dashboard/examinations">Start New Allotment</Link>
                 </Button>
             </CardContent>
         </Card>

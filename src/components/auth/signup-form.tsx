@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -36,8 +37,8 @@ export function SignupForm() {
     }
 
     // In a real app, you'd handle Firebase registration here.
-    // We'll just redirect to the dashboard.
-    router.push("/dashboard");
+    // Redirecting to the default examinations page.
+    router.push("/dashboard/examinations");
   };
 
   return (

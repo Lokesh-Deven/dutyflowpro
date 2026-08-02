@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -5,15 +6,16 @@ import type { Invigilator, Examination, AllotmentResult } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Download, Mail } from 'lucide-react';
+import { Download, Mail, FolderArchive } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { useAllotment } from '@/lib/allotment-context';
 import { formatTimeTo12Hour } from '@/lib/utils';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
 
 type IndividualDashboardProps = {
   invigilators: Invigilator[];
@@ -59,14 +61,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     });
   };
 
-  const handleDownload = () => {
-    if (!selectedInvigilator) return;
-    
-    toast({
-      title: "Generating PDF...",
-      description: `Preparing summary for ${selectedInvigilator.name}.`,
-    });
-
+  const generateInvigilatorPDF = (invigilator: Invigilator, assignedDuties: Examination[]) => {
     const doc = new jsPDF({ orientation: 'portrait', format: 'a4' });
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
@@ -96,13 +91,11 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     doc.setFontSize(16);
     doc.setFont('helvetica', 'normal');
     const examName = assignedDuties.length > 0 ? assignedDuties[0].examName : (activeAllotment?.examinations[0]?.examName || 'Examination Name');
-    // Space 1.0 from college
-    doc.text(examName, pageWidth / 2, 23, { align: 'center' });
+    doc.text(examName, pageWidth / 2, 25, { align: 'center' });
     
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    // Space 2.0 from exam (approx 12 units)
-    doc.text("INVIGILATOR'S DUTY SUMMARY", pageWidth / 2, 35, { align: 'center' });
+    doc.text("INVIGILATOR'S DUTY SUMMARY", pageWidth / 2, 40, { align: 'center' });
 
     const startY = 60;
     doc.setTextColor(textColor);
@@ -115,10 +108,10 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     doc.text('E-Mail:', 20, startY + 30);
     
     doc.setFont('helvetica', 'normal');
-    doc.text(selectedInvigilator.name, 55, startY);
-    doc.text(selectedInvigilator.designation, 55, startY + 10);
-    doc.text(selectedInvigilator.mobile, 55, startY + 20);
-    doc.text(selectedInvigilator.email, 55, startY + 30);
+    doc.text(invigilator.name, 55, startY);
+    doc.text(invigilator.designation, 55, startY + 10);
+    doc.text(invigilator.mobile, 55, startY + 20);
+    doc.text(invigilator.email, 55, startY + 30);
 
     // Summary Card
     doc.setFillColor(240, 240, 240);
@@ -172,7 +165,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     const finalY = (doc as any).lastAutoTable.finalY || startY + 80;
 
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(12);
+    doc.setFontSize(11);
     doc.setTextColor(textColor);
     const closingText = "Wishing you a smooth and successful examination duty";
     doc.text(closingText, pageWidth / 2, finalY + 20, { align: 'center' });
@@ -181,7 +174,46 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     doc.setFillColor(midnightBlue);
     doc.rect(0, pageHeight - 10, pageWidth, 10, 'F');
 
+    return doc;
+  };
+
+  const handleDownload = () => {
+    if (!selectedInvigilator) return;
+    toast({
+      title: "Generating PDF...",
+      description: `Preparing summary for ${selectedInvigilator.name}.`,
+    });
+    const doc = generateInvigilatorPDF(selectedInvigilator, assignedDuties);
     doc.save(`Duty_Summary_${selectedInvigilator.name.replace(/ /g, '_')}.pdf`);
+  };
+
+  const handleDownloadAll = async () => {
+    toast({
+      title: "Generating ZIP...",
+      description: "Creating summaries for all invigilators.",
+    });
+
+    const zip = new JSZip();
+    
+    for (const inv of invigilators) {
+      const dutyIds = allotmentResult.assignments[inv.id] || [];
+      const duties = examinations
+        .filter(exam => dutyIds.includes(exam.id))
+        .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      
+      const doc = generateInvigilatorPDF(inv, duties);
+      const pdfBlob = doc.output('blob');
+      const fileName = `Duty_Summary_${inv.name.replace(/ /g, '_')}.pdf`;
+      zip.file(fileName, pdfBlob);
+    }
+
+    const content = await zip.generateAsync({ type: 'blob' });
+    saveAs(content, `All_Invigilator_Summaries_${format(new Date(), 'yyyyMMdd_HHmm')}.zip`);
+    
+    toast({
+      title: "ZIP Generated",
+      description: "All duty summaries have been downloaded.",
+    });
   };
   
   if (invigilators.length === 0) {
@@ -256,13 +288,18 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
                 <p className="text-center text-muted-foreground p-4">No duties assigned.</p>
               )}
             </CardContent>
-            <CardFooter className="justify-end gap-2">
-              <Button variant="outline" onClick={handleDownload}>
-                <Download className="mr-2" /> Download Summary
+            <CardFooter className="flex justify-between items-center">
+              <Button variant="outline" className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700" onClick={handleDownloadAll}>
+                <FolderArchive className="mr-2 h-4 w-4" /> Download All Summaries
               </Button>
-              <Button onClick={handleEmail}>
-                <Mail className="mr-2" /> Email Summary
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={handleDownload}>
+                  <Download className="mr-2" /> Download Summary
+                </Button>
+                <Button onClick={handleEmail}>
+                  <Mail className="mr-2" /> Email Summary
+                </Button>
+              </div>
             </CardFooter>
           </Card>
         )}

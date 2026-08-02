@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -21,8 +22,8 @@ export function LoginForm() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     // In a real app, you'd handle Firebase authentication here.
-    // For this prototype, we'll just redirect.
-    router.push("/dashboard");
+    // Redirecting to the default examinations page.
+    router.push("/dashboard/examinations");
   };
 
   return (

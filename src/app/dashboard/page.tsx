@@ -1,2 +1,6 @@
-// This page is no longer needed as the new allotment flow starts at /invigilators.
-// It will be deleted.
+
+import { redirect } from 'next/navigation';
+
+export default function DashboardRootPage() {
+  redirect('/dashboard/examinations');
+}
