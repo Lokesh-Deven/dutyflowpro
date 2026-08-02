@@ -93,9 +93,9 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     const examName = assignedDuties.length > 0 ? assignedDuties[0].examName : (activeAllotment?.examinations[0]?.examName || 'Examination Name');
     doc.text(examName, pageWidth / 2, 25, { align: 'center' });
     
-    doc.setFontSize(16);
+    doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.text("INVIGILATOR'S DUTY SUMMARY", pageWidth / 2, 45, { align: 'center' });
+    doc.text("INVIGILATOR'S DUTY SUMMARY", pageWidth / 2, 40, { align: 'center' });
 
     const startY = 65;
     doc.setTextColor(textColor);
@@ -124,7 +124,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     doc.setTextColor(midnightBlue);
     doc.text(assignedDuties.length.toString().padStart(2, '0'), pageWidth - 40, startY + 24, { align: 'center' });
 
-    const head = [['Sl.No', 'Date / Day', 'Subject', 'Timings']];
+    const head = [['SN', 'Date / Day', 'Subject', 'Timings']];
     const body = assignedDuties.map((duty, index) => [
       index + 1,
       `${format(duty.date, "dd.MM.yyyy")}\n${format(duty.date, "EEEE")}`,
