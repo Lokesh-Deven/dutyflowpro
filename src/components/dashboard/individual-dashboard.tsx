@@ -95,33 +95,34 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    doc.text("INVIGILATOR'S DUTY SUMMARY", pageWidth / 2, 40, { align: 'center' });
+    doc.text("INVIGILATOR'S DUTY SUMMARY", pageWidth / 2, 45, { align: 'center' });
 
-    const startY = 60;
+    const startY = 65;
     doc.setTextColor(textColor);
     
+    // Invigilator Information - Size 12
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
+    doc.setFontSize(12);
     doc.text('Name:', 20, startY);
-    doc.text('Designation:', 20, startY + 10);
-    doc.text('Mobile:', 20, startY + 20);
-    doc.text('E-Mail:', 20, startY + 30);
+    doc.text('Designation:', 20, startY + 12);
+    doc.text('Mobile:', 20, startY + 24);
+    doc.text('E-Mail:', 20, startY + 36);
     
     doc.setFont('helvetica', 'normal');
     doc.text(invigilator.name, 55, startY);
-    doc.text(invigilator.designation, 55, startY + 10);
-    doc.text(invigilator.mobile, 55, startY + 20);
-    doc.text(invigilator.email, 55, startY + 30);
+    doc.text(invigilator.designation, 55, startY + 12);
+    doc.text(invigilator.mobile, 55, startY + 24);
+    doc.text(invigilator.email, 55, startY + 36);
 
     // Summary Card
     doc.setFillColor(240, 240, 240);
-    doc.roundedRect(pageWidth - 60, startY - 5, 40, 38, 3, 3, 'F');
+    doc.roundedRect(pageWidth - 60, startY - 5, 40, 42, 3, 3, 'F');
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
     doc.text('TOTAL DUTIES', pageWidth - 40, startY + 5, { align: 'center' });
     doc.setFontSize(24);
     doc.setTextColor(midnightBlue);
-    doc.text(assignedDuties.length.toString().padStart(2, '0'), pageWidth - 40, startY + 22, { align: 'center' });
+    doc.text(assignedDuties.length.toString().padStart(2, '0'), pageWidth - 40, startY + 24, { align: 'center' });
 
     const head = [['Sl.No', 'Date / Day', 'Subject', 'Timings']];
     const body = assignedDuties.map((duty, index) => [
@@ -134,25 +135,25 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     (doc as any).autoTable({
         head: head,
         body: body,
-        startY: startY + 45,
+        startY: startY + 50,
         theme: 'grid',
         headStyles: {
             fillColor: [28, 48, 74],
             textColor: 255,
             fontStyle: 'bold',
             halign: 'center',
-            fontSize: 10,
+            fontSize: 12,
             cellPadding: 5,
         },
         styles: {
             cellPadding: 4,
-            fontSize: 10,
+            fontSize: 12,
             textColor: textColor,
             valign: 'middle'
         },
         columnStyles: {
             0: { halign: 'center', cellWidth: 15 },
-            1: { halign: 'left', cellWidth: 35 },
+            1: { halign: 'left', cellWidth: 40 },
             2: { halign: 'left', fontStyle: 'bold', textColor: [28, 48, 74] },
             3: { halign: 'center' },
         },
@@ -162,7 +163,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
         }
     });
 
-    const finalY = (doc as any).lastAutoTable.finalY || startY + 80;
+    const finalY = (doc as any).lastAutoTable.finalY || startY + 100;
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(11);
