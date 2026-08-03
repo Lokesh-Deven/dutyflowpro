@@ -11,7 +11,6 @@ import {
 import {
   LayoutGrid,
   Save,
-  History,
   CalendarDays,
   BarChart2,
   Info,
@@ -22,7 +21,6 @@ import {
 export const navItems = [
   { href: '/dashboard/examinations', label: 'New Allotment', icon: LayoutGrid },
   { href: '/dashboard/saved', label: 'Saved Allotments', icon: Save },
-  { href: '/dashboard/history', label: 'History', icon: History },
   { href: '/dashboard/schedule', label: 'Day-wise Schedule', icon: CalendarDays },
   { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart2 },
   { href: '/dashboard/about', label: 'About', icon: Info },
