@@ -1,3 +1,4 @@
+
 "use client";
 
 import { UserNav } from './user-nav';
@@ -28,7 +29,7 @@ const ClientHeaderNav = () => {
     }, []);
 
     if (!isMounted) {
-        return <div className="hidden md:flex" />; // Render the container but empty
+        return null; 
     }
 
     return (
@@ -43,22 +44,30 @@ export default function Header() {
   const { clearCurrentAllotment } = useAllotment();
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-card px-4 sm:px-6 lg:px-8 dark:bg-slate-900">
-      <div className="flex items-center gap-6">
-        <Link href="/dashboard/examinations" onClick={clearCurrentAllotment} className="flex items-center gap-2">
+    <header className="sticky top-0 z-30 h-16 border-b bg-card px-4 sm:px-6 lg:px-8 dark:bg-slate-900">
+      <div className="grid h-full grid-cols-[1fr_auto_1fr] items-center">
+        {/* Left Section: Logo */}
+        <div className="flex justify-start">
+          <Link href="/dashboard/examinations" onClick={clearCurrentAllotment} className="flex items-center gap-2">
             <div className="p-2 rounded-lg bg-primary/10">
-            <Users className="w-6 h-6 text-primary" />
+              <Users className="w-6 h-6 text-primary" />
             </div>
             <div className="flex flex-col">
-            <span className="text-3xl font-black font-roboto text-primary">DutyFlow</span>
+              <span className="text-3xl font-black font-roboto text-primary">DutyFlow</span>
             </div>
-        </Link>
-        <ClientHeaderNav />
-      </div>
-      
-      <div className="flex items-center gap-4 ml-auto">
-        <ClientThemeToggle />
-        <UserNav />
+          </Link>
+        </div>
+
+        {/* Center Section: Navigation */}
+        <div className="flex justify-center">
+          <ClientHeaderNav />
+        </div>
+
+        {/* Right Section: Actions */}
+        <div className="flex justify-end gap-4">
+          <ClientThemeToggle />
+          <UserNav />
+        </div>
       </div>
     </header>
   );
