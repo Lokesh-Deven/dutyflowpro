@@ -81,7 +81,6 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     
     const collegeName = activeAllotment?.examinations[0]?.college || "College Name";
     
-    // Auto-fit college name on one line
     while (doc.getTextWidth(collegeName) > (pageWidth - 20) && collegeFontSize > 8) {
         collegeFontSize -= 0.5;
         doc.setFontSize(collegeFontSize);
@@ -100,7 +99,6 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     const startY = 65;
     doc.setTextColor(textColor);
     
-    // Invigilator Information - Size 12
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
     doc.text('Name:', 20, startY);
@@ -290,7 +288,8 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
               )}
             </CardContent>
             <CardFooter className="flex justify-between items-center">
-              <Button variant="outline" className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700" onClick={handleDownloadAll}>
+              {/* Button positioned on the extreme left */}
+              <Button variant="outline" className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={handleDownloadAll}>
                 <FolderArchive className="mr-2 h-4 w-4" /> Download All Summaries
               </Button>
               <div className="flex gap-2">
