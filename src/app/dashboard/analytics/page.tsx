@@ -116,60 +116,13 @@ export default function AnalyticsPage() {
 
     return (
         <div className="space-y-8">
-            <h1 className="text-3xl font-bold tracking-tight font-headline">Allotment Analytics</h1>
+            <h1 className="text-3xl font-bold tracking-tight font-headline text-slate-900 dark:text-white">Allotment Analytics</h1>
             
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <div>
-                        <CardTitle>Duties Required per Exam Date</CardTitle>
-                        <CardDescription>Rooms, relievers, and total invigilators needed each day.</CardDescription>
-                    </div>
-                     <Dialog>
-                        <DialogTrigger asChild>
-                            <Button variant="outline" size="icon" className="h-8 w-8">
-                                <Expand className="h-4 w-4" />
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-4xl h-[70vh] flex flex-col">
-                            <h2 className="text-lg font-semibold">Duties Required per Exam Date</h2>
-                            <div className="flex-1">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={dutiesRequiredData} margin={{ top: 5, right: 30, left: 20, bottom: 20 }}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                        <XAxis dataKey="date" />
-                                        <YAxis />
-                                        <Tooltip content={<CustomTooltip />} />
-                                        <Legend />
-                                        <Bar dataKey="No of Rooms" fill="#ffc658" name="Rooms" />
-                                        <Bar dataKey="No of Relievers" fill="#fb8c00" name="Relievers" />
-                                        <Bar dataKey="Total Invigilators" fill="#e53935" name="Total Required" radius={[4, 4, 0, 0]} />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </DialogContent>
-                    </Dialog>
-                </CardHeader>
-                <CardContent>
-                    <ResponsiveContainer width="100%" height={350}>
-                        <BarChart data={dutiesRequiredData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                            <XAxis dataKey="date" />
-                            <YAxis />
-                            <Tooltip content={<CustomTooltip />} />
-                            <Legend />
-                            <Bar dataKey="No of Rooms" fill="#ffc658" name="Rooms" />
-                            <Bar dataKey="No of Relievers" fill="#fb8c00" name="Relievers" />
-                            <Bar dataKey="Total Invigilators" fill="#e53935" name="Total Required" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                    </ResponsiveContainer>
-                </CardContent>
-            </Card>
-
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <Card>
+                <Card className="border-l-4 border-l-purple-500 shadow-md">
                     <CardHeader className="flex flex-row items-center justify-between">
                         <div>
-                            <CardTitle>Daily Invigilator Workload</CardTitle>
+                            <CardTitle className="text-xl font-bold">Daily Invigilator Workload</CardTitle>
                             <CardDescription>Number of invigilators assigned vs. free for each exam day.</CardDescription>
                         </div>
                         <Dialog>
@@ -188,8 +141,8 @@ export default function AnalyticsPage() {
                                             <YAxis dataKey="date" type="category" tick={{ fontSize: 12 }} width={50} />
                                             <Tooltip content={<CustomTooltip />} />
                                             <Legend />
-                                            <Bar dataKey="Assigned" stackId="a" fill="#4c51bf" name="Assigned" />
-                                            <Bar dataKey="Free" stackId="a" fill="#a8b2d1" name="Free" radius={[0, 4, 4, 0]} />
+                                            <Bar dataKey="Assigned" stackId="a" fill="#6366f1" name="Assigned" />
+                                            <Bar dataKey="Free" stackId="a" fill="#e2e8f0" name="Free" radius={[0, 4, 4, 0]} />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -204,17 +157,17 @@ export default function AnalyticsPage() {
                                 <YAxis dataKey="date" type="category" tick={{ fontSize: 12 }} />
                                 <Tooltip content={<CustomTooltip />} />
                                 <Legend />
-                                <Bar dataKey="Assigned" stackId="a" fill="#4c51bf" name="Assigned" />
-                                <Bar dataKey="Free" stackId="a" fill="#a8b2d1" name="Free" radius={[0, 4, 4, 0]} />
+                                <Bar dataKey="Assigned" stackId="a" fill="#6366f1" name="Assigned" />
+                                <Bar dataKey="Free" stackId="a" fill="#e2e8f0" name="Free" radius={[0, 4, 4, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
 
-                <Card>
+                <Card className="border-l-4 border-l-emerald-500 shadow-md">
                     <CardHeader className="flex flex-row items-center justify-between">
                         <div>
-                            <CardTitle>Day-wise Session Trends</CardTitle>
+                            <CardTitle className="text-xl font-bold">Day-wise Session Trends</CardTitle>
                             <CardDescription>Total duties and relievers over the exam period.</CardDescription>
                         </div>
                         <Dialog>
@@ -233,8 +186,8 @@ export default function AnalyticsPage() {
                                             <YAxis />
                                             <Tooltip content={<CustomTooltip />} />
                                             <Legend />
-                                            <Line type="monotone" dataKey="Total Duties" stroke="#38bdf8" strokeWidth={3} activeDot={{ r: 8 }} />
-                                            <Line type="monotone" dataKey="Total Relievers" stroke="#f472b6" strokeWidth={2} />
+                                            <Line type="monotone" dataKey="Total Duties" stroke="#3b82f6" strokeWidth={3} activeDot={{ r: 8 }} />
+                                            <Line type="monotone" dataKey="Total Relievers" stroke="#10b981" strokeWidth={2} />
                                         </LineChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -249,13 +202,60 @@ export default function AnalyticsPage() {
                                 <YAxis />
                                 <Tooltip content={<CustomTooltip />} />
                                 <Legend />
-                                <Line type="monotone" dataKey="Total Duties" stroke="#38bdf8" strokeWidth={3} activeDot={{ r: 8 }} />
-                                <Line type="monotone" dataKey="Total Relievers" stroke="#f472b6" strokeWidth={2} />
+                                <Line type="monotone" dataKey="Total Duties" stroke="#3b82f6" strokeWidth={3} activeDot={{ r: 8 }} />
+                                <Line type="monotone" dataKey="Total Relievers" stroke="#10b981" strokeWidth={2} />
                             </LineChart>
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
             </div>
+
+            <Card className="border-l-4 border-l-blue-600 shadow-md">
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                        <CardTitle className="text-xl font-bold">Duties Required per Exam Date</CardTitle>
+                        <CardDescription>Rooms, relievers, and total invigilators needed each day.</CardDescription>
+                    </div>
+                     <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" size="icon" className="h-8 w-8">
+                                <Expand className="h-4 w-4" />
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl h-[70vh] flex flex-col">
+                            <h2 className="text-lg font-semibold">Duties Required per Exam Date</h2>
+                            <div className="flex-1">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={dutiesRequiredData} margin={{ top: 5, right: 30, left: 20, bottom: 20 }}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                        <XAxis dataKey="date" />
+                                        <YAxis />
+                                        <Tooltip content={<CustomTooltip />} />
+                                        <Legend />
+                                        <Bar dataKey="No of Rooms" fill="#94a3b8" name="Rooms" />
+                                        <Bar dataKey="No of Relievers" fill="#10b981" name="Relievers" />
+                                        <Bar dataKey="Total Invigilators" fill="#2563eb" name="Total Required" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+                </CardHeader>
+                <CardContent>
+                    <ResponsiveContainer width="100%" height={350}>
+                        <BarChart data={dutiesRequiredData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                            <XAxis dataKey="date" />
+                            <YAxis />
+                            <Tooltip content={<CustomTooltip />} />
+                            <Legend />
+                            <Bar dataKey="No of Rooms" fill="#94a3b8" name="Rooms" />
+                            <Bar dataKey="No of Relievers" fill="#10b981" name="Relievers" />
+                            <Bar dataKey="Total Invigilators" fill="#2563eb" name="Total Required" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </CardContent>
+            </Card>
 
         </div>
     );
