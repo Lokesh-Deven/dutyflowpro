@@ -16,7 +16,9 @@ import {
     Legend, 
     ResponsiveContainer, 
     Line, 
-    LineChart
+    LineChart,
+    Area,
+    AreaChart
 } from "recharts";
 import { format } from "date-fns";
 import { BarChart3, Maximize2 } from "lucide-react";
@@ -91,7 +93,7 @@ export default function AnalyticsPage() {
             date: format(new Date(date), "dd/MM"),
             "Rooms": data.rooms,
             "Relievers": data.relievers,
-            "Total": data.rooms + data.relievers
+            "Total Required": data.rooms + data.relievers
         }));
     }, [examinations]);
 
@@ -197,21 +199,25 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Duties Required per Exam Date - Breakdown */}
-            <Card className="shadow-sm">
+            <Card className="shadow-sm border-l-4 border-l-blue-600 relative">
+                <Button variant="ghost" size="icon" className="absolute top-4 right-4 h-8 w-8 text-muted-foreground">
+                    <Maximize2 className="h-4 w-4" />
+                </Button>
                 <CardHeader>
                     <CardTitle className="text-lg font-bold">Duties Required per Exam Date</CardTitle>
-                    <CardDescription>Breakdown of Rooms and Relievers requirements.</CardDescription>
+                    <CardDescription>Rooms, relievers, and total invigilators needed each day.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <ResponsiveContainer width="100%" height={400}>
                         <BarChart data={dutiesRequiredData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                            <XAxis dataKey="date" />
-                            <YAxis />
-                            <Tooltip />
-                            <Legend />
-                            <Bar dataKey="Rooms" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                            <Bar dataKey="Relievers" fill="#10b981" radius={[4, 4, 0, 0]} />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                            <XAxis dataKey="date" axisLine={true} tickLine={true} />
+                            <YAxis domain={[0, 60]} ticks={[0, 15, 30, 45, 60]} axisLine={true} tickLine={true} />
+                            <Tooltip cursor={{ fill: '#f8fafc' }} />
+                            <Legend verticalAlign="bottom" height={36} iconType="rect" />
+                            <Bar dataKey="Rooms" fill="#94a3b8" radius={[0, 0, 0, 0]} barSize={40} />
+                            <Bar dataKey="Relievers" fill="#10b981" radius={[0, 0, 0, 0]} barSize={40} />
+                            <Bar dataKey="Total Required" fill="#2563eb" radius={[0, 0, 0, 0]} barSize={40} />
                         </BarChart>
                     </ResponsiveContainer>
                 </CardContent>
