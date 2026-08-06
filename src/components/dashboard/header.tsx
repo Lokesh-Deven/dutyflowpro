@@ -46,7 +46,7 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-30 h-16 border-b bg-card px-4 sm:px-6 lg:px-8 dark:bg-slate-900">
       <div className="grid h-full grid-cols-[1fr_auto_1fr] items-center">
-        {/* Left Section: Logo & Tagline */}
+        {/* Left Section: Logo */}
         <div className="flex justify-start">
           <Link href="/dashboard/examinations" onClick={clearCurrentAllotment} className="flex items-center gap-2">
             <div className="p-2 rounded-lg bg-primary/10">
@@ -54,7 +54,6 @@ export default function Header() {
             </div>
             <div className="flex flex-col">
               <span className="text-2xl font-black font-roboto text-primary leading-tight">DutyFlow</span>
-              <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest leading-none">Smart. Simple. Seamless.</span>
             </div>
           </Link>
         </div>
