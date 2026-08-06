@@ -251,16 +251,28 @@ export function ExaminationManagement() {
             <form className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField control={form.control} name="college" render={({ field }) => (
-                  <FormItem><FormLabel>Name of the College</FormLabel><FormControl><Input placeholder="e.g. Seshadripuram College" {...field} className="bg-slate-100 dark:bg-slate-800" /></FormControl><FormMessage /></FormItem>
+                  <FormItem>
+                    <FormLabel>Name of the College</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. Seshadripuram College" {...field} className="bg-blue-50/50 dark:bg-slate-800/50 border-blue-100 dark:border-slate-700" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}/>
                 <FormField control={form.control} name="examName" render={({ field }) => (
-                  <FormItem><FormLabel>Name of the Examination</FormLabel><FormControl><Input {...field} placeholder="e.g. Annual Examination, March 2025" className="bg-slate-100 dark:bg-slate-800" /></FormControl><FormMessage /></FormItem>
+                  <FormItem>
+                    <FormLabel>Name of the Examination</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="e.g. Annual Examination, March 2025" className="bg-blue-50/50 dark:bg-slate-800/50 border-blue-100 dark:border-slate-700" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}/>
               </div>
 
-              <Card>
+              <Card className="border-l-4 border-l-blue-500 shadow-md">
                 <CardHeader>
-                    <CardTitle className="font-headline text-2xl text-black dark:text-white font-extrabold" style={{ fontSize: '1.5rem' }}>Session Details</CardTitle>
+                    <CardTitle className="font-headline text-2xl text-black dark:text-white font-extrabold">Session Details</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
@@ -271,9 +283,9 @@ export function ExaminationManagement() {
                                     <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                                         <PopoverTrigger asChild>
                                             <FormControl>
-                                                <Button variant={"outline"} className={cn("pl-3 text-left font-normal bg-slate-100 dark:bg-slate-800", !field.value && "text-muted-foreground")}>
+                                                <Button variant={"outline"} className={cn("pl-3 text-left font-normal bg-blue-50/50 dark:bg-slate-800/50 border-blue-100 dark:border-slate-700", !field.value && "text-muted-foreground")}>
                                                     {field.value ? format(field.value, "PPP") : <span>Select a date</span>}
-                                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50 text-primary" />
                                                 </Button>
                                             </FormControl>
                                         </PopoverTrigger>
@@ -295,7 +307,7 @@ export function ExaminationManagement() {
                         </div>
                         <div className="md:col-span-2 flex items-center gap-2 pb-1">
                              <span className="text-sm text-muted-foreground">or</span>
-                             <Button type="button" onClick={handleBulkUploadClick} className="text-white bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700">
+                             <Button type="button" onClick={handleBulkUploadClick} variant="outline" className="border-primary text-primary hover:bg-primary/5 shadow-sm">
                                 <Upload className="mr-2 h-4 w-4" />
                                 Import from Excel
                             </Button>
@@ -309,7 +321,7 @@ export function ExaminationManagement() {
                               value={sessionDetails.subject} 
                               onChange={(e) => handleSessionDetailChange('subject', e.target.value)}
                               list="subject-options"
-                              className="bg-slate-100 dark:bg-slate-800"
+                              className="bg-blue-50/50 dark:bg-slate-800/50 border-blue-100 dark:border-slate-700"
                            />
                            <datalist id="subject-options">
                               <option value="Accountancy" />
@@ -338,14 +350,14 @@ export function ExaminationManagement() {
                         <div>
                             <Label>No of Rooms</Label>
                              <Select value={sessionDetails.rooms.toString()} onValueChange={(value) => handleSessionDetailChange('rooms', parseInt(value, 10))}>
-                                <SelectTrigger className="bg-slate-100 dark:bg-slate-800"><SelectValue/></SelectTrigger>
+                                <SelectTrigger className="bg-blue-50/50 dark:bg-slate-800/50 border-blue-100 dark:border-slate-700"><SelectValue/></SelectTrigger>
                                 <SelectContent>{Array.from({ length: 50 }, (_, i) => i + 1).map(n => <SelectItem key={n} value={n.toString()}>{n}</SelectItem>)}</SelectContent>
                             </Select>
                         </div>
                         <div>
                            <Label>No of Relievers</Label>
                             <Select value={sessionDetails.relievers.toString()} onValueChange={(value) => handleSessionDetailChange('relievers', parseInt(value, 10))}>
-                                <SelectTrigger className="bg-slate-100 dark:bg-slate-800"><SelectValue/></SelectTrigger>
+                                <SelectTrigger className="bg-blue-50/50 dark:bg-slate-800/50 border-blue-100 dark:border-slate-700"><SelectValue/></SelectTrigger>
                                 <SelectContent>{Array.from({ length: 26 }, (_, i) => i).map(n => <SelectItem key={n} value={n.toString()}>{n}</SelectItem>)}</SelectContent>
                             </Select>
                         </div>
@@ -353,19 +365,19 @@ export function ExaminationManagement() {
                         <div className="md:col-span-2">
                            <Label>Time</Label>
                             <div className="grid grid-cols-3 gap-2">
-                                <Select value={sessionDetails.startTimeHour} onValueChange={(v) => handleSessionDetailChange('startTimeHour', v)}><SelectTrigger className="bg-slate-100 dark:bg-slate-800"><SelectValue/></SelectTrigger><SelectContent>{hours.map(h => <SelectItem key={`st-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent></Select>
-                                <Select value={sessionDetails.startTimeMinute} onValueChange={(v) => handleSessionDetailChange('startTimeMinute', v)}><SelectTrigger className="bg-slate-100 dark:bg-slate-800"><SelectValue/></SelectTrigger><SelectContent>{minutes.map(m => <SelectItem key={`st-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent></Select>
-                                <Select value={sessionDetails.startTimePeriod} onValueChange={(v) => handleSessionDetailChange('startTimePeriod', v)}><SelectTrigger className="bg-slate-100 dark:bg-slate-800"><SelectValue/></SelectTrigger><SelectContent>{periods.map(p => <SelectItem key={`st-p-${p}`} value={p}>{p}</SelectItem>)}</SelectContent></Select>
+                                <Select value={sessionDetails.startTimeHour} onValueChange={(v) => handleSessionDetailChange('startTimeHour', v)}><SelectTrigger className="bg-blue-50/50 border-blue-100 dark:bg-slate-800/50 dark:border-slate-700"><SelectValue/></SelectTrigger><SelectContent>{hours.map(h => <SelectItem key={`st-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent></Select>
+                                <Select value={sessionDetails.startTimeMinute} onValueChange={(v) => handleSessionDetailChange('startTimeMinute', v)}><SelectTrigger className="bg-blue-50/50 border-blue-100 dark:bg-slate-800/50 dark:border-slate-700"><SelectValue/></SelectTrigger><SelectContent>{minutes.map(m => <SelectItem key={`st-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent></Select>
+                                <Select value={sessionDetails.startTimePeriod} onValueChange={(v) => handleSessionDetailChange('startTimePeriod', v)}><SelectTrigger className="bg-blue-50/50 border-blue-100 dark:bg-slate-800/50 dark:border-slate-700"><SelectValue/></SelectTrigger><SelectContent>{periods.map(p => <SelectItem key={`st-p-${p}`} value={p}>{p}</SelectItem>)}</SelectContent></Select>
                             </div>
                             <div className="grid grid-cols-3 gap-2 mt-2">
-                                <Select value={sessionDetails.endTimeHour} onValueChange={(v) => handleSessionDetailChange('endTimeHour', v)}><SelectTrigger className="bg-slate-100 dark:bg-slate-800"><SelectValue/></SelectTrigger><SelectContent>{hours.map(h => <SelectItem key={`et-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent></Select>
-                                <Select value={sessionDetails.endTimeMinute} onValueChange={(v) => handleSessionDetailChange('endTimeMinute', v)}><SelectTrigger className="bg-slate-100 dark:bg-slate-800"><SelectValue/></SelectTrigger><SelectContent>{minutes.map(m => <SelectItem key={`et-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent></Select>
-                                <Select value={sessionDetails.endTimePeriod} onValueChange={(v) => handleSessionDetailChange('endTimePeriod', v)}><SelectTrigger className="bg-slate-100 dark:bg-slate-800"><SelectValue/></SelectTrigger><SelectContent>{periods.map(p => <SelectItem key={`et-p-${p}`} value={p}>{p}</SelectItem>)}</SelectContent></Select>
+                                <Select value={sessionDetails.endTimeHour} onValueChange={(v) => handleSessionDetailChange('endTimeHour', v)}><SelectTrigger className="bg-blue-50/50 border-blue-100 dark:bg-slate-800/50 dark:border-slate-700"><SelectValue/></SelectTrigger><SelectContent>{hours.map(h => <SelectItem key={`et-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent></Select>
+                                <Select value={sessionDetails.endTimeMinute} onValueChange={(v) => handleSessionDetailChange('endTimeMinute', v)}><SelectTrigger className="bg-blue-50/50 border-blue-100 dark:bg-slate-800/50 dark:border-slate-700"><SelectValue/></SelectTrigger><SelectContent>{minutes.map(m => <SelectItem key={`et-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent></Select>
+                                <Select value={sessionDetails.endTimePeriod} onValueChange={(v) => handleSessionDetailChange('endTimePeriod', v)}><SelectTrigger className="bg-blue-50/50 border-blue-100 dark:bg-slate-800/50 dark:border-slate-700"><SelectValue/></SelectTrigger><SelectContent>{periods.map(p => <SelectItem key={`et-p-${p}`} value={p}>{p}</SelectItem>)}</SelectContent></Select>
                             </div>
                         </div>
                     </div>
                      <div className="flex justify-end pt-4">
-                        <Button type="button" onClick={onAddExamination}>+ Add Examination</Button>
+                        <Button type="button" onClick={onAddExamination} className="bg-primary text-white shadow-md hover:bg-primary/90 font-bold">+ Add Examination</Button>
                     </div>
                 </CardContent>
               </Card>
@@ -395,14 +407,14 @@ export function ExaminationManagement() {
               </TableHeader>
               <TableBody>
                   {examinations.length === 0 ? (
-                      <TableRow><TableCell colSpan={8} className="text-center h-24">No examinations added yet.</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={8} className="text-center h-24 text-muted-foreground">No examinations added yet.</TableCell></TableRow>
                   ) : (
                       examinations.map((exam, index) => (
                           <TableRow key={exam.id}>
                               <TableCell>{index + 1}</TableCell>
                               <TableCell>{format(exam.date, "dd/MM/yyyy")}</TableCell>
                               <TableCell>{format(exam.date, "EEEE")}</TableCell>
-                              <TableCell className="font-medium">{exam.subject}</TableCell>
+                              <TableCell className="font-bold text-slate-700 dark:text-slate-300">{exam.subject}</TableCell>
                               <TableCell>{formatTimeTo12Hour(exam.startTime)} - {formatTimeTo12Hour(exam.endTime)}</TableCell>
                               <TableCell>{exam.rooms}</TableCell>
                               <TableCell>{exam.relievers}</TableCell>
@@ -418,23 +430,22 @@ export function ExaminationManagement() {
               {examinations.length > 0 && (
                 <TableFooter>
                   <TableRow>
-                    <TableCell colSpan={5} className="text-right font-bold text-primary">Total</TableCell>
-                    <TableCell className="font-bold text-primary">{totalRooms}</TableCell>
-                    <TableCell className="font-bold text-primary">{totalRelievers}</TableCell>
+                    <TableCell colSpan={5} className="text-right font-black text-primary">TOTAL REQUIREMENTS</TableCell>
+                    <TableCell className="font-black text-primary">{totalRooms}</TableCell>
+                    <TableCell className="font-black text-primary">{totalRelievers}</TableCell>
                     <TableCell />
                   </TableRow>
                 </TableFooter>
               )}
           </Table>
         </CardContent>
-        <CardFooter className="justify-end">
-            <Button type="button" className="text-white bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700" onClick={handleContinue}>
+        <CardFooter className="justify-end pt-6 border-t">
+            <Button type="button" size="lg" className="bg-primary text-white shadow-lg hover:bg-primary/90 font-bold" onClick={handleContinue}>
                 Continue to Invigilator Details
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
         </CardFooter>
       </Card>
     </div>
   );
 }
-

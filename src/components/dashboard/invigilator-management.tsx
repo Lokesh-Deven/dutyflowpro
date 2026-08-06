@@ -174,29 +174,53 @@ export function InvigilatorManagement() {
         <Card className="shadow-lg">
             <CardHeader>
                 <CardTitle className="font-headline text-2xl font-extrabold text-black dark:text-white">Invigilators' Details</CardTitle>
-                <CardDescription>Add all available invigilators. This is the second step.</CardDescription>
+                <CardDescription>Add all available invigilators to build the roster.</CardDescription>
             </CardHeader>
             <CardContent>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                             <FormField control={form.control} name="name" render={({ field }) => (
-                                <FormItem><FormLabel>Invigilator's Name</FormLabel><FormControl><Input placeholder="e.g. Lokesh D" {...field} className="bg-slate-100 dark:bg-slate-800" /></FormControl><FormMessage /></FormItem>
+                                <FormItem>
+                                  <FormLabel>Invigilator's Name</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="e.g. Lokesh D" {...field} className="bg-blue-50/50 dark:bg-slate-800/50 border-blue-100 dark:border-slate-700" />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
                             )}/>
                             <FormField control={form.control} name="designation" render={({ field }) => (
-                                <FormItem><FormLabel>Designation</FormLabel><FormControl><Input placeholder="e.g. Lecturer in English" {...field} className="bg-slate-100 dark:bg-slate-800" /></FormControl><FormMessage /></FormItem>
+                                <FormItem>
+                                  <FormLabel>Designation</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="e.g. Lecturer in English" {...field} className="bg-blue-50/50 dark:bg-slate-800/50 border-blue-100 dark:border-slate-700" />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
                             )}/>
                             <FormField control={form.control} name="mobile" render={({ field }) => (
-                                <FormItem><FormLabel>Mobile No</FormLabel><FormControl><Input placeholder="e.g. 9876543210" {...field} className="bg-slate-100 dark:bg-slate-800" /></FormControl><FormMessage /></FormItem>
+                                <FormItem>
+                                  <FormLabel>Mobile No</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="e.g. 9876543210" {...field} className="bg-blue-50/50 dark:bg-slate-800/50 border-blue-100 dark:border-slate-700" />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
                             )}/>
                             <FormField control={form.control} name="email" render={({ field }) => (
-                               <FormItem><FormLabel>E-Mail ID</FormLabel><FormControl><Input placeholder="e.g. lokesh@example.com" {...field} className="bg-slate-100 dark:bg-slate-800" /></FormControl><FormMessage /></FormItem>
+                               <FormItem>
+                                 <FormLabel>E-Mail ID</FormLabel>
+                                 <FormControl>
+                                   <Input placeholder="e.g. lokesh@example.com" {...field} className="bg-blue-50/50 dark:bg-slate-800/50 border-blue-100 dark:border-slate-700" />
+                                 </FormControl>
+                                 <FormMessage />
+                               </FormItem>
                             )}/>
                         </div>
                         <div className="flex items-center gap-4">
-                           <Button type="submit"><UserPlus className="mr-2 h-4 w-4" /> Add Invigilator</Button>
+                           <Button type="submit" className="bg-primary text-white font-bold shadow-md"><UserPlus className="mr-2 h-4 w-4" /> Add Invigilator</Button>
                            <span className="text-sm text-muted-foreground">or</span>
-                           <Button type="button" onClick={handleBulkUploadClick} className="text-white bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700">
+                           <Button type="button" onClick={handleBulkUploadClick} variant="outline" className="border-primary text-primary hover:bg-primary/5 shadow-sm">
                                 <Upload className="mr-2 h-4 w-4" />
                                 Import from Excel
                             </Button>
@@ -225,16 +249,16 @@ export function InvigilatorManagement() {
                         </TableHeader>
                         <TableBody>
                             {invigilators.length === 0 ? (
-                                <TableRow><TableCell colSpan={6} className="text-center h-24">No invigilators added yet.</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={6} className="text-center h-24 text-muted-foreground">No invigilators added yet.</TableCell></TableRow>
                             ) : (
                                 invigilators.map((inv, index) => (
                                     <TableRow key={inv.id}>
                                         <TableCell>{index + 1}</TableCell>
-                                        <TableCell className="font-medium">{inv.name}</TableCell>
+                                        <TableCell className="font-bold text-slate-700 dark:text-slate-300">{inv.name}</TableCell>
                                         <TableCell>{inv.designation}</TableCell>
                                         <TableCell>{inv.email}</TableCell>
                                         <TableCell>
-                                            <Button variant="secondary" size="sm" className="h-7" onClick={() => handleOpenAvailabilityDialog(inv)}>
+                                            <Button variant="secondary" size="sm" className="h-7 font-bold px-3" onClick={() => handleOpenAvailabilityDialog(inv)}>
                                                  {formatAvailability(inv)}
                                             </Button>
                                         </TableCell>
@@ -250,21 +274,18 @@ export function InvigilatorManagement() {
                     </Table>
                 </div>
             </CardContent>
-            <CardFooter className="justify-between">
-                <Button onClick={() => router.push('/dashboard/examinations')} variant="outline">
+            <CardFooter className="justify-between border-t pt-6">
+                <Button onClick={() => router.push('/dashboard/examinations')} variant="ghost" className="text-primary font-bold">
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Back to Examinations
                 </Button>
                 <Button
                   onClick={handleGenerate}
                   size="lg"
-                  className={cn(
-                    "bg-primary text-primary-foreground",
-                    "bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700"
-                  )}
+                  className="bg-primary text-white font-black shadow-xl px-8 hover:bg-primary/90"
                 >
                     Generate Duty Allotment
-                    <Sparkles className="ml-2 h-4 w-4" />
+                    <Sparkles className="ml-2 h-5 w-5" />
                 </Button>
             </CardFooter>
         </Card>
@@ -278,4 +299,3 @@ export function InvigilatorManagement() {
         </>
     );
 }
-    

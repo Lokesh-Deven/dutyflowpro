@@ -6,7 +6,7 @@ import type { Invigilator, Examination, AllotmentResult } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Download, Mail, FolderArchive } from 'lucide-react';
+import { Download, Mail, FolderArchive, Clock, Calendar as CalendarIcon } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -16,6 +16,7 @@ import { useAllotment } from '@/lib/allotment-context';
 import { formatTimeTo12Hour } from '@/lib/utils';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
+import { Separator } from '@/components/ui/separator';
 
 type IndividualDashboardProps = {
   invigilators: Invigilator[];
@@ -239,7 +240,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
           onValueChange={setSelectedInvigilatorId}
           value={selectedInvigilatorId ?? undefined}
         >
-          <SelectTrigger className="w-full md:w-72">
+          <SelectTrigger className="w-full md:w-72 bg-blue-50/50 border-blue-100 dark:bg-slate-800/50 dark:border-slate-700">
             <SelectValue placeholder="Select an invigilator" />
           </SelectTrigger>
           <SelectContent>
@@ -252,58 +253,96 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
         </Select>
 
         {selectedInvigilator && (
-          <Card className="bg-secondary">
-            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                <Avatar className="h-16 w-16">
-                  <AvatarFallback className="text-2xl bg-primary text-primary-foreground font-bold flex items-center justify-center">
-                    {selectedInvigilator.name.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <CardTitle className="text-2xl font-headline">{selectedInvigilator.name}</CardTitle>
-                  <CardDescription>{selectedInvigilator.designation}</CardDescription>
-                  <CardDescription>{selectedInvigilator.email}</CardDescription>
-                </div>
-                 <div className="text-right">
-                    <h3 className="font-semibold mb-1">Assigned Duties ({assignedDuties.length})</h3>
-                    <h4 className="font-medium text-muted-foreground mb-2">{examName}</h4>
-                </div>
-            </CardHeader>
-            <CardContent>
+          <div className="space-y-6">
+            <Card className="bg-secondary/30 border-dashed border-2">
+                <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                    <Avatar className="h-16 w-16 border-2 border-white shadow-sm">
+                    <AvatarFallback className="text-2xl bg-primary text-primary-foreground font-bold flex items-center justify-center">
+                        {selectedInvigilator.name.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                    <CardTitle className="text-2xl font-headline font-extrabold">{selectedInvigilator.name}</CardTitle>
+                    <CardDescription className="font-medium text-slate-600">{selectedInvigilator.designation}</CardDescription>
+                    <CardDescription className="text-slate-500">{selectedInvigilator.email}</CardDescription>
+                    </div>
+                    <div className="text-right sm:border-l sm:pl-6 border-slate-200">
+                        <div className="flex flex-col items-end">
+                            <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Total Duties</span>
+                            <span className="text-3xl font-black text-primary">{assignedDuties.length.toString().padStart(2, '0')}</span>
+                            <h4 className="text-xs font-semibold text-slate-500 max-w-[150px] text-right line-clamp-2 mt-1">{examName}</h4>
+                        </div>
+                    </div>
+                </CardHeader>
+            </Card>
+
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                <CalendarIcon className="w-4 h-4" />
+                Duty Schedule
+              </h3>
               {assignedDuties.length > 0 ? (
-                <ul className="space-y-2">
+                <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
                   {assignedDuties.map(duty => (
-                    <li key={duty.id} className="flex justify-between items-center p-3 rounded-md bg-background">
-                      <div>
-                        <p className="font-medium">{format(duty.date, 'PPP')} ({format(duty.date, 'EEEE')})</p>
+                    <div key={duty.id} className="group flex rounded-xl overflow-hidden shadow-sm border border-slate-200 bg-white dark:bg-slate-900 hover:shadow-md transition-all duration-300">
+                      {/* Left Section: The "When" (Ticket Stub) */}
+                      <div className="bg-gradient-to-br from-blue-600 to-indigo-700 px-6 py-4 flex flex-col items-center justify-center text-white w-28 shrink-0 relative">
+                        <span className="text-3xl font-black leading-none">{format(duty.date, 'dd')}</span>
+                        <span className="text-[10px] uppercase font-bold tracking-widest mt-1 opacity-90">{format(duty.date, 'MMM')}</span>
+                        <div className="h-px w-8 bg-white/30 my-2" />
+                        <span className="text-[10px] uppercase font-medium tracking-tighter opacity-80">{format(duty.date, 'EEEE')}</span>
+                        
+                        {/* Visual "Punch Hole" detail for ticket feel */}
+                        <div className="absolute top-1/2 -right-1.5 h-3 w-3 bg-white dark:bg-slate-900 rounded-full -translate-y-1/2" />
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        <span className="text-primary font-semibold">{duty.subject}</span> | {formatTimeTo12Hour(duty.startTime)} - {formatTimeTo12Hour(duty.endTime)}
-                      </p>
-                    </li>
+                      
+                      {/* Right Section: The "What" (Main Ticket) */}
+                      <div className="flex-1 p-5 flex flex-col justify-center border-l border-dashed border-slate-300">
+                        <h4 className="text-lg font-headline font-extrabold text-slate-900 dark:text-slate-100 mb-2 leading-tight">
+                          {duty.subject}
+                        </h4>
+                        <div className="flex items-center gap-4">
+                          <div className="flex flex-col">
+                            <span className="text-[9px] uppercase font-bold text-slate-400 tracking-widest mb-0.5">Duration</span>
+                            <span className="text-xs font-bold text-primary flex items-center gap-1">
+                               <Clock className="w-3 h-3" />
+                               {formatTimeTo12Hour(duty.startTime)} - {formatTimeTo12Hour(duty.endTime)}
+                            </span>
+                          </div>
+                          <Separator orientation="vertical" className="h-8" />
+                          <div className="flex flex-col">
+                            <span className="text-[9px] uppercase font-bold text-slate-400 tracking-widest mb-0.5">Session</span>
+                            <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+                              {parseInt(duty.startTime.split(':')[0]) < 12 ? 'Morning' : 'Afternoon'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   ))}
-                </ul>
+                </div>
               ) : (
-                <p className="text-center text-muted-foreground p-4">No duties assigned.</p>
+                <div className="text-center py-12 bg-slate-50 dark:bg-slate-900/50 rounded-xl border-2 border-dashed border-slate-200">
+                    <p className="text-muted-foreground">No duties assigned for this invigilator.</p>
+                </div>
               )}
-            </CardContent>
-            <CardFooter className="flex justify-between items-center">
-              {/* Button positioned on the extreme left */}
-              <Button variant="outline" className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={handleDownloadAll}>
-                <FolderArchive className="mr-2 h-4 w-4" /> Download All Summaries
-              </Button>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={handleDownload}>
-                  <Download className="mr-2" /> Download Summary
-                </Button>
-                <Button onClick={handleEmail}>
-                  <Mail className="mr-2" /> Email Summary
-                </Button>
-              </div>
-            </CardFooter>
-          </Card>
+            </div>
+          </div>
         )}
       </CardContent>
+      <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6 border-t">
+        <Button variant="outline" className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90 font-bold" onClick={handleDownloadAll}>
+          <FolderArchive className="mr-2 h-4 w-4" /> Download All Summaries
+        </Button>
+        <div className="flex w-full sm:w-auto gap-2">
+          <Button variant="outline" className="flex-1 sm:flex-none border-primary text-primary hover:bg-primary/5" onClick={handleDownload}>
+            <Download className="mr-2 h-4 w-4" /> Download PDF
+          </Button>
+          <Button className="flex-1 sm:flex-none shadow-md" onClick={handleEmail}>
+            <Mail className="mr-2 h-4 w-4" /> Email Lecturer
+          </Button>
+        </div>
+      </CardFooter>
     </Card>
   );
 }
