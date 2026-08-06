@@ -6,9 +6,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useMemo } from "react";
-import { Bar, BarChart, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart } from "recharts";
+import { 
+    Bar, 
+    BarChart, 
+    XAxis, 
+    YAxis, 
+    CartesianGrid, 
+    Tooltip, 
+    Legend, 
+    ResponsiveContainer, 
+    Line, 
+    LineChart
+} from "recharts";
 import { format } from "date-fns";
-import { BarChart3, Calendar, TrendingUp, ClipboardList } from "lucide-react";
+import { BarChart3, Maximize2 } from "lucide-react";
 
 export default function AnalyticsPage() {
     const { invigilators, examinations, activeAllotment } = useAllotment();
@@ -30,17 +41,38 @@ export default function AnalyticsPage() {
                 const exam = examinations.find(e => e.id === examId);
                 if (exam) {
                     const date = format(new Date(exam.date), "yyyy-MM-dd");
-                    dailyData[date].add(invId);
+                    dailyData[date]?.add(invId);
                 }
             }
         }
         
         return Object.entries(dailyData).map(([date, invIds]) => ({
-            date: format(new Date(date), "dd MMM"),
+            date: format(new Date(date), "dd/MM"),
             Assigned: invIds.size,
-            Free: invigilators.length - invIds.size
+            Free: Math.max(0, invigilators.length - invIds.size)
         }));
     }, [examinations, invigilators, activeAllotment]);
+
+    const sessionTrendsData = useMemo(() => {
+        if (!examinations.length) return [];
+        const dailyData: Record<string, { duties: number, relievers: number }> = {};
+        
+        const sortedExams = [...examinations].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+        sortedExams.forEach(exam => {
+            const date = format(new Date(exam.date), "yyyy-MM-dd");
+            if (!dailyData[date]) dailyData[date] = { duties: 0, relievers: 0 };
+            dailyData[date].duties += exam.rooms;
+            dailyData[date].relievers += exam.relievers;
+        });
+        
+        return Object.entries(dailyData).map(([date, data]) => ({
+            date: format(new Date(date), "dd/MM"),
+            "Total Duties": data.duties,
+            "Total Relievers": data.relievers
+        }));
+
+    }, [examinations]);
 
     const dutiesRequiredData = useMemo(() => {
         if (!examinations.length) return [];
@@ -56,29 +88,11 @@ export default function AnalyticsPage() {
         });
 
         return Object.entries(dailyData).map(([date, data]) => ({
-            date: format(new Date(date), "dd MMM"),
+            date: format(new Date(date), "dd/MM"),
             "Rooms": data.rooms,
             "Relievers": data.relievers,
             "Total": data.rooms + data.relievers
         }));
-    }, [examinations]);
-    
-    const sessionTrendsData = useMemo(() => {
-        if (!examinations.length) return [];
-        const dailyData: Record<string, number> = {};
-        
-        const sortedExams = [...examinations].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-        sortedExams.forEach(exam => {
-            const date = format(new Date(exam.date), "yyyy-MM-dd");
-            dailyData[date] = (dailyData[date] || 0) + exam.rooms + exam.relievers;
-        });
-        
-        return Object.entries(dailyData).map(([date, count]) => ({
-            date: format(new Date(date), "dd MMM"),
-            duties: count
-        }));
-
     }, [examinations]);
 
 
@@ -94,7 +108,7 @@ export default function AnalyticsPage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <Button asChild>
+                        <Button asChild className="bg-gradient-to-r from-purple-500 to-indigo-600">
                             <Link href="/dashboard/examinations">Start New Allotment</Link>
                         </Button>
                     </CardContent>
@@ -106,77 +120,98 @@ export default function AnalyticsPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight font-headline">Allotment Analytics</h1>
-                    <p className="text-muted-foreground">Detailed insights into duty distribution and exam requirements.</p>
-                </div>
-            </div>
+            <h1 className="text-3xl font-bold tracking-tight font-headline">Allotment Analytics</h1>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <div className="space-y-1">
-                            <CardTitle className="text-lg font-bold">Daily Invigilator Workload</CardTitle>
-                            <CardDescription>Assigned vs. Free Invigilators</CardDescription>
-                        </div>
-                        <Calendar className="h-5 w-5 text-muted-foreground" />
+                {/* Daily Invigilator Workload - Horizontal Bar Chart */}
+                <Card className="border-l-4 border-l-purple-500 shadow-sm relative">
+                    <Button variant="ghost" size="icon" className="absolute top-4 right-4 h-8 w-8 text-muted-foreground">
+                        <Maximize2 className="h-4 w-4" />
+                    </Button>
+                    <CardHeader>
+                        <CardTitle className="text-lg font-bold">Daily Invigilator Workload</CardTitle>
+                        <CardDescription>Number of invigilators assigned vs. free for each exam day.</CardDescription>
                     </CardHeader>
-                    <CardContent className="pt-4">
-                         <ResponsiveContainer width="100%" height={300}>
-                            <BarChart data={dailyWorkloadData}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                <XAxis dataKey="date" />
-                                <YAxis />
+                    <CardContent>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <BarChart 
+                                data={dailyWorkloadData} 
+                                layout="vertical" 
+                                margin={{ left: 20, right: 30, top: 10, bottom: 20 }}
+                            >
+                                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                                <XAxis type="number" hide={false} axisLine={true} tickLine={true} />
+                                <YAxis 
+                                    dataKey="date" 
+                                    type="category" 
+                                    axisLine={true} 
+                                    tickLine={true}
+                                    width={60}
+                                />
                                 <Tooltip />
-                                <Legend />
-                                <Bar dataKey="Assigned" stackId="a" fill="hsl(var(--primary))" />
-                                <Bar dataKey="Free" stackId="a" fill="hsl(var(--muted))" />
+                                <Legend verticalAlign="bottom" height={36} />
+                                <Bar dataKey="Assigned" stackId="a" fill="#6366f1" radius={[0, 0, 0, 0]} barSize={20} />
+                                <Bar dataKey="Free" stackId="a" fill="#e2e8f0" radius={[0, 0, 0, 0]} barSize={20} />
                             </BarChart>
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
 
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <div className="space-y-1">
-                            <CardTitle className="text-lg font-bold">Session Trends</CardTitle>
-                            <CardDescription>Total duties required per day</CardDescription>
-                        </div>
-                        <TrendingUp className="h-5 w-5 text-muted-foreground" />
+                {/* Day-wise Session Trends - Line Chart */}
+                <Card className="border-l-4 border-l-emerald-500 shadow-sm relative">
+                    <Button variant="ghost" size="icon" className="absolute top-4 right-4 h-8 w-8 text-muted-foreground">
+                        <Maximize2 className="h-4 w-4" />
+                    </Button>
+                    <CardHeader>
+                        <CardTitle className="text-lg font-bold">Day-wise Session Trends</CardTitle>
+                        <CardDescription>Total duties and relievers over the exam period.</CardDescription>
                     </CardHeader>
-                    <CardContent className="pt-4">
+                    <CardContent>
                         <ResponsiveContainer width="100%" height={300}>
-                            <AreaChart data={sessionTrendsData}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                <XAxis dataKey="date" />
-                                <YAxis />
+                            <LineChart data={sessionTrendsData} margin={{ left: 10, right: 30, top: 10, bottom: 20 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={true} horizontal={true} stroke="#f1f5f9" />
+                                <XAxis dataKey="date" axisLine={true} tickLine={true} />
+                                <YAxis domain={[0, 60]} ticks={[0, 15, 30, 45, 60]} axisLine={true} tickLine={true} />
                                 <Tooltip />
-                                <Area type="monotone" dataKey="duties" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.1} />
-                            </AreaChart>
+                                <Legend verticalAlign="bottom" height={36} />
+                                <Line 
+                                    type="monotone" 
+                                    dataKey="Total Duties" 
+                                    stroke="#3b82f6" 
+                                    strokeWidth={2} 
+                                    dot={{ r: 4, fill: "#fff", stroke: "#3b82f6", strokeWidth: 2 }} 
+                                    activeDot={{ r: 6 }}
+                                />
+                                <Line 
+                                    type="monotone" 
+                                    dataKey="Total Relievers" 
+                                    stroke="#10b981" 
+                                    strokeWidth={2} 
+                                    dot={{ r: 4, fill: "#fff", stroke: "#10b981", strokeWidth: 2 }} 
+                                    activeDot={{ r: 6 }}
+                                />
+                            </LineChart>
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
             </div>
 
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <div className="space-y-1">
-                        <CardTitle className="text-lg font-bold">Duties Required per Exam Date</CardTitle>
-                        <CardDescription>Breakdown of Rooms and Relievers</CardDescription>
-                    </div>
-                    <ClipboardList className="h-5 w-5 text-muted-foreground" />
+            {/* Duties Required per Exam Date - Breakdown */}
+            <Card className="shadow-sm">
+                <CardHeader>
+                    <CardTitle className="text-lg font-bold">Duties Required per Exam Date</CardTitle>
+                    <CardDescription>Breakdown of Rooms and Relievers requirements.</CardDescription>
                 </CardHeader>
-                <CardContent className="pt-4">
+                <CardContent>
                     <ResponsiveContainer width="100%" height={400}>
                         <BarChart data={dutiesRequiredData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                             <XAxis dataKey="date" />
                             <YAxis />
                             <Tooltip />
                             <Legend />
                             <Bar dataKey="Rooms" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                            <Bar dataKey="Relievers" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="Relievers" fill="#10b981" radius={[4, 4, 0, 0]} />
                         </BarChart>
                     </ResponsiveContainer>
                 </CardContent>
