@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -6,7 +5,7 @@ import type { Invigilator, Examination, AllotmentResult } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Download, Mail, FolderArchive, Clock, Calendar as CalendarIcon } from 'lucide-react';
+import { Download, FolderArchive, Clock, Calendar as CalendarIcon } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -53,14 +52,6 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
         .filter(exam => dutyIds.includes(exam.id))
         .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [selectedInvigilatorId, allotmentResult, examinations]);
-
-  const handleEmail = () => {
-    if (!selectedInvigilator) return;
-    toast({
-      title: "Emailing Summary",
-      description: `Sending summary to ${selectedInvigilator.email}. (This is a demo action)`,
-    });
-  };
 
   const generateInvigilatorPDF = (invigilator: Invigilator, assignedDuties: Examination[]) => {
     const doc = new jsPDF({ orientation: 'portrait', format: 'a4' });
@@ -285,18 +276,15 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
                 <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
                   {assignedDuties.map(duty => (
                     <div key={duty.id} className="group flex rounded-xl overflow-hidden shadow-sm border border-slate-200 bg-white dark:bg-slate-900 hover:shadow-md transition-all duration-300">
-                      {/* Left Section: The "When" (Ticket Stub) */}
                       <div className="bg-gradient-to-br from-blue-600 to-indigo-700 px-6 py-4 flex flex-col items-center justify-center text-white w-28 shrink-0 relative">
                         <span className="text-3xl font-black leading-none">{format(duty.date, 'dd')}</span>
                         <span className="text-[10px] uppercase font-bold tracking-widest mt-1 opacity-90">{format(duty.date, 'MMM')}</span>
                         <div className="h-px w-8 bg-white/30 my-2" />
                         <span className="text-[10px] uppercase font-medium tracking-tighter opacity-80">{format(duty.date, 'EEEE')}</span>
                         
-                        {/* Visual "Punch Hole" detail for ticket feel */}
                         <div className="absolute top-1/2 -right-1.5 h-3 w-3 bg-white dark:bg-slate-900 rounded-full -translate-y-1/2" />
                       </div>
                       
-                      {/* Right Section: The "What" (Main Ticket) */}
                       <div className="flex-1 p-5 flex flex-col justify-center border-l border-dashed border-slate-300">
                         <h4 className="text-lg font-headline font-normal text-slate-900 dark:text-slate-100 mb-2 leading-tight">
                           {duty.subject}
@@ -335,11 +323,8 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
           <FolderArchive className="mr-2 h-4 w-4" /> Download All Summaries
         </Button>
         <div className="flex w-full sm:w-auto gap-2">
-          <Button variant="outline" className="flex-1 sm:flex-none border-primary text-primary hover:bg-primary/5" onClick={handleDownload}>
+          <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary/5" onClick={handleDownload}>
             <Download className="mr-2 h-4 w-4" /> Download PDF
-          </Button>
-          <Button className="flex-1 sm:flex-none shadow-md" onClick={handleEmail}>
-            <Mail className="mr-2 h-4 w-4" /> Email Lecturer
           </Button>
         </div>
       </CardFooter>

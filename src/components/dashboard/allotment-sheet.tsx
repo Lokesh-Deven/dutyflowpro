@@ -5,11 +5,10 @@ import type { Invigilator, Examination, AllotmentResult } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Download, Send, Sparkles, Save } from 'lucide-react';
+import { Download, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { useAllotment } from '@/lib/allotment-context';
-import { optimizeDutyAssignments } from '@/ai/flows/optimize-duty-assignments';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { cn, formatTimeTo12Hour } from '@/lib/utils';
@@ -97,13 +96,6 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
     onAllotmentChange(updatedResult);
   };
 
-  const handleEmailAll = () => {
-    toast({
-      title: "Emailing Summaries",
-      description: "Preparing to email all individual summaries. (This is a demo action)",
-    });
-  };
-
   const handleSave = () => {
     saveCurrentAllotment(saveName, allotmentResult.assignments);
     setIsSaveAlertOpen(false);
@@ -126,7 +118,6 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
     const subtitle = `${examInfo?.examName || 'Invigilation Duty Allotment'}`;
     const staticTitle = "Invigilation Duty Allotment Sheet";
     
-    // Tighten layout by reducing initial Y and title spacing
     let currentY = 12;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(20);
@@ -137,7 +128,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
     doc.setFontSize(15);
     doc.text(subtitle, doc.internal.pageSize.getWidth() / 2, currentY, { align: 'center' });
     
-    currentY += 10; // Extra space as requested
+    currentY += 10;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
     doc.text(staticTitle, doc.internal.pageSize.getWidth() / 2, currentY, { align: 'center' });
@@ -199,7 +190,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
             halign: 'center',
             valign: 'middle',
             fontSize: 8,
-            minCellHeight: 35, // Reduced from 45 for tighter header
+            minCellHeight: 35,
         },
         footStyles: {
             fillColor: [240, 240, 240],
@@ -233,7 +224,6 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                 const centerX = cell.x + (cell.width / 2);
                 const baselineY = cell.y + cell.height - 3;
                 
-                // Draw headers in 3 vertical lines: Date, Subject, Time
                 doc.text(info.date, centerX - 3, baselineY, { angle: 90 });
                 doc.text(info.subject, centerX, baselineY, { angle: 90 });
                 doc.setFontSize(6);
@@ -253,17 +243,6 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
     doc.save(`${saveName.replace(/ /g, '_')}.pdf`);
   };
 
-  const handleOptimize = async () => {
-    toast({ title: "Optimizing Allotment", description: "AI is re-evaluating the duty assignments..." });
-    try {
-      const result = await optimizeDutyAssignments({ invigilators, exams: examinations, constraints: { hard: [], soft: [] } });
-      toast({ title: "Optimization Complete", description: result.message });
-    } catch (error) {
-      console.error("Optimization failed:", error);
-      toast({ variant: "destructive", title: "Optimization Failed", description: "The AI optimization process encountered an error." });
-    }
-  };
-  
   const examInfo = examinations.length > 0 ? examinations[0] : null;
   const totalRooms = examinations.reduce((acc, exam) => acc + exam.rooms, 0);
   const totalRelievers = examinations.reduce((acc, exam) => acc + exam.relievers, 0);
@@ -291,7 +270,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                     <TableHead key={exam.id} className="whitespace-nowrap h-48 p-2" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
                       <div className="flex flex-col items-start w-full">
                         <span className="text-xs font-normal text-muted-foreground">{format(new Date(exam.date), "dd/MM/yy")}</span>
-                        <span className="font-bold">{exam.subject}</span>
+                        <span className="font-normal">{exam.subject}</span>
                         <span className="text-xs font-normal text-muted-foreground">{formatTimeTo12Hour(exam.startTime)} - {formatTimeTo12Hour(exam.endTime)}</span>
                       </div>
                     </TableHead>
@@ -385,7 +364,6 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
             </AlertDialogContent>
            </AlertDialog>
            <Button onClick={handleDownload}><Download className="mr-2 h-4 w-4" />Download as PDF</Button>
-           <Button onClick={handleEmailAll}><Send className="mr-2 h-4 w-4" />Email All Summaries</Button>
         </CardFooter>
       </Card>
     </TooltipProvider>
