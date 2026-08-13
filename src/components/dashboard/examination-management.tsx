@@ -370,8 +370,10 @@ export function ExaminationManagement() {
                             </div>
                         </div>
                     </div>
-                     <div className="flex justify-end pt-4 gap-3">
+                     <div className="flex justify-end items-center pt-4 gap-4">
                         <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".xlsx, .xls, .csv" />
+                        <Button type="button" onClick={onAddExamination} className="bg-primary text-white shadow-md hover:bg-primary/90 font-bold">+ Add Examination</Button>
+                        <span className="text-sm font-medium text-muted-foreground">or</span>
                         <Button 
                             type="button" 
                             onClick={handleBulkUploadClick} 
@@ -380,7 +382,6 @@ export function ExaminationManagement() {
                             <Upload className="mr-2 h-4 w-4" />
                             Import from Excel
                         </Button>
-                        <Button type="button" onClick={onAddExamination} className="bg-primary text-white shadow-md hover:bg-primary/90 font-bold">+ Add Examination</Button>
                     </div>
                 </CardContent>
               </Card>
