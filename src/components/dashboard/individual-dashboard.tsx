@@ -153,7 +153,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
         columnStyles: {
             0: { halign: 'center', cellWidth: 15 },
             1: { halign: 'left', cellWidth: 40 },
-            2: { halign: 'left', fontStyle: 'bold', textColor: [28, 48, 74] },
+            2: { halign: 'left', fontStyle: 'normal', textColor: [28, 48, 74] },
             3: { halign: 'center' },
         },
         margin: { left: 20, right: 20 },
@@ -298,7 +298,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
                       
                       {/* Right Section: The "What" (Main Ticket) */}
                       <div className="flex-1 p-5 flex flex-col justify-center border-l border-dashed border-slate-300">
-                        <h4 className="text-lg font-headline font-extrabold text-slate-900 dark:text-slate-100 mb-2 leading-tight">
+                        <h4 className="text-lg font-headline font-normal text-slate-900 dark:text-slate-100 mb-2 leading-tight">
                           {duty.subject}
                         </h4>
                         <div className="flex items-center gap-4">
