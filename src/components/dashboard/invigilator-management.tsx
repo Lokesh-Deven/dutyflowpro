@@ -218,9 +218,14 @@ export function InvigilatorManagement() {
                             )}/>
                         </div>
                         <div className="flex items-center gap-4">
-                           <Button type="submit" className="bg-primary text-white font-bold shadow-md"><UserPlus className="mr-2 h-4 w-4" /> Add Invigilator</Button>
-                           <span className="text-sm text-muted-foreground">or</span>
-                           <Button 
+                           <input
+                                type="file"
+                                ref={fileInputRef}
+                                onChange={handleFileChange}
+                                className="hidden"
+                                accept=".xlsx, .xls, .csv"
+                            />
+                            <Button 
                                 type="button" 
                                 onClick={handleBulkUploadClick} 
                                 className="bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md hover:opacity-90 font-bold"
@@ -228,13 +233,8 @@ export function InvigilatorManagement() {
                                 <Upload className="mr-2 h-4 w-4" />
                                 Import from Excel
                             </Button>
-                            <input
-                                type="file"
-                                ref={fileInputRef}
-                                onChange={handleFileChange}
-                                className="hidden"
-                                accept=".xlsx, .xls, .csv"
-                            />
+                            <span className="text-sm text-muted-foreground">or</span>
+                            <Button type="submit" className="bg-primary text-white font-bold shadow-md"><UserPlus className="mr-2 h-4 w-4" /> Add Invigilator</Button>
                         </div>
                     </form>
                 </Form>
@@ -242,13 +242,13 @@ export function InvigilatorManagement() {
                 <div className="mt-8">
                     <Table>
                         <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-[50px]">Sl. No</TableHead>
-                                <TableHead>Invigilator's Name</TableHead>
-                                <TableHead>Designation</TableHead>
-                                <TableHead>E-Mail ID</TableHead>
-                                <TableHead>Availability</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
+                            <TableRow className="bg-slate-100 dark:bg-slate-800">
+                                <TableHead className="w-[50px] font-bold text-primary">Sl. No</TableHead>
+                                <TableHead className="font-bold text-primary">Invigilator's Name</TableHead>
+                                <TableHead className="font-bold text-primary">Designation</TableHead>
+                                <TableHead className="font-bold text-primary">E-Mail ID</TableHead>
+                                <TableHead className="font-bold text-primary">Availability</TableHead>
+                                <TableHead className="text-right font-bold text-primary">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -256,7 +256,13 @@ export function InvigilatorManagement() {
                                 <TableRow><TableCell colSpan={6} className="text-center h-24 text-muted-foreground">No invigilators added yet.</TableCell></TableRow>
                             ) : (
                                 invigilators.map((inv, index) => (
-                                    <TableRow key={inv.id}>
+                                    <TableRow 
+                                        key={inv.id}
+                                        className={cn(
+                                            "transition-colors hover:bg-blue-100/50",
+                                            index % 2 === 0 ? "bg-blue-50/40" : "bg-slate-50/60"
+                                        )}
+                                    >
                                         <TableCell>{index + 1}</TableCell>
                                         <TableCell className="font-bold text-slate-700 dark:text-slate-300">{inv.name}</TableCell>
                                         <TableCell>{inv.designation}</TableCell>
