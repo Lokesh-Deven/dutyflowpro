@@ -361,7 +361,7 @@ export function ExaminationManagement() {
                             <div className="grid grid-cols-3 gap-2">
                                 <Select value={sessionDetails.startTimeHour} onValueChange={(v) => handleSessionDetailChange('startTimeHour', v)}><SelectTrigger className="bg-blue-50/50 border-primary dark:bg-slate-800/50 dark:border-slate-700"><SelectValue/></SelectTrigger><SelectContent>{hours.map(h => <SelectItem key={`st-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent></Select>
                                 <Select value={sessionDetails.startTimeMinute} onValueChange={(v) => handleSessionDetailChange('startTimeMinute', v)}><SelectTrigger className="bg-blue-50/50 border-primary dark:bg-slate-800/50 dark:border-slate-700"><SelectValue/></SelectTrigger><SelectContent>{minutes.map(m => <SelectItem key={`st-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent></Select>
-                                <Select value={sessionDetails.startTimePeriod} onValueChange={(v) => handleSessionDetailChange('startTimePeriod', v)}><SelectTrigger className="bg-blue-50/50 border-primary dark:bg-slate-800/50 dark:border-slate-700"><SelectValue/></SelectTrigger><SelectContent>{periods.map(p => <SelectItem key={`st-p-${p}`} value={p}>{p}</SelectItem>)}</SelectContent></Select>
+                                <Select value={sessionDetails.startTimePeriod} onValueChange={(v) => handleSessionDetailChange('startTimePeriod', v)}><SelectTrigger className="bg-blue-50/50 border-primary dark:border-slate-800/50 dark:border-slate-700"><SelectValue/></SelectTrigger><SelectContent>{periods.map(p => <SelectItem key={`st-p-${p}`} value={p}>{p}</SelectItem>)}</SelectContent></Select>
                             </div>
                             <div className="grid grid-cols-3 gap-2 mt-2">
                                 <Select value={sessionDetails.endTimeHour} onValueChange={(v) => handleSessionDetailChange('endTimeHour', v)}><SelectTrigger className="bg-blue-50/50 border-primary dark:bg-slate-800/50 dark:border-slate-700"><SelectValue/></SelectTrigger><SelectContent>{hours.map(h => <SelectItem key={`et-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent></Select>
@@ -398,15 +398,15 @@ export function ExaminationManagement() {
         <CardContent>
           <Table>
               <TableHeader>
-                  <TableRow>
-                      <TableHead>Sl.No</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Day</TableHead>
-                      <TableHead>Subject</TableHead>
-                      <TableHead>Timings</TableHead>
-                      <TableHead>No of Rooms</TableHead>
-                      <TableHead>No of Relievers</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                  <TableRow className="bg-slate-100 dark:bg-slate-800">
+                      <TableHead className="font-bold text-primary">Sl.No</TableHead>
+                      <TableHead className="font-bold text-primary">Date</TableHead>
+                      <TableHead className="font-bold text-primary">Day</TableHead>
+                      <TableHead className="font-bold text-primary">Subject</TableHead>
+                      <TableHead className="font-bold text-primary">Timings</TableHead>
+                      <TableHead className="font-bold text-primary">No of Rooms</TableHead>
+                      <TableHead className="font-bold text-primary">No of Relievers</TableHead>
+                      <TableHead className="text-right font-bold text-primary">Actions</TableHead>
                   </TableRow>
               </TableHeader>
               <TableBody>
@@ -414,14 +414,20 @@ export function ExaminationManagement() {
                       <TableRow><TableCell colSpan={8} className="text-center h-24 text-muted-foreground">No examinations added yet.</TableCell></TableRow>
                   ) : (
                       examinations.map((exam, index) => (
-                          <TableRow key={exam.id}>
+                          <TableRow 
+                            key={exam.id}
+                            className={cn(
+                                "transition-colors hover:bg-blue-100/50",
+                                index % 2 === 0 ? "bg-blue-50/40" : "bg-slate-50/60"
+                            )}
+                          >
                               <TableCell>{index + 1}</TableCell>
                               <TableCell>{format(exam.date, "dd/MM/yyyy")}</TableCell>
                               <TableCell>{format(exam.date, "EEEE")}</TableCell>
-                              <TableCell className="font-bold text-slate-700 dark:text-slate-300">{exam.subject}</TableCell>
+                              <TableCell className="font-bold text-slate-800 dark:text-slate-200">{exam.subject}</TableCell>
                               <TableCell>{formatTimeTo12Hour(exam.startTime)} - {formatTimeTo12Hour(exam.endTime)}</TableCell>
-                              <TableCell>{exam.rooms}</TableCell>
-                              <TableCell>{exam.relievers}</TableCell>
+                              <TableCell className="font-medium">{exam.rooms}</TableCell>
+                              <TableCell className="font-medium">{exam.relievers}</TableCell>
                               <TableCell className="text-right">
                                   <Button variant="ghost" size="icon" onClick={() => handleDelete(exam.id)}>
                                       <Trash2 className="h-4 w-4 text-destructive" />
@@ -433,10 +439,10 @@ export function ExaminationManagement() {
               </TableBody>
               {examinations.length > 0 && (
                 <TableFooter>
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-right font-black text-primary">TOTAL REQUIREMENTS</TableCell>
-                    <TableCell className="font-black text-primary">{totalRooms}</TableCell>
-                    <TableCell className="font-black text-primary">{totalRelievers}</TableCell>
+                  <TableRow className="bg-blue-100/30">
+                    <TableCell colSpan={5} className="text-right font-black text-primary uppercase">Total Requirements</TableCell>
+                    <TableCell className="font-black text-primary text-lg">{totalRooms}</TableCell>
+                    <TableCell className="font-black text-primary text-lg">{totalRelievers}</TableCell>
                     <TableCell />
                   </TableRow>
                 </TableFooter>
