@@ -231,7 +231,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
           onValueChange={setSelectedInvigilatorId}
           value={selectedInvigilatorId ?? undefined}
         >
-          <SelectTrigger className="w-full md:w-72 bg-blue-50/50 border-blue-100 dark:bg-slate-800/50 dark:border-slate-700">
+          <SelectTrigger className="w-full md:w-72 bg-blue-50/50 border-primary dark:bg-slate-800/50 dark:border-slate-700">
             <SelectValue placeholder="Select an invigilator" />
           </SelectTrigger>
           <SelectContent>
@@ -319,11 +319,11 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
         )}
       </CardContent>
       <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6 border-t">
-        <Button variant="outline" className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90 font-bold" onClick={handleDownloadAll}>
+        <Button variant="outline" className="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md hover:opacity-90 font-bold border-0" onClick={handleDownloadAll}>
           <FolderArchive className="mr-2 h-4 w-4" /> Download All Summaries
         </Button>
         <div className="flex w-full sm:w-auto gap-2">
-          <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary/5" onClick={handleDownload}>
+          <Button variant="default" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold" onClick={handleDownload}>
             <Download className="mr-2 h-4 w-4" /> Download PDF
           </Button>
         </div>
