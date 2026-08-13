@@ -28,14 +28,11 @@ export default function AllotmentPage() {
     } else if (invigilators.length > 0 && examinations.length > 0) {
       const generated = generateAllotment(invigilators, processedExaminations);
       setAllotment(generated);
-      // If it's a new allotment, we might want to save its initial generated state
-      if (!activeAllotment) {
-        saveCurrentAllotment("New Allotment Draft", generated.assignments);
-      }
+      // Auto-save removed as per user request for single copy management
     } else {
         setAllotment({ assignments: {} });
     }
-  }, [invigilators, examinations, activeAllotment, processedExaminations, saveCurrentAllotment]);
+  }, [invigilators, examinations, activeAllotment, processedExaminations]);
 
   if (invigilators.length === 0 || examinations.length === 0) {
     return (
@@ -58,11 +55,6 @@ export default function AllotmentPage() {
 
   return (
     <div className="flex-1 space-y-8">
-      <div className="flex flex-col items-center text-center space-y-2">
-        <h1 className="text-3xl font-black tracking-tight font-headline text-primary">{activeAllotment?.name || 'Duty Allotment'}</h1>
-        <p className="text-muted-foreground max-w-2xl">View, refine, and export your generated invigilation schedule.</p>
-      </div>
-
       <Tabs defaultValue="allotment-sheet" className="w-full">
         <div className="flex justify-center mb-8">
           <TabsList className="bg-slate-100/80 dark:bg-slate-800/50 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 h-auto gap-2">

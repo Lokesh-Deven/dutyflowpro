@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
@@ -45,7 +46,12 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
   const { activeAllotment, saveCurrentAllotment } = useAllotment();
   const [allotmentResult, setAllotmentResult] = useState<AllotmentResult>(initialAllotmentResult);
   const [isSaveAlertOpen, setIsSaveAlertOpen] = useState(false);
-  const [saveName, setSaveName] = useState(activeAllotment?.name || 'New Allotment');
+  
+  const defaultSaveName = useMemo(() => {
+    return activeAllotment?.name || (examinations.length > 0 ? examinations[0].examName : 'New Allotment');
+  }, [activeAllotment, examinations]);
+
+  const [saveName, setSaveName] = useState(defaultSaveName);
 
   const uniqueDates = useMemo(() => {
     const dates = examinations.map(exam => format(new Date(exam.date), 'yyyy-MM-dd'));
@@ -73,8 +79,8 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
   }, [initialAllotmentResult]);
 
   useEffect(() => {
-    setSaveName(activeAllotment?.name || 'New Allotment');
-  }, [activeAllotment]);
+    setSaveName(defaultSaveName);
+  }, [defaultSaveName]);
 
   const handleDutyToggle = (invigilatorId: string, examId: string) => {
     const newResult = { ...allotmentResult };
@@ -341,7 +347,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
             <AlertDialogTrigger asChild>
                 <Button>
                     <Save className="mr-2 h-4 w-4" />
-                    Save/Update
+                    Save Allotment
                 </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>

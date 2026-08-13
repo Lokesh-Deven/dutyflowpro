@@ -42,7 +42,7 @@ export default function SavedAllotmentsPage() {
       {draftAllotments.length === 0 ? (
         <Card className="text-center py-12">
           <CardHeader>
-            <CardTitle>No Saved Drafts</CardTitle>
+            <CardTitle>No Saved Allotments</CardTitle>
             <CardDescription>You haven't saved any allotment sheets yet. Once you save one, it will appear here.</CardDescription>
           </CardHeader>
         </Card>
@@ -53,8 +53,8 @@ export default function SavedAllotmentsPage() {
               <CardHeader>
                 <div className="flex justify-between items-start">
                     <div>
-                        <CardTitle>{allotment.name}</CardTitle>
-                        <CardDescription>Last updated: {format(allotment.createdAt, "PPP")}</CardDescription>
+                        <CardTitle className="line-clamp-1">{allotment.name}</CardTitle>
+                        <CardDescription>Saved: {format(allotment.createdAt, "PPP 'at' p")}</CardDescription>
                     </div>
                     <AlertDialog>
                         <DropdownMenu>
