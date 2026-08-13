@@ -220,7 +220,11 @@ export function InvigilatorManagement() {
                         <div className="flex items-center gap-4">
                            <Button type="submit" className="bg-primary text-white font-bold shadow-md"><UserPlus className="mr-2 h-4 w-4" /> Add Invigilator</Button>
                            <span className="text-sm text-muted-foreground">or</span>
-                           <Button type="button" onClick={handleBulkUploadClick} variant="outline" className="border-primary text-primary hover:bg-primary/5 shadow-sm">
+                           <Button 
+                                type="button" 
+                                onClick={handleBulkUploadClick} 
+                                className="bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md hover:opacity-90 font-bold"
+                            >
                                 <Upload className="mr-2 h-4 w-4" />
                                 Import from Excel
                             </Button>
@@ -282,7 +286,7 @@ export function InvigilatorManagement() {
                 <Button
                   onClick={handleGenerate}
                   size="lg"
-                  className="bg-primary text-white font-black shadow-xl px-8 hover:bg-primary/90"
+                  className="bg-gradient-to-r from-purple-600 to-blue-600 text-white font-black shadow-xl px-8 hover:opacity-90"
                 >
                     Generate Duty Allotment
                     <Sparkles className="ml-2 h-5 w-5" />
