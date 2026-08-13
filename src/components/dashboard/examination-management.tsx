@@ -371,6 +371,8 @@ export function ExaminationManagement() {
                         </div>
                     </div>
                      <div className="flex justify-end items-center pt-4 gap-4">
+                        <Button type="button" onClick={onAddExamination} className="bg-primary text-white shadow-md hover:bg-primary/90 font-bold">+ Add Examination</Button>
+                        <span className="text-sm font-medium text-muted-foreground">or</span>
                         <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".xlsx, .xls, .csv" />
                         <Button 
                             type="button" 
@@ -380,8 +382,6 @@ export function ExaminationManagement() {
                             <Upload className="mr-2 h-4 w-4" />
                             Import from Excel
                         </Button>
-                        <span className="text-sm font-medium text-muted-foreground">or</span>
-                        <Button type="button" onClick={onAddExamination} className="bg-primary text-white shadow-md hover:bg-primary/90 font-bold">+ Add Examination</Button>
                     </div>
                 </CardContent>
               </Card>
@@ -424,7 +424,7 @@ export function ExaminationManagement() {
                               <TableCell>{index + 1}</TableCell>
                               <TableCell>{format(exam.date, "dd/MM/yyyy")}</TableCell>
                               <TableCell>{format(exam.date, "EEEE")}</TableCell>
-                              <TableCell className="font-bold text-slate-800 dark:text-slate-200">{exam.subject}</TableCell>
+                              <TableCell className="text-slate-800 dark:text-slate-200">{exam.subject}</TableCell>
                               <TableCell>{formatTimeTo12Hour(exam.startTime)} - {formatTimeTo12Hour(exam.endTime)}</TableCell>
                               <TableCell className="font-medium">{exam.rooms}</TableCell>
                               <TableCell className="font-medium">{exam.relievers}</TableCell>

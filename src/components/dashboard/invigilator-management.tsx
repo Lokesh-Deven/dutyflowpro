@@ -218,7 +218,9 @@ export function InvigilatorManagement() {
                             )}/>
                         </div>
                         <div className="flex items-center gap-4">
-                           <input
+                            <Button type="submit" className="bg-primary text-white font-bold shadow-md"><UserPlus className="mr-2 h-4 w-4" /> Add Invigilator</Button>
+                            <span className="text-sm text-muted-foreground">or</span>
+                            <input
                                 type="file"
                                 ref={fileInputRef}
                                 onChange={handleFileChange}
@@ -233,8 +235,6 @@ export function InvigilatorManagement() {
                                 <Upload className="mr-2 h-4 w-4" />
                                 Import from Excel
                             </Button>
-                            <span className="text-sm text-muted-foreground">or</span>
-                            <Button type="submit" className="bg-primary text-white font-bold shadow-md"><UserPlus className="mr-2 h-4 w-4" /> Add Invigilator</Button>
                         </div>
                     </form>
                 </Form>
@@ -264,7 +264,7 @@ export function InvigilatorManagement() {
                                         )}
                                     >
                                         <TableCell>{index + 1}</TableCell>
-                                        <TableCell className="font-bold text-slate-700 dark:text-slate-300">{inv.name}</TableCell>
+                                        <TableCell className="text-slate-700 dark:text-slate-300">{inv.name}</TableCell>
                                         <TableCell>{inv.designation}</TableCell>
                                         <TableCell>{inv.email}</TableCell>
                                         <TableCell>
