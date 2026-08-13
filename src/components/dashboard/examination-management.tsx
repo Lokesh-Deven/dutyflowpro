@@ -361,7 +361,7 @@ export function ExaminationManagement() {
                             <div className="grid grid-cols-3 gap-2">
                                 <Select value={sessionDetails.startTimeHour} onValueChange={(v) => handleSessionDetailChange('startTimeHour', v)}><SelectTrigger className="bg-blue-50/50 border-primary dark:bg-slate-800/50 dark:border-slate-700"><SelectValue/></SelectTrigger><SelectContent>{hours.map(h => <SelectItem key={`st-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent></Select>
                                 <Select value={sessionDetails.startTimeMinute} onValueChange={(v) => handleSessionDetailChange('startTimeMinute', v)}><SelectTrigger className="bg-blue-50/50 border-primary dark:bg-slate-800/50 dark:border-slate-700"><SelectValue/></SelectTrigger><SelectContent>{minutes.map(m => <SelectItem key={`st-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent></Select>
-                                <Select value={sessionDetails.startTimePeriod} onValueChange={(v) => handleSessionDetailChange('startTimePeriod', v)}><SelectTrigger className="bg-blue-50/50 border-primary dark:border-slate-800/50 dark:border-slate-700"><SelectValue/></SelectTrigger><SelectContent>{periods.map(p => <SelectItem key={`st-p-${p}`} value={p}>{p}</SelectItem>)}</SelectContent></Select>
+                                <Select value={sessionDetails.startTimePeriod} onValueChange={(v) => handleSessionDetailChange('startTimePeriod', v)}><SelectTrigger className="bg-blue-50/50 border-primary dark:bg-slate-800/50 dark:border-slate-700"><SelectValue/></SelectTrigger><SelectContent>{periods.map(p => <SelectItem key={`st-p-${p}`} value={p}>{p}</SelectItem>)}</SelectContent></Select>
                             </div>
                             <div className="grid grid-cols-3 gap-2 mt-2">
                                 <Select value={sessionDetails.endTimeHour} onValueChange={(v) => handleSessionDetailChange('endTimeHour', v)}><SelectTrigger className="bg-blue-50/50 border-primary dark:bg-slate-800/50 dark:border-slate-700"><SelectValue/></SelectTrigger><SelectContent>{hours.map(h => <SelectItem key={`et-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent></Select>
@@ -372,8 +372,6 @@ export function ExaminationManagement() {
                     </div>
                      <div className="flex justify-end items-center pt-4 gap-4">
                         <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".xlsx, .xls, .csv" />
-                        <Button type="button" onClick={onAddExamination} className="bg-primary text-white shadow-md hover:bg-primary/90 font-bold">+ Add Examination</Button>
-                        <span className="text-sm font-medium text-muted-foreground">or</span>
                         <Button 
                             type="button" 
                             onClick={handleBulkUploadClick} 
@@ -382,6 +380,8 @@ export function ExaminationManagement() {
                             <Upload className="mr-2 h-4 w-4" />
                             Import from Excel
                         </Button>
+                        <span className="text-sm font-medium text-muted-foreground">or</span>
+                        <Button type="button" onClick={onAddExamination} className="bg-primary text-white shadow-md hover:bg-primary/90 font-bold">+ Add Examination</Button>
                     </div>
                 </CardContent>
               </Card>
@@ -450,7 +450,7 @@ export function ExaminationManagement() {
           </Table>
         </CardContent>
         <CardFooter className="justify-end pt-6 border-t">
-            <Button type="button" size="lg" className="bg-primary text-white shadow-lg hover:bg-primary/90 font-bold" onClick={handleContinue}>
+            <Button type="button" size="lg" className="bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg hover:opacity-90 font-bold" onClick={handleContinue}>
                 Continue to Invigilator Details
                 <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
@@ -459,3 +459,4 @@ export function ExaminationManagement() {
     </div>
   );
 }
+
