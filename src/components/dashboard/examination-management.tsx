@@ -270,7 +270,7 @@ export function ExaminationManagement() {
                 )}/>
               </div>
 
-              <Card className="border-l-4 border-l-blue-500 shadow-md">
+              <Card className="border-l-4 border-l-blue-500 shadow-md mt-6">
                 <CardHeader>
                     <CardTitle className="font-headline text-2xl text-black dark:text-white font-extrabold">Session Details</CardTitle>
                 </CardHeader>
@@ -305,14 +305,8 @@ export function ExaminationManagement() {
                                 </FormItem>
                             )}/>
                         </div>
-                        <div className="md:col-span-2 flex items-center gap-2 pb-1">
-                             <span className="text-sm text-muted-foreground">or</span>
-                             <Button type="button" onClick={handleBulkUploadClick} variant="outline" className="border-primary text-primary hover:bg-primary/5 shadow-sm">
-                                <Upload className="mr-2 h-4 w-4" />
-                                Import from Excel
-                            </Button>
-                            <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".xlsx, .xls, .csv" />
-                        </div>
+                        
+                        <div className="md:col-span-2" />
 
                         <div className="md:col-span-2">
                            <Label>Subject</Label>
@@ -376,7 +370,16 @@ export function ExaminationManagement() {
                             </div>
                         </div>
                     </div>
-                     <div className="flex justify-end pt-4">
+                     <div className="flex justify-end pt-4 gap-3">
+                        <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".xlsx, .xls, .csv" />
+                        <Button 
+                            type="button" 
+                            onClick={handleBulkUploadClick} 
+                            className="bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md hover:opacity-90 font-bold"
+                        >
+                            <Upload className="mr-2 h-4 w-4" />
+                            Import from Excel
+                        </Button>
                         <Button type="button" onClick={onAddExamination} className="bg-primary text-white shadow-md hover:bg-primary/90 font-bold">+ Add Examination</Button>
                     </div>
                 </CardContent>
