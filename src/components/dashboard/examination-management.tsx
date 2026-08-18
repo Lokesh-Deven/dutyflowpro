@@ -16,7 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Calendar as CalendarIcon, Upload, Trash2, ArrowRight } from 'lucide-react';
+import { Calendar as CalendarIcon, Upload, Trash2, ArrowRight, Edit2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
@@ -67,6 +67,7 @@ export function ExaminationManagement() {
   const router = useRouter();
   const { examinations, setExaminations } = useAllotment();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [editingExamId, setEditingExamId] = useState<string | null>(null);
   
   const [sessionDetails, setSessionDetails] = useState({
     subject: '',
@@ -98,10 +99,28 @@ export function ExaminationManagement() {
     return `${h.toString().padStart(2, '0')}:${minute}`;
   }
 
-  function onAddExamination() {
+  const parseTimeToParts = (time: string) => {
+    const [hour24, minute] = time.split(':');
+    let h = parseInt(hour24, 10);
+    const period = h >= 12 ? 'PM' : 'AM';
+    h = h % 12;
+    if (h === 0) h = 12;
+    return {
+      hour: h.toString().padStart(2, '0'),
+      minute: minute,
+      period: period
+    };
+  };
+
+  function onSaveExamination() {
     const examinationData = form.getValues();
     const validation = examinationSchema.safeParse(examinationData);
-    const sessionValidation = examSessionSchema.safeParse({ ...sessionDetails, subject: sessionDetails.subject || 'None', rooms: Number(sessionDetails.rooms), relievers: Number(sessionDetails.relievers) });
+    const sessionValidation = examSessionSchema.safeParse({ 
+        ...sessionDetails, 
+        subject: sessionDetails.subject || 'None', 
+        rooms: Number(sessionDetails.rooms), 
+        relievers: Number(sessionDetails.relievers) 
+    });
 
     if (!validation.success || !sessionValidation.success) {
       if (!validation.success) {
@@ -115,24 +134,72 @@ export function ExaminationManagement() {
       return;
     }
     
-    const newExamination: Examination = {
-      id: `exam-${Date.now()}`,
-      college: examinationData.college,
-      examName: examinationData.examName,
-      date: examinationData.date,
-      subject: sessionDetails.subject || 'None',
-      startTime: formatTime(sessionDetails.startTimeHour, sessionDetails.startTimeMinute, sessionDetails.startTimePeriod),
-      endTime: formatTime(sessionDetails.endTimeHour, sessionDetails.endTimeMinute, sessionDetails.endTimePeriod),
-      rooms: Number(sessionDetails.rooms),
-      relievers: Number(sessionDetails.relievers),
-    };
+    if (editingExamId) {
+        setExaminations(prev => prev.map(exam => exam.id === editingExamId ? {
+            ...exam,
+            college: examinationData.college,
+            examName: examinationData.examName,
+            date: examinationData.date,
+            subject: sessionDetails.subject || 'None',
+            startTime: formatTime(sessionDetails.startTimeHour, sessionDetails.startTimeMinute, sessionDetails.startTimePeriod),
+            endTime: formatTime(sessionDetails.endTimeHour, sessionDetails.endTimeMinute, sessionDetails.endTimePeriod),
+            rooms: Number(sessionDetails.rooms),
+            relievers: Number(sessionDetails.relievers),
+        } : exam));
+        toast({ title: "Examination Updated", description: "The changes have been saved." });
+        setEditingExamId(null);
+    } else {
+        const newExamination: Examination = {
+            id: `exam-${Date.now()}`,
+            college: examinationData.college,
+            examName: examinationData.examName,
+            date: examinationData.date,
+            subject: sessionDetails.subject || 'None',
+            startTime: formatTime(sessionDetails.startTimeHour, sessionDetails.startTimeMinute, sessionDetails.startTimePeriod),
+            endTime: formatTime(sessionDetails.endTimeHour, sessionDetails.endTimeMinute, sessionDetails.endTimePeriod),
+            rooms: Number(sessionDetails.rooms),
+            relievers: Number(sessionDetails.relievers),
+        };
+        setExaminations(prev => [...prev, newExamination]);
+        toast({ title: "Examination Added", description: `${sessionDetails.subject} on ${format(examinationData.date, "PPP")} has been added.` });
+    }
 
-    setExaminations(prev => [...prev, newExamination]);
-    toast({ title: "Examination Added", description: `${sessionDetails.subject} on ${format(examinationData.date, "PPP")} has been added.` });
+    // Reset session form but keep college/exam names as they are usually same for multiple entries
+    setSessionDetails(prev => ({
+        ...prev,
+        subject: '',
+        rooms: 1,
+        relievers: 0,
+    }));
   }
+
+  const handleEdit = (exam: Examination) => {
+    form.setValue('college', exam.college);
+    form.setValue('examName', exam.examName);
+    form.setValue('date', exam.date);
+    
+    const startParts = parseTimeToParts(exam.startTime);
+    const endParts = parseTimeToParts(exam.endTime);
+
+    setSessionDetails({
+        subject: exam.subject,
+        startTimeHour: startParts.hour,
+        startTimeMinute: startParts.minute,
+        startTimePeriod: startParts.period,
+        endTimeHour: endParts.hour,
+        endTimeMinute: endParts.minute,
+        endTimePeriod: endParts.period,
+        rooms: exam.rooms,
+        relievers: exam.relievers,
+    });
+    
+    setEditingExamId(exam.id);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
   
   const handleDelete = (id: string) => {
     setExaminations(prev => prev.filter(exam => exam.id !== id));
+    if (editingExamId === id) setEditingExamId(null);
     toast({ title: "Examination Removed", variant: "destructive" });
   }
 
@@ -371,17 +438,31 @@ export function ExaminationManagement() {
                         </div>
                     </div>
                      <div className="flex justify-end items-center pt-4 gap-4">
-                        <Button type="button" onClick={onAddExamination} className="bg-primary text-white shadow-md hover:bg-primary/90 font-bold">+ Add Examination</Button>
-                        <span className="text-sm font-medium text-muted-foreground">or</span>
-                        <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".xlsx, .xls, .csv" />
-                        <Button 
-                            type="button" 
-                            onClick={handleBulkUploadClick} 
-                            className="bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md hover:opacity-90 font-bold"
-                        >
-                            <Upload className="mr-2 h-4 w-4" />
-                            Import from Excel
+                        <Button type="button" onClick={onSaveExamination} className="bg-primary text-white shadow-md hover:bg-primary/90 font-bold">
+                            {editingExamId ? 'Update Examination' : '+ Add Examination'}
                         </Button>
+                        {!editingExamId && (
+                            <>
+                                <span className="text-sm font-medium text-muted-foreground">or</span>
+                                <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".xlsx, .xls, .csv" />
+                                <Button 
+                                    type="button" 
+                                    onClick={handleBulkUploadClick} 
+                                    className="bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md hover:opacity-90 font-bold"
+                                >
+                                    <Upload className="mr-2 h-4 w-4" />
+                                    Import from Excel
+                                </Button>
+                            </>
+                        )}
+                        {editingExamId && (
+                            <Button type="button" variant="outline" onClick={() => {
+                                setEditingExamId(null);
+                                setSessionDetails(prev => ({ ...prev, subject: '', rooms: 1, relievers: 0 }));
+                            }}>
+                                Cancel Edit
+                            </Button>
+                        )}
                     </div>
                 </CardContent>
               </Card>
@@ -406,12 +487,13 @@ export function ExaminationManagement() {
                       <TableHead className="font-bold text-primary">Timings</TableHead>
                       <TableHead className="font-bold text-primary">No of Rooms</TableHead>
                       <TableHead className="font-bold text-primary">No of Relievers</TableHead>
+                      <TableHead className="font-bold text-primary">Edit</TableHead>
                       <TableHead className="text-right font-bold text-primary">Actions</TableHead>
                   </TableRow>
               </TableHeader>
               <TableBody>
                   {examinations.length === 0 ? (
-                      <TableRow><TableCell colSpan={8} className="text-center h-24 text-muted-foreground">No examinations added yet.</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={9} className="text-center h-24 text-muted-foreground">No examinations added yet.</TableCell></TableRow>
                   ) : (
                       examinations.map((exam, index) => (
                           <TableRow 
@@ -428,6 +510,11 @@ export function ExaminationManagement() {
                               <TableCell>{formatTimeTo12Hour(exam.startTime)} - {formatTimeTo12Hour(exam.endTime)}</TableCell>
                               <TableCell className="font-medium">{exam.rooms}</TableCell>
                               <TableCell className="font-medium">{exam.relievers}</TableCell>
+                              <TableCell>
+                                  <Button variant="ghost" size="icon" onClick={() => handleEdit(exam)}>
+                                      <Edit2 className="h-4 w-4 text-primary" />
+                                  </Button>
+                              </TableCell>
                               <TableCell className="text-right">
                                   <Button variant="ghost" size="icon" onClick={() => handleDelete(exam.id)}>
                                       <Trash2 className="h-4 w-4 text-destructive" />
@@ -443,7 +530,7 @@ export function ExaminationManagement() {
                     <TableCell colSpan={5} className="text-right font-black text-primary uppercase">Total Requirements</TableCell>
                     <TableCell className="font-black text-primary text-lg">{totalRooms}</TableCell>
                     <TableCell className="font-black text-primary text-lg">{totalRelievers}</TableCell>
-                    <TableCell />
+                    <TableCell colSpan={2} />
                   </TableRow>
                 </TableFooter>
               )}
