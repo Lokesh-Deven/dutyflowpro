@@ -30,8 +30,9 @@ export function InvigilatorManagement() {
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const router = useRouter();
-    const [isAvailabilityDialogOpen, setIsAvailabilityDialogOpen] = useState(false);
+    const [isAvailabilityDialogOpen] = useState(false);
     const [selectedInvigilator, setSelectedInvigilator] = useState<Invigilator | null>(null);
+    const [isActualAvailabilityDialogOpen, setIsActualAvailabilityDialogOpen] = useState(false);
 
     const { invigilators, setInvigilators, examinations } = useAllotment();
 
@@ -118,7 +119,7 @@ export function InvigilatorManagement() {
 
     const handleOpenAvailabilityDialog = (invigilator: Invigilator) => {
         setSelectedInvigilator(invigilator);
-        setIsAvailabilityDialogOpen(true);
+        setIsActualAvailabilityDialogOpen(true);
     };
 
     const handleSaveAvailability = (invigilatorId: string, availability: { isAvailableAllDays: boolean, availableExamIds: string[] }) => {
@@ -184,7 +185,7 @@ export function InvigilatorManagement() {
                                 <FormItem>
                                   <FormLabel>Invigilator's Name</FormLabel>
                                   <FormControl>
-                                    <Input placeholder="e.g. Lokesh D" {...field} className="bg-blue-50/50 dark:bg-slate-800/50 border-primary dark:border-slate-700" />
+                                    <Input placeholder="e.g. Lokesh D" {...field} className="bg-orange-50/50 dark:bg-slate-800/50 border-primary dark:border-slate-700" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -193,7 +194,7 @@ export function InvigilatorManagement() {
                                 <FormItem>
                                   <FormLabel>Designation</FormLabel>
                                   <FormControl>
-                                    <Input placeholder="e.g. Lecturer in English" {...field} className="bg-blue-50/50 dark:bg-slate-800/50 border-primary dark:border-slate-700" />
+                                    <Input placeholder="e.g. Lecturer in English" {...field} className="bg-orange-50/50 dark:bg-slate-800/50 border-primary dark:border-slate-700" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -202,7 +203,7 @@ export function InvigilatorManagement() {
                                 <FormItem>
                                   <FormLabel>Mobile No</FormLabel>
                                   <FormControl>
-                                    <Input placeholder="e.g. 9876543210" {...field} className="bg-blue-50/50 dark:bg-slate-800/50 border-primary dark:border-slate-700" />
+                                    <Input placeholder="e.g. 9876543210" {...field} className="bg-orange-50/50 dark:bg-slate-800/50 border-primary dark:border-slate-700" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -211,15 +212,13 @@ export function InvigilatorManagement() {
                                <FormItem>
                                  <FormLabel>E-Mail ID</FormLabel>
                                  <FormControl>
-                                   <Input placeholder="e.g. lokesh@example.com" {...field} className="bg-blue-50/50 dark:bg-slate-800/50 border-primary dark:border-slate-700" />
+                                   <Input placeholder="e.g. lokesh@example.com" {...field} className="bg-orange-50/50 dark:bg-slate-800/50 border-primary dark:border-slate-700" />
                                  </FormControl>
                                  <FormMessage />
                                </FormItem>
                             )}/>
                         </div>
                         <div className="flex items-center gap-4">
-                            <Button type="submit" className="bg-primary text-white font-bold shadow-md"><UserPlus className="mr-2 h-4 w-4" /> Add Invigilator</Button>
-                            <span className="text-sm text-muted-foreground">or</span>
                             <input
                                 type="file"
                                 ref={fileInputRef}
@@ -235,6 +234,8 @@ export function InvigilatorManagement() {
                                 <Upload className="mr-2 h-4 w-4" />
                                 Import from Excel
                             </Button>
+                            <span className="text-sm text-muted-foreground">or</span>
+                            <Button type="submit" className="bg-primary text-white font-bold shadow-md"><UserPlus className="mr-2 h-4 w-4" /> Add Invigilator</Button>
                         </div>
                     </form>
                 </Form>
@@ -260,7 +261,7 @@ export function InvigilatorManagement() {
                                         key={inv.id}
                                         className={cn(
                                             "transition-colors hover:bg-blue-100/50",
-                                            index % 2 === 0 ? "bg-blue-50/40" : "bg-slate-50/60"
+                                            index % 2 === 0 ? "bg-blue-100/30" : "bg-slate-50/60"
                                         )}
                                     >
                                         <TableCell>{index + 1}</TableCell>
@@ -300,8 +301,8 @@ export function InvigilatorManagement() {
             </CardFooter>
         </Card>
         <SetAvailabilityDialog
-            isOpen={isAvailabilityDialogOpen}
-            onClose={() => setIsAvailabilityDialogOpen(false)}
+            isOpen={isActualAvailabilityDialogOpen}
+            onClose={() => setIsActualAvailabilityDialogOpen(false)}
             invigilator={selectedInvigilator}
             onSave={handleSaveAvailability}
             examinations={examinations}

@@ -321,7 +321,7 @@ export function ExaminationManagement() {
                   <FormItem>
                     <FormLabel>Name of the College</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. Seshadripuram College" {...field} className="bg-blue-50/50 dark:bg-slate-800/50 border-primary dark:border-slate-700" />
+                      <Input placeholder="e.g. Seshadripuram College" {...field} className="bg-orange-50/50 dark:bg-slate-800/50 border-primary dark:border-slate-700" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -330,7 +330,7 @@ export function ExaminationManagement() {
                   <FormItem>
                     <FormLabel>Name of the Examination</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="e.g. Annual Examination, March 2025" className="bg-blue-50/50 dark:bg-slate-800/50 border-primary dark:border-slate-700" />
+                      <Input {...field} placeholder="e.g. Annual Examination, March 2025" className="bg-orange-50/50 dark:bg-slate-800/50 border-primary dark:border-slate-700" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -350,7 +350,7 @@ export function ExaminationManagement() {
                                     <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                                         <PopoverTrigger asChild>
                                             <FormControl>
-                                                <Button variant={"outline"} className={cn("pl-3 text-left font-normal bg-blue-50/50 dark:bg-slate-800/50 border-primary dark:border-slate-700", !field.value && "text-muted-foreground")}>
+                                                <Button variant={"outline"} className={cn("pl-3 text-left font-normal bg-orange-50/50 dark:bg-slate-800/50 border-primary dark:border-slate-700", !field.value && "text-muted-foreground")}>
                                                     {field.value ? format(field.value, "PPP") : <span>Select a date</span>}
                                                     <CalendarIcon className="ml-auto h-4 w-4 opacity-50 text-primary" />
                                                 </Button>
@@ -382,7 +382,7 @@ export function ExaminationManagement() {
                               value={sessionDetails.subject} 
                               onChange={(e) => handleSessionDetailChange('subject', e.target.value)}
                               list="subject-options"
-                              className="bg-blue-50/50 dark:bg-slate-800/50 border-primary dark:border-slate-700"
+                              className="bg-orange-50/50 dark:bg-slate-800/50 border-primary dark:border-slate-700"
                            />
                            <datalist id="subject-options">
                               <option value="Accountancy" />
@@ -411,14 +411,14 @@ export function ExaminationManagement() {
                         <div>
                             <Label>No of Rooms</Label>
                              <Select value={sessionDetails.rooms.toString()} onValueChange={(value) => handleSessionDetailChange('rooms', parseInt(value, 10))}>
-                                <SelectTrigger className="bg-blue-50/50 dark:bg-slate-800/50 border-primary dark:border-slate-700"><SelectValue/></SelectTrigger>
+                                <SelectTrigger className="bg-orange-50/50 dark:bg-slate-800/50 border-primary dark:border-slate-700"><SelectValue/></SelectTrigger>
                                 <SelectContent>{Array.from({ length: 50 }, (_, i) => i + 1).map(n => <SelectItem key={n} value={n.toString()}>{n}</SelectItem>)}</SelectContent>
                             </Select>
                         </div>
                         <div>
                            <Label>No of Relievers</Label>
                             <Select value={sessionDetails.relievers.toString()} onValueChange={(value) => handleSessionDetailChange('relievers', parseInt(value, 10))}>
-                                <SelectTrigger className="bg-blue-50/50 dark:bg-slate-800/50 border-primary dark:border-slate-700"><SelectValue/></SelectTrigger>
+                                <SelectTrigger className="bg-orange-50/50 dark:bg-slate-800/50 border-primary dark:border-slate-700"><SelectValue/></SelectTrigger>
                                 <SelectContent>{Array.from({ length: 26 }, (_, i) => i).map(n => <SelectItem key={n} value={n.toString()}>{n}</SelectItem>)}</SelectContent>
                             </Select>
                         </div>
@@ -426,35 +426,33 @@ export function ExaminationManagement() {
                         <div className="md:col-span-2">
                            <Label>Time</Label>
                             <div className="grid grid-cols-3 gap-2">
-                                <Select value={sessionDetails.startTimeHour} onValueChange={(v) => handleSessionDetailChange('startTimeHour', v)}><SelectTrigger className="bg-blue-50/50 border-primary dark:bg-slate-800/50 dark:border-slate-700"><SelectValue/></SelectTrigger><SelectContent>{hours.map(h => <SelectItem key={`st-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent></Select>
-                                <Select value={sessionDetails.startTimeMinute} onValueChange={(v) => handleSessionDetailChange('startTimeMinute', v)}><SelectTrigger className="bg-blue-50/50 border-primary dark:bg-slate-800/50 dark:border-slate-700"><SelectValue/></SelectTrigger><SelectContent>{minutes.map(m => <SelectItem key={`st-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent></Select>
-                                <Select value={sessionDetails.startTimePeriod} onValueChange={(v) => handleSessionDetailChange('startTimePeriod', v)}><SelectTrigger className="bg-blue-50/50 border-primary dark:bg-slate-800/50 dark:border-slate-700"><SelectValue/></SelectTrigger><SelectContent>{periods.map(p => <SelectItem key={`st-p-${p}`} value={p}>{p}</SelectItem>)}</SelectContent></Select>
+                                <Select value={sessionDetails.startTimeHour} onValueChange={(v) => handleSessionDetailChange('startTimeHour', v)}><SelectTrigger className="bg-orange-50/50 border-primary dark:bg-slate-800/50 dark:border-slate-700"><SelectValue/></SelectTrigger><SelectContent>{hours.map(h => <SelectItem key={`st-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent></Select>
+                                <Select value={sessionDetails.startTimeMinute} onValueChange={(v) => handleSessionDetailChange('startTimeMinute', v)}><SelectTrigger className="bg-orange-50/50 border-primary dark:bg-slate-800/50 dark:border-slate-700"><SelectValue/></SelectTrigger><SelectContent>{minutes.map(m => <SelectItem key={`st-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent></Select>
+                                <Select value={sessionDetails.startTimePeriod} onValueChange={(v) => handleSessionDetailChange('startTimePeriod', v)}><SelectTrigger className="bg-orange-50/50 border-primary dark:bg-slate-800/50 dark:border-slate-700"><SelectValue/></SelectTrigger><SelectContent>{periods.map(p => <SelectItem key={`st-p-${p}`} value={p}>{p}</SelectItem>)}</SelectContent></Select>
                             </div>
                             <div className="grid grid-cols-3 gap-2 mt-2">
-                                <Select value={sessionDetails.endTimeHour} onValueChange={(v) => handleSessionDetailChange('endTimeHour', v)}><SelectTrigger className="bg-blue-50/50 border-primary dark:bg-slate-800/50 dark:border-slate-700"><SelectValue/></SelectTrigger><SelectContent>{hours.map(h => <SelectItem key={`et-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent></Select>
-                                <Select value={sessionDetails.endTimeMinute} onValueChange={(v) => handleSessionDetailChange('endTimeMinute', v)}><SelectTrigger className="bg-blue-50/50 border-primary dark:bg-slate-800/50 dark:border-slate-700"><SelectValue/></SelectTrigger><SelectContent>{minutes.map(m => <SelectItem key={`et-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent></Select>
-                                <Select value={sessionDetails.endTimePeriod} onValueChange={(v) => handleSessionDetailChange('endTimePeriod', v)}><SelectTrigger className="bg-blue-50/50 border-primary dark:bg-slate-800/50 dark:border-slate-700"><SelectValue/></SelectTrigger><SelectContent>{periods.map(p => <SelectItem key={`et-p-${p}`} value={p}>{p}</SelectItem>)}</SelectContent></Select>
+                                <Select value={sessionDetails.endTimeHour} onValueChange={(v) => handleSessionDetailChange('endTimeHour', v)}><SelectTrigger className="bg-orange-50/50 border-primary dark:bg-slate-800/50 dark:border-slate-700"><SelectValue/></SelectTrigger><SelectContent>{hours.map(h => <SelectItem key={`et-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent></Select>
+                                <Select value={sessionDetails.endTimeMinute} onValueChange={(v) => handleSessionDetailChange('endTimeMinute', v)}><SelectTrigger className="bg-orange-50/50 border-primary dark:bg-slate-800/50 dark:border-slate-700"><SelectValue/></SelectTrigger><SelectContent>{minutes.map(m => <SelectItem key={`et-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent></Select>
+                                <Select value={sessionDetails.endTimePeriod} onValueChange={(v) => handleSessionDetailChange('endTimePeriod', v)}><SelectTrigger className="bg-orange-50/50 border-primary dark:bg-slate-800/50 dark:border-slate-700"><SelectValue/></SelectTrigger><SelectContent>{periods.map(p => <SelectItem key={`et-p-${p}`} value={p}>{p}</SelectItem>)}</SelectContent></Select>
                             </div>
                         </div>
                     </div>
                      <div className="flex justify-end items-center pt-4 gap-4">
+                        <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".xlsx, .xls, .csv" />
+                        <Button 
+                            type="button" 
+                            onClick={handleBulkUploadClick} 
+                            className="bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md hover:opacity-90 font-bold"
+                        >
+                            <Upload className="mr-2 h-4 w-4" />
+                            Import from Excel
+                        </Button>
+                        {!editingExamId && (
+                            <span className="text-sm font-medium text-muted-foreground">or</span>
+                        )}
                         <Button type="button" onClick={onSaveExamination} className="bg-primary text-white shadow-md hover:bg-primary/90 font-bold">
                             {editingExamId ? 'Update Examination' : '+ Add Examination'}
                         </Button>
-                        {!editingExamId && (
-                            <>
-                                <span className="text-sm font-medium text-muted-foreground">or</span>
-                                <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".xlsx, .xls, .csv" />
-                                <Button 
-                                    type="button" 
-                                    onClick={handleBulkUploadClick} 
-                                    className="bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md hover:opacity-90 font-bold"
-                                >
-                                    <Upload className="mr-2 h-4 w-4" />
-                                    Import from Excel
-                                </Button>
-                            </>
-                        )}
                         {editingExamId && (
                             <Button type="button" variant="outline" onClick={() => {
                                 setEditingExamId(null);
@@ -499,8 +497,8 @@ export function ExaminationManagement() {
                           <TableRow 
                             key={exam.id}
                             className={cn(
-                                "transition-colors hover:bg-blue-100/50",
-                                index % 2 === 0 ? "bg-blue-50/40" : "bg-slate-50/60"
+                                "transition-colors",
+                                index % 2 === 0 ? "bg-blue-100/30" : "bg-slate-50/60"
                             )}
                           >
                               <TableCell>{index + 1}</TableCell>
