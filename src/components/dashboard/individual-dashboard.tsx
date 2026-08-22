@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -128,7 +127,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
         columnStyles: {
             0: { halign: 'center', fontStyle: 'bold', textColor: primaryBlue },
             1: { halign: 'center', fontStyle: 'bold' },
-            2: { halign: 'center', fontStyle: 'normal' }, // Subject normal as requested
+            2: { halign: 'center', fontStyle: 'normal' },
             3: { halign: 'center', fontStyle: 'bold' },
             4: { halign: 'center', fontStyle: 'bold' }
         },
@@ -175,14 +174,8 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
   const examName = activeAllotment?.examinations[0]?.examName || 'Annual Examination';
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8">
-      <div className="text-center space-y-2">
-        <h1 className="text-4xl font-black text-[#0f172a] font-headline">Invigilator Duty Summary</h1>
-        <p className="text-slate-500 font-medium">Select an invigilator to view their detailed duty summary.</p>
-      </div>
-
-      <div className="max-w-md mx-auto space-y-2">
-        <label className="text-sm font-black text-slate-900 uppercase tracking-wider">Select Invigilator</label>
+    <div className="max-w-6xl mx-auto space-y-8 pt-6">
+      <div className="max-w-md mx-auto">
         <Select onValueChange={setSelectedInvigilatorId} value={selectedInvigilatorId ?? undefined}>
           <SelectTrigger className="w-full h-12 bg-white border-slate-200 shadow-sm focus:ring-primary rounded-xl">
             <SelectValue placeholder="Select an invigilator" />
