@@ -50,37 +50,64 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
   const generateInvigilatorPDF = (invigilator: Invigilator, assignedDuties: Examination[]) => {
     const doc = new jsPDF({ orientation: 'portrait', format: 'a4' });
     const pageWidth = doc.internal.pageSize.getWidth();
-    
     const midnightBlue = '#1C304A';
+    const primaryBlue = '#115DA9';
     
+    // Header Block
     doc.setFillColor(midnightBlue);
-    doc.rect(0, 0, pageWidth, 40, 'F');
+    doc.rect(0, 0, pageWidth, 45, 'F');
     
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(18);
+    doc.setFontSize(20);
     doc.setTextColor('#FFFFFF');
     const collegeName = activeAllotment?.examinations[0]?.college || "College Name";
-    doc.text(collegeName, pageWidth / 2, 15, { align: 'center' });
+    doc.text(collegeName.toUpperCase(), pageWidth / 2, 18, { align: 'center' });
 
     doc.setFontSize(14);
     doc.setFont('helvetica', 'normal');
     const examName = assignedDuties.length > 0 ? assignedDuties[0].examName : (activeAllotment?.examinations[0]?.examName || 'Examination Name');
-    doc.text(examName, pageWidth / 2, 25, { align: 'center' });
+    doc.text(examName, pageWidth / 2, 28, { align: 'center' });
     
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    doc.text("INVIGILATOR'S DUTY SUMMARY", pageWidth / 2, 35, { align: 'center' });
+    doc.text("INVIGILATOR'S DUTY SUMMARY", pageWidth / 2, 38, { align: 'center' });
 
+    // Profile Section
     doc.setTextColor('#000000');
-    doc.setFontSize(12);
-    doc.text(`Name: ${invigilator.name}`, 20, 55);
-    doc.text(`Designation: ${invigilator.designation}`, 20, 65);
-    doc.text(`E-Mail: ${invigilator.email}`, 20, 75);
-    doc.text(`Total Duties: ${assignedDuties.length}`, pageWidth - 60, 55);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text("Lecturer Details:", 20, 60);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Name:`, 20, 70);
+    doc.setFont('helvetica', 'bold');
+    doc.text(invigilator.name, 45, 70);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Designation:`, 20, 78);
+    doc.setFont('helvetica', 'bold');
+    doc.text(invigilator.designation, 45, 78);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.text(`E-Mail:`, 20, 86);
+    doc.setFont('helvetica', 'bold');
+    doc.text(invigilator.email, 45, 86);
 
+    // Total Duties Box
+    doc.setDrawColor(primaryBlue);
+    doc.setFillColor(248, 250, 252); // bg-slate-50
+    doc.roundedRect(pageWidth - 65, 60, 45, 30, 3, 3, 'FD');
+    doc.setTextColor(primaryBlue);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.text("TOTAL DUTIES", pageWidth - 42.5, 68, { align: 'center' });
+    doc.setFontSize(24);
+    doc.text(assignedDuties.length.toString().padStart(2, '0'), pageWidth - 42.5, 82, { align: 'center' });
+
+    // Schedule Table
     const head = [['DATE', 'DAY', 'SUBJECT', 'DURATION', 'SESSION']];
     const body = assignedDuties.map((duty) => [
-      format(duty.date, "dd MMM"),
+      format(duty.date, "dd MMM").toUpperCase(),
       format(duty.date, "EEEE"),
       duty.subject,
       `${formatTimeTo12Hour(duty.startTime)} - ${formatTimeTo12Hour(duty.endTime)}`,
@@ -90,10 +117,26 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     (doc as any).autoTable({
         head: head,
         body: body,
-        startY: 85,
+        startY: 100,
         theme: 'grid',
-        headStyles: { fillColor: [28, 48, 74], textColor: 255 },
-        styles: { fontSize: 10, cellPadding: 5 },
+        headStyles: { 
+            fillColor: [28, 48, 74], 
+            textColor: 255,
+            fontStyle: 'bold',
+            halign: 'center'
+        },
+        columnStyles: {
+            0: { halign: 'center', fontStyle: 'bold', textColor: primaryBlue },
+            1: { halign: 'center', fontStyle: 'bold' },
+            2: { halign: 'center', fontStyle: 'normal' }, // Subject normal as requested
+            3: { halign: 'center', fontStyle: 'bold' },
+            4: { halign: 'center', fontStyle: 'bold' }
+        },
+        styles: { 
+            fontSize: 10, 
+            cellPadding: 5,
+            valign: 'middle'
+        },
     });
 
     return doc;
@@ -215,7 +258,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
                       </TableCell>
                       <TableCell className="text-center font-bold text-slate-700">{format(duty.date, 'EEEE')}</TableCell>
                       <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-2 text-slate-700 font-bold">
+                        <div className="flex items-center justify-center gap-2 text-slate-700 font-normal">
                           <Book className="h-4 w-4 text-primary opacity-60" />
                           {duty.subject}
                         </div>
@@ -254,13 +297,13 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-8 border-t border-slate-100">
         <Button 
           variant="outline" 
-          className="w-full sm:w-auto font-black border-2 border-primary text-primary hover:bg-primary/5 transition-all px-8 h-12 rounded-xl" 
+          className="w-full sm:w-auto font-bold border-2 border-primary text-primary hover:bg-primary/5 transition-all px-8 h-12 rounded-xl" 
           onClick={handleDownloadAll}
         >
           <FolderArchive className="mr-2 h-5 w-5" /> Download All Summaries
         </Button>
         <Button 
-          className="w-full sm:w-auto bg-primary text-white font-black px-12 h-12 rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 transition-all" 
+          className="w-full sm:w-auto bg-primary text-white font-bold px-12 h-12 rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 transition-all" 
           onClick={handleDownload}
         >
           <Download className="mr-2 h-5 w-5" /> Download PDF
