@@ -50,7 +50,6 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     const doc = new jsPDF({ orientation: 'portrait', format: 'a4' });
     const pageWidth = doc.internal.pageSize.getWidth();
     const midnightBlue = '#1C304A';
-    const primaryBlue = '#115DA9';
     
     // Header Block
     doc.setFillColor(midnightBlue);
@@ -59,12 +58,13 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(18);
     doc.setTextColor('#FFFFFF');
-    const collegeName = activeAllotment?.examinations[0]?.college || "College Name";
-    doc.text(collegeName.toUpperCase(), pageWidth / 2, 18, { align: 'center' });
+    // Priority: Prop examinations -> Active Allotment -> Default
+    const collegeName = (examinations[0]?.college || activeAllotment?.examinations[0]?.college || "College Name").toUpperCase();
+    doc.text(collegeName, pageWidth / 2, 18, { align: 'center' });
 
     doc.setFontSize(14);
     doc.setFont('helvetica', 'normal');
-    const examName = assignedDuties.length > 0 ? assignedDuties[0].examName : (activeAllotment?.examinations[0]?.examName || 'Examination Name');
+    const examName = assignedDuties.length > 0 ? assignedDuties[0].examName : (examinations[0]?.examName || activeAllotment?.examinations[0]?.examName || 'Examination Name');
     doc.text(examName, pageWidth / 2, 28, { align: 'center' });
     
     doc.setFontSize(16);
@@ -97,7 +97,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
 
     // Total Duties Box
     doc.setDrawColor(240, 240, 240);
-    doc.setFillColor(243, 244, 246); // bg-gray-100
+    doc.setFillColor(243, 244, 246);
     doc.roundedRect(pageWidth - 65, 55, 45, 35, 3, 3, 'FD');
     doc.setTextColor(midnightBlue);
     doc.setFontSize(8);
@@ -182,7 +182,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     saveAs(content, `All_Invigilator_Summaries.zip`);
   };
   
-  const examName = activeAllotment?.examinations[0]?.examName || 'Annual Examination';
+  const examName = examinations[0]?.examName || activeAllotment?.examinations[0]?.examName || 'Annual Examination';
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 pt-6">
