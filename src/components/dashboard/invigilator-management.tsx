@@ -185,7 +185,7 @@ export function InvigilatorManagement() {
                                 <FormItem>
                                   <FormLabel>Invigilator's Name</FormLabel>
                                   <FormControl>
-                                    <Input placeholder="e.g. Lokesh D" {...field} className="bg-orange-50/50 dark:bg-slate-800/50 border-primary dark:border-slate-700" />
+                                    <Input placeholder="e.g. Lokesh D" {...field} className="bg-white dark:bg-slate-800/50 border-primary dark:border-slate-700" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -194,7 +194,7 @@ export function InvigilatorManagement() {
                                 <FormItem>
                                   <FormLabel>Designation</FormLabel>
                                   <FormControl>
-                                    <Input placeholder="e.g. Lecturer in English" {...field} className="bg-orange-50/50 dark:bg-slate-800/50 border-primary dark:border-slate-700" />
+                                    <Input placeholder="e.g. Lecturer in English" {...field} className="bg-white dark:bg-slate-800/50 border-primary dark:border-slate-700" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -203,7 +203,7 @@ export function InvigilatorManagement() {
                                 <FormItem>
                                   <FormLabel>Mobile No</FormLabel>
                                   <FormControl>
-                                    <Input placeholder="e.g. 9876543210" {...field} className="bg-orange-50/50 dark:bg-slate-800/50 border-primary dark:border-slate-700" />
+                                    <Input placeholder="e.g. 9876543210" {...field} className="bg-white dark:bg-slate-800/50 border-primary dark:border-slate-700" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -212,13 +212,15 @@ export function InvigilatorManagement() {
                                <FormItem>
                                  <FormLabel>E-Mail ID</FormLabel>
                                  <FormControl>
-                                   <Input placeholder="e.g. lokesh@example.com" {...field} className="bg-orange-50/50 dark:bg-slate-800/50 border-primary dark:border-slate-700" />
+                                   <Input placeholder="e.g. lokesh@example.com" {...field} className="bg-white dark:bg-slate-800/50 border-primary dark:border-slate-700" />
                                  </FormControl>
                                  <FormMessage />
                                </FormItem>
                             )}/>
                         </div>
                         <div className="flex items-center gap-4">
+                            <Button type="submit" className="bg-primary text-white font-bold shadow-md"><UserPlus className="mr-2 h-4 w-4" /> Add Invigilator</Button>
+                            <span className="text-sm text-muted-foreground">or</span>
                             <input
                                 type="file"
                                 ref={fileInputRef}
@@ -234,8 +236,6 @@ export function InvigilatorManagement() {
                                 <Upload className="mr-2 h-4 w-4" />
                                 Import from Excel
                             </Button>
-                            <span className="text-sm text-muted-foreground">or</span>
-                            <Button type="submit" className="bg-primary text-white font-bold shadow-md"><UserPlus className="mr-2 h-4 w-4" /> Add Invigilator</Button>
                         </div>
                     </form>
                 </Form>
