@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -5,7 +6,7 @@ import type { Invigilator, Examination, AllotmentResult } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Download, FolderArchive, Clock, Calendar as CalendarIcon } from 'lucide-react';
+import { Download, FolderArchive, Clock, Calendar as CalendarIcon, Book, User, Sun, Moon, Mail } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -32,12 +33,6 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     if(invigilators.length > 0 && !selectedInvigilatorId) {
         setSelectedInvigilatorId(invigilators[0].id);
     }
-    if (invigilators.length > 0 && selectedInvigilatorId && !invigilators.some(i => i.id === selectedInvigilatorId)) {
-        setSelectedInvigilatorId(invigilators[0].id);
-    }
-     if (invigilators.length === 0) {
-        setSelectedInvigilatorId(null);
-    }
   }, [invigilators, selectedInvigilatorId]);
 
 
@@ -62,21 +57,14 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     const textColor = '#1C304A';
     const headerTextColor = '#FFFFFF';
 
-    // Header Banner
     doc.setFillColor(midnightBlue);
     doc.rect(0, 0, pageWidth, 50, 'F');
     
     doc.setFont('helvetica', 'bold');
-    let collegeFontSize = 18;
-    doc.setFontSize(collegeFontSize);
+    doc.setFontSize(18);
     doc.setTextColor(headerTextColor);
     
     const collegeName = activeAllotment?.examinations[0]?.college || "College Name";
-    
-    while (doc.getTextWidth(collegeName) > (pageWidth - 20) && collegeFontSize > 8) {
-        collegeFontSize -= 0.5;
-        doc.setFontSize(collegeFontSize);
-    }
     doc.text(collegeName, pageWidth / 2, 15, { align: 'center' });
 
     doc.setFontSize(16);
@@ -104,7 +92,6 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     doc.text(invigilator.mobile, 55, startY + 24);
     doc.text(invigilator.email, 55, startY + 36);
 
-    // Summary Card
     doc.setFillColor(240, 240, 240);
     doc.roundedRect(pageWidth - 60, startY - 5, 40, 42, 3, 3, 'F');
     doc.setFont('helvetica', 'bold');
@@ -144,24 +131,18 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
         columnStyles: {
             0: { halign: 'center', cellWidth: 15 },
             1: { halign: 'left', cellWidth: 40 },
-            2: { halign: 'left', fontStyle: 'normal', textColor: [28, 48, 74] },
+            2: { halign: 'left', fontStyle: 'normal' },
             3: { halign: 'center' },
         },
         margin: { left: 20, right: 20 },
-        alternateRowStyles: {
-            fillColor: [245, 250, 255]
-        }
     });
 
     const finalY = (doc as any).lastAutoTable.finalY || startY + 100;
-
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(11);
     doc.setTextColor(textColor);
-    const closingText = "Wishing you a smooth and successful examination duty";
-    doc.text(closingText, pageWidth / 2, finalY + 20, { align: 'center' });
+    doc.text("Wishing you a smooth and successful examination duty", pageWidth / 2, finalY + 20, { align: 'center' });
 
-    // Footer banner
     doc.setFillColor(midnightBlue);
     doc.rect(0, pageHeight - 10, pageWidth, 10, 'F');
 
@@ -199,12 +180,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     }
 
     const content = await zip.generateAsync({ type: 'blob' });
-    saveAs(content, `All_Invigilator_Summaries_${format(new Date(), 'yyyyMMdd_HHmm')}.zip`);
-    
-    toast({
-      title: "ZIP Generated",
-      description: "All duty summaries have been downloaded.",
-    });
+    saveAs(content, `All_Invigilator_Summaries.zip`);
   };
   
   if (invigilators.length === 0) {
@@ -218,115 +194,166 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     );
   }
 
-  const examName = assignedDuties.length > 0 ? assignedDuties[0].examName : (activeAllotment?.examinations[0]?.examName || 'No duties assigned');
+  const examName = assignedDuties.length > 0 ? assignedDuties[0].examName : (activeAllotment?.examinations[0]?.examName || 'Annual Examination');
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Invigilator Duty Summary</CardTitle>
-        <CardDescription>Select an invigilator to view their detailed duty summary.</CardDescription>
+    <Card className="border-none shadow-none">
+      <CardHeader className="text-center pb-8">
+        <CardTitle className="text-3xl font-black text-[#1e293b] font-headline">Invigilator Duty Summary</CardTitle>
+        <CardDescription className="text-base text-slate-500">Select an invigilator to view their detailed duty summary.</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <Select
-          onValueChange={setSelectedInvigilatorId}
-          value={selectedInvigilatorId ?? undefined}
-        >
-          <SelectTrigger className="w-full md:w-72 bg-blue-50/50 border-primary dark:bg-slate-800/50 dark:border-slate-700">
-            <SelectValue placeholder="Select an invigilator" />
-          </SelectTrigger>
-          <SelectContent>
-            {invigilators.map(inv => (
-              <SelectItem key={inv.id} value={inv.id}>
-                {inv.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      
+      <CardContent className="space-y-10">
+        <div className="max-w-xl mx-auto space-y-2">
+          <label className="text-sm font-bold text-slate-700">Select Invigilator</label>
+          <Select
+            onValueChange={setSelectedInvigilatorId}
+            value={selectedInvigilatorId ?? undefined}
+          >
+            <SelectTrigger className="w-full h-12 bg-white border-slate-200 shadow-sm focus:ring-primary">
+              <SelectValue placeholder="Select an invigilator" />
+            </SelectTrigger>
+            <SelectContent>
+              {invigilators.map(inv => (
+                <SelectItem key={inv.id} value={inv.id}>
+                  {inv.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
         {selectedInvigilator && (
-          <div className="space-y-6">
-            <Card className="bg-secondary/30 border-dashed border-2">
-                <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                    <Avatar className="h-16 w-16 border-2 border-white shadow-sm">
-                    <AvatarFallback className="text-2xl bg-primary text-primary-foreground font-bold flex items-center justify-center">
-                        {selectedInvigilator.name.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                    <CardTitle className="text-2xl font-headline font-extrabold">{selectedInvigilator.name}</CardTitle>
-                    <CardDescription className="font-medium text-slate-600">{selectedInvigilator.designation}</CardDescription>
-                    <CardDescription className="text-slate-500">{selectedInvigilator.email}</CardDescription>
-                    </div>
-                    <div className="text-right sm:border-l sm:pl-6 border-slate-200">
-                        <div className="flex flex-col items-end">
-                            <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Total Duties</span>
-                            <span className="text-3xl font-black text-primary">{assignedDuties.length.toString().padStart(2, '0')}</span>
-                            <h4 className="text-xs font-semibold text-slate-500 max-w-[150px] text-right line-clamp-2 mt-1">{examName}</h4>
-                        </div>
-                    </div>
-                </CardHeader>
-            </Card>
-
-            <div className="space-y-4">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-                <CalendarIcon className="w-4 h-4" />
-                Duty Schedule
-              </h3>
-              {assignedDuties.length > 0 ? (
-                <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
-                  {assignedDuties.map(duty => (
-                    <div key={duty.id} className="group flex rounded-xl overflow-hidden shadow-sm border border-slate-200 bg-white dark:bg-slate-900 hover:shadow-md transition-all duration-300">
-                      <div className="bg-gradient-to-br from-blue-600 to-indigo-700 px-6 py-4 flex flex-col items-center justify-center text-white w-28 shrink-0 relative">
-                        <span className="text-3xl font-black leading-none">{format(duty.date, 'dd')}</span>
-                        <span className="text-[10px] uppercase font-bold tracking-widest mt-1 opacity-90">{format(duty.date, 'MMM')}</span>
-                        <div className="h-px w-8 bg-white/30 my-2" />
-                        <span className="text-[10px] uppercase font-medium tracking-tighter opacity-80">{format(duty.date, 'EEEE')}</span>
-                        
-                        <div className="absolute top-1/2 -right-1.5 h-3 w-3 bg-white dark:bg-slate-900 rounded-full -translate-y-1/2" />
-                      </div>
-                      
-                      <div className="flex-1 p-5 flex flex-col justify-center border-l border-dashed border-slate-300">
-                        <h4 className="text-lg font-headline font-normal text-slate-900 dark:text-slate-100 mb-2 leading-tight">
-                          {duty.subject}
-                        </h4>
-                        <div className="flex items-center gap-4">
-                          <div className="flex flex-col">
-                            <span className="text-[9px] uppercase font-bold text-slate-400 tracking-widest mb-0.5">Duration</span>
-                            <span className="text-xs font-bold text-primary flex items-center gap-1">
-                               <Clock className="w-3 h-3" />
-                               {formatTimeTo12Hour(duty.startTime)} - {formatTimeTo12Hour(duty.endTime)}
-                            </span>
-                          </div>
-                          <Separator orientation="vertical" className="h-8" />
-                          <div className="flex flex-col">
-                            <span className="text-[9px] uppercase font-bold text-slate-400 tracking-widest mb-0.5">Session</span>
-                            <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
-                              {parseInt(duty.startTime.split(':')[0]) < 12 ? 'Morning' : 'Afternoon'}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+          <div className="space-y-12">
+            {/* Invigilator Profile Card */}
+            <div className="bg-[#f8fafc] border border-slate-100 rounded-2xl p-8 flex flex-col md:flex-row items-center gap-8 shadow-sm">
+              <Avatar className="h-24 w-24 border-4 border-white shadow-md">
+                <AvatarFallback className="text-3xl bg-primary text-white font-black">
+                  {selectedInvigilator.name.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 text-center md:text-left space-y-1">
+                <h2 className="text-3xl font-black text-slate-900">{selectedInvigilator.name}</h2>
+                <p className="text-lg font-medium text-slate-500">{selectedInvigilator.designation}</p>
+                <div className="flex items-center justify-center md:justify-start gap-2 text-slate-400 font-medium">
+                  <Mail className="h-4 w-4 text-primary" />
+                  <span>{selectedInvigilator.email}</span>
                 </div>
-              ) : (
-                <div className="text-center py-12 bg-slate-50 dark:bg-slate-900/50 rounded-xl border-2 border-dashed border-slate-200">
-                    <p className="text-muted-foreground">No duties assigned for this invigilator.</p>
-                </div>
-              )}
+              </div>
+              <Separator orientation="vertical" className="hidden md:block h-16 bg-slate-200" />
+              <div className="text-center md:text-right min-w-[150px]">
+                <span className="text-xs font-black text-slate-400 uppercase tracking-widest block mb-1">TOTAL DUTIES</span>
+                <span className="text-5xl font-black text-primary leading-none block mb-1">
+                  {assignedDuties.length.toString().padStart(2, '0')}
+                </span>
+                <span className="text-sm font-bold text-slate-600 block">{examName}</span>
+              </div>
             </div>
+
+            {/* Duty Schedule Header */}
+            <div className="flex items-center gap-6">
+              <div className="h-px flex-1 bg-slate-200" />
+              <div className="flex items-center gap-2 text-primary">
+                <CalendarIcon className="h-5 w-5" />
+                <span className="text-sm font-black uppercase tracking-widest">DUTY SCHEDULE</span>
+              </div>
+              <div className="h-px flex-1 bg-slate-200" />
+            </div>
+
+            {/* Duty Cards Grid */}
+            {assignedDuties.length > 0 ? (
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {assignedDuties.map(duty => (
+                  <Card key={duty.id} className="border border-slate-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                    <CardContent className="p-0">
+                      {/* Date Header Section */}
+                      <div className="p-6 pb-4 flex flex-col items-center">
+                        <div className="bg-primary rounded-2xl w-24 h-24 flex flex-col items-center justify-center text-white shadow-lg mb-3 relative overflow-hidden">
+                           <CalendarIcon className="w-4 h-4 opacity-50 absolute top-2 left-1/2 -translate-x-1/2" />
+                           <span className="text-4xl font-black leading-none mt-2">{format(duty.date, 'dd')}</span>
+                           <span className="text-[10px] font-black tracking-widest uppercase opacity-90">{format(duty.date, 'MMM')}</span>
+                        </div>
+                        <div className="bg-blue-50 text-primary text-[10px] font-black tracking-widest uppercase px-6 py-1 rounded-full border border-blue-100">
+                          {format(duty.date, 'EEEE')}
+                        </div>
+                      </div>
+
+                      <Separator className="bg-slate-50" />
+
+                      {/* Info Section */}
+                      <div className="p-6 space-y-6">
+                        <div className="text-center">
+                          <Book className="h-4 w-4 text-primary mx-auto mb-2 opacity-60" />
+                          <h4 className="text-lg font-bold text-slate-800 leading-tight">
+                            {duty.subject}
+                          </h4>
+                        </div>
+
+                        <div className="space-y-4 pt-2">
+                          <div className="flex items-center gap-4">
+                            <div className="bg-slate-50 p-2 rounded-full">
+                              <Clock className="h-4 w-4 text-primary" />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">DURATION</span>
+                              <span className="text-sm font-bold text-primary">
+                                {formatTimeTo12Hour(duty.startTime)} - {formatTimeTo12Hour(duty.endTime)}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-4">
+                            <div className="bg-slate-50 p-2 rounded-full">
+                              <User className="h-4 w-4 text-primary" />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">SESSION</span>
+                              <span className="text-sm font-bold text-slate-700">
+                                {parseInt(duty.startTime.split(':')[0]) < 12 ? 'Morning' : 'Afternoon'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Bottom Session Pill */}
+                        <div className="pt-2">
+                          <div className="bg-blue-50/50 border border-blue-100 rounded-xl py-2 px-4 flex items-center justify-center gap-2 text-primary text-sm font-bold">
+                            {parseInt(duty.startTime.split(':')[0]) < 12 ? (
+                              <Sun className="h-4 w-4" />
+                            ) : (
+                              <Moon className="h-4 w-4" />
+                            )}
+                            <span>{parseInt(duty.startTime.split(':')[0]) < 12 ? 'Morning' : 'Afternoon'}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-20 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
+                  <p className="text-slate-400 font-bold">No duties assigned for this invigilator.</p>
+              </div>
+            )}
           </div>
         )}
       </CardContent>
-      <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6 border-t">
-        <Button variant="outline" className="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md hover:opacity-90 font-bold border-0" onClick={handleDownloadAll}>
-          <FolderArchive className="mr-2 h-4 w-4" /> Download All Summaries
+      
+      <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4 px-0 pt-10 border-t border-slate-100">
+        <Button 
+          variant="outline" 
+          className="w-full sm:w-auto font-bold border-2 border-primary text-primary hover:bg-primary/5 transition-colors px-8 h-12 rounded-xl" 
+          onClick={handleDownloadAll}
+        >
+          <FolderArchive className="mr-2 h-5 w-5" /> Download All Summaries
         </Button>
-        <div className="flex w-full sm:w-auto gap-2">
-          <Button variant="default" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold" onClick={handleDownload}>
-            <Download className="mr-2 h-4 w-4" /> Download PDF
-          </Button>
-        </div>
+        <Button 
+          className="w-full sm:w-auto bg-primary text-white font-bold px-8 h-12 rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 transition-all" 
+          onClick={handleDownload}
+        >
+          <Download className="mr-2 h-5 w-5" /> Download PDF
+        </Button>
       </CardFooter>
     </Card>
   );
