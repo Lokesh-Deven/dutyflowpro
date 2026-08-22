@@ -57,7 +57,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     doc.rect(0, 0, pageWidth, 45, 'F');
     
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(20);
+    doc.setFontSize(18);
     doc.setTextColor('#FFFFFF');
     const collegeName = activeAllotment?.examinations[0]?.college || "College Name";
     doc.text(collegeName.toUpperCase(), pageWidth / 2, 18, { align: 'center' });
@@ -74,69 +74,80 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     // Profile Section
     doc.setTextColor('#000000');
     doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.text("Lecturer Details:", 20, 60);
     
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Name:`, 20, 70);
     doc.setFont('helvetica', 'bold');
-    doc.text(invigilator.name, 45, 70);
+    doc.text(`Name:`, 20, 60);
+    doc.setFont('helvetica', 'normal');
+    doc.text(invigilator.name, 55, 60);
     
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Designation:`, 20, 78);
     doc.setFont('helvetica', 'bold');
-    doc.text(invigilator.designation, 45, 78);
+    doc.text(`Designation:`, 20, 70);
+    doc.setFont('helvetica', 'normal');
+    doc.text(invigilator.designation, 55, 70);
     
-    doc.setFont('helvetica', 'normal');
-    doc.text(`E-Mail:`, 20, 86);
     doc.setFont('helvetica', 'bold');
-    doc.text(invigilator.email, 45, 86);
+    doc.text(`Mobile:`, 20, 80);
+    doc.setFont('helvetica', 'normal');
+    doc.text(invigilator.mobile, 55, 80);
+    
+    doc.setFont('helvetica', 'bold');
+    doc.text(`E-Mail:`, 20, 90);
+    doc.setFont('helvetica', 'normal');
+    doc.text(invigilator.email, 55, 90);
 
     // Total Duties Box
-    doc.setDrawColor(primaryBlue);
-    doc.setFillColor(248, 250, 252); // bg-slate-50
-    doc.roundedRect(pageWidth - 65, 60, 45, 30, 3, 3, 'FD');
-    doc.setTextColor(primaryBlue);
+    doc.setDrawColor(240, 240, 240);
+    doc.setFillColor(243, 244, 246); // bg-gray-100
+    doc.roundedRect(pageWidth - 65, 55, 45, 35, 3, 3, 'FD');
+    doc.setTextColor(midnightBlue);
     doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
-    doc.text("TOTAL DUTIES", pageWidth - 42.5, 68, { align: 'center' });
-    doc.setFontSize(24);
+    doc.text("TOTAL DUTIES", pageWidth - 42.5, 65, { align: 'center' });
+    doc.setFontSize(28);
     doc.text(assignedDuties.length.toString().padStart(2, '0'), pageWidth - 42.5, 82, { align: 'center' });
 
     // Schedule Table
-    const head = [['DATE', 'DAY', 'SUBJECT', 'DURATION', 'SESSION']];
-    const body = assignedDuties.map((duty) => [
-      format(duty.date, "dd MMM").toUpperCase(),
-      format(duty.date, "EEEE"),
+    const head = [['Sl.\nNo', 'Date / Day', 'Subject', 'Timings']];
+    const body = assignedDuties.map((duty, index) => [
+      index + 1,
+      `${format(duty.date, "dd.MM.yyyy")}\n${format(duty.date, "EEEE")}`,
       duty.subject,
-      `${formatTimeTo12Hour(duty.startTime)} - ${formatTimeTo12Hour(duty.endTime)}`,
-      parseInt(duty.startTime.split(':')[0]) < 12 ? 'Morning' : 'Afternoon',
+      `${formatTimeTo12Hour(duty.startTime)} - ${formatTimeTo12Hour(duty.endTime)}`
     ]);
 
     (doc as any).autoTable({
         head: head,
         body: body,
-        startY: 100,
+        startY: 105,
         theme: 'grid',
         headStyles: { 
             fillColor: [28, 48, 74], 
             textColor: 255,
             fontStyle: 'bold',
-            halign: 'center'
+            halign: 'center',
+            valign: 'middle',
+            fontSize: 10
         },
         columnStyles: {
-            0: { halign: 'center', fontStyle: 'bold', textColor: primaryBlue },
-            1: { halign: 'center', fontStyle: 'bold' },
-            2: { halign: 'center', fontStyle: 'normal' },
-            3: { halign: 'center', fontStyle: 'bold' },
-            4: { halign: 'center', fontStyle: 'bold' }
+            0: { halign: 'center', cellWidth: 15 },
+            1: { halign: 'center', cellWidth: 40 },
+            2: { halign: 'center', fontStyle: 'bold', textColor: [28, 48, 74] },
+            3: { halign: 'center', cellWidth: 40 }
         },
         styles: { 
             fontSize: 10, 
             cellPadding: 5,
-            valign: 'middle'
+            valign: 'middle',
+            lineColor: [220, 220, 220]
         },
     });
+
+    // Add wishing message
+    const finalY = (doc as any).lastAutoTable.finalY + 25;
+    doc.setFontSize(12);
+    doc.setTextColor(midnightBlue);
+    doc.setFont('helvetica', 'normal');
+    doc.text("Wishing you a smooth and successful examination duty", pageWidth / 2, finalY, { align: 'center' });
 
     return doc;
   };
