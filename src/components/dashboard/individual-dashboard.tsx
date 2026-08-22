@@ -5,7 +5,7 @@ import type { Invigilator, Examination, AllotmentResult } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Download, FolderArchive, Clock, Calendar as CalendarIcon, Book, Mail, Sun, Moon } from 'lucide-react';
+import { Download, FolderArchive, Clock, Calendar as CalendarIcon, Book, Mail, Sun, Moon, Phone } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -209,12 +209,18 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
                   {selectedInvigilator.name.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-1 text-center md:text-left space-y-1">
+              <div className="flex-1 text-center md:text-left space-y-2">
                 <h2 className="text-3xl font-black text-slate-900">{selectedInvigilator.name}</h2>
                 <p className="text-lg font-bold text-slate-500">{selectedInvigilator.designation}</p>
-                <div className="flex items-center justify-center md:justify-start gap-2 text-primary font-bold mt-2">
-                  <Mail className="h-4 w-4" />
-                  <span>{selectedInvigilator.email}</span>
+                <div className="flex flex-col gap-1.5 mt-2">
+                  <div className="flex items-center justify-center md:justify-start gap-2 text-primary font-bold">
+                    <Phone className="h-4 w-4" />
+                    <span>{selectedInvigilator.mobile}</span>
+                  </div>
+                  <div className="flex items-center justify-center md:justify-start gap-2 text-primary font-bold">
+                    <Mail className="h-4 w-4" />
+                    <span>{selectedInvigilator.email}</span>
+                  </div>
                 </div>
               </div>
               <div className="md:w-px h-16 bg-slate-200 hidden md:block" />
