@@ -19,7 +19,7 @@ type AnalyticsDashboardProps = {
 const chartConfig = {
   duties: {
     label: "Duties",
-    color: "hsl(var(--primary))",
+    color: "#4F46E5",
   },
 } satisfies ChartConfig;
 

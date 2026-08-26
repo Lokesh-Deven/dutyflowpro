@@ -3,7 +3,6 @@
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { navItems } from './sidebar-nav';
-import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 import { useAllotment } from '@/lib/allotment-context';
 
@@ -18,26 +17,26 @@ export function HeaderNav() {
   };
 
   return (
-    <nav className="flex items-center space-x-2">
+    <nav className="flex items-center gap-1 p-1 bg-muted/60 dark:bg-muted/30 rounded-xl border border-border/70 shadow-2xs">
       {navItems.map((item) => {
-        const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
+        const isNewAllotmentActive = item.href === '/dashboard/examinations' && (pathname.startsWith('/dashboard/invigilators') || pathname.startsWith('/dashboard/examinations') || pathname.startsWith('/dashboard/allotment'));
+        const isActive = isNewAllotmentActive || pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
+        
         return (
-          <Button
+          <Link
             key={item.href}
-            asChild
-            variant="default"
+            href={item.href}
+            onClick={() => handleNavClick(item.href)}
             className={cn(
-              "gap-2 transition-all",
+              "px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all duration-200",
               isActive 
-                ? "font-semibold bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700" 
-                : "hover:bg-gradient-to-r hover:from-purple-500 hover:to-indigo-600"
+                ? "bg-[#4F46E5] text-white shadow-xs" 
+                : "text-muted-foreground hover:text-foreground hover:bg-background/80"
             )}
           >
-            <Link href={item.href} onClick={() => handleNavClick(item.href)}>
-              <item.icon className="h-4 w-4" />
-              {item.label}
-            </Link>
-          </Button>
+            <item.icon className={cn("h-3.5 w-3.5", isActive ? "text-white" : "text-muted-foreground")} />
+            <span>{item.label}</span>
+          </Link>
         );
       })}
     </nav>

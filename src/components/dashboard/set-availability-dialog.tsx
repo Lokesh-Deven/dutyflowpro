@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
@@ -15,9 +14,10 @@ import {
 } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { ScrollArea } from '../ui/scroll-area';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
-import { Separator } from '../ui/separator';
+import { CalendarClock, CheckCheck, Calendar, BookOpen } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 type SetAvailabilityDialogProps = {
   invigilator: Invigilator | null;
@@ -30,9 +30,9 @@ type SetAvailabilityDialogProps = {
 export function SetAvailabilityDialog({ invigilator, isOpen, onClose, onSave, examinations }: SetAvailabilityDialogProps) {
   const [isAllDays, setIsAllDays] = useState(true);
   const [selectedExamIds, setSelectedExamIds] = useState<string[]>([]);
-  
-  const sortedExams = useMemo(() => 
-    [...examinations].sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()), 
+
+  const sortedExams = useMemo(() =>
+    [...examinations].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
     [examinations]
   );
 
@@ -41,9 +41,8 @@ export function SetAvailabilityDialog({ invigilator, isOpen, onClose, onSave, ex
       setIsAllDays(invigilator.isAvailableAllDays);
       setSelectedExamIds(invigilator.availableExamIds || []);
     } else {
-        // Reset state when dialog is closed or invigilator is null
-        setIsAllDays(true);
-        setSelectedExamIds([]);
+      setIsAllDays(true);
+      setSelectedExamIds([]);
     }
   }, [invigilator, isOpen]);
 
@@ -59,11 +58,10 @@ export function SetAvailabilityDialog({ invigilator, isOpen, onClose, onSave, ex
   const handleExamIdToggle = (examId: string) => {
     const isCurrentlySelected = selectedExamIds.includes(examId);
 
-    // If "All Days" is checked, any interaction with specific dates unchecks it.
     if (isAllDays) {
       setIsAllDays(false);
     }
-    
+
     if (isCurrentlySelected) {
       setSelectedExamIds(prev => prev.filter(id => id !== examId));
     } else {
@@ -72,9 +70,9 @@ export function SetAvailabilityDialog({ invigilator, isOpen, onClose, onSave, ex
   };
 
   const handleSave = () => {
-    onSave(invigilator.id, { 
+    onSave(invigilator.id, {
       isAvailableAllDays: isAllDays,
-      availableExamIds: isAllDays ? [] : selectedExamIds 
+      availableExamIds: isAllDays ? [] : selectedExamIds
     });
     onClose();
   };
@@ -83,66 +81,153 @@ export function SetAvailabilityDialog({ invigilator, isOpen, onClose, onSave, ex
     setSelectedExamIds([]);
     setIsAllDays(false);
   };
-  
+
   const handleSelectAll = () => {
     setSelectedExamIds(examinations.map(e => e.id));
     setIsAllDays(false);
-  }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Set Availability for {invigilator.name}</DialogTitle>
-          <DialogDescription>
-            Select "All Days" or choose specific exam dates the invigilator is available for duty.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4 py-4">
-            <div className="flex items-center space-x-2">
-                <Checkbox
-                    id="all-days"
-                    checked={isAllDays}
-                    onCheckedChange={(checked) => handleAllDaysToggle(Boolean(checked))}
-                />
-                <Label htmlFor="all-days" className="text-base font-medium leading-none">
-                    All Days
+      <DialogContent className="sm:max-w-lg rounded-2xl p-0 overflow-hidden border-border">
+        {/* Top Accent Gradient */}
+        <div className="h-1.5 w-full bg-gradient-to-r from-[#4F46E5] via-[#0891B2] to-[#F59E0B]" />
+
+        <div className="p-6 space-y-5">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-[#4F46E5] dark:text-indigo-300">
+                <CalendarClock className="h-5 w-5" />
+              </div>
+              <div>
+                <DialogTitle className="text-lg font-bold">Duty Availability: {invigilator.name}</DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                  Designation: <span className="font-medium text-foreground">{invigilator.designation}</span>
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          {/* All Days Option Card */}
+          <div
+            onClick={() => handleAllDaysToggle(!isAllDays)}
+            className={cn(
+              "flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer",
+              isAllDays
+                ? "bg-emerald-50/50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 shadow-xs"
+                : "bg-muted/30 border-border/70 hover:bg-muted/50"
+            )}
+          >
+            <div className="flex items-center space-x-3">
+              <Checkbox
+                id="all-days"
+                checked={isAllDays}
+                onCheckedChange={(checked) => handleAllDaysToggle(Boolean(checked))}
+                className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+              />
+              <div>
+                <Label htmlFor="all-days" className="font-semibold text-sm cursor-pointer">
+                  Available for All Examination Days
                 </Label>
+                <p className="text-xs text-muted-foreground">Full availability without date constraints.</p>
+              </div>
             </div>
-            <Separator />
-            <div className='flex justify-between items-center'>
-                 <h4 className="font-medium">Specific Days</h4>
-                 <div>
-                    <Button variant="link" size="sm" onClick={handleSelectAll} disabled={isAllDays}>Select All</Button>
-                    <Button variant="link" size="sm" onClick={handleClearAll} disabled={isAllDays}>Clear All</Button>
-                 </div>
+            {isAllDays && (
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600">
+                Active
+              </span>
+            )}
+          </div>
+
+          {/* Specific Days Section */}
+          <div className="space-y-3">
+            <div className="flex justify-between items-center px-0.5">
+              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Or Select Specific Dates ({sortedExams.length} Available)
+              </div>
+              <div className="flex items-center gap-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSelectAll}
+                  className="h-7 text-xs text-[#4F46E5] hover:bg-indigo-50 dark:hover:bg-indigo-950/50 px-2"
+                >
+                  Select All
+                </Button>
+                <span className="text-muted-foreground/40 text-xs">•</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleClearAll}
+                  className="h-7 text-xs text-muted-foreground hover:text-destructive px-2"
+                >
+                  Clear
+                </Button>
+              </div>
             </div>
-            <ScrollArea className="h-64 pr-4">
-                <div className="space-y-3">
-                {sortedExams.map(exam => (
-                    <div key={exam.id} className="flex items-center space-x-3">
-                    <Checkbox
-                        id={exam.id}
-                        checked={selectedExamIds.includes(exam.id)}
-                        onCheckedChange={() => handleExamIdToggle(exam.id)}
-                        disabled={isAllDays}
-                    />
-                    <Label htmlFor={exam.id} className="text-sm font-normal leading-none w-full cursor-pointer">
-                        <div className='flex justify-between'>
-                            <span>{format(exam.date, "PPP")} ({format(exam.date, "EEE")})</span>
-                            <span className="text-muted-foreground">{exam.subject}</span>
+
+            <ScrollArea className="h-64 pr-3 border border-border/70 rounded-xl bg-muted/20 p-2">
+              <div className="space-y-1.5">
+                {sortedExams.map(exam => {
+                  const isSelected = selectedExamIds.includes(exam.id);
+
+                  return (
+                    <div
+                      key={exam.id}
+                      onClick={() => handleExamIdToggle(exam.id)}
+                      className={cn(
+                        "flex items-center justify-between p-2.5 rounded-lg border text-sm transition-colors cursor-pointer",
+                        isSelected && !isAllDays
+                          ? "bg-indigo-50/70 dark:bg-indigo-950/40 border-[#4F46E5]/40 text-foreground font-medium shadow-2xs"
+                          : "bg-background border-border/60 hover:bg-muted/40 text-muted-foreground"
+                      )}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <Checkbox
+                          id={exam.id}
+                          checked={isAllDays || isSelected}
+                          onCheckedChange={() => handleExamIdToggle(exam.id)}
+                          className="data-[state=checked]:bg-[#4F46E5] data-[state=checked]:border-[#4F46E5]"
+                        />
+                        <div>
+                          <div className="font-semibold text-xs text-foreground flex items-center gap-1.5">
+                            <Calendar className="h-3 w-3 text-[#4F46E5]" />
+                            <span>{format(new Date(exam.date), "dd/MM/yyyy")}</span>
+                            <span className="text-muted-foreground font-normal">({format(new Date(exam.date), "EEEE")})</span>
+                          </div>
+                          <div className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                            <BookOpen className="h-3 w-3 text-[#0891B2]" />
+                            <span>{exam.subject}</span>
+                          </div>
                         </div>
-                    </Label>
+                      </div>
+
+                      <span className="text-[11px] text-muted-foreground bg-muted/50 px-2 py-0.5 rounded">
+                        {exam.rooms + exam.relievers} duties
+                      </span>
                     </div>
-                ))}
-                </div>
+                  );
+                })}
+              </div>
             </ScrollArea>
+          </div>
         </div>
-        <DialogFooter className="justify-end">
-            <DialogClose asChild>
-                <Button type="button" variant="outline">Cancel</Button>
-            </DialogClose>
-            <Button type="button" onClick={handleSave}>Save Availability</Button>
+
+        <DialogFooter className="px-6 py-4 bg-muted/10 border-t border-border/60 justify-end gap-2">
+          <DialogClose asChild>
+            <Button type="button" variant="outline" className="rounded-lg">
+              Cancel
+            </Button>
+          </DialogClose>
+          <Button
+            type="button"
+            onClick={handleSave}
+            className="bg-[#4F46E5] hover:bg-[#4338ca] text-white font-semibold rounded-lg shadow-sm"
+          >
+            Save Availability
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

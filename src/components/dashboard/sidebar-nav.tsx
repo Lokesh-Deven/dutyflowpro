@@ -1,4 +1,3 @@
-
 "use client";
 
 import { usePathname } from 'next/navigation';
@@ -15,7 +14,9 @@ import {
   BarChart2,
   Info,
   Users,
-  FileText
+  FileText,
+  Building2,
+  UserCircle
 } from 'lucide-react';
 
 export const navItems = [
@@ -23,7 +24,7 @@ export const navItems = [
   { href: '/dashboard/saved', label: 'Saved Allotments', icon: Save },
   { href: '/dashboard/schedule', label: 'Day-wise Schedule', icon: CalendarDays },
   { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart2 },
-  { href: '/dashboard/about', label: 'About', icon: Info },
+  { href: '/dashboard/profile', label: 'Profile Details', icon: Building2 },
 ];
 
 export const newAllotmentSteps = [

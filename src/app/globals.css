@@ -2,74 +2,71 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
-}
-
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 214 45% 20%;
+    --foreground: 222 47% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 214 45% 20%;
+    --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 214 45% 20%;
-    --primary: 210 82% 37%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 20% 96%;
-    --secondary-foreground: 214 45% 20%;
-    --muted: 210 20% 96%;
-    --muted-foreground: 214 15% 45%;
-    --accent: 210 20% 96%;
-    --accent-foreground: 210 82% 37%;
-    --destructive: 0 84% 60%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 239 84% 59%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214 30% 90%;
-    --input: 214 30% 90%;
-    --ring: 210 82% 37%;
-    --chart-1: 210 82% 37%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 239 84% 59%;
+    --chart-1: 239 84% 59%;
+    --chart-2: 189 94% 43%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 142 76% 36%;
     --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
-    --sidebar-background: 214 45% 20%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 210 82% 37%;
-    --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 210 82% 30%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 214 30% 25%;
-    --sidebar-ring: 210 82% 37%;
+    --radius: 0.65rem;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 239 84% 59%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 40% 96.1%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214.3 31.8% 91.4%;
+    --sidebar-ring: 239 84% 59%;
   }
+
   .dark {
-    --background: 214 45% 10%;
+    --background: 224 71% 4%;
     --foreground: 210 40% 98%;
-    --card: 214 45% 12%;
+    --card: 222 47% 8.5%;
     --card-foreground: 210 40% 98%;
-    --popover: 214 45% 12%;
+    --popover: 222 47% 8.5%;
     --popover-foreground: 210 40% 98%;
-    --primary: 210 82% 45%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 214 30% 20%;
+    --primary: 234 89% 74%;
+    --primary-foreground: 224 71% 4%;
+    --secondary: 217 33% 15%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 214 30% 20%;
-    --muted-foreground: 214 15% 65%;
-    --accent: 214 30% 20%;
+    --muted: 217 33% 14%;
+    --muted-foreground: 215 20% 70%;
+    --accent: 217 33% 15%;
     --accent-foreground: 210 40% 98%;
-    --destructive: 0 63% 31%;
+    --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214 30% 20%;
-    --input: 214 30% 20%;
-    --ring: 210 82% 45%;
-    --sidebar-background: 214 45% 10%;
+    --border: 217 33% 18%;
+    --input: 217 33% 18%;
+    --ring: 234 89% 74%;
+    --sidebar-background: 224 71% 4%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 210 82% 45%;
-    --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 214 30% 20%;
+    --sidebar-primary: 234 89% 74%;
+    --sidebar-primary-foreground: 224 71% 4%;
+    --sidebar-accent: 217 33% 15%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 214 30% 20%;
-    --sidebar-ring: 210 82% 45%;
+    --sidebar-border: 217 33% 18%;
+    --sidebar-ring: 234 89% 74%;
   }
 }
 
@@ -77,7 +74,14 @@ body {
   * {
     @apply border-border;
   }
+
+  html {
+    font-size: 18px;
+    letter-spacing: -0.01em;
+  }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
