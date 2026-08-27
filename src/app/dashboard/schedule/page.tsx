@@ -2,6 +2,8 @@
 
 import { useState, useMemo } from "react";
 import { useAllotment } from "@/lib/allotment-context";
+import { useAuth } from "@/lib/auth-context";
+import { uploadUserFile } from "@/lib/storage-service";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -42,6 +44,7 @@ interface DutySlot {
 
 export default function SchedulePage() {
   const { invigilators, examinations, activeAllotment, savedAllotments, setActiveAllotment } = useAllotment();
+  const { user, recordDownload } = useAuth();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [showFullSchedule, setShowFullSchedule] = useState(false);
   const { toast } = useToast();
@@ -207,10 +210,38 @@ export default function SchedulePage() {
     });
 
     const fileName = isFull
-      ? `Full_Schedule_${activeAllotment?.name.replace(/ /g, '_')}.pdf`
+      ? `Full_Schedule_${activeAllotment?.name ? activeAllotment.name.replace(/ /g, '_') : 'Comprehensive'}.pdf`
       : `Duty_Schedule_${format(date || new Date(), "yyyy-MM-dd")}.pdf`;
 
+    const pdfBlob = doc.output('blob');
     doc.save(fileName);
+    recordDownload();
+
+    // Save generated Schedule PDF to Supabase Storage per user
+    if (user?.id) {
+      uploadUserFile({
+        file: pdfBlob,
+        fileName,
+        fileType: 'pdf',
+        category: 'download',
+        subCategory: 'schedule',
+        userId: user.id,
+        metadata: {
+          isFull,
+          date: isFull ? 'all' : (date ? format(date, 'yyyy-MM-dd') : null),
+          slotCount: dataToExport.length,
+          allotmentName: activeAllotment?.name || 'Active Schedule',
+        },
+        mimeType: 'application/pdf',
+      }).then(({ error }) => {
+        if (!error) {
+          toast({
+            title: "Cloud Backup Complete",
+            description: `"${fileName}" has been saved to your Supabase storage.`,
+          });
+        }
+      });
+    }
   };
 
   const examDetails = examinations.length > 0 ? examinations[0] : null;

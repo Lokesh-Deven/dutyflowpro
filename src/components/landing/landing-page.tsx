@@ -133,19 +133,19 @@ export function LandingPage() {
         {/* ========================================================================= */}
         {/* LEFT COLUMN: Title & Vector Illustration */}
         {/* ========================================================================= */}
-        <div className="w-full md:w-1/2 flex flex-col items-center justify-center space-y-6">
+        <div className="w-full md:w-1/2 flex flex-col items-center justify-center space-y-5 px-2">
           {/* Main Title */}
-          <h1 className="font-headline text-3xl sm:text-4xl font-extrabold tracking-tight text-black text-center">
+          <h1 className="font-headline text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-black text-center select-none">
             DutyFlow
           </h1>
 
-          {/* Vector Illustration from attachment */}
-          <div className="relative w-full max-w-[360px] sm:max-w-[420px] aspect-[4/3] flex items-center justify-center">
+          {/* Vector Illustration */}
+          <div className="relative w-full max-w-[320px] sm:max-w-[380px] lg:max-w-[420px] flex items-center justify-center">
             <Image
               src="/images/team-illustration.png"
               alt="DutyFlow AI Invigilation Illustration"
-              width={420}
-              height={340}
+              width={440}
+              height={420}
               priority
               className="object-contain w-full h-auto drop-shadow-xs"
             />
@@ -345,7 +345,7 @@ export function LandingPage() {
                   <Input
                     id="signup-institution"
                     type="text"
-                    placeholder="e.g., Carmel Pre-University College"
+                    placeholder="Enter full name of college or school"
                     value={institutionName}
                     onChange={(e) => setInstitutionName(e.target.value)}
                     className="rounded-md h-9 bg-white border-slate-300 text-sm text-slate-800 placeholder:text-slate-400 focus-visible:border-[#1E2A5E] focus-visible:ring-1 focus-visible:ring-[#1E2A5E]"

@@ -30,6 +30,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { useAllotment } from '@/lib/allotment-context';
 import { useAuth } from '@/lib/auth-context';
+import { uploadUserFile } from '@/lib/storage-service';
 import { cn, formatTimeTo12Hour } from '@/lib/utils';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
@@ -56,7 +57,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
   const [selectedInvigilatorId, setSelectedInvigilatorId] = useState<string | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const { activeAllotment } = useAllotment();
-  const { recordDownload } = useAuth();
+  const { user, recordDownload } = useAuth();
 
   useEffect(() => {
     if (invigilators.length > 0 && !selectedInvigilatorId) {
@@ -312,7 +313,36 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
       description: `Preparing summary for ${selectedInvigilator.name}.`,
     });
     const doc = generateInvigilatorPDF(selectedInvigilator, assignedDuties);
-    doc.save(`Duty_Summary_${selectedInvigilator.name.replace(/ /g, '_')}.pdf`);
+    const fileName = `Duty_Summary_${selectedInvigilator.name.replace(/ /g, '_')}.pdf`;
+    const pdfBlob = doc.output('blob');
+    doc.save(fileName);
+
+    // Save generated faculty PDF to Supabase Storage per user
+    if (user?.id) {
+      uploadUserFile({
+        file: pdfBlob,
+        fileName,
+        fileType: 'pdf',
+        category: 'download',
+        subCategory: 'duty_summary',
+        userId: user.id,
+        metadata: {
+          invigilatorId: selectedInvigilator.id,
+          invigilatorName: selectedInvigilator.name,
+          designation: selectedInvigilator.designation,
+          dutyCount: assignedDuties.length,
+          examName,
+        },
+        mimeType: 'application/pdf',
+      }).then(({ error }) => {
+        if (!error) {
+          toast({
+            title: "Cloud Backup Complete",
+            description: `"${fileName}" has been saved to your Supabase storage.`,
+          });
+        }
+      });
+    }
   };
 
   const handleDownloadAll = async () => {
@@ -333,7 +363,32 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     }
 
     const content = await zip.generateAsync({ type: 'blob' });
-    saveAs(content, `All_Invigilator_Duty_Summaries.zip`);
+    const zipFileName = `All_Invigilator_Duty_Summaries.zip`;
+    saveAs(content, zipFileName);
+
+    // Save generated ZIP archive to Supabase Storage per user
+    if (user?.id) {
+      uploadUserFile({
+        file: content,
+        fileName: zipFileName,
+        fileType: 'zip',
+        category: 'download',
+        subCategory: 'all_summaries_zip',
+        userId: user.id,
+        metadata: {
+          invigilatorCount: invigilators.length,
+          examName,
+        },
+        mimeType: 'application/zip',
+      }).then(({ error }) => {
+        if (!error) {
+          toast({
+            title: "Cloud Backup Complete",
+            description: `"${zipFileName}" has been saved to your Supabase storage.`,
+          });
+        }
+      });
+    }
   };
 
   const examName = examinations[0]?.examName || activeAllotment?.examinations[0]?.examName || 'Examination Session';

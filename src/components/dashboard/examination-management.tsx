@@ -42,6 +42,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFoo
 import { useRouter } from 'next/navigation';
 import { useAllotment } from '@/lib/allotment-context';
 import { useAuth } from '@/lib/auth-context';
+import { uploadUserFile } from '@/lib/storage-service';
 
 const examSessionSchema = z.object({
   subject: z.string().min(1, "Subject is required."),
@@ -508,6 +509,30 @@ export function ExaminationManagement() {
 
         // 7. Update examinations state
         setExaminations(prev => [...prev, ...newExams]);
+
+        // 8. Save uploaded Excel file to Supabase Storage per user
+        if (user?.id) {
+          uploadUserFile({
+            file,
+            fileName: file.name,
+            fileType: 'excel',
+            category: 'upload',
+            subCategory: 'examinations',
+            userId: user.id,
+            metadata: {
+              examCount: newExams.length,
+              college: collegeFinal,
+              examName: examNameFinal,
+            },
+          }).then(({ error }) => {
+            if (!error) {
+              toast({
+                title: "Cloud Backup Complete",
+                description: `"${file.name}" was successfully saved to your Supabase storage.`,
+              });
+            }
+          });
+        }
 
         toast({
           title: "Import Successful",

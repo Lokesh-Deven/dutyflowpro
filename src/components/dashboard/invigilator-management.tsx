@@ -34,6 +34,8 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { SetAvailabilityDialog } from './set-availability-dialog';
 import { useAllotment } from '@/lib/allotment-context';
+import { useAuth } from '@/lib/auth-context';
+import { uploadUserFile } from '@/lib/storage-service';
 import { generateAllotment } from '@/lib/allotment';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -47,6 +49,7 @@ const invigilatorSchema = z.object({
 
 export function InvigilatorManagement() {
     const { toast } = useToast();
+    const { user } = useAuth();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const router = useRouter();
     const [selectedInvigilator, setSelectedInvigilator] = useState<Invigilator | null>(null);
@@ -127,6 +130,29 @@ export function InvigilatorManagement() {
 
                 if (newInvigilators.length > 0) {
                     setInvigilators(prev => [...prev, ...newInvigilators]);
+
+                    // Save uploaded Excel file to Supabase Storage per user
+                    if (user?.id) {
+                        uploadUserFile({
+                            file,
+                            fileName: file.name,
+                            fileType: 'excel',
+                            category: 'upload',
+                            subCategory: 'invigilators',
+                            userId: user.id,
+                            metadata: {
+                                invigilatorCount: newInvigilators.length,
+                            },
+                        }).then(({ error }) => {
+                            if (!error) {
+                                toast({
+                                    title: "Cloud Backup Complete",
+                                    description: `"${file.name}" was successfully saved to your Supabase storage.`,
+                                });
+                            }
+                        });
+                    }
+
                     toast({
                         title: "Bulk Import Successful",
                         description: `${newInvigilators.length} invigilators have been added.`,

@@ -96,7 +96,7 @@ export function SignupForm() {
             <Label htmlFor="institution" className="text-xs font-semibold text-slate-700">Institution Name</Label>
             <Input 
               id="institution" 
-              placeholder="e.g. Carmel Pre-University College" 
+              placeholder="Enter full name of college or school" 
               value={institutionName}
               onChange={(e) => setInstitutionName(e.target.value)}
               required 

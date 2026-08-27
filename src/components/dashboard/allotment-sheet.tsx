@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { useAllotment } from '@/lib/allotment-context';
 import { useAuth } from '@/lib/auth-context';
+import { uploadUserFile } from '@/lib/storage-service';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { cn, formatTimeTo12Hour } from '@/lib/utils';
@@ -44,7 +45,7 @@ type AllotmentSheetProps = {
 export function AllotmentSheet({ invigilators, examinations, allotmentResult: initialAllotmentResult, onAllotmentChange }: AllotmentSheetProps) {
   const { toast } = useToast();
   const { activeAllotment, saveCurrentAllotment } = useAllotment();
-  const { recordDownload } = useAuth();
+  const { user, recordDownload } = useAuth();
   const [allotmentResult, setAllotmentResult] = useState<AllotmentResult>(initialAllotmentResult);
   const [isSaveAlertOpen, setIsSaveAlertOpen] = useState(false);
 
@@ -249,7 +250,35 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
       }
     });
 
-    doc.save(`${saveName.replace(/ /g, '_')}.pdf`);
+    const fileName = `${saveName.replace(/ /g, '_')}.pdf`;
+    const pdfBlob = doc.output('blob');
+    doc.save(fileName);
+
+    // Save generated PDF to Supabase Storage per user
+    if (user?.id) {
+      uploadUserFile({
+        file: pdfBlob,
+        fileName,
+        fileType: 'pdf',
+        category: 'download',
+        subCategory: 'allotment_sheet',
+        userId: user.id,
+        metadata: {
+          allotmentName: saveName,
+          invigilatorCount: invigilators.length,
+          examCount: examinations.length,
+          totalDuties: totalDutiesAllotted,
+        },
+        mimeType: 'application/pdf',
+      }).then(({ error }) => {
+        if (!error) {
+          toast({
+            title: "Cloud Backup Complete",
+            description: `"${fileName}" was saved to your Supabase cloud files.`,
+          });
+        }
+      });
+    }
   };
 
   const examInfo = examinations.length > 0 ? examinations[0] : null;
