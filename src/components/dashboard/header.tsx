@@ -67,8 +67,8 @@ export default function Header() {
                   PRO
                 </span>
               </div>
-              <span className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
-                Exam Invigilation Hub
+              <span className="text-[10px] font-medium tracking-tight text-muted-foreground">
+                Examination Duties, Simplified.
               </span>
             </div>
           </Link>

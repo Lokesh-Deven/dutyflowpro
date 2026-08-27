@@ -58,7 +58,7 @@ export function UserNav() {
         <DropdownMenuItem asChild className="cursor-pointer m-1 rounded-lg">
           <Link href="/dashboard/profile" className="flex items-center gap-2">
             <UserCircle className="h-4 w-4 text-[#4F46E5]" />
-            <span className="font-medium text-xs">Profile & Subscription</span>
+            <span className="font-medium text-xs">My Account</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />

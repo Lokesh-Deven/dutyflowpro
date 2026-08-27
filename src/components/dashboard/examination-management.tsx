@@ -575,23 +575,32 @@ export function ExaminationManagement() {
     <div className="space-y-8">
       {/* Top Card: Examination Details */}
       <Card className="border border-border/80 shadow-sm rounded-xl overflow-hidden bg-card">
-        <div className="h-1.5 w-full bg-gradient-to-r from-[#4F46E5] to-[#0891B2]" />
+        <div className="h-1.5 w-full bg-gradient-to-r from-[#4F46E5] via-[#0891B2] to-[#F59E0B]" />
         <CardHeader className="pb-4 pt-6 px-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-[#4F46E5] dark:text-indigo-300">
-              <Building2 className="h-5 w-5" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-[#4F46E5] dark:text-indigo-300">
+                <Building2 className="h-5 w-5" />
+              </div>
+              <div>
+                <CardTitle className="font-headline text-xl font-bold tracking-tight">Examination Details</CardTitle>
+                <p className="text-xs text-muted-foreground mt-0.5">Configure your institution, examination schedule, and session requirements</p>
+              </div>
             </div>
-            <div>
-              <CardTitle className="font-headline text-xl font-bold tracking-tight">Examination Details</CardTitle>
-            </div>
+            {editingExamId && (
+              <Badge className="bg-[#F59E0B]/15 text-[#D97706] dark:text-[#FBBF24] border-[#F59E0B]/30 font-semibold px-3 py-1 text-xs">
+                Editing Examination
+              </Badge>
+            )}
           </div>
         </CardHeader>
         <CardContent className="px-6 pb-6 pt-2">
           <Form {...form}>
-            <form className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {/* Institution Name Card */}
-                <div className="bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 rounded-xl p-3.5 space-y-2">
+            <form className="space-y-5">
+              {/* Main Grid of all Examination and Session Inputs */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+                {/* 1. Institution Name */}
+                <div className="md:col-span-6 bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 rounded-xl p-3.5 space-y-2">
                   <div className="flex items-center gap-1.5 text-[#4F46E5] dark:text-indigo-400 text-xs font-semibold uppercase tracking-wider">
                     <Building2 className="h-4 w-4" />
                     <span>Name of the Institution</span>
@@ -614,8 +623,8 @@ export function ExaminationManagement() {
                   />
                 </div>
 
-                {/* Examination Name Card */}
-                <div className="bg-cyan-50/50 dark:bg-cyan-950/30 border border-cyan-100 dark:border-cyan-900/50 rounded-xl p-3.5 space-y-2">
+                {/* 2. Examination Name */}
+                <div className="md:col-span-6 bg-cyan-50/50 dark:bg-cyan-950/30 border border-cyan-100 dark:border-cyan-900/50 rounded-xl p-3.5 space-y-2">
                   <div className="flex items-center gap-1.5 text-[#0891B2] dark:text-cyan-400 text-xs font-semibold uppercase tracking-wider">
                     <GraduationCap className="h-4 w-4" />
                     <span>Name of the Examination</span>
@@ -637,266 +646,239 @@ export function ExaminationManagement() {
                     )}
                   />
                 </div>
-              </div>
 
-              {/* Modern Session Details Card */}
-              <div className="rounded-xl border border-border/80 bg-gradient-to-b from-card to-muted/20 shadow-sm overflow-hidden mt-6">
-                <div className="h-1 w-full bg-gradient-to-r from-[#4F46E5] via-[#0891B2] to-[#F59E0B]" />
-
-                <div className="p-6 space-y-6">
-                  {/* Session Header */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-[#4F46E5]/10 text-[#4F46E5] dark:text-indigo-400">
-                        <CalendarDays className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <h3 className="font-headline text-lg font-bold tracking-tight">Session Details</h3>
-                      </div>
-                    </div>
-                    {editingExamId && (
-                      <Badge className="bg-[#F59E0B]/15 text-[#D97706] dark:text-[#FBBF24] border-[#F59E0B]/30 font-medium">
-                        Editing Session
-                      </Badge>
+                {/* 3. Date for Session */}
+                <div className="md:col-span-6 bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 rounded-xl p-3.5 space-y-2">
+                  <div className="flex items-center gap-1.5 text-[#4F46E5] dark:text-indigo-400 text-xs font-semibold uppercase tracking-wider">
+                    <CalendarIcon className="h-4 w-4" />
+                    <span>Date for Session</span>
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="date"
+                    render={({ field }) => (
+                      <FormItem className="space-y-0 flex flex-col">
+                        <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={"outline"}
+                                className={cn(
+                                  "w-full justify-start text-left font-medium bg-background dark:bg-slate-900 border-indigo-200 dark:border-indigo-800/80 hover:bg-indigo-50/50 dark:hover:bg-slate-800 rounded-lg h-9 text-sm transition-colors",
+                                  !field.value && "text-muted-foreground font-normal"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4 text-[#4F46E5] shrink-0" />
+                                {field.value ? (
+                                  <span className="font-semibold text-foreground">{format(field.value, "PPP")}</span>
+                                ) : (
+                                  <span>Select exam date</span>
+                                )}
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0 rounded-xl shadow-lg border-border" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={(date) => {
+                                field.onChange(date);
+                                setIsCalendarOpen(false);
+                              }}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage className="text-xs mt-1" />
+                      </FormItem>
                     )}
+                  />
+                </div>
+
+                {/* 4. Subject */}
+                <div className="md:col-span-6 bg-cyan-50/50 dark:bg-cyan-950/30 border border-cyan-100 dark:border-cyan-900/50 rounded-xl p-3.5 space-y-2">
+                  <div className="flex items-center gap-1.5 text-[#0891B2] dark:text-cyan-400 text-xs font-semibold uppercase tracking-wider">
+                    <BookOpen className="h-4 w-4" />
+                    <span>Subject</span>
+                  </div>
+                  <div className="relative">
+                    <Input
+                      placeholder="Type or select a subject..."
+                      value={sessionDetails.subject}
+                      onChange={(e) => handleSessionDetailChange('subject', e.target.value)}
+                      list="subject-options"
+                      className="bg-background dark:bg-slate-900 border-cyan-200 dark:border-cyan-800/80 focus-visible:border-[#0891B2] focus-visible:ring-1 focus-visible:ring-[#0891B2] transition-colors rounded-lg h-9 font-medium text-sm text-foreground"
+                    />
+                  </div>
+                  <datalist id="subject-options">
+                    <option value="Accountancy" />
+                    <option value="Basic Mathematics" />
+                    <option value="Biology" />
+                    <option value="Business Studies" />
+                    <option value="Chemistry" />
+                    <option value="Computer Science" />
+                    <option value="Economics" />
+                    <option value="Electronics" />
+                    <option value="English" />
+                    <option value="Geography" />
+                    <option value="Hindi" />
+                    <option value="History" />
+                    <option value="Home Science" />
+                    <option value="Kannada" />
+                    <option value="Logic" />
+                    <option value="None" />
+                    <option value="Political Science" />
+                    <option value="Sanskrit" />
+                    <option value="Sociology" />
+                    <option value="Statistics" />
+                  </datalist>
+                </div>
+
+                {/* 5. Invigilator Count */}
+                <div className="col-span-1 sm:col-span-6 md:col-span-3 bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 rounded-xl p-3.5 space-y-2">
+                  <div className="flex items-center gap-1.5 text-[#4F46E5] dark:text-indigo-400 text-xs font-semibold uppercase tracking-wider">
+                    <Users className="h-4 w-4" />
+                    <span>NO. OF INVIGILATORS</span>
+                  </div>
+                  <Select
+                    value={sessionDetails.rooms.toString()}
+                    onValueChange={(value) => handleSessionDetailChange('rooms', parseInt(value, 10))}
+                  >
+                    <SelectTrigger className="bg-background dark:bg-slate-900 border-indigo-200 dark:border-indigo-800 rounded-lg h-9 font-semibold text-[#4F46E5] dark:text-indigo-300">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-56 dark:border-slate-800">
+                      {Array.from({ length: 50 }, (_, i) => i + 1).map(n => (
+                        <SelectItem key={n} value={n.toString()}>{n} {n === 1 ? 'Invigilator' : 'Invigilators'}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* 6. Reliever Count */}
+                <div className="col-span-1 sm:col-span-6 md:col-span-3 bg-cyan-50/50 dark:bg-cyan-950/30 border border-cyan-100 dark:border-cyan-900/50 rounded-xl p-3.5 space-y-2">
+                  <div className="flex items-center gap-1.5 text-[#0891B2] dark:text-cyan-400 text-xs font-semibold uppercase tracking-wider">
+                    <UserCheck className="h-4 w-4" />
+                    <span>No. of Relievers</span>
+                  </div>
+                  <Select
+                    value={sessionDetails.relievers.toString()}
+                    onValueChange={(value) => handleSessionDetailChange('relievers', parseInt(value, 10))}
+                  >
+                    <SelectTrigger className="bg-background dark:bg-slate-900 border-cyan-200 dark:border-cyan-800 rounded-lg h-9 font-semibold text-[#0891B2] dark:text-cyan-300">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-56 dark:border-slate-800">
+                      {Array.from({ length: 20 }, (_, i) => i).map(n => (
+                        <SelectItem key={n} value={n.toString()}>{n} {n === 1 ? 'Reliever' : 'Relievers'}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* 7. Timings Selector Grid */}
+                <div className="col-span-1 md:col-span-6 bg-muted/40 border border-border/80 rounded-xl p-3.5 space-y-3">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    <Clock className="h-4 w-4 text-[#F59E0B]" />
+                    <span>Session Timings</span>
                   </div>
 
-                  {/* Form Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
-                    {/* Date Picker Card */}
-                    <div className="md:col-span-6 bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 rounded-xl p-3.5 space-y-2">
-                      <div className="flex items-center gap-1.5 text-[#4F46E5] dark:text-indigo-400 text-xs font-semibold uppercase tracking-wider">
-                        <CalendarIcon className="h-4 w-4" />
-                        <span>Date for Session</span>
-                      </div>
-                      <FormField
-                        control={form.control}
-                        name="date"
-                        render={({ field }) => (
-                          <FormItem className="space-y-0 flex flex-col">
-                            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                              <PopoverTrigger asChild>
-                                <FormControl>
-                                  <Button
-                                    variant={"outline"}
-                                    className={cn(
-                                      "w-full justify-start text-left font-medium bg-background dark:bg-slate-900 border-indigo-200 dark:border-indigo-800/80 hover:bg-indigo-50/50 dark:hover:bg-slate-800 rounded-lg h-9 text-sm transition-colors",
-                                      !field.value && "text-muted-foreground font-normal"
-                                    )}
-                                  >
-                                    <CalendarIcon className="mr-2 h-4 w-4 text-[#4F46E5] shrink-0" />
-                                    {field.value ? (
-                                      <span className="font-semibold text-foreground">{format(field.value, "PPP")}</span>
-                                    ) : (
-                                      <span>Select exam date</span>
-                                    )}
-                                  </Button>
-                                </FormControl>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0 rounded-xl shadow-lg border-border" align="start">
-                                <Calendar
-                                  mode="single"
-                                  selected={field.value}
-                                  onSelect={(date) => {
-                                    field.onChange(date);
-                                    setIsCalendarOpen(false);
-                                  }}
-                                  initialFocus
-                                />
-                              </PopoverContent>
-                            </Popover>
-                            <FormMessage className="text-xs mt-1" />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    {/* Subject Input Card */}
-                    <div className="md:col-span-6 bg-cyan-50/50 dark:bg-cyan-950/30 border border-cyan-100 dark:border-cyan-900/50 rounded-xl p-3.5 space-y-2">
-                      <div className="flex items-center gap-1.5 text-[#0891B2] dark:text-cyan-400 text-xs font-semibold uppercase tracking-wider">
-                        <BookOpen className="h-4 w-4" />
-                        <span>Subject</span>
-                      </div>
-                      <div className="relative">
-                        <Input
-                          placeholder="Type or select a subject..."
-                          value={sessionDetails.subject}
-                          onChange={(e) => handleSessionDetailChange('subject', e.target.value)}
-                          list="subject-options"
-                          className="bg-background dark:bg-slate-900 border-cyan-200 dark:border-cyan-800/80 focus-visible:border-[#0891B2] focus-visible:ring-1 focus-visible:ring-[#0891B2] transition-colors rounded-lg h-9 font-medium text-sm text-foreground"
-                        />
-                      </div>
-                      <datalist id="subject-options">
-                        <option value="Accountancy" />
-                        <option value="Basic Mathematics" />
-                        <option value="Biology" />
-                        <option value="Business Studies" />
-                        <option value="Chemistry" />
-                        <option value="Computer Science" />
-                        <option value="Economics" />
-                        <option value="Electronics" />
-                        <option value="English" />
-                        <option value="Geography" />
-                        <option value="Hindi" />
-                        <option value="History" />
-                        <option value="Home Science" />
-                        <option value="Kannada" />
-                        <option value="Logic" />
-                        <option value="None" />
-                        <option value="Political Science" />
-                        <option value="Sanskrit" />
-                        <option value="Sociology" />
-                        <option value="Statistics" />
-                      </datalist>
-                    </div>
-
-                    {/* Invigilator Count Card */}
-                    <div className="md:col-span-3 bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 rounded-xl p-3.5 space-y-2">
-                      <div className="flex items-center gap-1.5 text-[#4F46E5] dark:text-indigo-400 text-xs font-semibold uppercase tracking-wider">
-                        <Users className="h-4 w-4" />
-                        <span>NO. OF INVIGILATORS</span>
-                      </div>
-                      <Select
-                        value={sessionDetails.rooms.toString()}
-                        onValueChange={(value) => handleSessionDetailChange('rooms', parseInt(value, 10))}
-                      >
-                        <SelectTrigger className="bg-background dark:bg-slate-900 border-indigo-200 dark:border-indigo-800 rounded-lg h-9 font-semibold text-[#4F46E5] dark:text-indigo-300">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-56 dark:border-slate-800">
-                          {Array.from({ length: 50 }, (_, i) => i + 1).map(n => (
-                            <SelectItem key={n} value={n.toString()}>{n} {n === 1 ? 'Invigilator' : 'Invigilators'}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Reliever Count Card */}
-                    <div className="md:col-span-3 bg-cyan-50/50 dark:bg-cyan-950/30 border border-cyan-100 dark:border-cyan-900/50 rounded-xl p-3.5 space-y-2">
-                      <div className="flex items-center gap-1.5 text-[#0891B2] dark:text-cyan-400 text-xs font-semibold uppercase tracking-wider">
-                        <UserCheck className="h-4 w-4" />
-                        <span>No. of Relievers</span>
-                      </div>
-                      <Select
-                        value={sessionDetails.relievers.toString()}
-                        onValueChange={(value) => handleSessionDetailChange('relievers', parseInt(value, 10))}
-                      >
-                        <SelectTrigger className="bg-background dark:bg-slate-900 border-cyan-200 dark:border-cyan-800 rounded-lg h-9 font-semibold text-[#0891B2] dark:text-cyan-300">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-56 dark:border-slate-800">
-                          {Array.from({ length: 20 }, (_, i) => i).map(n => (
-                            <SelectItem key={n} value={n.toString()}>{n} {n === 1 ? 'Reliever' : 'Relievers'}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Timings Selector Grid */}
-                    <div className="md:col-span-6 bg-muted/40 border border-border/80 rounded-xl p-3.5 space-y-3">
-                      <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                        <Clock className="h-4 w-4 text-[#F59E0B]" />
-                        <span>Session Timings</span>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {/* Start Time */}
-                        <div className="space-y-1">
-                          <span className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
-                            <span className="h-1.5 w-1.5 rounded-full bg-[#4F46E5]" /> Start Time
-                          </span>
-                          <div className="grid grid-cols-3 gap-1">
-                            <Select value={sessionDetails.startTimeHour} onValueChange={(v) => handleSessionDetailChange('startTimeHour', v)}>
-                              <SelectTrigger className="h-8 text-xs bg-background"><SelectValue /></SelectTrigger>
-                              <SelectContent>{hours.map(h => <SelectItem key={`st-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent>
-                            </Select>
-                            <Select value={sessionDetails.startTimeMinute} onValueChange={(v) => handleSessionDetailChange('startTimeMinute', v)}>
-                              <SelectTrigger className="h-8 text-xs bg-background"><SelectValue /></SelectTrigger>
-                              <SelectContent>{minutes.map(m => <SelectItem key={`st-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent>
-                            </Select>
-                            <Select value={sessionDetails.startTimePeriod} onValueChange={(v) => handleSessionDetailChange('startTimePeriod', v)}>
-                              <SelectTrigger className="h-8 text-xs bg-background font-semibold"><SelectValue /></SelectTrigger>
-                              <SelectContent>{periods.map(p => <SelectItem key={`st-p-${p}`} value={p}>{p}</SelectItem>)}</SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-
-                        {/* End Time */}
-                        <div className="space-y-1">
-                          <span className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
-                            <span className="h-1.5 w-1.5 rounded-full bg-[#0891B2]" /> End Time
-                          </span>
-                          <div className="grid grid-cols-3 gap-1">
-                            <Select value={sessionDetails.endTimeHour} onValueChange={(v) => handleSessionDetailChange('endTimeHour', v)}>
-                              <SelectTrigger className="h-8 text-xs bg-background"><SelectValue /></SelectTrigger>
-                              <SelectContent>{hours.map(h => <SelectItem key={`et-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent>
-                            </Select>
-                            <Select value={sessionDetails.endTimeMinute} onValueChange={(v) => handleSessionDetailChange('endTimeMinute', v)}>
-                              <SelectTrigger className="h-8 text-xs bg-background"><SelectValue /></SelectTrigger>
-                              <SelectContent>{minutes.map(m => <SelectItem key={`et-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent>
-                            </Select>
-                            <Select value={sessionDetails.endTimePeriod} onValueChange={(v) => handleSessionDetailChange('endTimePeriod', v)}>
-                              <SelectTrigger className="h-8 text-xs bg-background font-semibold"><SelectValue /></SelectTrigger>
-                              <SelectContent>{periods.map(p => <SelectItem key={`et-p-${p}`} value={p}>{p}</SelectItem>)}</SelectContent>
-                            </Select>
-                          </div>
-                        </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Start Time */}
+                    <div className="space-y-1">
+                      <span className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#4F46E5]" /> Start Time
+                      </span>
+                      <div className="grid grid-cols-3 gap-1">
+                        <Select value={sessionDetails.startTimeHour} onValueChange={(v) => handleSessionDetailChange('startTimeHour', v)}>
+                          <SelectTrigger className="h-8 text-xs bg-background"><SelectValue /></SelectTrigger>
+                          <SelectContent>{hours.map(h => <SelectItem key={`st-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent>
+                        </Select>
+                        <Select value={sessionDetails.startTimeMinute} onValueChange={(v) => handleSessionDetailChange('startTimeMinute', v)}>
+                          <SelectTrigger className="h-8 text-xs bg-background"><SelectValue /></SelectTrigger>
+                          <SelectContent>{minutes.map(m => <SelectItem key={`st-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent>
+                        </Select>
+                        <Select value={sessionDetails.startTimePeriod} onValueChange={(v) => handleSessionDetailChange('startTimePeriod', v)}>
+                          <SelectTrigger className="h-8 text-xs bg-background font-semibold"><SelectValue /></SelectTrigger>
+                          <SelectContent>{periods.map(p => <SelectItem key={`st-p-${p}`} value={p}>{p}</SelectItem>)}</SelectContent>
+                        </Select>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Actions Bar */}
-                  <div className="flex flex-wrap justify-end items-center pt-2 gap-3 border-t border-border/60">
-                    <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".xlsx, .xls, .csv" />
-
-                    {editingExamId && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          setEditingExamId(null);
-                          setSessionDetails(prev => ({ ...prev, subject: '', rooms: 1, relievers: 0 }));
-                        }}
-                        className="rounded-lg"
-                      >
-                        Cancel Edit
-                      </Button>
-                    )}
-
-                    <Button
-                      type="button"
-                      onClick={onSaveExamination}
-                      className="bg-[#4F46E5] hover:bg-[#4338ca] text-white font-semibold shadow-sm rounded-lg transition-all"
-                    >
-                      {editingExamId ? (
-                        <>
-                          <CheckCircle2 className="mr-2 h-4 w-4" />
-                          Update Examination
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="mr-2 h-4 w-4" />
-                          Add Examination
-                        </>
-                      )}
-                    </Button>
-
-                    {!editingExamId && (
-                      <>
-                        <span className="text-xs uppercase font-medium text-muted-foreground px-1">or</span>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={handleBulkUploadClick}
-                          className="border-[#0891B2]/40 text-[#0891B2] hover:bg-[#0891B2]/10 dark:text-cyan-400 font-semibold rounded-lg shadow-sm"
-                        >
-                          <Upload className="mr-2 h-4 w-4" />
-                          Import from Excel
-                        </Button>
-                      </>
-                    )}
+                    {/* End Time */}
+                    <div className="space-y-1">
+                      <span className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#0891B2]" /> End Time
+                      </span>
+                      <div className="grid grid-cols-3 gap-1">
+                        <Select value={sessionDetails.endTimeHour} onValueChange={(v) => handleSessionDetailChange('endTimeHour', v)}>
+                          <SelectTrigger className="h-8 text-xs bg-background"><SelectValue /></SelectTrigger>
+                          <SelectContent>{hours.map(h => <SelectItem key={`et-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent>
+                        </Select>
+                        <Select value={sessionDetails.endTimeMinute} onValueChange={(v) => handleSessionDetailChange('endTimeMinute', v)}>
+                          <SelectTrigger className="h-8 text-xs bg-background"><SelectValue /></SelectTrigger>
+                          <SelectContent>{minutes.map(m => <SelectItem key={`et-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent>
+                        </Select>
+                        <Select value={sessionDetails.endTimePeriod} onValueChange={(v) => handleSessionDetailChange('endTimePeriod', v)}>
+                          <SelectTrigger className="h-8 text-xs bg-background font-semibold"><SelectValue /></SelectTrigger>
+                          <SelectContent>{periods.map(p => <SelectItem key={`et-p-${p}`} value={p}>{p}</SelectItem>)}</SelectContent>
+                        </Select>
+                      </div>
+                    </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Actions Bar */}
+              <div className="flex flex-wrap justify-end items-center pt-4 gap-3 border-t border-border/60">
+                <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".xlsx, .xls, .csv" />
+
+                {editingExamId && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setEditingExamId(null);
+                      setSessionDetails(prev => ({ ...prev, subject: '', rooms: 1, relievers: 0 }));
+                    }}
+                    className="rounded-lg"
+                  >
+                    Cancel Edit
+                  </Button>
+                )}
+
+                <Button
+                  type="button"
+                  onClick={onSaveExamination}
+                  className="bg-[#4F46E5] hover:bg-[#4338ca] text-white font-semibold shadow-sm rounded-lg transition-all"
+                >
+                  {editingExamId ? (
+                    <>
+                      <CheckCircle2 className="mr-2 h-4 w-4" />
+                      Update Examination
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Examination
+                    </>
+                  )}
+                </Button>
+
+                {!editingExamId && (
+                  <>
+                    <span className="text-xs uppercase font-medium text-muted-foreground px-1">or</span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleBulkUploadClick}
+                      className="border-[#0891B2]/40 text-[#0891B2] hover:bg-[#0891B2]/10 dark:text-cyan-400 font-semibold rounded-lg shadow-sm"
+                    >
+                      <Upload className="mr-2 h-4 w-4" />
+                      Import from Excel
+                    </Button>
+                  </>
+                )}
               </div>
             </form>
           </Form>

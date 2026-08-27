@@ -24,7 +24,7 @@ export const navItems = [
   { href: '/dashboard/saved', label: 'Saved Allotments', icon: Save },
   { href: '/dashboard/schedule', label: 'Day-wise Schedule', icon: CalendarDays },
   { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart2 },
-  { href: '/dashboard/profile', label: 'Profile Details', icon: Building2 },
+  { href: '/dashboard/profile', label: 'My Account', icon: UserCircle },
 ];
 
 export const newAllotmentSteps = [
