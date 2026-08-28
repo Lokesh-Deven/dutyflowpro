@@ -1,6 +1,5 @@
 
 import Header from '@/components/dashboard/header';
-import { Toaster } from '@/components/ui/toaster';
 import { AllotmentProvider } from '@/lib/allotment-context';
 
 export default function AppLayout({
@@ -17,7 +16,6 @@ export default function AppLayout({
             {children}
           </div>
         </main>
-        <Toaster />
       </div>
     </AllotmentProvider>
   );

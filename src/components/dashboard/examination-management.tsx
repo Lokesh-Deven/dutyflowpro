@@ -614,7 +614,7 @@ export function ExaminationManagement() {
                           <Input
                             placeholder="Type your School / College Name..."
                             {...field}
-                            className="bg-background dark:bg-slate-900 border-indigo-200 dark:border-indigo-800/80 focus-visible:border-[#4F46E5] focus-visible:ring-1 focus-visible:ring-[#4F46E5] transition-colors rounded-lg h-9 font-medium text-sm text-foreground"
+                            className="bg-background dark:bg-slate-900 border-indigo-200 dark:border-indigo-800/80 focus-visible:border-[#4F46E5] focus-visible:ring-0 transition-colors rounded-lg h-9 font-medium text-sm text-foreground"
                           />
                         </FormControl>
                         <FormMessage className="text-xs mt-1" />
@@ -624,8 +624,8 @@ export function ExaminationManagement() {
                 </div>
 
                 {/* 2. Examination Name */}
-                <div className="md:col-span-6 bg-cyan-50/50 dark:bg-cyan-950/30 border border-cyan-100 dark:border-cyan-900/50 rounded-xl p-3.5 space-y-2">
-                  <div className="flex items-center gap-1.5 text-[#0891B2] dark:text-cyan-400 text-xs font-semibold uppercase tracking-wider">
+                <div className="md:col-span-6 bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 rounded-xl p-3.5 space-y-2">
+                  <div className="flex items-center gap-1.5 text-[#4F46E5] dark:text-indigo-400 text-xs font-semibold uppercase tracking-wider">
                     <GraduationCap className="h-4 w-4" />
                     <span>Name of the Examination</span>
                   </div>
@@ -638,7 +638,7 @@ export function ExaminationManagement() {
                           <Input
                             {...field}
                             placeholder="e.g. Annual Examination - March 2027"
-                            className="bg-background dark:bg-slate-900 border-cyan-200 dark:border-cyan-800/80 focus-visible:border-[#0891B2] focus-visible:ring-1 focus-visible:ring-[#0891B2] transition-colors rounded-lg h-9 font-medium text-sm text-foreground"
+                            className="bg-background dark:bg-slate-900 border-indigo-200 dark:border-indigo-800/80 focus-visible:border-[#4F46E5] focus-visible:ring-0 transition-colors rounded-lg h-9 font-medium text-sm text-foreground"
                           />
                         </FormControl>
                         <FormMessage className="text-xs mt-1" />
@@ -696,8 +696,8 @@ export function ExaminationManagement() {
                 </div>
 
                 {/* 4. Subject */}
-                <div className="md:col-span-6 bg-cyan-50/50 dark:bg-cyan-950/30 border border-cyan-100 dark:border-cyan-900/50 rounded-xl p-3.5 space-y-2">
-                  <div className="flex items-center gap-1.5 text-[#0891B2] dark:text-cyan-400 text-xs font-semibold uppercase tracking-wider">
+                <div className="md:col-span-6 bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 rounded-xl p-3.5 space-y-2">
+                  <div className="flex items-center gap-1.5 text-[#4F46E5] dark:text-indigo-400 text-xs font-semibold uppercase tracking-wider">
                     <BookOpen className="h-4 w-4" />
                     <span>Subject</span>
                   </div>
@@ -707,7 +707,7 @@ export function ExaminationManagement() {
                       value={sessionDetails.subject}
                       onChange={(e) => handleSessionDetailChange('subject', e.target.value)}
                       list="subject-options"
-                      className="bg-background dark:bg-slate-900 border-cyan-200 dark:border-cyan-800/80 focus-visible:border-[#0891B2] focus-visible:ring-1 focus-visible:ring-[#0891B2] transition-colors rounded-lg h-9 font-medium text-sm text-foreground"
+                      className="bg-background dark:bg-slate-900 border-indigo-200 dark:border-indigo-800/80 focus-visible:border-[#4F46E5] focus-visible:ring-0 transition-colors rounded-lg h-9 font-medium text-sm text-foreground"
                     />
                   </div>
                   <datalist id="subject-options">
@@ -756,8 +756,8 @@ export function ExaminationManagement() {
                 </div>
 
                 {/* 6. Reliever Count */}
-                <div className="col-span-1 sm:col-span-6 md:col-span-3 bg-cyan-50/50 dark:bg-cyan-950/30 border border-cyan-100 dark:border-cyan-900/50 rounded-xl p-3.5 space-y-2">
-                  <div className="flex items-center gap-1.5 text-[#0891B2] dark:text-cyan-400 text-xs font-semibold uppercase tracking-wider">
+                <div className="col-span-1 sm:col-span-6 md:col-span-3 bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 rounded-xl p-3.5 space-y-2">
+                  <div className="flex items-center gap-1.5 text-[#4F46E5] dark:text-indigo-400 text-xs font-semibold uppercase tracking-wider">
                     <UserCheck className="h-4 w-4" />
                     <span>No. of Relievers</span>
                   </div>
@@ -765,7 +765,7 @@ export function ExaminationManagement() {
                     value={sessionDetails.relievers.toString()}
                     onValueChange={(value) => handleSessionDetailChange('relievers', parseInt(value, 10))}
                   >
-                    <SelectTrigger className="bg-background dark:bg-slate-900 border-cyan-200 dark:border-cyan-800 rounded-lg h-9 font-semibold text-[#0891B2] dark:text-cyan-300">
+                    <SelectTrigger className="bg-background dark:bg-slate-900 border-indigo-200 dark:border-indigo-800 rounded-lg h-9 font-semibold text-[#4F46E5] dark:text-indigo-300">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="max-h-56 dark:border-slate-800">
@@ -777,9 +777,9 @@ export function ExaminationManagement() {
                 </div>
 
                 {/* 7. Timings Selector Grid */}
-                <div className="col-span-1 md:col-span-6 bg-muted/40 border border-border/80 rounded-xl p-3.5 space-y-3">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    <Clock className="h-4 w-4 text-[#F59E0B]" />
+                <div className="col-span-1 md:col-span-6 bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 rounded-xl p-3.5 space-y-3">
+                  <div className="flex items-center gap-1.5 text-[#4F46E5] dark:text-indigo-400 text-xs font-semibold uppercase tracking-wider">
+                    <Clock className="h-4 w-4" />
                     <span>Session Timings</span>
                   </div>
 
@@ -791,15 +791,15 @@ export function ExaminationManagement() {
                       </span>
                       <div className="grid grid-cols-3 gap-1">
                         <Select value={sessionDetails.startTimeHour} onValueChange={(v) => handleSessionDetailChange('startTimeHour', v)}>
-                          <SelectTrigger className="h-8 text-xs bg-background"><SelectValue /></SelectTrigger>
+                          <SelectTrigger className="h-8 text-xs bg-background dark:bg-slate-900 border-indigo-200 dark:border-indigo-800/80"><SelectValue /></SelectTrigger>
                           <SelectContent>{hours.map(h => <SelectItem key={`st-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent>
                         </Select>
                         <Select value={sessionDetails.startTimeMinute} onValueChange={(v) => handleSessionDetailChange('startTimeMinute', v)}>
-                          <SelectTrigger className="h-8 text-xs bg-background"><SelectValue /></SelectTrigger>
+                          <SelectTrigger className="h-8 text-xs bg-background dark:bg-slate-900 border-indigo-200 dark:border-indigo-800/80"><SelectValue /></SelectTrigger>
                           <SelectContent>{minutes.map(m => <SelectItem key={`st-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent>
                         </Select>
                         <Select value={sessionDetails.startTimePeriod} onValueChange={(v) => handleSessionDetailChange('startTimePeriod', v)}>
-                          <SelectTrigger className="h-8 text-xs bg-background font-semibold"><SelectValue /></SelectTrigger>
+                          <SelectTrigger className="h-8 text-xs bg-background dark:bg-slate-900 border-indigo-200 dark:border-indigo-800/80 font-semibold"><SelectValue /></SelectTrigger>
                           <SelectContent>{periods.map(p => <SelectItem key={`st-p-${p}`} value={p}>{p}</SelectItem>)}</SelectContent>
                         </Select>
                       </div>
@@ -808,19 +808,19 @@ export function ExaminationManagement() {
                     {/* End Time */}
                     <div className="space-y-1">
                       <span className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
-                        <span className="h-1.5 w-1.5 rounded-full bg-[#0891B2]" /> End Time
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#4F46E5]" /> End Time
                       </span>
                       <div className="grid grid-cols-3 gap-1">
                         <Select value={sessionDetails.endTimeHour} onValueChange={(v) => handleSessionDetailChange('endTimeHour', v)}>
-                          <SelectTrigger className="h-8 text-xs bg-background"><SelectValue /></SelectTrigger>
+                          <SelectTrigger className="h-8 text-xs bg-background dark:bg-slate-900 border-indigo-200 dark:border-indigo-800/80"><SelectValue /></SelectTrigger>
                           <SelectContent>{hours.map(h => <SelectItem key={`et-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent>
                         </Select>
                         <Select value={sessionDetails.endTimeMinute} onValueChange={(v) => handleSessionDetailChange('endTimeMinute', v)}>
-                          <SelectTrigger className="h-8 text-xs bg-background"><SelectValue /></SelectTrigger>
+                          <SelectTrigger className="h-8 text-xs bg-background dark:bg-slate-900 border-indigo-200 dark:border-indigo-800/80"><SelectValue /></SelectTrigger>
                           <SelectContent>{minutes.map(m => <SelectItem key={`et-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent>
                         </Select>
                         <Select value={sessionDetails.endTimePeriod} onValueChange={(v) => handleSessionDetailChange('endTimePeriod', v)}>
-                          <SelectTrigger className="h-8 text-xs bg-background font-semibold"><SelectValue /></SelectTrigger>
+                          <SelectTrigger className="h-8 text-xs bg-background dark:bg-slate-900 border-indigo-200 dark:border-indigo-800/80 font-semibold"><SelectValue /></SelectTrigger>
                           <SelectContent>{periods.map(p => <SelectItem key={`et-p-${p}`} value={p}>{p}</SelectItem>)}</SelectContent>
                         </Select>
                       </div>
@@ -989,7 +989,7 @@ export function ExaminationManagement() {
                         </span>
                       </TableCell>
                       <TableCell className="text-center">
-                        <span className="inline-flex items-center justify-center min-w-8 px-2 py-0.5 rounded-full text-xs font-semibold bg-cyan-50 text-[#0891B2] dark:bg-cyan-950/60 dark:text-cyan-300 border border-cyan-100 dark:border-cyan-900/50">
+                        <span className="inline-flex items-center justify-center min-w-8 px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-[#4F46E5] dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-900/50">
                           {exam.relievers}
                         </span>
                       </TableCell>

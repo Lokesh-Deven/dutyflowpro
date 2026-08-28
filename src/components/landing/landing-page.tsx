@@ -229,7 +229,7 @@ export function LandingPage() {
                     placeholder="Enter email"
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
-                    className="rounded-md h-9 bg-white border-slate-300 text-sm text-slate-800 placeholder:text-slate-400 focus-visible:border-[#1E2A5E] focus-visible:ring-1 focus-visible:ring-[#1E2A5E]"
+                    className="rounded-md h-9 bg-white border-slate-300 text-sm text-slate-800 placeholder:text-slate-400 focus-visible:border-[#1E2A5E] focus-visible:ring-0"
                     required
                   />
                 </div>
@@ -246,7 +246,7 @@ export function LandingPage() {
                       placeholder="Enter password"
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
-                      className="rounded-md h-9 bg-white border-slate-300 text-sm text-slate-800 placeholder:text-slate-400 focus-visible:border-[#1E2A5E] focus-visible:ring-1 focus-visible:ring-[#1E2A5E] pr-9"
+                      className="rounded-md h-9 bg-white border-slate-300 text-sm text-slate-800 placeholder:text-slate-400 focus-visible:border-[#1E2A5E] focus-visible:ring-0 pr-9"
                       required
                     />
                     <button
@@ -348,7 +348,7 @@ export function LandingPage() {
                     placeholder="Enter full name of college or school"
                     value={institutionName}
                     onChange={(e) => setInstitutionName(e.target.value)}
-                    className="rounded-md h-9 bg-white border-slate-300 text-sm text-slate-800 placeholder:text-slate-400 focus-visible:border-[#1E2A5E] focus-visible:ring-1 focus-visible:ring-[#1E2A5E]"
+                    className="rounded-md h-9 bg-white border-slate-300 text-sm text-slate-800 placeholder:text-slate-400 focus-visible:border-[#1E2A5E] focus-visible:ring-0"
                     required
                   />
                 </div>
@@ -364,7 +364,7 @@ export function LandingPage() {
                     placeholder="Enter email"
                     value={signupEmail}
                     onChange={(e) => setSignupEmail(e.target.value)}
-                    className="rounded-md h-9 bg-white border-slate-300 text-sm text-slate-800 placeholder:text-slate-400 focus-visible:border-[#1E2A5E] focus-visible:ring-1 focus-visible:ring-[#1E2A5E]"
+                    className="rounded-md h-9 bg-white border-slate-300 text-sm text-slate-800 placeholder:text-slate-400 focus-visible:border-[#1E2A5E] focus-visible:ring-0"
                     required
                   />
                 </div>
@@ -381,7 +381,7 @@ export function LandingPage() {
                       placeholder="Enter password (min 6 chars)"
                       value={signupPassword}
                       onChange={(e) => setSignupPassword(e.target.value)}
-                      className="rounded-md h-9 bg-white border-slate-300 text-sm text-slate-800 placeholder:text-slate-400 focus-visible:border-[#1E2A5E] focus-visible:ring-1 focus-visible:ring-[#1E2A5E] pr-9"
+                      className="rounded-md h-9 bg-white border-slate-300 text-sm text-slate-800 placeholder:text-slate-400 focus-visible:border-[#1E2A5E] focus-visible:ring-0 pr-9"
                       required
                       minLength={6}
                     />
