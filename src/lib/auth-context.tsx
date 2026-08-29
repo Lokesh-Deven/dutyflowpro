@@ -1,18 +1,36 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback, useMemo } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import { useRouter } from 'next/navigation';
+
+export type SubscriptionStatus = 'Subscribed' | 'Unsubscribed' | 'Free Access';
+export type DownloadCategory = 'master_roster' | 'individual_profile' | 'daywise_profile';
+
+export interface DownloadQuota {
+  master_roster: number;
+  individual_profile: number;
+  daywise_profile: number;
+}
+
+export const QUOTA_LIMITS: Record<DownloadCategory, number> = {
+  master_roster: 3,
+  individual_profile: 3,
+  daywise_profile: 3,
+};
 
 export interface UserProfile {
   id: string;
   email: string;
   institution_name: string;
-  subscription_status: string;
+  subscription_status: SubscriptionStatus;
   subscription_start_date: string | null;
   subscription_end_date: string | null;
   download_count: number;
+  master_roster_downloads: number;
+  individual_profile_downloads: number;
+  daywise_profile_downloads: number;
 }
 
 interface AuthContextType {
@@ -20,6 +38,12 @@ interface AuthContextType {
   session: Session | null;
   profile: UserProfile | null;
   isLoading: boolean;
+  isSubscribed: boolean;
+  isUnsubscribed: boolean;
+  isFreeAccess: boolean;
+  quota: DownloadQuota;
+  canDownload: (category: DownloadCategory) => { allowed: boolean; remaining: number; current: number; max: number };
+  recordCategoryDownload: (category: DownloadCategory, count?: number) => Promise<void>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (institutionName: string, email: string, password: string) => Promise<{ error: Error | null; needsEmailConfirmation?: boolean }>;
   signOut: () => Promise<void>;
@@ -27,12 +51,45 @@ interface AuthContextType {
   recordDownload: () => Promise<void>;
 }
 
+export const DEFAULT_GUEST_PROFILE: UserProfile = {
+  id: 'guest-session',
+  email: 'guest@dutyflow.in',
+  institution_name: 'Guest Profile',
+  subscription_status: 'Free Access',
+  subscription_start_date: new Date().toISOString(),
+  subscription_end_date: null,
+  download_count: 0,
+  master_roster_downloads: 0,
+  individual_profile_downloads: 0,
+  daywise_profile_downloads: 0,
+};
+
+const getGuestProfile = (): UserProfile => {
+  if (typeof window !== 'undefined') {
+    try {
+      const stored = localStorage.getItem('dutyflow_guest_profile');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        const email = parsed.email === 'guestuser@dutyflow.in' ? 'guest@dutyflow.in' : (parsed.email || 'guest@dutyflow.in');
+        return {
+          ...DEFAULT_GUEST_PROFILE,
+          ...parsed,
+          email,
+        };
+      }
+    } catch (_) {}
+  }
+  return DEFAULT_GUEST_PROFILE;
+};
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(() => {
+    return typeof window !== 'undefined' ? getGuestProfile() : DEFAULT_GUEST_PROFILE;
+  });
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
@@ -49,10 +106,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           id: data.id,
           email: data.email || currentUser.email || '',
           institution_name: data.institution_name || (currentUser.user_metadata?.institution_name as string) || 'Institution',
-          subscription_status: data.subscription_status || 'Free Access',
+          subscription_status: (data.subscription_status as SubscriptionStatus) || 'Free Access',
           subscription_start_date: data.subscription_start_date || data.created_at || new Date().toISOString(),
           subscription_end_date: data.subscription_end_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
           download_count: data.download_count ?? 0,
+          master_roster_downloads: data.master_roster_downloads ?? 0,
+          individual_profile_downloads: data.individual_profile_downloads ?? 0,
+          daywise_profile_downloads: data.daywise_profile_downloads ?? 0,
         });
       } else {
         // Fallback default profile
@@ -64,6 +124,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           subscription_start_date: new Date().toISOString(),
           subscription_end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
           download_count: 0,
+          master_roster_downloads: 0,
+          individual_profile_downloads: 0,
+          daywise_profile_downloads: 0,
         };
         setProfile(defaultProfile);
         // Persist default row in database
@@ -84,6 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (session?.user) {
         fetchProfile(session.user);
       } else {
+        setProfile(getGuestProfile());
         setIsLoading(false);
       }
     });
@@ -95,7 +159,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (session?.user) {
         fetchProfile(session.user);
       } else {
-        setProfile(null);
+        setProfile(getGuestProfile());
         setIsLoading(false);
       }
     });
@@ -104,6 +168,85 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       subscription.unsubscribe();
     };
   }, [fetchProfile]);
+
+  const isSubscribed = useMemo(() => profile?.subscription_status === 'Subscribed', [profile?.subscription_status]);
+  const isUnsubscribed = useMemo(() => profile?.subscription_status === 'Unsubscribed', [profile?.subscription_status]);
+  const isFreeAccess = useMemo(() => !profile || profile.subscription_status === 'Free Access', [profile?.subscription_status]);
+
+  const quota: DownloadQuota = useMemo(() => ({
+    master_roster: profile?.master_roster_downloads ?? 0,
+    individual_profile: profile?.individual_profile_downloads ?? 0,
+    daywise_profile: profile?.daywise_profile_downloads ?? 0,
+  }), [profile?.master_roster_downloads, profile?.individual_profile_downloads, profile?.daywise_profile_downloads]);
+
+  const canDownload = useCallback((category: DownloadCategory) => {
+    // If unsubscribed, permission denied
+    if (profile?.subscription_status === 'Unsubscribed') {
+      return { allowed: false, remaining: 0, current: quota[category] || 0, max: QUOTA_LIMITS[category] };
+    }
+    // If subscribed, unlimited access
+    if (profile?.subscription_status === 'Subscribed') {
+      return { allowed: true, remaining: 9999, current: quota[category] || 0, max: 9999 };
+    }
+    // Free Access tier (limited to 3 each)
+    const current = quota[category] || 0;
+    const max = QUOTA_LIMITS[category];
+    const remaining = Math.max(0, max - current);
+    return {
+      allowed: current < max,
+      remaining,
+      current,
+      max,
+    };
+  }, [profile?.subscription_status, quota]);
+
+  const recordCategoryDownload = async (category: DownloadCategory, count: number = 1) => {
+    const incrementAmount = Math.max(1, count);
+    const countKey = category === 'master_roster'
+      ? 'master_roster_downloads'
+      : category === 'individual_profile'
+      ? 'individual_profile_downloads'
+      : 'daywise_profile_downloads';
+
+    if (!user) {
+      setProfile(prev => {
+        const currentProfile = prev || DEFAULT_GUEST_PROFILE;
+        const newProfile: UserProfile = {
+          ...currentProfile,
+          [countKey]: (currentProfile[countKey] || 0) + incrementAmount,
+          download_count: (currentProfile.download_count || 0) + incrementAmount,
+        };
+
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('dutyflow_guest_profile', JSON.stringify(newProfile));
+          } catch (_) {}
+        }
+        return newProfile;
+      });
+      return;
+    }
+
+    try {
+      setProfile(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          [countKey]: (prev[countKey] || 0) + incrementAmount,
+          download_count: (prev.download_count || 0) + incrementAmount,
+        };
+      });
+
+      // Update Supabase Database
+      await supabase.rpc('increment_category_download', {
+        p_user_id: user.id,
+        p_category: category,
+        p_count: incrementAmount,
+      });
+    } catch (err) {
+      console.error('Failed to increment category download in database:', err);
+    }
+  };
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -159,6 +302,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           subscription_start_date: now.toISOString(),
           subscription_end_date: endDate.toISOString(),
           download_count: 0,
+          master_roster_downloads: 0,
+          individual_profile_downloads: 0,
+          daywise_profile_downloads: 0,
         };
 
         if (data.session) {
@@ -179,7 +325,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const updateProfile = async (updated: Partial<UserProfile>) => {
-    if (!user) return { error: new Error('User not logged in') };
+    if (!user) {
+      const updatedProfile = { ...(profile || DEFAULT_GUEST_PROFILE), ...updated };
+      setProfile(updatedProfile);
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('dutyflow_guest_profile', JSON.stringify(updatedProfile));
+        } catch (_) {}
+      }
+      return { error: null };
+    }
     try {
       const { error } = await supabase
         .from('profiles')
@@ -196,21 +351,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const recordDownload = async () => {
-    if (!user) return;
-    try {
-      setProfile(prev => prev ? { ...prev, download_count: prev.download_count + 1 } : null);
-      await supabase.rpc('increment_download_count', { user_id: user.id });
-    } catch (err) {
-      console.error('Failed to increment download count:', err);
-    }
+    await recordCategoryDownload('master_roster');
   };
 
   const signOut = async () => {
     try {
-      await supabase.auth.signOut();
+      if (user) {
+        await supabase.auth.signOut();
+      }
       setUser(null);
       setSession(null);
-      setProfile(null);
+      setProfile(DEFAULT_GUEST_PROFILE);
 
       // Clean up all local storage session items on sign out
       if (typeof window !== 'undefined') {
@@ -237,6 +388,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       profile,
       isLoading,
+      isSubscribed,
+      isUnsubscribed,
+      isFreeAccess,
+      quota,
+      canDownload,
+      recordCategoryDownload,
       signIn,
       signUp,
       signOut,

@@ -34,6 +34,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { SubscriptionDialog } from '@/components/dashboard/subscription-dialog';
 
 type AllotmentSheetProps = {
   invigilators: Invigilator[];
@@ -45,9 +46,10 @@ type AllotmentSheetProps = {
 export function AllotmentSheet({ invigilators, examinations, allotmentResult: initialAllotmentResult, onAllotmentChange }: AllotmentSheetProps) {
   const { toast } = useToast();
   const { activeAllotment, saveCurrentAllotment } = useAllotment();
-  const { user, recordDownload } = useAuth();
+  const { user, canDownload, recordCategoryDownload } = useAuth();
   const [allotmentResult, setAllotmentResult] = useState<AllotmentResult>(initialAllotmentResult);
   const [isSaveAlertOpen, setIsSaveAlertOpen] = useState(false);
+  const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false);
 
   const defaultSaveName = useMemo(() => {
     return activeAllotment?.name || (examinations.length > 0 ? examinations[0].examName : 'New Allotment');
@@ -115,7 +117,13 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
   };
 
   const handleDownload = () => {
-    recordDownload();
+    const check = canDownload('master_roster');
+    if (!check.allowed) {
+      setIsSubscriptionDialogOpen(true);
+      return;
+    }
+
+    recordCategoryDownload('master_roster');
     toast({
       title: "Generating PDF...",
       description: "Your download will begin shortly.",
@@ -563,6 +571,12 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
           </Button>
         </CardFooter>
       </Card>
+
+      <SubscriptionDialog
+        open={isSubscriptionDialogOpen}
+        onOpenChange={setIsSubscriptionDialogOpen}
+        category="master_roster"
+      />
     </TooltipProvider>
   );
 }

@@ -4,8 +4,8 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/lib/auth-context';
 
 export const metadata: Metadata = {
-  title: 'DutyFlow',
-  description: 'Streamlined Invigilation Duty Allotment',
+  title: 'DutyFlow - Exam Duty Allocation Software',
+  description: 'DutyFlow - Exam Duty Allocation Software | Streamlined Invigilation Allotment',
 };
 
 export default function RootLayout({

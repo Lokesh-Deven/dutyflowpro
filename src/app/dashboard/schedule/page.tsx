@@ -33,6 +33,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { SubscriptionDialog } from "@/components/dashboard/subscription-dialog";
 
 interface DutySlot {
   date: Date;
@@ -44,9 +45,10 @@ interface DutySlot {
 
 export default function SchedulePage() {
   const { invigilators, examinations, activeAllotment, savedAllotments, setActiveAllotment } = useAllotment();
-  const { user, recordDownload } = useAuth();
+  const { user, canDownload, recordCategoryDownload } = useAuth();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [showFullSchedule, setShowFullSchedule] = useState(false);
+  const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const handleAllotmentChange = (id: string) => {
@@ -113,6 +115,12 @@ export default function SchedulePage() {
   }, [scheduleData]);
 
   const handleDownload = (isFull: boolean = false) => {
+    const check = canDownload('daywise_profile');
+    if (!check.allowed) {
+      setIsSubscriptionDialogOpen(true);
+      return;
+    }
+
     const dataToExport = isFull ? scheduleData : scheduleData.filter(s => format(s.date, 'yyyy-MM-dd') === format(date || new Date(), 'yyyy-MM-dd'));
 
     if (dataToExport.length === 0) {
@@ -124,6 +132,7 @@ export default function SchedulePage() {
       return;
     }
 
+    recordCategoryDownload('daywise_profile');
     toast({ title: "Generating PDF...", description: "Your download will begin shortly." });
 
     const doc = new jsPDF();
@@ -215,7 +224,6 @@ export default function SchedulePage() {
 
     const pdfBlob = doc.output('blob');
     doc.save(fileName);
-    recordDownload();
 
     // Save generated Schedule PDF to Supabase Storage per user
     if (user?.id) {
@@ -494,6 +502,12 @@ export default function SchedulePage() {
           </Card>
         </div>
       </div>
+
+      <SubscriptionDialog
+        open={isSubscriptionDialogOpen}
+        onOpenChange={setIsSubscriptionDialogOpen}
+        category="daywise_profile"
+      />
     </div>
   );
 }

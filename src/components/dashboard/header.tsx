@@ -54,21 +54,16 @@ export default function Header() {
             onClick={clearCurrentAllotment}
             className="flex items-center gap-3 group"
           >
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-[#4F46E5] via-[#4338ca] to-[#0891B2] text-white shadow-sm ring-2 ring-[#4F46E5]/20 group-hover:scale-105 transition-all duration-200 flex items-center justify-center">
+            <div className="p-2 rounded-xl bg-gradient-to-br from-[#4F46E5] via-[#4338ca] to-[#0891B2] text-white shadow-sm ring-2 ring-[#4F46E5]/20 group-hover:scale-105 transition-all duration-200 flex items-center justify-center">
               <CalendarCheck2 className="w-5 h-5" />
             </div>
 
             <div className="flex flex-col">
-              <div className="flex items-center gap-1.5">
-                <span className="text-xl font-black font-headline tracking-tight text-foreground">
-                  Duty<span className="bg-gradient-to-r from-[#4F46E5] via-[#0891B2] to-[#0891B2] bg-clip-text text-transparent">Flow</span>
-                </span>
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#4F46E5]/10 text-[#4F46E5] dark:text-indigo-300 border border-[#4F46E5]/20">
-                  PRO
-                </span>
-              </div>
-              <span className="text-[10px] font-medium tracking-tight text-muted-foreground">
-                Examination Duties, Simplified.
+              <span className="text-2xl font-black font-headline tracking-tight text-foreground leading-none">
+                Duty<span className="bg-gradient-to-r from-[#4F46E5] via-[#0891B2] to-[#0891B2] bg-clip-text text-transparent">Flow</span>
+              </span>
+              <span className="text-[10px] font-medium tracking-tight text-muted-foreground mt-0.5">
+                Exam Duty Allocation Software
               </span>
             </div>
           </Link>

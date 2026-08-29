@@ -584,7 +584,6 @@ export function ExaminationManagement() {
               </div>
               <div>
                 <CardTitle className="font-headline text-xl font-bold tracking-tight">Examination Details</CardTitle>
-                <p className="text-xs text-muted-foreground mt-0.5">Configure your institution, examination schedule, and session requirements</p>
               </div>
             </div>
             {editingExamId && (

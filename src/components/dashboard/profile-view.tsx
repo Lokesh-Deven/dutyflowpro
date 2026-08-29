@@ -20,28 +20,33 @@ import {
   LogOut,
   Sparkles,
   ShieldCheck,
+  ShieldAlert,
+  ShieldX,
   CheckCircle2,
   Clock,
   Edit2,
   Save,
   HelpCircle,
   ExternalLink,
-  Layers
+  Layers,
+  FileText,
+  Users,
+  CalendarRange
 } from 'lucide-react';
 
 export function ProfileView() {
-  const { user, profile, signOut, updateProfile } = useAuth();
+  const { user, profile, quota, isSubscribed, isUnsubscribed, isFreeAccess, signOut, updateProfile } = useAuth();
   const { toast } = useToast();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(profile?.institution_name || '');
   const [isSaving, setIsSaving] = useState(false);
 
-  const institutionName = profile?.institution_name || (user?.user_metadata?.institution_name as string) || "Institution Name";
-  const email = user?.email || profile?.email || "admin@institution.edu";
+  const institutionName = profile?.institution_name || (user?.user_metadata?.institution_name as string) || "Guest Profile";
+  const email = profile?.email || user?.email || "guest@dutyflow.in";
   
   // Strictly single letter initial (first letter of institution name)
-  const singleInitial = (institutionName.trim().charAt(0) || email.trim().charAt(0) || "D").toUpperCase();
+  const singleInitial = (institutionName.trim().charAt(0) || email.trim().charAt(0) || "G").toUpperCase();
 
   const subscriptionStatus = profile?.subscription_status || "Free Access";
   
@@ -51,14 +56,18 @@ export function ProfileView() {
 
   const endDateFormatted = profile?.subscription_end_date
     ? format(new Date(profile.subscription_end_date), "dd MMM yyyy")
-    : format(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), "dd MMM yyyy");
+    : isSubscribed ? "Active / Auto-Renewing" : "Unlimited Trial";
 
-  const downloadCount = profile?.download_count ?? 0;
+  const totalDownloads = profile?.download_count ?? 0;
+  const masterRosters = quota.master_roster;
+  const individualProfiles = quota.individual_profile;
+  const daywiseProfiles = quota.daywise_profile;
 
-  // Support Contacts (placeholders to be updated later as requested)
-  const supportEmail = "support@dutyflow.com";
-  const whatsappNumber = "+91 98765 43210";
-  const whatsappLink = `https://wa.me/919876543210?text=Hi%20DutyFlow%20Support,%20I%20would%20like%20to%20inquire%20about%20subscription%20and%20assistance.`;
+  // Support Contacts
+  const supportEmail = "admin@dutyflow.in";
+  const whatsappNumber = "9113815925";
+  const whatsappDisplay = "+91 91138 15925";
+  const whatsappLink = `https://wa.me/919113815925?text=Hi%20DutyFlow%20Admin,%20I%20would%20like%20to%20inquire%20about%20subscription%20and%20assistance.`;
 
   const handleSaveInstitution = async () => {
     if (!editedName.trim()) {
@@ -120,10 +129,23 @@ export function ProfileView() {
                 <div className="space-y-1.5 flex-1 min-w-0">
                   <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-[#4F46E5]">Institution Profile</span>
-                    <Badge className="bg-indigo-50 text-[#4F46E5] dark:bg-indigo-950/60 dark:text-indigo-300 border-indigo-200 text-[10px] font-bold py-0 px-2">
-                      <ShieldCheck className="mr-1 h-3 w-3 text-[#0891B2]" />
-                      Verified
-                    </Badge>
+                    
+                    {isSubscribed ? (
+                      <Badge className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 text-[10px] font-bold py-0 px-2">
+                        <ShieldCheck className="mr-1 h-3 w-3 text-emerald-600" />
+                        Subscribed (Full Access)
+                      </Badge>
+                    ) : isUnsubscribed ? (
+                      <Badge variant="destructive" className="text-[10px] font-bold py-0 px-2">
+                        <ShieldX className="mr-1 h-3 w-3" />
+                        Unsubscribed (Access Denied)
+                      </Badge>
+                    ) : (
+                      <Badge className="bg-indigo-50 text-[#4F46E5] dark:bg-indigo-950/60 dark:text-indigo-300 border-indigo-200 text-[10px] font-bold py-0 px-2">
+                        <Sparkles className="mr-1 h-3 w-3 text-[#0891B2]" />
+                        Free Access (Quota Limited)
+                      </Badge>
+                    )}
                   </div>
                   
                   <h1 className="text-2xl sm:text-3xl font-headline font-extrabold text-foreground tracking-tight break-words">
@@ -207,7 +229,6 @@ export function ProfileView() {
               </div>
               <CardTitle className="text-base font-headline font-bold">Institution Details</CardTitle>
             </div>
-            <CardDescription className="text-xs">Your registered examination center credentials</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 pt-1">
             <div className="p-3 rounded-xl bg-muted/30 border border-border/60 space-y-1">
@@ -218,11 +239,6 @@ export function ProfileView() {
             <div className="p-3 rounded-xl bg-muted/30 border border-border/60 space-y-1">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Account Email ID</span>
               <p className="text-sm font-bold text-foreground">{email}</p>
-            </div>
-
-            <div className="p-3 rounded-xl bg-muted/30 border border-border/60 space-y-1">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">User Profile ID</span>
-              <p className="text-xs font-mono text-muted-foreground truncate">{user?.id || profile?.id || 'dutyflow-user-session'}</p>
             </div>
           </CardContent>
         </Card>
@@ -235,46 +251,75 @@ export function ProfileView() {
                 <div className="p-2 rounded-lg bg-cyan-50 dark:bg-cyan-950/50">
                   <CreditCard className="h-4 w-4" />
                 </div>
-                <CardTitle className="text-base font-headline font-bold">Subscription & Access</CardTitle>
+                <CardTitle className="text-base font-headline font-bold">Subscription Status</CardTitle>
               </div>
-              <Badge className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 font-bold text-xs">
+              <Badge className={
+                isSubscribed 
+                  ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 font-bold text-xs"
+                  : isUnsubscribed
+                  ? "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200 font-bold text-xs"
+                  : "bg-indigo-50 text-[#4F46E5] dark:bg-indigo-950/60 dark:text-indigo-300 border-indigo-200 font-bold text-xs"
+              }>
                 {subscriptionStatus}
               </Badge>
             </div>
-            <CardDescription className="text-xs">Current plan tier and allocation usage statistics</CardDescription>
+            <CardDescription className="text-xs">Current tier permissions and download quota usage</CardDescription>
           </CardHeader>
           
           <CardContent className="space-y-3 pt-1">
-            {/* Start & End Dates */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 rounded-xl bg-muted/30 border border-border/60 space-y-1">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                  <Calendar className="h-3 w-3 text-[#4F46E5]" />
-                  Start Date
-                </span>
-                <p className="text-xs sm:text-sm font-bold text-foreground">{startDateFormatted}</p>
+            {/* 3 Quota Breakdown Chips */}
+            <div className="grid grid-cols-3 gap-2">
+              {/* Quota 1: Master Rosters */}
+              <div className="p-2.5 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40 text-center space-y-1">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block truncate">Master Roster</span>
+                <div className="text-base font-extrabold font-headline text-[#4F46E5]">
+                  {isSubscribed ? masterRosters : `${masterRosters}/3`}
+                </div>
+                {isSubscribed && (
+                  <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 block tracking-tight">
+                    Unlimited
+                  </span>
+                )}
               </div>
 
-              <div className="p-3 rounded-xl bg-muted/30 border border-border/60 space-y-1">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                  <Clock className="h-3 w-3 text-[#0891B2]" />
-                  End Date
-                </span>
-                <p className="text-xs sm:text-sm font-bold text-foreground">{endDateFormatted}</p>
+              {/* Quota 2: Individual Profiles */}
+              <div className="p-2.5 rounded-xl bg-cyan-50/50 dark:bg-cyan-950/30 border border-cyan-100 dark:border-cyan-900/40 text-center space-y-1">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block truncate">Indiv. Slips</span>
+                <div className="text-base font-extrabold font-headline text-[#0891B2]">
+                  {isSubscribed ? individualProfiles : `${individualProfiles}/3`}
+                </div>
+                {isSubscribed && (
+                  <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 block tracking-tight">
+                    Unlimited
+                  </span>
+                )}
+              </div>
+
+              {/* Quota 3: Day-wise Profiles */}
+              <div className="p-2.5 rounded-xl bg-amber-50/50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/40 text-center space-y-1">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block truncate">Day-wise</span>
+                <div className="text-base font-extrabold font-headline text-amber-600 dark:text-amber-400">
+                  {isSubscribed ? daywiseProfiles : `${daywiseProfiles}/3`}
+                </div>
+                {isSubscribed && (
+                  <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 block tracking-tight">
+                    Unlimited
+                  </span>
+                )}
               </div>
             </div>
 
-            {/* Total Downloads Count */}
-            <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-50/70 to-cyan-50/70 dark:from-indigo-950/30 dark:to-cyan-950/30 border border-indigo-100 dark:border-indigo-900/40 flex items-center justify-between">
+            {/* Total Downloads Count Banner */}
+            <div className="p-3.5 rounded-xl bg-gradient-to-r from-indigo-50/70 to-cyan-50/70 dark:from-indigo-950/30 dark:to-cyan-950/30 border border-indigo-100 dark:border-indigo-900/40 flex items-center justify-between">
               <div className="space-y-0.5">
                 <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                   <Download className="h-3.5 w-3.5 text-[#4F46E5]" />
-                  Number of Downloads Till Date
+                  Total Downloads Generated
                 </span>
-                <p className="text-[11px] text-muted-foreground">Generated PDF sheets & duty slips</p>
+                <p className="text-[11px] text-muted-foreground">PDF sheets, duty slips & reports</p>
               </div>
-              <div className="text-2xl font-black font-headline text-[#4F46E5]">
-                {downloadCount}
+              <div className="text-xl font-black font-headline text-[#4F46E5]">
+                {totalDownloads}
               </div>
             </div>
           </CardContent>
@@ -304,13 +349,13 @@ export function ProfileView() {
             <div className="p-4 rounded-xl bg-card border border-border/80 shadow-2xs space-y-2">
               <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
                 <Mail className="h-4 w-4 text-[#4F46E5]" />
-                <span>Support Email</span>
+                <span>Support & Admin Email</span>
               </div>
               <p className="text-sm font-bold text-foreground select-all">{supportEmail}</p>
               <Button asChild variant="outline" size="sm" className="w-full text-xs font-semibold h-8 border-indigo-200 text-[#4F46E5] hover:bg-indigo-50/50">
                 <a href={`mailto:${supportEmail}?subject=DutyFlow%20Subscription%20Inquiry%20-%20${encodeURIComponent(institutionName)}`}>
                   <Mail className="mr-1.5 h-3.5 w-3.5" />
-                  Send Email
+                  Send Email ({supportEmail})
                 </a>
               </Button>
             </div>
@@ -319,13 +364,13 @@ export function ProfileView() {
             <div className="p-4 rounded-xl bg-card border border-border/80 shadow-2xs space-y-2">
               <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
                 <MessageCircle className="h-4 w-4 text-emerald-600" />
-                <span>WhatsApp Phone Support</span>
+                <span>WhatsApp Helpline</span>
               </div>
-              <p className="text-sm font-bold text-foreground select-all">{whatsappNumber}</p>
+              <p className="text-sm font-bold text-foreground select-all">{whatsappDisplay}</p>
               <Button asChild size="sm" className="w-full text-xs font-semibold h-8 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs">
                 <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
                   <MessageCircle className="mr-1.5 h-3.5 w-3.5" />
-                  Chat on WhatsApp
+                  Chat on WhatsApp ({whatsappNumber})
                 </a>
               </Button>
             </div>

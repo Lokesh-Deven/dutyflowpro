@@ -45,6 +45,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { SubscriptionDialog } from '@/components/dashboard/subscription-dialog';
 
 type IndividualDashboardProps = {
   invigilators: Invigilator[];
@@ -56,8 +57,10 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
   const { toast } = useToast();
   const [selectedInvigilatorId, setSelectedInvigilatorId] = useState<string | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false);
+  const [customSubscriptionMessage, setCustomSubscriptionMessage] = useState<string | undefined>(undefined);
   const { activeAllotment } = useAllotment();
-  const { user, recordDownload } = useAuth();
+  const { user, isSubscribed, canDownload, recordCategoryDownload } = useAuth();
 
   useEffect(() => {
     if (invigilators.length > 0 && !selectedInvigilatorId) {
@@ -307,7 +310,14 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
 
   const handleDownload = () => {
     if (!selectedInvigilator) return;
-    recordDownload();
+    const check = canDownload('individual_profile');
+    if (!check.allowed) {
+      setCustomSubscriptionMessage(undefined);
+      setIsSubscriptionDialogOpen(true);
+      return;
+    }
+
+    recordCategoryDownload('individual_profile');
     toast({
       title: "Generating PDF...",
       description: `Preparing summary for ${selectedInvigilator.name}.`,
@@ -346,10 +356,17 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
   };
 
   const handleDownloadAll = async () => {
-    recordDownload();
+    if (!isSubscribed) {
+      setCustomSubscriptionMessage("Bulk download of all invigilators' summaries exceeds the 3-profile limit. Please subscribe to download the complete roster.");
+      setIsSubscriptionDialogOpen(true);
+      return;
+    }
+
+    const totalInvigilatorsCount = invigilators.length;
+    recordCategoryDownload('individual_profile', totalInvigilatorsCount);
     toast({
       title: "Generating ZIP...",
-      description: "Creating individual duty summaries for all invigilators.",
+      description: `Creating duty summaries for all ${totalInvigilatorsCount} invigilators.`,
     });
 
     const zip = new JSZip();
@@ -580,7 +597,14 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
         <Button
           variant="outline"
           className="w-full sm:w-auto border-[#0891B2]/40 text-[#0891B2] hover:bg-[#0891B2]/10 dark:text-cyan-400 font-semibold rounded-lg h-10 px-5"
-          onClick={() => setIsConfirmOpen(true)}
+          onClick={() => {
+            if (!isSubscribed) {
+              setCustomSubscriptionMessage("Bulk download of all invigilators' summaries exceeds the 3-profile limit. Please subscribe to download the complete roster.");
+              setIsSubscriptionDialogOpen(true);
+            } else {
+              setIsConfirmOpen(true);
+            }
+          }}
         >
           <FolderArchive className="mr-2 h-4 w-4" /> Download All Invigilators&apos; Summaries
         </Button>
@@ -619,6 +643,13 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <SubscriptionDialog
+        open={isSubscriptionDialogOpen}
+        onOpenChange={setIsSubscriptionDialogOpen}
+        category="individual_profile"
+        customMessage={customSubscriptionMessage}
+      />
     </div>
   );
 }
