@@ -59,20 +59,23 @@ export function LoginForm() {
   };
 
   return (
-    <Card className="w-full max-w-sm rounded-2xl shadow-sm border-slate-300">
-      <CardHeader className="text-center">
+    <Card className="w-full max-w-sm rounded-2xl shadow-lg border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900">
+      {/* Top Accent Gradient Stripe */}
+      <div className="h-[3px] w-full bg-gradient-to-r from-[#6342e8] via-[#8b5cf6] to-[#f59e0b]" />
+
+      <CardHeader className="text-center pt-6">
         <div className="flex justify-center mb-3">
-          <div className="h-10 w-10 rounded-xl bg-[#1E2A5E] text-white flex items-center justify-center">
-            <Sparkles className="w-5 h-5" />
+          <div className="h-12 w-12 rounded-2xl bg-[#6342e8] text-white flex items-center justify-center shadow-md shadow-purple-500/20 ring-4 ring-purple-100 dark:ring-purple-950">
+            <Sparkles className="w-6 h-6" />
           </div>
         </div>
-        <CardTitle className="text-2xl font-headline font-bold text-slate-800">Welcome to DutyFlow</CardTitle>
-        <CardDescription className="text-xs">Enter your institutional credentials to log in.</CardDescription>
+        <CardTitle className="text-2xl font-headline font-bold text-slate-900 dark:text-white">Welcome to DutyFlow</CardTitle>
+        <CardDescription className="text-xs text-slate-500">Enter your institutional credentials to log in.</CardDescription>
       </CardHeader>
       <form onSubmit={handleLogin}>
-        <CardContent className="grid gap-3.5">
+        <CardContent className="grid gap-3.5 px-6">
           <div className="grid gap-1.5">
-            <Label htmlFor="email" className="text-xs font-semibold text-slate-700">Email ID</Label>
+            <Label htmlFor="email" className="text-xs font-semibold text-slate-700 dark:text-slate-300">Email ID</Label>
             <Input 
               id="email" 
               type="email" 
@@ -80,24 +83,24 @@ export function LoginForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required 
-              className="h-9"
+              className="h-10 rounded-xl"
             />
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="password" className="text-xs font-semibold text-slate-700">Password</Label>
+            <Label htmlFor="password" className="text-xs font-semibold text-slate-700 dark:text-slate-300">Password</Label>
             <Input 
               id="password" 
               type="password" 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required 
-              className="h-9"
+              className="h-10 rounded-xl"
             />
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col gap-3 pt-2">
+        <CardFooter className="flex flex-col gap-3 pt-2 px-6 pb-6">
           <Button 
-            className="w-full bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs tracking-wider h-10" 
+            className="w-full bg-[#6342e8] hover:bg-[#5232d6] text-white font-bold text-xs tracking-wider h-10 rounded-xl shadow-xs" 
             type="submit"
             disabled={isSubmitting}
           >
@@ -110,9 +113,9 @@ export function LoginForm() {
               "SIGN IN"
             )}
           </Button>
-          <p className="text-xs text-center text-muted-foreground">
+          <p className="text-xs text-center text-slate-500">
             Don&apos;t have an account?{" "}
-            <Link href="/signup" className="font-bold underline text-[#1E2A5E]">
+            <Link href="/signup" className="font-bold underline text-[#6342e8] hover:text-[#5232d6]">
               Sign Up
             </Link>
           </p>

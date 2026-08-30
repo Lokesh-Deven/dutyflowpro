@@ -32,4 +32,11 @@ export type SavedAllotment = {
   assignments: AllotmentResult['assignments'];
   createdAt: Date;
   status: 'Draft' | 'Finalized';
-}
+};
+
+export type InstructionItem = {
+  id: string;
+  text: string;
+  enabled: boolean;
+};
+

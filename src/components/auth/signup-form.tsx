@@ -80,31 +80,34 @@ export function SignupForm() {
   };
 
   return (
-    <Card className="w-full max-w-sm rounded-2xl shadow-sm border-slate-300">
-      <CardHeader className="text-center">
+    <Card className="w-full max-w-sm rounded-2xl shadow-lg border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900">
+      {/* Top Accent Gradient Stripe */}
+      <div className="h-[3px] w-full bg-gradient-to-r from-[#6342e8] via-[#8b5cf6] to-[#f59e0b]" />
+
+      <CardHeader className="text-center pt-6">
         <div className="flex justify-center mb-3">
-          <div className="h-10 w-10 rounded-xl bg-[#1E2A5E] text-white flex items-center justify-center">
-            <Sparkles className="w-5 h-5" />
+          <div className="h-12 w-12 rounded-2xl bg-[#6342e8] text-white flex items-center justify-center shadow-md shadow-purple-500/20 ring-4 ring-purple-100 dark:ring-purple-950">
+            <Sparkles className="w-6 h-6" />
           </div>
         </div>
-        <CardTitle className="text-2xl font-headline font-bold text-slate-800">Create an Account</CardTitle>
-        <CardDescription className="text-xs">Join DutyFlow to streamline your invigilation rosters.</CardDescription>
+        <CardTitle className="text-2xl font-headline font-bold text-slate-900 dark:text-white">Create an Account</CardTitle>
+        <CardDescription className="text-xs text-slate-500">Join DutyFlow to streamline your invigilation rosters.</CardDescription>
       </CardHeader>
       <form onSubmit={handleSignup}>
-        <CardContent className="grid gap-3.5">
+        <CardContent className="grid gap-3.5 px-6">
           <div className="grid gap-1.5">
-            <Label htmlFor="institution" className="text-xs font-semibold text-slate-700">Institution Name</Label>
+            <Label htmlFor="institution" className="text-xs font-semibold text-slate-700 dark:text-slate-300">Institution Name</Label>
             <Input 
               id="institution" 
               placeholder="Enter full name of college or school" 
               value={institutionName}
               onChange={(e) => setInstitutionName(e.target.value)}
               required 
-              className="h-9"
+              className="h-10 rounded-xl"
             />
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="email" className="text-xs font-semibold text-slate-700">Email ID</Label>
+            <Label htmlFor="email" className="text-xs font-semibold text-slate-700 dark:text-slate-300">Email ID</Label>
             <Input 
               id="email" 
               type="email" 
@@ -112,11 +115,11 @@ export function SignupForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required 
-              className="h-9"
+              className="h-10 rounded-xl"
             />
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="create-password" className="text-xs font-semibold text-slate-700">Create Password</Label>
+            <Label htmlFor="create-password" className="text-xs font-semibold text-slate-700 dark:text-slate-300">Create Password</Label>
             <Input 
               id="create-password" 
               type="password" 
@@ -124,11 +127,11 @@ export function SignupForm() {
               onChange={(e) => setPassword(e.target.value)}
               required 
               minLength={6}
-              className="h-9"
+              className="h-10 rounded-xl"
             />
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="confirm-password" className="text-xs font-semibold text-slate-700">Confirm Password</Label>
+            <Label htmlFor="confirm-password" className="text-xs font-semibold text-slate-700 dark:text-slate-300">Confirm Password</Label>
             <Input 
               id="confirm-password" 
               type="password" 
@@ -136,13 +139,13 @@ export function SignupForm() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               required 
               minLength={6}
-              className="h-9"
+              className="h-10 rounded-xl"
             />
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col gap-3 pt-2">
+        <CardFooter className="flex flex-col gap-3 pt-2 px-6 pb-6">
           <Button 
-            className="w-full bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs tracking-wider h-10" 
+            className="w-full bg-[#6342e8] hover:bg-[#5232d6] text-white font-bold text-xs tracking-wider h-10 rounded-xl shadow-xs" 
             type="submit"
             disabled={isSubmitting}
           >
@@ -155,9 +158,9 @@ export function SignupForm() {
               "SIGN UP"
             )}
           </Button>
-          <p className="text-xs text-center text-muted-foreground">
+          <p className="text-xs text-center text-slate-500">
             Already have an account?{" "}
-            <Link href="/" className="font-bold underline text-[#1E2A5E]">
+            <Link href="/" className="font-bold underline text-[#6342e8] hover:text-[#5232d6]">
               Log in
             </Link>
           </p>

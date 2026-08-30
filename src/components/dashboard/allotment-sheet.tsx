@@ -298,30 +298,30 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
 
   return (
     <TooltipProvider>
-      <Card className="border border-border/80 shadow-sm rounded-xl overflow-hidden bg-card">
+      <Card className="border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl overflow-hidden bg-white dark:bg-slate-900">
         {/* Top Accent Gradient Line */}
-        <div className="h-1.5 w-full bg-gradient-to-r from-[#4F46E5] via-[#0891B2] to-[#F59E0B]" />
+        <div className="h-[3px] w-full bg-gradient-to-r from-[#6342e8] via-[#8b5cf6] to-[#f59e0b]" />
 
         <CardHeader className="pb-5 pt-6 px-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             {/* Institution & Examination Cards */}
             <div className="flex flex-wrap items-center gap-2.5">
-              <div className="bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40 rounded-lg px-3.5 py-1.5 min-w-[140px]">
-                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
-                  <Building2 className="h-3 w-3 text-[#4F46E5]" />
+              <div className="bg-purple-50/60 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900/40 rounded-xl px-3.5 py-1.5 min-w-[140px]">
+                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold text-slate-500">
+                  <Building2 className="h-3 w-3 text-[#6342e8]" />
                   <span>Institution</span>
                 </div>
-                <div className="text-sm font-bold text-[#4F46E5] dark:text-indigo-300">
+                <div className="text-sm font-bold text-[#6342e8] dark:text-purple-300">
                   {examInfo?.college || 'College Name'}
                 </div>
               </div>
 
-              <div className="bg-cyan-50/60 dark:bg-cyan-950/30 border border-cyan-100 dark:border-cyan-900/40 rounded-lg px-3.5 py-1.5 min-w-[160px]">
-                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
-                  <GraduationCap className="h-3 w-3 text-[#0891B2]" />
+              <div className="bg-purple-50/60 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900/40 rounded-xl px-3.5 py-1.5 min-w-[160px]">
+                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold text-slate-500">
+                  <GraduationCap className="h-3 w-3 text-[#6342e8]" />
                   <span>Examination</span>
                 </div>
-                <div className="text-sm font-bold text-[#0891B2] dark:text-cyan-300">
+                <div className="text-sm font-bold text-[#6342e8] dark:text-purple-300">
                   {activeAllotment?.name || examInfo?.examName || 'Examination Duty Allotment'}
                 </div>
               </div>
@@ -329,54 +329,54 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
 
             {/* Live Metrics Chips Bar */}
             <div className="flex flex-wrap items-center gap-2">
-              <div className="bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40 rounded-lg px-3 py-1.5 text-center">
-                <div className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">INVIGILATORS</div>
-                <div className="text-sm font-bold text-[#4F46E5]">{totalRooms}</div>
+              <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-1.5 text-center">
+                <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">INVIGILATORS</div>
+                <div className="text-sm font-bold text-[#6342e8]">{totalRooms}</div>
               </div>
-              <div className="bg-cyan-50/60 dark:bg-cyan-950/30 border border-cyan-100 dark:border-cyan-900/40 rounded-lg px-3 py-1.5 text-center">
-                <div className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Relievers</div>
-                <div className="text-sm font-bold text-[#0891B2]">{totalRelievers}</div>
+              <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-1.5 text-center">
+                <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">Relievers</div>
+                <div className="text-sm font-bold text-[#8b5cf6]">{totalRelievers}</div>
               </div>
-              <div className="bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40 rounded-lg px-3 py-1.5 text-center">
-                <div className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Staff Req.</div>
+              <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-1.5 text-center">
+                <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">Staff Req.</div>
                 <div className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{totalInvigilatorsRequired}</div>
               </div>
-              <div className="bg-amber-50/60 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/40 rounded-lg px-3 py-1.5 text-center">
-                <div className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Allotted</div>
-                <div className="text-sm font-bold text-[#F59E0B]">{totalDutiesAllotted}</div>
+              <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-1.5 text-center">
+                <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">Allotted</div>
+                <div className="text-sm font-bold text-[#f59e0b]">{totalDutiesAllotted}</div>
               </div>
             </div>
           </div>
         </CardHeader>
 
         <CardContent className="px-6 pb-6 pt-0">
-          <div className="rounded-xl border border-border/70 dark:border-slate-800 overflow-x-auto shadow-2xs">
+          <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 overflow-x-auto shadow-2xs">
             <Table className="min-w-full border-collapse">
               <TableHeader>
-                <TableRow className="bg-muted/60 dark:bg-slate-900/90 hover:bg-muted/60 dark:hover:bg-slate-900/90 border-b border-border/70 dark:border-slate-800">
-                  <TableHead className="sticky left-0 bg-card dark:bg-slate-900/95 backdrop-blur-sm z-20 w-12 font-bold text-xs uppercase tracking-wider text-muted-foreground text-center border-r border-border/60 dark:border-slate-800">
+                <TableRow className="bg-[#f8f9fc] dark:bg-slate-800/60 hover:bg-[#f8f9fc] border-b border-slate-200/80 dark:border-slate-800">
+                  <TableHead className="sticky left-0 bg-[#f8f9fc] dark:bg-slate-900/95 backdrop-blur-sm z-20 w-12 font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 text-center border-r border-slate-200/80 dark:border-slate-800">
                     #
                   </TableHead>
-                  <TableHead className="sticky left-12 bg-card dark:bg-slate-900/95 backdrop-blur-sm z-20 min-w-44 font-bold text-xs uppercase tracking-wider text-muted-foreground border-r border-border/60 dark:border-slate-800">
+                  <TableHead className="sticky left-12 bg-[#f8f9fc] dark:bg-slate-900/95 backdrop-blur-sm z-20 min-w-44 font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 border-r border-slate-200/80 dark:border-slate-800">
                     Invigilator&apos;s Name
                   </TableHead>
-                  <TableHead className="min-w-40 font-bold text-xs uppercase tracking-wider text-muted-foreground border-r border-border/60 dark:border-slate-800">
+                  <TableHead className="min-w-40 font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 border-r border-slate-200/80 dark:border-slate-800">
                     Designation
                   </TableHead>
                   {examinations.map(exam => (
                     <TableHead 
                       key={exam.id} 
-                      className="whitespace-nowrap h-44 p-2 text-center border-r border-border/40 dark:border-slate-800/80 min-w-12"
+                      className="whitespace-nowrap h-44 p-2 text-center border-r border-slate-200/60 dark:border-slate-800/80 min-w-12"
                       style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
                     >
                       <div className="flex flex-col items-start justify-end w-full pl-1">
-                        <span className="text-[13px] font-bold text-[#4F46E5] dark:text-indigo-400">{format(new Date(exam.date), "dd/MM/yy")}</span>
-                        <span className="text-xs font-semibold text-foreground dark:text-slate-200 truncate max-h-24 my-0.5">{exam.subject}</span>
-                        <span className="text-[12px] text-muted-foreground font-normal">{formatTimeTo12Hour(exam.startTime)}</span>
+                        <span className="text-[13px] font-bold text-[#6342e8] dark:text-purple-400">{format(new Date(exam.date), "dd/MM/yy")}</span>
+                        <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate max-h-24 my-0.5">{exam.subject}</span>
+                        <span className="text-[11px] text-slate-500 font-normal">{formatTimeTo12Hour(exam.startTime)}</span>
                       </div>
                     </TableHead>
                   ))}
-                  <TableHead className="text-center sticky right-0 bg-card dark:bg-slate-900/95 backdrop-blur-sm z-20 min-w-16 font-bold text-xs uppercase tracking-wider text-muted-foreground border-l border-border/60 dark:border-slate-800">
+                  <TableHead className="text-center sticky right-0 bg-[#f8f9fc] dark:bg-slate-900/95 backdrop-blur-sm z-20 min-w-16 font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 border-l border-slate-200/80 dark:border-slate-800">
                     Total
                   </TableHead>
                 </TableRow>
@@ -391,17 +391,17 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                     <TableRow 
                       key={invigilator.id} 
                       className={cn(
-                        "transition-colors hover:bg-muted/40 dark:hover:bg-slate-800/40 group/row",
-                        index % 2 === 1 && "bg-muted/15 dark:bg-slate-900/40"
+                        "transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/40 group/row",
+                        index % 2 === 1 && "bg-slate-50/30 dark:bg-slate-800/20"
                       )}
                     >
-                      <TableCell className="sticky left-0 bg-card group-hover/row:bg-muted/40 dark:bg-slate-900 dark:group-hover/row:bg-slate-850 z-10 text-center font-medium text-xs text-muted-foreground border-r border-border/60 dark:border-slate-800">
+                      <TableCell className="sticky left-0 bg-white group-hover/row:bg-slate-50 dark:bg-slate-900 dark:group-hover/row:bg-slate-850 z-10 text-center font-medium text-xs text-slate-500 border-r border-slate-200/60 dark:border-slate-800">
                         {index + 1}
                       </TableCell>
-                      <TableCell className="font-semibold text-xs sticky left-12 bg-card group-hover/row:bg-muted/40 dark:bg-slate-900 dark:group-hover/row:bg-slate-850 z-10 text-foreground dark:text-slate-100 border-r border-border/60 dark:border-slate-800">
+                      <TableCell className="font-semibold text-xs sticky left-12 bg-white group-hover/row:bg-slate-50 dark:bg-slate-900 dark:group-hover/row:bg-slate-850 z-10 text-slate-900 dark:text-slate-100 border-r border-slate-200/60 dark:border-slate-800">
                         {invigilator.name}
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground dark:text-slate-300 border-r border-border/60 dark:border-slate-800">
+                      <TableCell className="text-xs text-slate-500 border-r border-slate-200/60 dark:border-slate-800">
                         {invigilator.designation}
                       </TableCell>
                       {examinations.map(exam => {
@@ -411,7 +411,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                         return (
                           <TableCell 
                             key={exam.id} 
-                            className="p-1 text-center cursor-pointer transition-colors hover:bg-[#4F46E5]/10 dark:hover:bg-indigo-950/40 border-r border-border/40 dark:border-slate-800/70"
+                            className="p-1 text-center cursor-pointer transition-colors hover:bg-purple-50/60 dark:hover:bg-purple-950/40 border-r border-slate-200/40 dark:border-slate-800/70"
                             onClick={() => handleDutyToggle(invigilator.id, exam.id)}
                           >
                             <Tooltip>
@@ -420,28 +420,28 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                                   {hasDuty ? (
                                     <div className={cn(
                                       "font-bold text-xs rounded-md w-6 h-6 flex items-center justify-center shadow-xs transition-all hover:scale-110",
-                                      dateColorMap[examDate] || 'bg-gradient-to-b from-indigo-100 to-indigo-200/90 text-indigo-700 border border-indigo-300/80 dark:from-indigo-950/70 dark:to-indigo-900/60 dark:text-indigo-300'
+                                      dateColorMap[examDate] || 'bg-purple-100 text-[#6342e8] border border-purple-200 dark:bg-purple-950/70 dark:text-purple-300'
                                     )}>
                                       1
                                     </div>
                                   ) : (
-                                    <span className="text-xs text-muted-foreground/30 hover:text-muted-foreground">0</span>
+                                    <span className="text-xs text-slate-300 hover:text-slate-500">0</span>
                                   )}
                                 </div>
                               </TooltipTrigger>
-                              <TooltipContent className="rounded-lg shadow-md border-border dark:border-slate-800 text-xs">
+                              <TooltipContent className="rounded-xl shadow-md border-slate-200 dark:border-slate-800 text-xs">
                                 <div className="space-y-0.5">
-                                  <div className="font-bold text-foreground">{exam.subject}</div>
-                                  <div className="text-muted-foreground">{format(new Date(exam.date), 'PPP')} ({format(new Date(exam.date), 'EEEE')})</div>
-                                  <div className="text-[12px] text-muted-foreground">{formatTimeTo12Hour(exam.startTime)} – {formatTimeTo12Hour(exam.endTime)}</div>
+                                  <div className="font-bold text-slate-900 dark:text-white">{exam.subject}</div>
+                                  <div className="text-slate-500">{format(new Date(exam.date), 'PPP')} ({format(new Date(exam.date), 'EEEE')})</div>
+                                  <div className="text-[11px] text-slate-500">{formatTimeTo12Hour(exam.startTime)} – {formatTimeTo12Hour(exam.endTime)}</div>
                                 </div>
                               </TooltipContent>
                             </Tooltip>
                           </TableCell>
                         );
                       })}
-                      <TableCell className="text-center sticky right-0 bg-card group-hover/row:bg-muted/40 dark:bg-slate-900 dark:group-hover/row:bg-slate-850 z-10 border-l border-border/60 dark:border-slate-800">
-                        <div className="bg-indigo-50 dark:bg-indigo-950/60 text-[#4F46E5] dark:text-indigo-300 border border-indigo-100 dark:border-indigo-900/50 font-bold rounded-lg w-7 h-7 flex items-center justify-center mx-auto text-xs">
+                      <TableCell className="text-center sticky right-0 bg-white group-hover/row:bg-slate-50 dark:bg-slate-900 dark:group-hover/row:bg-slate-850 z-10 border-l border-slate-200/60 dark:border-slate-800">
+                        <div className="bg-purple-50 dark:bg-purple-950/60 text-[#6342e8] dark:text-purple-300 border border-purple-100 dark:border-purple-900/50 font-bold rounded-lg w-7 h-7 flex items-center justify-center mx-auto text-xs">
                           {dutyCount}
                         </div>
                       </TableCell>
@@ -450,55 +450,55 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                 })}
               </TableBody>
 
-              <TableFooter className="border-t-2 border-border dark:border-slate-800 font-medium bg-muted/30 dark:bg-slate-900/60">
+              <TableFooter className="border-t-2 border-slate-200 dark:border-slate-800 font-medium bg-slate-50/50 dark:bg-slate-900/60">
                 {/* Invigilators Row */}
-                <TableRow className="hover:bg-muted/40 dark:hover:bg-slate-800/40 border-b border-border/40 dark:border-slate-800/60">
-                  <TableCell colSpan={3} className="text-right font-bold text-xs uppercase tracking-wider text-muted-foreground sticky left-0 bg-muted/80 dark:bg-slate-900/90 z-10">
+                <TableRow className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 border-b border-slate-200/60 dark:border-slate-800/60">
+                  <TableCell colSpan={3} className="text-right font-bold text-xs uppercase tracking-wider text-slate-500 sticky left-0 bg-slate-50/90 dark:bg-slate-900/90 z-10">
                     No of Invigilators
                   </TableCell>
                   {examinations.map((exam) => (
-                    <TableCell key={`rooms-${exam.id}`} className="text-center text-xs font-bold text-[#4F46E5] dark:text-indigo-400">
+                    <TableCell key={`rooms-${exam.id}`} className="text-center text-xs font-bold text-[#6342e8] dark:text-purple-400">
                       {exam.rooms}
                     </TableCell>
                   ))}
-                  <TableCell className="text-center font-bold text-xs text-[#4F46E5] dark:text-indigo-400 sticky right-0 bg-muted/80 dark:bg-slate-900/90 z-10 border-l border-border/60 dark:border-slate-800">
+                  <TableCell className="text-center font-bold text-xs text-[#6342e8] dark:text-purple-400 sticky right-0 bg-slate-50/90 dark:bg-slate-900/90 z-10 border-l border-slate-200/60 dark:border-slate-800">
                     {totalRooms}
                   </TableCell>
                 </TableRow>
 
                 {/* Relievers Row */}
-                <TableRow className="hover:bg-muted/40 dark:hover:bg-slate-800/40 border-b border-border/40 dark:border-slate-800/60">
-                  <TableCell colSpan={3} className="text-right font-bold text-xs uppercase tracking-wider text-muted-foreground sticky left-0 bg-muted/80 dark:bg-slate-900/90 z-10">
+                <TableRow className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 border-b border-slate-200/60 dark:border-slate-800/60">
+                  <TableCell colSpan={3} className="text-right font-bold text-xs uppercase tracking-wider text-slate-500 sticky left-0 bg-slate-50/90 dark:bg-slate-900/90 z-10">
                     No of Relievers
                   </TableCell>
                   {examinations.map((exam) => (
-                    <TableCell key={`relievers-${exam.id}`} className="text-center text-xs font-bold text-[#0891B2] dark:text-cyan-400">
+                    <TableCell key={`relievers-${exam.id}`} className="text-center text-xs font-bold text-[#8b5cf6] dark:text-purple-400">
                       {exam.relievers}
                     </TableCell>
                   ))}
-                  <TableCell className="text-center font-bold text-xs text-[#0891B2] dark:text-cyan-400 sticky right-0 bg-muted/80 dark:bg-slate-900/90 z-10 border-l border-border/60 dark:border-slate-800">
+                  <TableCell className="text-center font-bold text-xs text-[#8b5cf6] dark:text-purple-400 sticky right-0 bg-slate-50/90 dark:bg-slate-900/90 z-10 border-l border-slate-200/60 dark:border-slate-800">
                     {totalRelievers}
                   </TableCell>
                 </TableRow>
 
                 {/* Total Invigilators Required Row */}
-                <TableRow className="hover:bg-muted/40 dark:hover:bg-slate-800/40 border-b border-border/40 dark:border-slate-800/60 bg-muted/60 dark:bg-slate-900/80">
-                  <TableCell colSpan={3} className="text-right font-bold text-xs uppercase tracking-wider text-foreground dark:text-slate-200 sticky left-0 bg-muted/90 dark:bg-slate-900 z-10">
+                <TableRow className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 border-b border-slate-200/60 dark:border-slate-800/60 bg-slate-100/50 dark:bg-slate-900/80">
+                  <TableCell colSpan={3} className="text-right font-bold text-xs uppercase tracking-wider text-slate-800 dark:text-slate-200 sticky left-0 bg-slate-100/90 dark:bg-slate-900 z-10">
                     Total Required
                   </TableCell>
                   {examinations.map((exam) => (
-                    <TableCell key={`invigilators-${exam.id}`} className="text-center text-xs font-bold text-foreground dark:text-slate-200">
+                    <TableCell key={`invigilators-${exam.id}`} className="text-center text-xs font-bold text-slate-800 dark:text-slate-200">
                       {exam.rooms + exam.relievers}
                     </TableCell>
                   ))}
-                  <TableCell className="text-center font-bold text-xs text-emerald-600 dark:text-emerald-400 sticky right-0 bg-muted/90 dark:bg-slate-900 z-10 border-l border-border/60 dark:border-slate-800">
+                  <TableCell className="text-center font-bold text-xs text-emerald-600 dark:text-emerald-400 sticky right-0 bg-slate-100/90 dark:bg-slate-900 z-10 border-l border-slate-200/60 dark:border-slate-800">
                     {totalInvigilatorsRequired}
                   </TableCell>
                 </TableRow>
 
                 {/* Total Duties Allotted Row */}
-                <TableRow className="hover:bg-muted/40 dark:hover:bg-slate-800/40 bg-indigo-50/40 dark:bg-indigo-950/20">
-                  <TableCell colSpan={3} className="text-right font-bold text-xs uppercase tracking-wider text-[#4F46E5] dark:text-indigo-400 sticky left-0 bg-indigo-50/90 dark:bg-indigo-950/90 z-10">
+                <TableRow className="hover:bg-purple-50/40 dark:hover:bg-slate-800/40 bg-purple-50/30 dark:bg-purple-950/20">
+                  <TableCell colSpan={3} className="text-right font-bold text-xs uppercase tracking-wider text-[#6342e8] dark:text-purple-400 sticky left-0 bg-purple-50/90 dark:bg-purple-950/90 z-10">
                     Total Allotted
                   </TableCell>
                   {dutiesPerExam.map((count, index) => {
@@ -510,14 +510,14 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                         key={`total-duties-${exam.id}`} 
                         className={cn(
                           "text-center text-xs font-bold",
-                          isMismatch ? "text-destructive font-black" : "text-[#4F46E5] dark:text-indigo-400"
+                          isMismatch ? "text-destructive font-black" : "text-[#6342e8] dark:text-purple-400"
                         )}
                       >
                         {count}
                       </TableCell>
                     );
                   })}
-                  <TableCell className="text-center font-black text-xs text-[#4F46E5] dark:text-indigo-400 sticky right-0 bg-indigo-50/90 dark:bg-indigo-950/90 z-10 border-l border-border/60 dark:border-slate-800">
+                  <TableCell className="text-center font-black text-xs text-[#6342e8] dark:text-purple-400 sticky right-0 bg-purple-50/90 dark:bg-purple-950/90 z-10 border-l border-slate-200/60 dark:border-slate-800">
                     {totalDutiesAllotted}
                   </TableCell>
                 </TableRow>
@@ -526,36 +526,36 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
           </div>
         </CardContent>
 
-        <CardFooter className="justify-end gap-3 px-6 py-4 bg-muted/10 border-t border-border/60">
+        <CardFooter className="justify-end gap-3 px-6 py-4 bg-slate-50/50 dark:bg-slate-800/30 border-t border-slate-200/80 dark:border-slate-800">
           <AlertDialog open={isSaveAlertOpen} onOpenChange={setIsSaveAlertOpen}>
             <AlertDialogTrigger asChild>
-              <Button variant="outline" className="border-[#4F46E5]/40 text-[#4F46E5] hover:bg-[#4F46E5]/10 font-semibold rounded-lg">
-                <Save className="mr-2 h-4 w-4" />
+              <Button variant="outline" className="border-slate-200 dark:border-slate-800 hover:border-[#6342e8]/50 hover:bg-purple-50/50 dark:hover:bg-purple-950/30 text-slate-800 dark:text-slate-200 font-semibold rounded-xl text-xs h-9">
+                <Save className="mr-2 h-3.5 w-3.5 text-[#6342e8]" />
                 Save Allotment
               </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent className="rounded-2xl border-border">
+            <AlertDialogContent className="rounded-2xl border-slate-200 dark:border-slate-800">
               <AlertDialogHeader>
-                <AlertDialogTitle className="text-lg font-bold">Save Allotment Sheet</AlertDialogTitle>
-                <AlertDialogDescription className="text-sm text-muted-foreground">
+                <AlertDialogTitle className="text-lg font-bold text-slate-900 dark:text-white">Save Allotment Sheet</AlertDialogTitle>
+                <AlertDialogDescription className="text-xs text-slate-500">
                   Save this current configuration to resume editing or download reports later from the &quot;Saved Allotments&quot; page.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <div className="py-2">
-                <Label htmlFor="save-sheet-name" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <Label htmlFor="save-sheet-name" className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Allotment Sheet Name
                 </Label>
                 <Input
                   id="save-sheet-name"
                   value={saveName}
                   onChange={(e) => setSaveName(e.target.value)}
-                  className="mt-1.5 rounded-lg"
+                  className="mt-1.5 rounded-xl"
                   placeholder="e.g. Mid-Term Invigilation 2027"
                 />
               </div>
               <AlertDialogFooter>
-                <AlertDialogCancel className="rounded-lg">Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleSave} className="bg-[#4F46E5] hover:bg-[#4338ca] text-white rounded-lg">
+                <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleSave} className="bg-[#6342e8] hover:bg-[#5232d6] text-white rounded-xl">
                   Save Allotment
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -564,9 +564,9 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
 
           <Button
             onClick={handleDownload}
-            className="bg-[#4F46E5] hover:bg-[#4338ca] text-white font-semibold rounded-lg shadow-sm"
+            className="bg-[#6342e8] hover:bg-[#5232d6] text-white font-semibold rounded-xl text-xs h-9 shadow-xs"
           >
-            <Download className="mr-2 h-4 w-4" />
+            <Download className="mr-2 h-3.5 w-3.5" />
             Download PDF Report
           </Button>
         </CardFooter>

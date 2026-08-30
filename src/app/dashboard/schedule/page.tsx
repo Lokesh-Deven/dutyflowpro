@@ -255,21 +255,31 @@ export default function SchedulePage() {
   const examDetails = examinations.length > 0 ? examinations[0] : null;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="space-y-1">
+        <h1 className="text-2xl font-bold font-headline tracking-tight text-slate-900 dark:text-white">
+          Day-wise Schedule
+        </h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Inspect daily schedules and export printable timetable rosters
+        </p>
+      </div>
+
       <div className="grid gap-6 md:grid-cols-12">
         {/* Left Sidebar: Controls & Date Picker */}
         <div className="md:col-span-4 space-y-6">
           {/* Date Selector Card */}
-          <Card className="border border-border/80 shadow-sm rounded-xl overflow-hidden bg-card">
-            <div className="h-1.5 w-full bg-gradient-to-r from-[#4F46E5] to-[#0891B2]" />
+          <Card className="border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl overflow-hidden bg-white dark:bg-slate-900">
+            <div className="h-[3px] w-full bg-gradient-to-r from-[#6342e8] via-[#8b5cf6] to-[#f59e0b]" />
             <CardHeader className="pb-3 pt-5 px-5">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-[#4F46E5] dark:text-indigo-300">
+                <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-[#6342e8] dark:text-purple-400">
                   <CalendarDays className="h-4 w-4" />
                 </div>
                 <div>
-                  <CardTitle className="text-base font-bold">Select Exam Date</CardTitle>
-                  <CardDescription className="text-xs">Pick a day to inspect sessions.</CardDescription>
+                  <CardTitle className="text-base font-bold text-slate-900 dark:text-white">Select Exam Date</CardTitle>
+                  <CardDescription className="text-xs text-slate-500">Pick a day to inspect sessions.</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -281,35 +291,35 @@ export default function SchedulePage() {
                   setDate(d);
                   setShowFullSchedule(false);
                 }}
-                className="p-1 rounded-lg"
+                className="p-1 rounded-xl"
               />
             </CardContent>
           </Card>
 
           {/* Allotment & Options Card */}
-          <Card className="border border-border/80 shadow-sm rounded-xl overflow-hidden bg-card">
-            <div className="h-1.5 w-full bg-gradient-to-r from-[#0891B2] to-[#F59E0B]" />
+          <Card className="border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl overflow-hidden bg-white dark:bg-slate-900">
+            <div className="h-[3px] w-full bg-gradient-to-r from-[#6342e8] to-[#f59e0b]" />
             <CardHeader className="pb-3 pt-5 px-5">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-lg bg-cyan-50 dark:bg-cyan-950/50 text-[#0891B2] dark:text-cyan-300">
+                <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-[#6342e8] dark:text-purple-400">
                   <FileSpreadsheet className="h-4 w-4" />
                 </div>
                 <div>
-                  <CardTitle className="text-base font-bold">Allotment Sheet</CardTitle>
-                  <CardDescription className="text-xs">Choose saved plan and view mode.</CardDescription>
+                  <CardTitle className="text-base font-bold text-slate-900 dark:text-white">Allotment Sheet</CardTitle>
+                  <CardDescription className="text-xs text-slate-500">Choose saved plan and view mode.</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4 px-5 pb-5">
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Active Allotment Plan
                 </Label>
                 <Select onValueChange={handleAllotmentChange} value={activeAllotment?.id}>
-                  <SelectTrigger className="w-full h-10 bg-background border-border/80 rounded-lg text-xs font-medium">
+                  <SelectTrigger className="w-full h-10 bg-slate-50/50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 rounded-xl text-xs font-medium">
                     <SelectValue placeholder="Choose an examination..." />
                   </SelectTrigger>
-                  <SelectContent className="rounded-xl">
+                  <SelectContent className="rounded-xl border-slate-200 dark:border-slate-800">
                     {savedAllotments.map(allotment => (
                       <SelectItem key={allotment.id} value={allotment.id} className="cursor-pointer">
                         {allotment.name}
@@ -323,18 +333,18 @@ export default function SchedulePage() {
               </div>
 
               {/* Full Schedule Switch */}
-              <div className="flex items-center justify-between p-3 bg-indigo-50/40 dark:bg-indigo-950/20 rounded-xl border border-indigo-100 dark:border-indigo-900/40">
+              <div className="flex items-center justify-between p-3 bg-purple-50/40 dark:bg-purple-950/20 rounded-xl border border-purple-100 dark:border-purple-900/40">
                 <div className="space-y-0.5">
-                  <Label htmlFor="full-schedule" className="text-xs font-bold text-foreground cursor-pointer">
+                  <Label htmlFor="full-schedule" className="text-xs font-bold text-slate-900 dark:text-white cursor-pointer">
                     Show Full Schedule
                   </Label>
-                  <p className="text-[11px] text-muted-foreground">List all dates in single view</p>
+                  <p className="text-[11px] text-slate-500">List all dates in single view</p>
                 </div>
                 <Switch
                   id="full-schedule"
                   checked={showFullSchedule}
                   onCheckedChange={setShowFullSchedule}
-                  className="data-[state=checked]:bg-[#4F46E5]"
+                  className="data-[state=checked]:bg-[#6342e8]"
                 />
               </div>
             </CardContent>
@@ -343,28 +353,28 @@ export default function SchedulePage() {
 
         {/* Right Main Schedule View */}
         <div className="md:col-span-8">
-          <Card className="border border-border/80 shadow-sm rounded-xl overflow-hidden bg-card">
-            <div className="h-1.5 w-full bg-gradient-to-r from-[#4F46E5] via-[#0891B2] to-[#F59E0B]" />
+          <Card className="border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl overflow-hidden bg-white dark:bg-slate-900">
+            <div className="h-[3px] w-full bg-gradient-to-r from-[#6342e8] via-[#8b5cf6] to-[#f59e0b]" />
 
             <CardHeader className="text-center space-y-3 pb-6 pt-6 px-6">
               {/* Institution & Examination Cards matching Duty Allotment Sheet format */}
               <div className="flex flex-wrap items-center justify-center gap-2.5">
-                <div className="bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40 rounded-lg px-3.5 py-1.5 min-w-[140px] text-left shadow-2xs">
-                  <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
-                    <Building2 className="h-3 w-3 text-[#4F46E5]" />
+                <div className="bg-purple-50/60 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900/40 rounded-xl px-3.5 py-1.5 min-w-[140px] text-left shadow-2xs">
+                  <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold text-slate-500">
+                    <Building2 className="h-3 w-3 text-[#6342e8]" />
                     <span>Institution</span>
                   </div>
-                  <div className="text-sm font-bold text-[#4F46E5] dark:text-indigo-300">
+                  <div className="text-sm font-bold text-[#6342e8] dark:text-purple-300">
                     {examDetails?.college || 'College Name'}
                   </div>
                 </div>
 
-                <div className="bg-cyan-50/60 dark:bg-cyan-950/30 border border-cyan-100 dark:border-cyan-900/40 rounded-lg px-3.5 py-1.5 min-w-[160px] text-left shadow-2xs">
-                  <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
-                    <GraduationCap className="h-3 w-3 text-[#0891B2]" />
+                <div className="bg-purple-50/60 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900/40 rounded-xl px-3.5 py-1.5 min-w-[160px] text-left shadow-2xs">
+                  <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold text-slate-500">
+                    <GraduationCap className="h-3 w-3 text-[#6342e8]" />
                     <span>Examination</span>
                   </div>
-                  <div className="text-sm font-bold text-[#0891B2] dark:text-cyan-300">
+                  <div className="text-sm font-bold text-[#6342e8] dark:text-purple-300">
                     {activeAllotment?.name || examDetails?.examName || 'Examination Name'}
                   </div>
                 </div>
@@ -372,15 +382,15 @@ export default function SchedulePage() {
 
               <div className="flex flex-col items-center justify-center gap-1.5 pt-1">
                 <span className={cn(
-                  "px-3 py-1 rounded-full text-xs font-semibold border shadow-2xs",
+                  "px-3.5 py-1 rounded-full text-xs font-semibold border shadow-2xs",
                   showFullSchedule
-                    ? "bg-[#0891B2]/10 text-[#0891B2] border-[#0891B2]/30"
-                    : "bg-[#4F46E5]/10 text-[#4F46E5] border-[#4F46E5]/30"
+                    ? "bg-[#6342e8]/10 text-[#6342e8] border-[#6342e8]/30"
+                    : "bg-[#6342e8]/10 text-[#6342e8] border-[#6342e8]/30"
                 )}>
                   {showFullSchedule ? 'COMPREHENSIVE FULL SCHEDULE' : 'DAY-WISE ALLOTMENT'}
                 </span>
 
-                <span className="text-xs text-muted-foreground font-medium">
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                   {showFullSchedule
                     ? `All Examination Dates (${scheduleData.length} Session Slots)`
                     : (date ? format(date, "MMMM do, yyyy (EEEE)") : 'Select a date')}
@@ -395,45 +405,45 @@ export default function SchedulePage() {
                     <div key={index} className="space-y-3">
                       {/* Sticky Date Separator in Full Schedule mode */}
                       {showFullSchedule && (index === 0 || format(slot.date, 'yyyy-MM-dd') !== format(scheduleData[index - 1].date, 'yyyy-MM-dd')) && (
-                        <div className="flex items-center gap-3 pt-4 mb-2 sticky top-0 bg-background/90 backdrop-blur-sm z-10 py-1">
-                          <div className="h-px flex-1 bg-border/80" />
-                          <div className="flex items-center gap-1.5 text-xs font-bold text-[#4F46E5] bg-indigo-50 dark:bg-indigo-950/60 px-3 py-1 rounded-full border border-indigo-100 dark:border-indigo-900/50 shadow-2xs">
+                        <div className="flex items-center gap-3 pt-4 mb-2 sticky top-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm z-10 py-1">
+                          <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-[#6342e8] bg-purple-50 dark:bg-purple-950/60 px-3 py-1 rounded-full border border-purple-100 dark:border-purple-900/50 shadow-2xs">
                             <CalendarRange className="h-3.5 w-3.5" />
                             <span>{format(slot.date, "EEEE, MMMM do, yyyy")}</span>
                           </div>
-                          <div className="h-px flex-1 bg-border/80" />
+                          <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
                         </div>
                       )}
 
                       {/* Subject & Timing Header Banner */}
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3.5 rounded-xl bg-muted/40 dark:bg-slate-900/70 border border-border/80 dark:border-slate-800 border-l-4 border-l-[#4F46E5] dark:border-l-indigo-500">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 border-l-4 border-l-[#6342e8]">
                         <div className="flex items-center gap-2 min-w-0">
-                          <BookOpen className="h-4 w-4 text-[#0891B2] dark:text-cyan-400 shrink-0" />
-                          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground shrink-0">Subject:</span>
-                          <span className="text-sm font-bold text-foreground dark:text-slate-100 truncate">{slot.subjects}</span>
+                          <BookOpen className="h-4 w-4 text-[#6342e8] shrink-0" />
+                          <span className="text-xs font-bold uppercase tracking-wider text-slate-500 shrink-0">Subject:</span>
+                          <span className="text-sm font-bold text-slate-900 dark:text-white truncate">{slot.subjects}</span>
                         </div>
 
-                        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-background dark:bg-slate-950 border border-border/60 dark:border-slate-800 text-xs font-semibold text-muted-foreground dark:text-slate-300 w-fit shrink-0">
-                          <Clock className="h-3 w-3 text-[#F59E0B] dark:text-amber-400" />
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-300 w-fit shrink-0">
+                          <Clock className="h-3 w-3 text-[#f59e0b]" />
                           <span>{slot.time}</span>
                         </div>
                       </div>
 
                       {/* Invigilators Table */}
-                      <div className="rounded-xl border border-border/70 dark:border-slate-800 overflow-hidden shadow-2xs">
+                      <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 overflow-hidden shadow-2xs">
                         <Table>
                           <TableHeader>
-                            <TableRow className="bg-muted/50 dark:bg-slate-900/80 hover:bg-muted/50 dark:hover:bg-slate-900/80 border-b border-border/70 dark:border-slate-800">
-                              <TableHead className="font-bold text-xs uppercase tracking-wider text-muted-foreground w-12 text-center">#</TableHead>
-                              <TableHead className="font-bold text-xs uppercase tracking-wider text-muted-foreground">Name of the Invigilator</TableHead>
-                              <TableHead className="font-bold text-xs uppercase tracking-wider text-muted-foreground">Designation</TableHead>
-                              <TableHead className="font-bold text-xs uppercase tracking-wider text-muted-foreground text-center w-36">Timings</TableHead>
+                            <TableRow className="bg-[#f8f9fc] dark:bg-slate-800/60 hover:bg-[#f8f9fc] border-b border-slate-200/80 dark:border-slate-800">
+                              <TableHead className="font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 w-12 text-center">#</TableHead>
+                              <TableHead className="font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">Name of the Invigilator</TableHead>
+                              <TableHead className="font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">Designation</TableHead>
+                              <TableHead className="font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 text-center w-36">Timings</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
                             {slot.invigilators.length === 0 ? (
                               <TableRow>
-                                <TableCell colSpan={4} className="text-center py-6 text-xs text-muted-foreground">
+                                <TableCell colSpan={4} className="text-center py-6 text-xs text-slate-500">
                                   No invigilators assigned to this session yet.
                                 </TableCell>
                               </TableRow>
@@ -442,20 +452,20 @@ export default function SchedulePage() {
                                 <TableRow 
                                   key={invigilator.id} 
                                   className={cn(
-                                    "transition-colors hover:bg-muted/40 dark:hover:bg-slate-800/40",
-                                    invIndex % 2 === 1 && "bg-muted/15 dark:bg-slate-900/40"
+                                    "transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/40",
+                                    invIndex % 2 === 1 && "bg-slate-50/30 dark:bg-slate-800/20"
                                   )}
                                 >
-                                  <TableCell className="text-center font-medium text-xs text-muted-foreground">
+                                  <TableCell className="text-center font-medium text-xs text-slate-500">
                                     {invIndex + 1}
                                   </TableCell>
-                                  <TableCell className="font-semibold text-xs text-foreground dark:text-slate-100">
+                                  <TableCell className="font-semibold text-xs text-slate-900 dark:text-white">
                                     {invigilator.name}
                                   </TableCell>
-                                  <TableCell className="text-xs text-muted-foreground dark:text-slate-400">
+                                  <TableCell className="text-xs text-slate-500">
                                     {invigilator.designation}
                                   </TableCell>
-                                  <TableCell className="text-center text-xs font-semibold text-[#4F46E5] dark:text-indigo-300">
+                                  <TableCell className="text-center text-xs font-semibold text-[#6342e8] dark:text-purple-300">
                                     {slot.time}
                                   </TableCell>
                                 </TableRow>
@@ -469,28 +479,27 @@ export default function SchedulePage() {
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-20 space-y-3">
-                  <div className="p-4 rounded-2xl bg-muted/60 text-muted-foreground/60">
+                  <div className="p-4 rounded-2xl bg-purple-50 dark:bg-purple-950/60 text-[#6342e8]">
                     <CalendarDays className="w-8 h-8" />
                   </div>
                   <div className="text-center space-y-1">
-                    <p className="font-semibold text-sm text-foreground">No duties scheduled for this selection</p>
-                    <p className="text-xs text-muted-foreground">Choose a different date or toggle &quot;Show Full Schedule&quot;.</p>
+                    <p className="font-bold text-sm text-slate-900 dark:text-white">No duties scheduled for this selection</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Choose a different date or toggle &quot;Show Full Schedule&quot;.</p>
                   </div>
                 </div>
               )}
             </CardContent>
 
             {scheduleData.length > 0 && (
-              <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4 px-6 py-4 bg-muted/10 border-t border-border/60">
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Info className="h-3.5 w-3.5 text-[#0891B2]" />
+              <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4 px-6 py-4 bg-slate-50/50 dark:bg-slate-800/30 border-t border-slate-200/80 dark:border-slate-800">
+                <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                  <Info className="h-3.5 w-3.5 text-[#6342e8]" />
                   <span>Reflects assignments from &quot;{activeAllotment?.name || 'Active'}&quot; allotment.</span>
                 </div>
 
                 <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                   <Button
-                    variant="outline"
-                    className="border-[#0891B2]/40 text-[#0891B2] hover:bg-[#0891B2]/10 dark:text-cyan-400 font-semibold rounded-lg text-xs h-9"
+                    className="bg-[#6342e8] hover:bg-[#5232d6] text-white font-semibold rounded-xl text-xs h-9 shadow-xs"
                     onClick={() => handleDownload(showFullSchedule)}
                   >
                     <Download className="mr-1.5 h-3.5 w-3.5" />

@@ -1,12 +1,26 @@
 "use client";
 
+import React, { useEffect, useState } from 'react';
 import { UserNav } from './user-nav';
-import Link from 'next/link';
-import { CalendarCheck2 } from 'lucide-react';
 import { HeaderNav } from './header-nav';
 import { ThemeToggle } from '../theme-toggle';
-import { useEffect, useState } from 'react';
-import { useAllotment } from '@/lib/allotment-context';
+import { Menu, Bell } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+interface HeaderProps {
+  onToggleSidebar?: () => void;
+  isSidebarCollapsed?: boolean;
+}
 
 const ClientThemeToggle = () => {
   const [isMounted, setIsMounted] = useState(false);
@@ -21,64 +35,65 @@ const ClientThemeToggle = () => {
   return <ThemeToggle />;
 };
 
-const ClientHeaderNav = () => {
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  if (!isMounted) {
-    return null;
-  }
-
+export default function Header({ onToggleSidebar, isSidebarCollapsed = false }: HeaderProps) {
   return (
-    <div className="hidden md:flex">
-      <HeaderNav />
-    </div>
-  );
-};
+    <header className="sticky top-0 z-30 w-full bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800">
+      <div className="h-16 px-4 sm:px-6 flex items-center justify-between gap-4">
+        {/* Left Section: Mobile/Desktop Sidebar Hamburger Toggle + Quick Nav */}
+        <div className="flex items-center gap-3 md:gap-5">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onToggleSidebar}
+                className="h-9 w-9 rounded-xl border border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              >
+                <Menu className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">
+              {isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+            </TooltipContent>
+          </Tooltip>
 
-export default function Header() {
-  const { clearCurrentAllotment } = useAllotment();
-
-  return (
-    <header className="sticky top-0 z-40 w-full border-b border-border/80 bg-background/85 backdrop-blur-md">
-      {/* Top Gradient Accent Stripe */}
-      <div className="h-1 w-full bg-gradient-to-r from-[#4F46E5] via-[#0891B2] to-[#F59E0B]" />
-
-      <div className="h-16 px-4 sm:px-6 lg:px-8 grid grid-cols-[auto_1fr_auto] items-center gap-4">
-        {/* Left Section: Modern Brand Logo */}
-        <div className="flex items-center">
-          <Link
-            href="/dashboard/examinations"
-            onClick={clearCurrentAllotment}
-            className="flex items-center gap-3 group"
-          >
-            <div className="p-2 rounded-xl bg-gradient-to-br from-[#4F46E5] via-[#4338ca] to-[#0891B2] text-white shadow-sm ring-2 ring-[#4F46E5]/20 group-hover:scale-105 transition-all duration-200 flex items-center justify-center">
-              <CalendarCheck2 className="w-5 h-5" />
-            </div>
-
-            <div className="flex flex-col">
-              <span className="text-2xl font-black font-headline tracking-tight text-foreground leading-none">
-                Duty<span className="bg-gradient-to-r from-[#4F46E5] via-[#0891B2] to-[#0891B2] bg-clip-text text-transparent">Flow</span>
-              </span>
-              <span className="text-[10px] font-medium tracking-tight text-muted-foreground mt-0.5">
-                Exam Duty Allocation Software
-              </span>
-            </div>
-          </Link>
+          <div className="hidden md:flex items-center">
+            <HeaderNav />
+          </div>
         </div>
 
-        {/* Center Section: Navigation (Equidistant & Centered) */}
-        <div className="flex justify-center">
-          <ClientHeaderNav />
-        </div>
+        {/* Right Section: Notification, Theme Toggle & Profile */}
+        <div className="flex items-center gap-2.5">
+          {/* Notification Bell with indicator */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative h-9 w-9 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                <Bell className="h-4 w-4" />
+                <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-[#6342e8] ring-2 ring-white dark:ring-slate-900" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-72 p-4 rounded-xl shadow-lg border-slate-200 dark:border-slate-800">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Notifications</h4>
+              <div className="text-xs text-slate-600 dark:text-slate-300 space-y-2">
+                <div className="p-2.5 rounded-lg bg-purple-50/60 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900/50">
+                  <p className="font-semibold text-slate-900 dark:text-white">Welcome to DutyFlow</p>
+                  <p className="text-[11px] text-slate-500 mt-0.5">Automate and streamline exam invigilation allocations effortlessly.</p>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
 
-        {/* Right Section: Actions */}
-        <div className="flex items-center justify-end gap-3">
-          <div className="p-1 rounded-lg bg-muted/40 border border-border/60">
+          {/* Theme Toggle */}
+          <div className="p-0.5 rounded-full">
             <ClientThemeToggle />
           </div>
+
+          {/* User Nav */}
           <UserNav />
         </div>
       </div>

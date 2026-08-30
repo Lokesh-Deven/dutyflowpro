@@ -164,53 +164,63 @@ export default function AnalyticsPage() {
     }
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-6">
+            {/* Page Header */}
+            <div className="space-y-1">
+                <h1 className="text-2xl font-bold font-headline tracking-tight text-slate-900 dark:text-white">
+                    Analytics & Insights
+                </h1>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                    Visual workload distributions, duty requirements, and session trends
+                </p>
+            </div>
+
             {/* Top Overview Metrics Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-card border border-border/80 dark:border-slate-800/80 rounded-xl p-4 shadow-2xs">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 shadow-2xs">
                     <div className="flex items-center gap-3">
-                        <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-[#4F46E5] dark:text-indigo-300">
+                        <div className="p-2.5 rounded-xl bg-purple-50 dark:bg-purple-950/50 text-[#6342e8] dark:text-purple-300">
                             <Users className="h-5 w-5" />
                         </div>
                         <div>
-                            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Staff</div>
-                            <div className="text-2xl font-bold text-[#4F46E5] dark:text-indigo-400">{invigilators.length}</div>
+                            <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Staff</div>
+                            <div className="text-2xl font-bold text-[#6342e8] dark:text-purple-400">{invigilators.length}</div>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-card border border-border/80 dark:border-slate-800/80 rounded-xl p-4 shadow-2xs">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 shadow-2xs">
                     <div className="flex items-center gap-3">
-                        <div className="p-2.5 rounded-xl bg-cyan-50 dark:bg-cyan-950/50 text-[#0891B2] dark:text-cyan-300">
+                        <div className="p-2.5 rounded-xl bg-purple-50 dark:bg-purple-950/50 text-[#6342e8] dark:text-purple-300">
                             <GraduationCap className="h-5 w-5" />
                         </div>
                         <div>
-                            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Exam Sessions</div>
-                            <div className="text-2xl font-bold text-[#0891B2] dark:text-cyan-400">{examinations.length}</div>
+                            <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">Exam Sessions</div>
+                            <div className="text-2xl font-bold text-[#6342e8] dark:text-purple-400">{examinations.length}</div>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-card border border-border/80 dark:border-slate-800/80 rounded-xl p-4 shadow-2xs">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 shadow-2xs">
                     <div className="flex items-center gap-3">
                         <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
                             <CheckCircle2 className="h-5 w-5" />
                         </div>
                         <div>
-                            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Staff Duties Req.</div>
+                            <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">Staff Duties Req.</div>
                             <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{totalDutiesRequired}</div>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-card border border-border/80 dark:border-slate-800/80 rounded-xl p-4 shadow-2xs">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 shadow-2xs">
                     <div className="flex items-center gap-3">
-                        <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-[#F59E0B] dark:text-amber-300">
+                        <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-[#f59e0b] dark:text-amber-300">
                             <FileSpreadsheet className="h-5 w-5" />
                         </div>
                         <div className="min-w-0">
-                            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Active Sheet</div>
-                            <div className="text-sm font-bold text-foreground dark:text-slate-100 truncate" title={activeAllotment.name}>
+                            <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">Active Sheet</div>
+                            <div className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate" title={activeAllotment.name}>
                                 {activeAllotment.name}
                             </div>
                         </div>
@@ -221,12 +231,12 @@ export default function AnalyticsPage() {
             {/* Analytics Charts Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Daily Invigilator Workload Card */}
-                <Card className="border border-border/80 dark:border-slate-800/80 shadow-sm rounded-xl overflow-hidden bg-card relative">
-                    <div className="h-1.5 w-full bg-gradient-to-r from-[#4F46E5] to-[#0891B2]" />
+                <Card className="border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl overflow-hidden bg-white dark:bg-slate-900 relative">
+                    <div className="h-[3px] w-full bg-gradient-to-r from-[#6342e8] via-[#8b5cf6] to-[#f59e0b]" />
                     <Button 
                         variant="ghost" 
                         size="icon" 
-                        className="absolute top-4 right-4 h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg"
+                        className="absolute top-4 right-4 h-8 w-8 text-slate-500 hover:text-slate-900 dark:hover:text-white rounded-lg"
                         onClick={() => setExpandedChart('workload')}
                         title="Maximize Chart"
                     >
@@ -234,12 +244,12 @@ export default function AnalyticsPage() {
                     </Button>
                     <CardHeader className="pb-2 pt-5 px-6">
                         <div className="flex items-center gap-2.5">
-                            <div className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-[#4F46E5] dark:text-indigo-300">
+                            <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-950/50 text-[#6342e8] dark:text-purple-300">
                                 <Users className="h-4 w-4" />
                             </div>
                             <div>
-                                <CardTitle className="text-base font-bold text-foreground dark:text-slate-100">Daily Invigilator Workload</CardTitle>
-                                <CardDescription className="text-xs text-muted-foreground">Assigned vs. available invigilators per exam date.</CardDescription>
+                                <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">Daily Invigilator Workload</CardTitle>
+                                <CardDescription className="text-xs text-slate-500">Assigned vs. available invigilators per exam date.</CardDescription>
                             </div>
                         </div>
                     </CardHeader>
@@ -251,20 +261,20 @@ export default function AnalyticsPage() {
                                 <YAxis dataKey="date" type="category" stroke="currentColor" className="text-slate-400 dark:text-slate-500" width={50} tick={{ fill: 'currentColor', fontSize: 13 }} />
                                 <Tooltip content={<CustomTooltip />} />
                                 <Legend verticalAlign="bottom" height={36} wrapperStyle={{ fontSize: '14px', paddingTop: '10px' }} />
-                                <Bar dataKey="Assigned" stackId="a" fill="#4F46E5" barSize={18} radius={[4, 0, 0, 4]} />
-                                <Bar dataKey="Free" stackId="a" fill="#0891B2" barSize={18} radius={[0, 4, 4, 0]} />
+                                <Bar dataKey="Assigned" stackId="a" fill="#6342e8" barSize={18} radius={[4, 0, 0, 4]} />
+                                <Bar dataKey="Free" stackId="a" fill="#8b5cf6" barSize={18} radius={[0, 4, 4, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
 
                 {/* Day-wise Session Trends Card */}
-                <Card className="border border-border/80 dark:border-slate-800/80 shadow-sm rounded-xl overflow-hidden bg-card relative">
-                    <div className="h-1.5 w-full bg-gradient-to-r from-[#0891B2] to-[#F59E0B]" />
+                <Card className="border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl overflow-hidden bg-white dark:bg-slate-900 relative">
+                    <div className="h-[3px] w-full bg-gradient-to-r from-[#6342e8] to-[#f59e0b]" />
                     <Button 
                         variant="ghost" 
                         size="icon" 
-                        className="absolute top-4 right-4 h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg"
+                        className="absolute top-4 right-4 h-8 w-8 text-slate-500 hover:text-slate-900 dark:hover:text-white rounded-lg"
                         onClick={() => setExpandedChart('trends')}
                         title="Maximize Chart"
                     >
@@ -272,12 +282,12 @@ export default function AnalyticsPage() {
                     </Button>
                     <CardHeader className="pb-2 pt-5 px-6">
                         <div className="flex items-center gap-2.5">
-                            <div className="p-2 rounded-lg bg-cyan-50 dark:bg-cyan-950/50 text-[#0891B2] dark:text-cyan-300">
+                            <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-950/50 text-[#6342e8] dark:text-purple-300">
                                 <TrendingUp className="h-4 w-4" />
                             </div>
                             <div>
-                                <CardTitle className="text-base font-bold text-foreground dark:text-slate-100">Day-wise Session Trends</CardTitle>
-                                <CardDescription className="text-xs text-muted-foreground">Room duties and relievers required across dates.</CardDescription>
+                                <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">Day-wise Session Trends</CardTitle>
+                                <CardDescription className="text-xs text-slate-500">Room duties and relievers required across dates.</CardDescription>
                             </div>
                         </div>
                     </CardHeader>
@@ -292,18 +302,18 @@ export default function AnalyticsPage() {
                                 <Line 
                                     type="monotone" 
                                     dataKey="Total Duties" 
-                                    stroke="#4F46E5" 
+                                    stroke="#6342e8" 
                                     strokeWidth={2.5} 
-                                    dot={{ r: 4, fill: "#fff", stroke: "#4F46E5", strokeWidth: 2 }} 
-                                    activeDot={{ r: 6, fill: "#4F46E5" }}
+                                    dot={{ r: 4, fill: "#fff", stroke: "#6342e8", strokeWidth: 2 }} 
+                                    activeDot={{ r: 6, fill: "#6342e8" }}
                                 />
                                 <Line 
                                     type="monotone" 
                                     dataKey="Total Relievers" 
-                                    stroke="#0891B2" 
+                                    stroke="#f59e0b" 
                                     strokeWidth={2.5} 
-                                    dot={{ r: 4, fill: "#fff", stroke: "#0891B2", strokeWidth: 2 }} 
-                                    activeDot={{ r: 6, fill: "#0891B2" }}
+                                    dot={{ r: 4, fill: "#fff", stroke: "#f59e0b", strokeWidth: 2 }} 
+                                    activeDot={{ r: 6, fill: "#f59e0b" }}
                                 />
                             </LineChart>
                         </ResponsiveContainer>
@@ -312,12 +322,12 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Duties Required per Exam Date Card */}
-            <Card className="border border-border/80 dark:border-slate-800/80 shadow-sm rounded-xl overflow-hidden bg-card relative">
-                <div className="h-1.5 w-full bg-gradient-to-r from-[#4F46E5] via-[#0891B2] to-[#F59E0B]" />
+            <Card className="border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl overflow-hidden bg-white dark:bg-slate-900 relative">
+                <div className="h-[3px] w-full bg-gradient-to-r from-[#6342e8] via-[#8b5cf6] to-[#f59e0b]" />
                 <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="absolute top-4 right-4 h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg"
+                    className="absolute top-4 right-4 h-8 w-8 text-slate-500 hover:text-slate-900 dark:hover:text-white rounded-lg"
                     onClick={() => setExpandedChart('requirements')}
                     title="Maximize Chart"
                 >
@@ -325,12 +335,12 @@ export default function AnalyticsPage() {
                 </Button>
                 <CardHeader className="pb-2 pt-5 px-6">
                     <div className="flex items-center gap-2.5">
-                        <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-[#F59E0B] dark:text-amber-300">
+                        <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-950/50 text-[#6342e8] dark:text-purple-300">
                             <BarChart3 className="h-4 w-4" />
                         </div>
                         <div>
-                            <CardTitle className="text-base font-bold text-foreground dark:text-slate-100">Duties Required per Exam Date</CardTitle>
-                            <CardDescription className="text-xs text-muted-foreground">Comparative distribution of room invigilators, relievers, and total required staff.</CardDescription>
+                            <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">Duties Required per Exam Date</CardTitle>
+                            <CardDescription className="text-xs text-slate-500">Comparative distribution of room invigilators, relievers, and total required staff.</CardDescription>
                         </div>
                     </div>
                 </CardHeader>
@@ -342,9 +352,9 @@ export default function AnalyticsPage() {
                             <YAxis domain={[0, 'auto']} stroke="currentColor" className="text-slate-400 dark:text-slate-500" tick={{ fill: 'currentColor', fontSize: 13 }} />
                             <Tooltip content={<CustomTooltip />} />
                             <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '14px', paddingTop: '10px' }} />
-                            <Bar dataKey="Rooms" fill="#4F46E5" barSize={28} radius={[6, 6, 0, 0]} />
-                            <Bar dataKey="Relievers" fill="#0891B2" barSize={28} radius={[6, 6, 0, 0]} />
-                            <Bar dataKey="Total Required" fill="#F59E0B" barSize={28} radius={[6, 6, 0, 0]} />
+                            <Bar dataKey="Rooms" fill="#6342e8" barSize={28} radius={[6, 6, 0, 0]} />
+                            <Bar dataKey="Relievers" fill="#8b5cf6" barSize={28} radius={[6, 6, 0, 0]} />
+                            <Bar dataKey="Total Required" fill="#f59e0b" barSize={28} radius={[6, 6, 0, 0]} />
                         </BarChart>
                     </ResponsiveContainer>
                 </CardContent>
@@ -352,8 +362,8 @@ export default function AnalyticsPage() {
 
             {/* Expanded Chart Modal */}
             <Dialog open={expandedChart !== null} onOpenChange={(open) => !open && setExpandedChart(null)}>
-                <DialogContent className="max-w-[90vw] w-full max-h-[90vh] rounded-2xl overflow-hidden p-0 border-border dark:border-slate-800 bg-card">
-                    <div className="h-1.5 w-full bg-gradient-to-r from-[#4F46E5] via-[#0891B2] to-[#F59E0B]" />
+                <DialogContent className="max-w-[90vw] w-full max-h-[90vh] rounded-2xl overflow-hidden p-0 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                    <div className="h-[3px] w-full bg-gradient-to-r from-[#6342e8] via-[#8b5cf6] to-[#f59e0b]" />
                     <div className="p-6">
                         <DialogHeader>
                             <DialogTitle className="text-xl font-bold text-foreground dark:text-slate-100">

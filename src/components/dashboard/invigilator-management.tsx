@@ -223,109 +223,114 @@ export function InvigilatorManagement() {
     };
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-6">
+            {/* Page Header */}
+            <div className="space-y-1">
+                <h1 className="text-2xl font-bold font-headline tracking-tight text-slate-900 dark:text-white">
+                    Invigilator Management
+                </h1>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                    Add faculty members and configure invigilation availability
+                </p>
+            </div>
+
             {/* Add Invigilator Card */}
-            <Card className="border border-border/80 shadow-sm rounded-xl overflow-hidden bg-card">
-                <div className="h-1.5 w-full bg-gradient-to-r from-[#4F46E5] to-[#0891B2]" />
+            <Card className="border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl overflow-hidden bg-white dark:bg-slate-900">
+                <div className="h-[3px] w-full bg-gradient-to-r from-[#6342e8] via-[#8b5cf6] to-[#f59e0b]" />
                 
                 <CardHeader className="pb-4 pt-6 px-6">
                     <div className="flex items-center gap-3">
-                        <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-[#4F46E5] dark:text-indigo-300">
+                        <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-[#6342e8] dark:text-purple-400">
                             <UserPlus className="h-5 w-5" />
                         </div>
-                        <div>
-                            <CardTitle className="font-headline text-xl font-bold tracking-tight">Invigilator Details</CardTitle>
+                        <div className="flex items-center gap-3">
+                            <CardTitle className="font-headline text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+                                Invigilator Details
+                            </CardTitle>
+                            <div className="w-8 h-[2px] bg-[#6342e8] rounded-full hidden sm:block" />
                         </div>
                     </div>
                 </CardHeader>
 
                 <CardContent className="px-6 pb-6 pt-2">
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                                 {/* Invigilator Name */}
                                 <FormField control={form.control} name="name" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">
-                                            Invigilator&apos;s Name
-                                        </FormLabel>
-                                        <div className="relative mt-1">
-                                            <User className="absolute left-3 top-3 h-4 w-4 text-[#4F46E5]" />
-                                            <FormControl>
-                                                <Input 
-                                                    placeholder="e.g. Lokesh D" 
-                                                    {...field} 
-                                                    className="pl-9 bg-muted/30 focus-visible:bg-background border-border/80 focus-visible:border-[#4F46E5] rounded-lg h-10 transition-colors" 
-                                                />
-                                            </FormControl>
+                                    <FormItem className="space-y-2">
+                                        <div className="flex items-center gap-2 text-[#6342e8] dark:text-purple-400 text-xs font-semibold">
+                                            <User className="h-4 w-4" />
+                                            <span className="text-slate-700 dark:text-slate-300">Invigilator&apos;s Name</span>
                                         </div>
-                                        <FormMessage />
+                                        <FormControl>
+                                            <Input 
+                                                placeholder="e.g. Lokesh D" 
+                                                {...field} 
+                                                className="bg-slate-50/50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 focus-visible:border-[#6342e8] focus-visible:ring-[#6342e8]/20 transition-all rounded-xl h-10 font-medium text-sm text-foreground" 
+                                            />
+                                        </FormControl>
+                                        <FormMessage className="text-xs mt-1" />
                                     </FormItem>
                                 )}/>
 
                                 {/* Designation/Department */}
                                 <FormField control={form.control} name="designation" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">
-                                            Designation/Department
-                                        </FormLabel>
-                                        <div className="relative mt-1">
-                                            <Briefcase className="absolute left-3 top-3 h-4 w-4 text-[#0891B2]" />
-                                            <FormControl>
-                                                <Input 
-                                                    placeholder="e.g. Lecturer in English" 
-                                                    {...field} 
-                                                    className="pl-9 bg-muted/30 focus-visible:bg-background border-border/80 focus-visible:border-[#0891B2] rounded-lg h-10 transition-colors" 
-                                                />
-                                            </FormControl>
+                                    <FormItem className="space-y-2">
+                                        <div className="flex items-center gap-2 text-[#6342e8] dark:text-purple-400 text-xs font-semibold">
+                                            <Briefcase className="h-4 w-4" />
+                                            <span className="text-slate-700 dark:text-slate-300">Designation / Department</span>
                                         </div>
-                                        <FormMessage />
+                                        <FormControl>
+                                            <Input 
+                                                placeholder="e.g. Lecturer in English" 
+                                                {...field} 
+                                                className="bg-slate-50/50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 focus-visible:border-[#6342e8] focus-visible:ring-[#6342e8]/20 transition-all rounded-xl h-10 font-medium text-sm text-foreground" 
+                                            />
+                                        </FormControl>
+                                        <FormMessage className="text-xs mt-1" />
                                     </FormItem>
                                 )}/>
 
                                 {/* Mobile No */}
                                 <FormField control={form.control} name="mobile" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">
-                                            Mobile No
-                                        </FormLabel>
-                                        <div className="relative mt-1">
-                                            <Phone className="absolute left-3 top-3 h-4 w-4 text-[#F59E0B]" />
-                                            <FormControl>
-                                                <Input 
-                                                    placeholder="e.g. 9876543210" 
-                                                    {...field} 
-                                                    className="pl-9 bg-muted/30 focus-visible:bg-background border-border/80 focus-visible:border-[#F59E0B] rounded-lg h-10 transition-colors" 
-                                                />
-                                            </FormControl>
+                                    <FormItem className="space-y-2">
+                                        <div className="flex items-center gap-2 text-[#6342e8] dark:text-purple-400 text-xs font-semibold">
+                                            <Phone className="h-4 w-4" />
+                                            <span className="text-slate-700 dark:text-slate-300">Mobile No</span>
                                         </div>
-                                        <FormMessage />
+                                        <FormControl>
+                                            <Input 
+                                                placeholder="e.g. 9876543210" 
+                                                {...field} 
+                                                className="bg-slate-50/50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 focus-visible:border-[#6342e8] focus-visible:ring-[#6342e8]/20 transition-all rounded-xl h-10 font-medium text-sm text-foreground" 
+                                            />
+                                        </FormControl>
+                                        <FormMessage className="text-xs mt-1" />
                                     </FormItem>
                                 )}/>
 
                                 {/* Email ID */}
                                 <FormField control={form.control} name="email" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">
-                                            E-Mail ID
-                                        </FormLabel>
-                                        <div className="relative mt-1">
-                                            <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
-                                            <FormControl>
-                                                <Input 
-                                                    placeholder="e.g. lokesh@gmail.com" 
-                                                    {...field} 
-                                                    className="pl-9 bg-muted/30 focus-visible:bg-background border-border/80 focus-visible:border-[#4F46E5] rounded-lg h-10 transition-colors" 
-                                                />
-                                            </FormControl>
+                                    <FormItem className="space-y-2">
+                                        <div className="flex items-center gap-2 text-[#6342e8] dark:text-purple-400 text-xs font-semibold">
+                                            <Mail className="h-4 w-4" />
+                                            <span className="text-slate-700 dark:text-slate-300">E-Mail ID</span>
                                         </div>
-                                        <FormMessage />
+                                        <FormControl>
+                                            <Input 
+                                                placeholder="e.g. lokesh@gmail.com" 
+                                                {...field} 
+                                                className="bg-slate-50/50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 focus-visible:border-[#6342e8] focus-visible:ring-[#6342e8]/20 transition-all rounded-xl h-10 font-medium text-sm text-foreground" 
+                                            />
+                                        </FormControl>
+                                        <FormMessage className="text-xs mt-1" />
                                     </FormItem>
                                 )}/>
                             </div>
 
                             {/* Actions Bar */}
-                            <div className="flex flex-wrap items-center justify-end gap-3 pt-2 border-t border-border/60">
+                            <div className="flex flex-wrap items-center justify-end gap-3 pt-4">
                                 <input
                                     type="file"
                                     ref={fileInputRef}
@@ -335,19 +340,20 @@ export function InvigilatorManagement() {
                                 />
                                 <Button 
                                     type="submit" 
-                                    className="bg-[#4F46E5] hover:bg-[#4338ca] text-white font-semibold shadow-sm rounded-lg transition-all"
+                                    className="bg-[#6342e8] hover:bg-[#5232d6] text-white font-semibold shadow-xs rounded-xl px-5 py-2.5 transition-all text-sm flex items-center gap-2"
                                 >
-                                    <Plus className="mr-2 h-4 w-4" /> Add Invigilator
+                                    <Plus className="h-4 w-4" />
+                                    <span>Add Invigilator</span>
                                 </Button>
-                                <span className="text-xs uppercase font-medium text-muted-foreground px-1">or</span>
+                                <span className="text-xs uppercase font-bold text-slate-400 px-1">OR</span>
                                 <Button 
                                     type="button" 
                                     variant="outline" 
                                     onClick={handleBulkUploadClick} 
-                                    className="border-[#0891B2]/40 text-[#0891B2] hover:bg-[#0891B2]/10 dark:text-cyan-400 font-semibold rounded-lg shadow-sm"
+                                    className="border border-purple-300 dark:border-purple-800 text-[#6342e8] dark:text-purple-300 bg-purple-50/50 dark:bg-purple-950/30 hover:bg-purple-100/70 font-semibold rounded-xl px-5 py-2.5 shadow-2xs transition-all text-sm flex items-center gap-2"
                                 >
-                                    <Upload className="mr-2 h-4 w-4" />
-                                    Import from Excel
+                                    <Upload className="h-4 w-4" />
+                                    <span>Import from Excel</span>
                                 </Button>
                             </div>
                         </form>
@@ -356,22 +362,23 @@ export function InvigilatorManagement() {
             </Card>
 
             {/* Invigilators Roster Table Card */}
-            <Card className="border border-border/80 shadow-sm rounded-xl overflow-hidden bg-card">
-                <div className="h-1.5 w-full bg-gradient-to-r from-[#0891B2] via-[#4F46E5] to-[#F59E0B]" />
-                
+            <Card className="border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl overflow-hidden bg-white dark:bg-slate-900">
                 <CardHeader className="pb-4 pt-6 px-6">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div className="flex items-center gap-3">
-                            <div className="p-2.5 rounded-xl bg-cyan-50 dark:bg-cyan-950/50 text-[#0891B2] dark:text-cyan-300">
+                            <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-[#6342e8] dark:text-purple-400">
                                 <Users className="h-5 w-5" />
                             </div>
-                            <div>
-                                <CardTitle className="font-headline text-xl font-bold tracking-tight">Added Invigilators</CardTitle>
+                            <div className="flex items-center gap-3">
+                                <CardTitle className="font-headline text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+                                    Added Invigilators
+                                </CardTitle>
+                                <div className="w-8 h-[2px] bg-[#6342e8] rounded-full hidden sm:block" />
                             </div>
                         </div>
 
                         {invigilators.length > 0 && (
-                            <Badge className="w-fit bg-[#4F46E5]/10 text-[#4F46E5] dark:text-indigo-300 border-[#4F46E5]/30 px-3 py-1 font-semibold rounded-full text-xs">
+                            <Badge className="w-fit bg-[#6342e8]/10 text-[#6342e8] dark:text-purple-300 border-[#6342e8]/20 px-3 py-1 font-semibold rounded-full text-xs">
                                 {invigilators.length} {invigilators.length === 1 ? 'Staff Member' : 'Staff Members'}
                             </Badge>
                         )}
@@ -380,51 +387,49 @@ export function InvigilatorManagement() {
                     {/* Summary Metric Cards */}
                     {invigilators.length > 0 && (
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4">
-                            <div className="bg-muted/40 dark:bg-slate-900/60 border border-border/60 dark:border-slate-800 rounded-lg p-3 text-center">
-                                <div className="text-xs font-medium text-muted-foreground">Total Registered</div>
-                                <div className="text-xl font-bold text-[#4F46E5] dark:text-indigo-400 mt-0.5">{invigilators.length}</div>
+                            <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 rounded-xl p-3 text-center">
+                                <div className="text-xs font-medium text-slate-500">Total Registered</div>
+                                <div className="text-xl font-bold text-[#6342e8] mt-0.5">{invigilators.length}</div>
                             </div>
-                            <div className="bg-muted/40 dark:bg-slate-900/60 border border-border/60 dark:border-slate-800 rounded-lg p-3 text-center">
-                                <div className="text-xs font-medium text-muted-foreground">Available All Days</div>
+                            <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 rounded-xl p-3 text-center">
+                                <div className="text-xs font-medium text-slate-500">Available All Days</div>
                                 <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">{availableAllDaysCount}</div>
                             </div>
-                            <div className="bg-muted/40 dark:bg-slate-900/60 border border-border/60 dark:border-slate-800 rounded-lg p-3 text-center">
-                                <div className="text-xs font-medium text-muted-foreground">Partial Availability</div>
-                                <div className="text-xl font-bold text-[#0891B2] dark:text-cyan-400 mt-0.5">{customAvailabilityCount}</div>
+                            <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 rounded-xl p-3 text-center">
+                                <div className="text-xs font-medium text-slate-500">Partial Availability</div>
+                                <div className="text-xl font-bold text-[#f59e0b] mt-0.5">{customAvailabilityCount}</div>
                             </div>
-                            <div className="bg-muted/40 dark:bg-slate-900/60 border border-border/60 dark:border-slate-800 rounded-lg p-3 text-center">
-                                <div className="text-xs font-medium text-muted-foreground">Total Duties Needed</div>
-                                <div className="text-xl font-bold text-[#F59E0B] dark:text-amber-400 mt-0.5">{totalDutiesNeeded}</div>
+                            <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 rounded-xl p-3 text-center">
+                                <div className="text-xs font-medium text-slate-500">Total Duties Needed</div>
+                                <div className="text-xl font-bold text-[#6342e8] mt-0.5">{totalDutiesNeeded}</div>
                             </div>
                         </div>
                     )}
                 </CardHeader>
 
                 <CardContent className="px-6 pb-6 pt-2">
-                    <div className="rounded-xl border border-border/70 dark:border-slate-800 overflow-hidden shadow-xs">
+                    <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 overflow-hidden">
                         <Table>
                             <TableHeader>
-                                <TableRow className="bg-muted/50 dark:bg-slate-900/80 hover:bg-muted/50 dark:hover:bg-slate-900/80 border-b border-border/70 dark:border-slate-800">
-                                    <TableHead className="font-bold text-xs uppercase tracking-wider text-muted-foreground w-12">#</TableHead>
-                                    <TableHead className="font-bold text-xs uppercase tracking-wider text-muted-foreground">Invigilator & Designation</TableHead>
-                                    <TableHead className="font-bold text-xs uppercase tracking-wider text-muted-foreground">Mobile No</TableHead>
-                                    <TableHead className="font-bold text-xs uppercase tracking-wider text-muted-foreground">E-Mail Address</TableHead>
-                                    <TableHead className="font-bold text-xs uppercase tracking-wider text-muted-foreground text-center">Availability Status</TableHead>
-                                    <TableHead className="font-bold text-xs uppercase tracking-wider text-muted-foreground text-right w-20">Actions</TableHead>
+                                <TableRow className="bg-[#f8f9fc] dark:bg-slate-800/60 hover:bg-[#f8f9fc] border-b border-slate-200/80 dark:border-slate-800">
+                                    <TableHead className="font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 w-12">#</TableHead>
+                                    <TableHead className="font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">Invigilator & Designation</TableHead>
+                                    <TableHead className="font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">Mobile No</TableHead>
+                                    <TableHead className="font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">E-Mail Address</TableHead>
+                                    <TableHead className="font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 text-center">Availability Status</TableHead>
+                                    <TableHead className="font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 text-right w-20">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {invigilators.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={6} className="text-center py-12">
-                                            <div className="flex flex-col items-center justify-center space-y-3">
-                                                <div className="p-3 rounded-full bg-muted dark:bg-slate-800 text-muted-foreground/60">
-                                                    <Users className="h-6 w-6" />
+                                            <div className="flex flex-col items-center justify-center space-y-2">
+                                                <div className="h-10 w-10 rounded-xl bg-purple-100 dark:bg-purple-950/70 text-[#6342e8] flex items-center justify-center mb-1">
+                                                    <Users className="h-5 w-5" />
                                                 </div>
-                                                <div className="space-y-1">
-                                                    <p className="font-medium text-foreground dark:text-slate-100">No invigilators registered yet</p>
-                                                    <p className="text-xs text-muted-foreground">Add staff members above or import an Excel spreadsheet.</p>
-                                                </div>
+                                                <p className="font-bold text-sm text-slate-800 dark:text-slate-200">No invigilators registered yet.</p>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400">Add staff members above or import an Excel spreadsheet.</p>
                                             </div>
                                         </TableCell>
                                     </TableRow>
@@ -437,28 +442,28 @@ export function InvigilatorManagement() {
                                             <TableRow 
                                                 key={inv.id}
                                                 className={cn(
-                                                    "transition-colors hover:bg-muted/40 dark:hover:bg-slate-800/40",
-                                                    index % 2 === 1 && "bg-muted/15 dark:bg-slate-900/40"
+                                                    "transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/40",
+                                                    index % 2 === 1 && "bg-slate-50/30 dark:bg-slate-800/20"
                                                 )}
                                             >
-                                                <TableCell className="font-medium text-xs text-muted-foreground">{index + 1}</TableCell>
+                                                <TableCell className="font-semibold text-xs text-slate-500">{index + 1}</TableCell>
                                                 <TableCell>
                                                     <div className="space-y-0.5">
-                                                        <div className="font-semibold text-sm text-foreground dark:text-slate-100">{inv.name}</div>
-                                                        <div className="text-xs text-muted-foreground dark:text-slate-400 flex items-center gap-1.5">
+                                                        <div className="font-semibold text-sm text-slate-900 dark:text-white">{inv.name}</div>
+                                                        <div className="text-xs text-slate-500 flex items-center gap-1.5">
                                                             <span>{inv.designation}</span>
                                                         </div>
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground dark:text-slate-300 font-medium">
-                                                        <Phone className="h-3 w-3 text-[#F59E0B] dark:text-amber-400" />
+                                                    <div className="inline-flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300 font-medium">
+                                                        <Phone className="h-3 w-3 text-[#f59e0b]" />
                                                         <span>{inv.mobile || '—'}</span>
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground dark:text-slate-300">
-                                                        <Mail className="h-3 w-3 text-[#0891B2] dark:text-cyan-400" />
+                                                    <div className="inline-flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300">
+                                                        <Mail className="h-3 w-3 text-[#6342e8]" />
                                                         <span className="truncate max-w-[200px]" title={inv.email}>{inv.email}</span>
                                                     </div>
                                                 </TableCell>
@@ -471,7 +476,7 @@ export function InvigilatorManagement() {
                                                             isAllDays 
                                                                 ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30" 
                                                                 : specificDaysCount > 0 
-                                                                    ? "bg-[#0891B2]/10 text-[#0891B2] dark:text-cyan-400 hover:bg-[#0891B2]/20 border border-[#0891B2]/30"
+                                                                    ? "bg-purple-500/10 text-[#6342e8] dark:text-purple-300 hover:bg-purple-500/20 border border-purple-500/30"
                                                                     : "bg-destructive/10 text-destructive hover:bg-destructive/20 border border-destructive/30"
                                                         )}
                                                         onClick={() => handleOpenAvailabilityDialog(inv)}
@@ -488,7 +493,7 @@ export function InvigilatorManagement() {
                                                     <Button 
                                                         variant="ghost" 
                                                         size="icon" 
-                                                        className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                                        className="h-8 w-8 text-slate-500 hover:text-destructive hover:bg-destructive/10 rounded-lg"
                                                         onClick={() => handleDelete(inv.id)}
                                                         title="Remove invigilator"
                                                     >
@@ -501,12 +506,12 @@ export function InvigilatorManagement() {
                                 )}
                             </TableBody>
                             {invigilators.length > 0 && (
-                                <TableFooter className="bg-muted/60 border-t-2 border-border font-medium">
+                                <TableFooter className="bg-slate-50 dark:bg-slate-800/60 border-t border-slate-200 dark:border-slate-800 font-medium">
                                     <TableRow>
-                                        <TableCell colSpan={3} className="font-bold text-xs uppercase tracking-wider text-foreground">
+                                        <TableCell colSpan={3} className="font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">
                                             Roster Summary
                                         </TableCell>
-                                        <TableCell colSpan={2} className="text-center font-bold text-xs text-[#4F46E5]">
+                                        <TableCell colSpan={2} className="text-center font-bold text-xs text-[#6342e8]">
                                             {availableAllDaysCount} Full Time • {customAvailabilityCount} Partial
                                         </TableCell>
                                         <TableCell className="text-right font-bold text-xs text-emerald-600 dark:text-emerald-400">
@@ -519,11 +524,11 @@ export function InvigilatorManagement() {
                     </div>
                 </CardContent>
 
-                <CardFooter className="justify-between px-6 py-4 bg-muted/10 border-t border-border/60">
+                <CardFooter className="justify-between px-6 py-4 bg-slate-50/50 dark:bg-slate-800/30 border-t border-slate-200/80 dark:border-slate-800">
                     <Button 
                         onClick={() => router.push('/dashboard/examinations')} 
                         variant="ghost" 
-                        className="text-muted-foreground hover:text-foreground font-semibold rounded-lg"
+                        className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-semibold rounded-xl"
                     >
                         <ArrowLeft className="mr-2 h-4 w-4" />
                         Back to Examinations
@@ -531,10 +536,10 @@ export function InvigilatorManagement() {
                     <Button
                         onClick={handleGenerate}
                         size="lg"
-                        className="bg-[#4F46E5] hover:bg-[#4338ca] text-white font-semibold shadow-sm rounded-lg px-6 transition-all flex items-center gap-2"
+                        className="bg-[#6342e8] hover:bg-[#5232d6] text-white font-semibold shadow-xs rounded-xl px-6 transition-all flex items-center gap-2"
                     >
                         <span>Generate Duty Allotment</span>
-                        <Sparkles className="h-4 w-4 text-[#F59E0B]" />
+                        <Sparkles className="h-4 w-4 text-[#f59e0b]" />
                     </Button>
                 </CardFooter>
             </Card>

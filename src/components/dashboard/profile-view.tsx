@@ -107,19 +107,28 @@ export function ProfileView() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 pb-12 animate-in fade-in duration-300">
+    <div className="max-w-4xl mx-auto space-y-6 pb-12 animate-in fade-in duration-300">
+      {/* Page Header */}
+      <div className="space-y-1">
+        <h1 className="text-2xl font-bold font-headline tracking-tight text-slate-900 dark:text-white">
+          My Account & Subscription
+        </h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Manage institutional profile settings, subscription status, and download quotas
+        </p>
+      </div>
       
       {/* ========================================================================= */}
       {/* 1. HERO PROFILE CARD */}
       {/* ========================================================================= */}
-      <Card className="border border-border/80 shadow-sm rounded-2xl overflow-hidden bg-card relative">
+      <Card className="border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl overflow-hidden bg-white dark:bg-slate-900 relative">
         {/* Top Accent Strip */}
-        <div className="h-2.5 w-full bg-gradient-to-r from-[#4F46E5] via-[#4338CA] to-[#0891B2]" />
+        <div className="h-[3px] w-full bg-gradient-to-r from-[#6342e8] via-[#8b5cf6] to-[#f59e0b]" />
 
         <CardContent className="p-6 sm:p-8">
           <div className="flex flex-col sm:flex-row items-center sm:items-center gap-6">
             {/* Single Letter Avatar */}
-            <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl bg-gradient-to-br from-[#4F46E5] to-[#312E81] text-white flex items-center justify-center font-extrabold text-3xl sm:text-4xl shadow-md ring-4 ring-indigo-50 dark:ring-indigo-950 shrink-0 select-none">
+            <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl bg-[#6342e8] text-white flex items-center justify-center font-black text-3xl sm:text-4xl shadow-md ring-4 ring-purple-50 dark:ring-purple-950 shrink-0 select-none">
               {singleInitial}
             </div>
 
@@ -128,32 +137,32 @@ export function ProfileView() {
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                 <div className="space-y-1.5 flex-1 min-w-0">
                   <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#4F46E5]">Institution Profile</span>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#6342e8]">Institution Profile</span>
                     
                     {isSubscribed ? (
-                      <Badge className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 text-[10px] font-bold py-0 px-2">
+                      <Badge className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 text-[10px] font-bold py-0 px-2 rounded-full">
                         <ShieldCheck className="mr-1 h-3 w-3 text-emerald-600" />
                         Subscribed (Full Access)
                       </Badge>
                     ) : isUnsubscribed ? (
-                      <Badge variant="destructive" className="text-[10px] font-bold py-0 px-2">
+                      <Badge variant="destructive" className="text-[10px] font-bold py-0 px-2 rounded-full">
                         <ShieldX className="mr-1 h-3 w-3" />
                         Unsubscribed (Access Denied)
                       </Badge>
                     ) : (
-                      <Badge className="bg-indigo-50 text-[#4F46E5] dark:bg-indigo-950/60 dark:text-indigo-300 border-indigo-200 text-[10px] font-bold py-0 px-2">
-                        <Sparkles className="mr-1 h-3 w-3 text-[#0891B2]" />
+                      <Badge className="bg-purple-50 text-[#6342e8] dark:bg-purple-950/60 dark:text-purple-300 border-purple-200 text-[10px] font-bold py-0 px-2 rounded-full">
+                        <Sparkles className="mr-1 h-3 w-3 text-[#6342e8]" />
                         Free Access (Quota Limited)
                       </Badge>
                     )}
                   </div>
                   
-                  <h1 className="text-2xl sm:text-3xl font-headline font-extrabold text-foreground tracking-tight break-words">
+                  <h1 className="text-2xl sm:text-3xl font-headline font-extrabold text-slate-900 dark:text-white tracking-tight break-words">
                     {institutionName}
                   </h1>
 
-                  <p className="text-xs sm:text-sm text-muted-foreground flex items-center justify-center sm:justify-start gap-1.5 font-medium">
-                    <Mail className="h-3.5 w-3.5 text-[#4F46E5]" />
+                  <p className="text-xs sm:text-sm text-slate-500 flex items-center justify-center sm:justify-start gap-1.5 font-medium">
+                    <Mail className="h-3.5 w-3.5 text-[#6342e8]" />
                     <span>{email}</span>
                   </p>
                 </div>
@@ -166,7 +175,7 @@ export function ProfileView() {
                       setEditedName(institutionName);
                       setIsEditing(true);
                     }}
-                    className="text-xs font-semibold self-center sm:self-auto rounded-lg border-indigo-200 text-[#4F46E5] hover:bg-indigo-50/70 shrink-0 h-8"
+                    className="text-xs font-semibold self-center sm:self-auto rounded-xl border-purple-200 dark:border-purple-800 text-[#6342e8] hover:bg-purple-50/70 shrink-0 h-8"
                   >
                     <Edit2 className="mr-1.5 h-3.5 w-3.5" />
                     Edit Institution
@@ -178,9 +187,9 @@ export function ProfileView() {
 
           {/* Edit Form if active */}
           {isEditing && (
-            <div className="mt-4 p-4 rounded-xl bg-muted/40 border border-border flex flex-col sm:flex-row items-end gap-3 animate-in fade-in">
+            <div className="mt-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-end gap-3 animate-in fade-in">
               <div className="w-full space-y-1.5">
-                <Label htmlFor="edit-inst" className="text-xs font-semibold">
+                <Label htmlFor="edit-inst" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Update Institution Name
                 </Label>
                 <Input
@@ -188,7 +197,7 @@ export function ProfileView() {
                   value={editedName}
                   onChange={(e) => setEditedName(e.target.value)}
                   placeholder="Enter full institution name"
-                  className="bg-background h-9 text-sm"
+                  className="bg-white dark:bg-slate-900 h-9 text-sm rounded-lg"
                 />
               </div>
               <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -196,7 +205,7 @@ export function ProfileView() {
                   size="sm"
                   onClick={handleSaveInstitution}
                   disabled={isSaving}
-                  className="bg-[#4F46E5] hover:bg-[#4338ca] text-white text-xs font-semibold h-9 px-4"
+                  className="bg-[#6342e8] hover:bg-[#5232d6] text-white text-xs font-semibold h-9 px-4 rounded-lg shadow-xs"
                 >
                   <Save className="mr-1.5 h-3.5 w-3.5" />
                   {isSaving ? "Saving..." : "Save"}
@@ -205,7 +214,7 @@ export function ProfileView() {
                   size="sm"
                   variant="ghost"
                   onClick={() => setIsEditing(false)}
-                  className="text-xs h-9"
+                  className="text-xs h-9 rounded-lg"
                 >
                   Cancel
                 </Button>
@@ -221,58 +230,58 @@ export function ProfileView() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         
         {/* Card A: Account & Institution Details */}
-        <Card className="border border-border/80 rounded-2xl shadow-xs">
+        <Card className="border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs bg-white dark:bg-slate-900">
           <CardHeader className="pb-3">
-            <div className="flex items-center gap-2 text-[#4F46E5]">
-              <div className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/50">
+            <div className="flex items-center gap-2 text-[#6342e8]">
+              <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-950/50">
                 <Building2 className="h-4 w-4" />
               </div>
-              <CardTitle className="text-base font-headline font-bold">Institution Details</CardTitle>
+              <CardTitle className="text-base font-headline font-bold text-slate-900 dark:text-white">Institution Details</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-4 pt-1">
-            <div className="p-3 rounded-xl bg-muted/30 border border-border/60 space-y-1">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Institution Name</span>
-              <p className="text-sm font-bold text-foreground">{institutionName}</p>
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 space-y-1">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Institution Name</span>
+              <p className="text-sm font-bold text-slate-900 dark:text-white">{institutionName}</p>
             </div>
 
-            <div className="p-3 rounded-xl bg-muted/30 border border-border/60 space-y-1">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Account Email ID</span>
-              <p className="text-sm font-bold text-foreground">{email}</p>
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 space-y-1">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Account Email ID</span>
+              <p className="text-sm font-bold text-slate-900 dark:text-white">{email}</p>
             </div>
           </CardContent>
         </Card>
 
         {/* Card B: Subscription & Downloads Stack */}
-        <Card className="border border-border/80 rounded-2xl shadow-xs">
+        <Card className="border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs bg-white dark:bg-slate-900">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-[#0891B2]">
-                <div className="p-2 rounded-lg bg-cyan-50 dark:bg-cyan-950/50">
+              <div className="flex items-center gap-2 text-[#6342e8]">
+                <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-950/50">
                   <CreditCard className="h-4 w-4" />
                 </div>
-                <CardTitle className="text-base font-headline font-bold">Subscription Status</CardTitle>
+                <CardTitle className="text-base font-headline font-bold text-slate-900 dark:text-white">Subscription Status</CardTitle>
               </div>
               <Badge className={
                 isSubscribed 
-                  ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 font-bold text-xs"
+                  ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 font-bold text-xs rounded-full"
                   : isUnsubscribed
-                  ? "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200 font-bold text-xs"
-                  : "bg-indigo-50 text-[#4F46E5] dark:bg-indigo-950/60 dark:text-indigo-300 border-indigo-200 font-bold text-xs"
+                  ? "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200 font-bold text-xs rounded-full"
+                  : "bg-purple-50 text-[#6342e8] dark:bg-purple-950/60 dark:text-purple-300 border-purple-200 font-bold text-xs rounded-full"
               }>
                 {subscriptionStatus}
               </Badge>
             </div>
-            <CardDescription className="text-xs">Current tier permissions and download quota usage</CardDescription>
+            <CardDescription className="text-xs text-slate-500">Current tier permissions and download quota usage</CardDescription>
           </CardHeader>
           
           <CardContent className="space-y-3 pt-1">
             {/* 3 Quota Breakdown Chips */}
             <div className="grid grid-cols-3 gap-2">
               {/* Quota 1: Master Rosters */}
-              <div className="p-2.5 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40 text-center space-y-1">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block truncate">Master Roster</span>
-                <div className="text-base font-extrabold font-headline text-[#4F46E5]">
+              <div className="p-2.5 rounded-xl bg-purple-50/50 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900/40 text-center space-y-1">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 block truncate">Master Roster</span>
+                <div className="text-base font-black font-headline text-[#6342e8]">
                   {isSubscribed ? masterRosters : `${masterRosters}/3`}
                 </div>
                 {isSubscribed && (
@@ -283,9 +292,9 @@ export function ProfileView() {
               </div>
 
               {/* Quota 2: Individual Profiles */}
-              <div className="p-2.5 rounded-xl bg-cyan-50/50 dark:bg-cyan-950/30 border border-cyan-100 dark:border-cyan-900/40 text-center space-y-1">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block truncate">Indiv. Slips</span>
-                <div className="text-base font-extrabold font-headline text-[#0891B2]">
+              <div className="p-2.5 rounded-xl bg-purple-50/50 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900/40 text-center space-y-1">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 block truncate">Indiv. Slips</span>
+                <div className="text-base font-black font-headline text-[#6342e8]">
                   {isSubscribed ? individualProfiles : `${individualProfiles}/3`}
                 </div>
                 {isSubscribed && (
@@ -297,8 +306,8 @@ export function ProfileView() {
 
               {/* Quota 3: Day-wise Profiles */}
               <div className="p-2.5 rounded-xl bg-amber-50/50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/40 text-center space-y-1">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block truncate">Day-wise</span>
-                <div className="text-base font-extrabold font-headline text-amber-600 dark:text-amber-400">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 block truncate">Day-wise</span>
+                <div className="text-base font-black font-headline text-[#f59e0b]">
                   {isSubscribed ? daywiseProfiles : `${daywiseProfiles}/3`}
                 </div>
                 {isSubscribed && (
@@ -310,15 +319,15 @@ export function ProfileView() {
             </div>
 
             {/* Total Downloads Count Banner */}
-            <div className="p-3.5 rounded-xl bg-gradient-to-r from-indigo-50/70 to-cyan-50/70 dark:from-indigo-950/30 dark:to-cyan-950/30 border border-indigo-100 dark:border-indigo-900/40 flex items-center justify-between">
+            <div className="p-3.5 rounded-xl bg-gradient-to-r from-purple-50/70 to-indigo-50/70 dark:from-purple-950/30 dark:to-indigo-950/30 border border-purple-100 dark:border-purple-900/40 flex items-center justify-between">
               <div className="space-y-0.5">
                 <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                  <Download className="h-3.5 w-3.5 text-[#4F46E5]" />
+                  <Download className="h-3.5 w-3.5 text-[#6342e8]" />
                   Total Downloads Generated
                 </span>
-                <p className="text-[11px] text-muted-foreground">PDF sheets, duty slips & reports</p>
+                <p className="text-[11px] text-slate-500">PDF sheets, duty slips & reports</p>
               </div>
-              <div className="text-xl font-black font-headline text-[#4F46E5]">
+              <div className="text-xl font-black font-headline text-[#6342e8]">
                 {totalDownloads}
               </div>
             </div>
@@ -329,15 +338,15 @@ export function ProfileView() {
       {/* ========================================================================= */}
       {/* 3. CONTACT TO SUBSCRIBE OR HELP CARD */}
       {/* ========================================================================= */}
-      <Card className="border border-indigo-100 dark:border-indigo-900/50 rounded-2xl shadow-xs overflow-hidden bg-gradient-to-br from-card to-indigo-50/30 dark:to-indigo-950/20">
+      <Card className="border border-purple-100 dark:border-purple-900/50 rounded-2xl shadow-xs overflow-hidden bg-white dark:bg-slate-900">
         <CardHeader className="pb-3">
-          <div className="flex items-center gap-2 text-[#4F46E5]">
-            <div className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/50">
+          <div className="flex items-center gap-2 text-[#6342e8]">
+            <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-950/50">
               <HelpCircle className="h-4 w-4" />
             </div>
-            <CardTitle className="text-base font-headline font-bold">Contact to Subscribe or Help</CardTitle>
+            <CardTitle className="text-base font-headline font-bold text-slate-900 dark:text-white">Contact to Subscribe or Help</CardTitle>
           </div>
-          <CardDescription className="text-xs">
+          <CardDescription className="text-xs text-slate-500">
             Have questions about institutional subscriptions, annual licensing, or need technical help? Reach out directly.
           </CardDescription>
         </CardHeader>
@@ -346,13 +355,13 @@ export function ProfileView() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             
             {/* Email Contact Card */}
-            <div className="p-4 rounded-xl bg-card border border-border/80 shadow-2xs space-y-2">
-              <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
-                <Mail className="h-4 w-4 text-[#4F46E5]" />
+            <div className="p-4 rounded-xl bg-slate-50/50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-2">
+              <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+                <Mail className="h-4 w-4 text-[#6342e8]" />
                 <span>Support & Admin Email</span>
               </div>
-              <p className="text-sm font-bold text-foreground select-all">{supportEmail}</p>
-              <Button asChild variant="outline" size="sm" className="w-full text-xs font-semibold h-8 border-indigo-200 text-[#4F46E5] hover:bg-indigo-50/50">
+              <p className="text-sm font-bold text-slate-900 dark:text-white select-all">{supportEmail}</p>
+              <Button asChild variant="outline" size="sm" className="w-full text-xs font-semibold h-8 border-purple-200 dark:border-purple-800 text-[#6342e8] hover:bg-purple-50/50 rounded-lg">
                 <a href={`mailto:${supportEmail}?subject=DutyFlow%20Subscription%20Inquiry%20-%20${encodeURIComponent(institutionName)}`}>
                   <Mail className="mr-1.5 h-3.5 w-3.5" />
                   Send Email ({supportEmail})
@@ -361,13 +370,13 @@ export function ProfileView() {
             </div>
 
             {/* WhatsApp Contact Card */}
-            <div className="p-4 rounded-xl bg-card border border-border/80 shadow-2xs space-y-2">
-              <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+            <div className="p-4 rounded-xl bg-slate-50/50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-2">
+              <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
                 <MessageCircle className="h-4 w-4 text-emerald-600" />
                 <span>WhatsApp Helpline</span>
               </div>
-              <p className="text-sm font-bold text-foreground select-all">{whatsappDisplay}</p>
-              <Button asChild size="sm" className="w-full text-xs font-semibold h-8 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs">
+              <p className="text-sm font-bold text-slate-900 dark:text-white select-all">{whatsappDisplay}</p>
+              <Button asChild size="sm" className="w-full text-xs font-semibold h-8 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs rounded-lg">
                 <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
                   <MessageCircle className="mr-1.5 h-3.5 w-3.5" />
                   Chat on WhatsApp ({whatsappNumber})
@@ -382,15 +391,15 @@ export function ProfileView() {
       {/* ========================================================================= */}
       {/* 4. LOGOUT ACTION BUTTON */}
       {/* ========================================================================= */}
-      <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-border/70">
-        <p className="text-xs text-muted-foreground text-center sm:text-left">
-          Signed in as <strong className="text-foreground">{email}</strong>
+      <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-200/70 dark:border-slate-800">
+        <p className="text-xs text-slate-500 text-center sm:text-left">
+          Signed in as <strong className="text-slate-800 dark:text-slate-200">{email}</strong>
         </p>
 
         <Button
           onClick={handleLogout}
           variant="destructive"
-          className="w-full sm:w-auto font-bold text-xs tracking-wider px-6 h-10 shadow-xs"
+          className="w-full sm:w-auto font-bold text-xs tracking-wider px-6 h-10 shadow-xs rounded-xl"
         >
           <LogOut className="mr-2 h-4 w-4" />
           LOG OUT FROM DUTYFLOW

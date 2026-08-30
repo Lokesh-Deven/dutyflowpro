@@ -32,6 +32,7 @@ import {
   CalendarDays,
   CheckCircle2,
   FileSpreadsheet,
+  FileText,
   Plus,
   Layers,
   Sparkles
@@ -572,22 +573,35 @@ export function ExaminationManagement() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="space-y-1">
+        <h1 className="text-2xl font-bold font-headline tracking-tight text-slate-900 dark:text-white">
+          Create New Allotment
+        </h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Provide examination details to get started
+        </p>
+      </div>
+
       {/* Top Card: Examination Details */}
-      <Card className="border border-border/80 shadow-sm rounded-xl overflow-hidden bg-card">
-        <div className="h-1.5 w-full bg-gradient-to-r from-[#4F46E5] via-[#0891B2] to-[#F59E0B]" />
+      <Card className="border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl overflow-hidden bg-white dark:bg-slate-900">
+        <div className="h-[3px] w-full bg-gradient-to-r from-[#6342e8] via-[#8b5cf6] to-[#f59e0b]" />
         <CardHeader className="pb-4 pt-6 px-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-[#4F46E5] dark:text-indigo-300">
-                <Building2 className="h-5 w-5" />
+              <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-[#6342e8] dark:text-purple-400">
+                <FileText className="h-5 w-5" />
               </div>
-              <div>
-                <CardTitle className="font-headline text-xl font-bold tracking-tight">Examination Details</CardTitle>
+              <div className="flex items-center gap-3">
+                <CardTitle className="font-headline text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+                  Examination Details
+                </CardTitle>
+                <div className="w-8 h-[2px] bg-[#6342e8] rounded-full hidden sm:block" />
               </div>
             </div>
             {editingExamId && (
-              <Badge className="bg-[#F59E0B]/15 text-[#D97706] dark:text-[#FBBF24] border-[#F59E0B]/30 font-semibold px-3 py-1 text-xs">
+              <Badge className="bg-[#f59e0b]/15 text-[#d97706] dark:text-[#fbbf24] border-[#f59e0b]/30 font-semibold px-3 py-1 text-xs rounded-full">
                 Editing Examination
               </Badge>
             )}
@@ -599,10 +613,10 @@ export function ExaminationManagement() {
               {/* Main Grid of all Examination and Session Inputs */}
               <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
                 {/* 1. Institution Name */}
-                <div className="md:col-span-6 bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 rounded-xl p-3.5 space-y-2">
-                  <div className="flex items-center gap-1.5 text-[#4F46E5] dark:text-indigo-400 text-xs font-semibold uppercase tracking-wider">
+                <div className="md:col-span-6 space-y-2">
+                  <div className="flex items-center gap-2 text-[#6342e8] dark:text-purple-400 text-xs font-semibold">
                     <Building2 className="h-4 w-4" />
-                    <span>Name of the Institution</span>
+                    <span className="text-slate-700 dark:text-slate-300">Name of the Institution</span>
                   </div>
                   <FormField
                     control={form.control}
@@ -613,7 +627,7 @@ export function ExaminationManagement() {
                           <Input
                             placeholder="Type your School / College Name..."
                             {...field}
-                            className="bg-background dark:bg-slate-900 border-indigo-200 dark:border-indigo-800/80 focus-visible:border-[#4F46E5] focus-visible:ring-0 transition-colors rounded-lg h-9 font-medium text-sm text-foreground"
+                            className="bg-slate-50/50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 focus-visible:border-[#6342e8] focus-visible:ring-[#6342e8]/20 transition-all rounded-xl h-10 font-medium text-sm text-foreground"
                           />
                         </FormControl>
                         <FormMessage className="text-xs mt-1" />
@@ -623,10 +637,10 @@ export function ExaminationManagement() {
                 </div>
 
                 {/* 2. Examination Name */}
-                <div className="md:col-span-6 bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 rounded-xl p-3.5 space-y-2">
-                  <div className="flex items-center gap-1.5 text-[#4F46E5] dark:text-indigo-400 text-xs font-semibold uppercase tracking-wider">
+                <div className="md:col-span-6 space-y-2">
+                  <div className="flex items-center gap-2 text-[#6342e8] dark:text-purple-400 text-xs font-semibold">
                     <GraduationCap className="h-4 w-4" />
-                    <span>Name of the Examination</span>
+                    <span className="text-slate-700 dark:text-slate-300">Name of the Examination</span>
                   </div>
                   <FormField
                     control={form.control}
@@ -637,7 +651,7 @@ export function ExaminationManagement() {
                           <Input
                             {...field}
                             placeholder="e.g. Annual Examination - March 2027"
-                            className="bg-background dark:bg-slate-900 border-indigo-200 dark:border-indigo-800/80 focus-visible:border-[#4F46E5] focus-visible:ring-0 transition-colors rounded-lg h-9 font-medium text-sm text-foreground"
+                            className="bg-slate-50/50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 focus-visible:border-[#6342e8] focus-visible:ring-[#6342e8]/20 transition-all rounded-xl h-10 font-medium text-sm text-foreground"
                           />
                         </FormControl>
                         <FormMessage className="text-xs mt-1" />
@@ -647,10 +661,10 @@ export function ExaminationManagement() {
                 </div>
 
                 {/* 3. Date for Session */}
-                <div className="md:col-span-6 bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 rounded-xl p-3.5 space-y-2">
-                  <div className="flex items-center gap-1.5 text-[#4F46E5] dark:text-indigo-400 text-xs font-semibold uppercase tracking-wider">
+                <div className="md:col-span-6 space-y-2">
+                  <div className="flex items-center gap-2 text-[#6342e8] dark:text-purple-400 text-xs font-semibold">
                     <CalendarIcon className="h-4 w-4" />
-                    <span>Date for Session</span>
+                    <span className="text-slate-700 dark:text-slate-300">Date for Session</span>
                   </div>
                   <FormField
                     control={form.control}
@@ -663,20 +677,20 @@ export function ExaminationManagement() {
                               <Button
                                 variant={"outline"}
                                 className={cn(
-                                  "w-full justify-start text-left font-medium bg-background dark:bg-slate-900 border-indigo-200 dark:border-indigo-800/80 hover:bg-indigo-50/50 dark:hover:bg-slate-800 rounded-lg h-9 text-sm transition-colors",
+                                  "w-full justify-between text-left font-medium bg-slate-50/50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl h-10 text-sm transition-all",
                                   !field.value && "text-muted-foreground font-normal"
                                 )}
                               >
-                                <CalendarIcon className="mr-2 h-4 w-4 text-[#4F46E5] shrink-0" />
                                 {field.value ? (
                                   <span className="font-semibold text-foreground">{format(field.value, "PPP")}</span>
                                 ) : (
                                   <span>Select exam date</span>
                                 )}
+                                <CalendarIcon className="h-4 w-4 text-[#6342e8] shrink-0" />
                               </Button>
                             </FormControl>
                           </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0 rounded-xl shadow-lg border-border" align="start">
+                          <PopoverContent className="w-auto p-0 rounded-2xl shadow-xl border-slate-200 dark:border-slate-800" align="start">
                             <Calendar
                               mode="single"
                               selected={field.value}
@@ -695,10 +709,10 @@ export function ExaminationManagement() {
                 </div>
 
                 {/* 4. Subject */}
-                <div className="md:col-span-6 bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 rounded-xl p-3.5 space-y-2">
-                  <div className="flex items-center gap-1.5 text-[#4F46E5] dark:text-indigo-400 text-xs font-semibold uppercase tracking-wider">
+                <div className="md:col-span-6 space-y-2">
+                  <div className="flex items-center gap-2 text-[#6342e8] dark:text-purple-400 text-xs font-semibold">
                     <BookOpen className="h-4 w-4" />
-                    <span>Subject</span>
+                    <span className="text-slate-700 dark:text-slate-300">Subject</span>
                   </div>
                   <div className="relative">
                     <Input
@@ -706,7 +720,7 @@ export function ExaminationManagement() {
                       value={sessionDetails.subject}
                       onChange={(e) => handleSessionDetailChange('subject', e.target.value)}
                       list="subject-options"
-                      className="bg-background dark:bg-slate-900 border-indigo-200 dark:border-indigo-800/80 focus-visible:border-[#4F46E5] focus-visible:ring-0 transition-colors rounded-lg h-9 font-medium text-sm text-foreground"
+                      className="bg-slate-50/50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 focus-visible:border-[#6342e8] focus-visible:ring-[#6342e8]/20 transition-all rounded-xl h-10 font-medium text-sm text-foreground"
                     />
                   </div>
                   <datalist id="subject-options">
@@ -734,16 +748,16 @@ export function ExaminationManagement() {
                 </div>
 
                 {/* 5. Invigilator Count */}
-                <div className="col-span-1 sm:col-span-6 md:col-span-3 bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 rounded-xl p-3.5 space-y-2">
-                  <div className="flex items-center gap-1.5 text-[#4F46E5] dark:text-indigo-400 text-xs font-semibold uppercase tracking-wider">
+                <div className="col-span-1 sm:col-span-6 md:col-span-3 bg-[#f9fafb] dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 rounded-xl p-3.5 space-y-2">
+                  <div className="flex items-center gap-2 text-[#6342e8] dark:text-purple-400 text-xs font-semibold">
                     <Users className="h-4 w-4" />
-                    <span>NO. OF INVIGILATORS</span>
+                    <span className="text-slate-700 dark:text-slate-300">No. of Invigilators</span>
                   </div>
                   <Select
                     value={sessionDetails.rooms.toString()}
                     onValueChange={(value) => handleSessionDetailChange('rooms', parseInt(value, 10))}
                   >
-                    <SelectTrigger className="bg-background dark:bg-slate-900 border-indigo-200 dark:border-indigo-800 rounded-lg h-9 font-semibold text-[#4F46E5] dark:text-indigo-300">
+                    <SelectTrigger className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-lg h-9 font-semibold text-slate-800 dark:text-slate-200">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="max-h-56 dark:border-slate-800">
@@ -755,16 +769,16 @@ export function ExaminationManagement() {
                 </div>
 
                 {/* 6. Reliever Count */}
-                <div className="col-span-1 sm:col-span-6 md:col-span-3 bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 rounded-xl p-3.5 space-y-2">
-                  <div className="flex items-center gap-1.5 text-[#4F46E5] dark:text-indigo-400 text-xs font-semibold uppercase tracking-wider">
+                <div className="col-span-1 sm:col-span-6 md:col-span-3 bg-[#f9fafb] dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 rounded-xl p-3.5 space-y-2">
+                  <div className="flex items-center gap-2 text-[#6342e8] dark:text-purple-400 text-xs font-semibold">
                     <UserCheck className="h-4 w-4" />
-                    <span>No. of Relievers</span>
+                    <span className="text-slate-700 dark:text-slate-300">No. of Relievers</span>
                   </div>
                   <Select
                     value={sessionDetails.relievers.toString()}
                     onValueChange={(value) => handleSessionDetailChange('relievers', parseInt(value, 10))}
                   >
-                    <SelectTrigger className="bg-background dark:bg-slate-900 border-indigo-200 dark:border-indigo-800 rounded-lg h-9 font-semibold text-[#4F46E5] dark:text-indigo-300">
+                    <SelectTrigger className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-lg h-9 font-semibold text-slate-800 dark:text-slate-200">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="max-h-56 dark:border-slate-800">
@@ -776,29 +790,27 @@ export function ExaminationManagement() {
                 </div>
 
                 {/* 7. Timings Selector Grid */}
-                <div className="col-span-1 md:col-span-6 bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 rounded-xl p-3.5 space-y-3">
-                  <div className="flex items-center gap-1.5 text-[#4F46E5] dark:text-indigo-400 text-xs font-semibold uppercase tracking-wider">
+                <div className="col-span-1 md:col-span-6 bg-[#f9fafb] dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 rounded-xl p-3.5 space-y-2">
+                  <div className="flex items-center gap-2 text-[#6342e8] dark:text-purple-400 text-xs font-semibold">
                     <Clock className="h-4 w-4" />
-                    <span>Session Timings</span>
+                    <span className="text-slate-700 dark:text-slate-300">Session Timings</span>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                     {/* Start Time */}
                     <div className="space-y-1">
-                      <span className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
-                        <span className="h-1.5 w-1.5 rounded-full bg-[#4F46E5]" /> Start Time
-                      </span>
+                      <span className="text-[11px] font-medium text-slate-500">Start Time</span>
                       <div className="grid grid-cols-3 gap-1">
                         <Select value={sessionDetails.startTimeHour} onValueChange={(v) => handleSessionDetailChange('startTimeHour', v)}>
-                          <SelectTrigger className="h-8 text-xs bg-background dark:bg-slate-900 border-indigo-200 dark:border-indigo-800/80"><SelectValue /></SelectTrigger>
+                          <SelectTrigger className="h-8 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"><SelectValue /></SelectTrigger>
                           <SelectContent>{hours.map(h => <SelectItem key={`st-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent>
                         </Select>
                         <Select value={sessionDetails.startTimeMinute} onValueChange={(v) => handleSessionDetailChange('startTimeMinute', v)}>
-                          <SelectTrigger className="h-8 text-xs bg-background dark:bg-slate-900 border-indigo-200 dark:border-indigo-800/80"><SelectValue /></SelectTrigger>
+                          <SelectTrigger className="h-8 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"><SelectValue /></SelectTrigger>
                           <SelectContent>{minutes.map(m => <SelectItem key={`st-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent>
                         </Select>
                         <Select value={sessionDetails.startTimePeriod} onValueChange={(v) => handleSessionDetailChange('startTimePeriod', v)}>
-                          <SelectTrigger className="h-8 text-xs bg-background dark:bg-slate-900 border-indigo-200 dark:border-indigo-800/80 font-semibold"><SelectValue /></SelectTrigger>
+                          <SelectTrigger className="h-8 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 font-semibold"><SelectValue /></SelectTrigger>
                           <SelectContent>{periods.map(p => <SelectItem key={`st-p-${p}`} value={p}>{p}</SelectItem>)}</SelectContent>
                         </Select>
                       </div>
@@ -806,20 +818,18 @@ export function ExaminationManagement() {
 
                     {/* End Time */}
                     <div className="space-y-1">
-                      <span className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
-                        <span className="h-1.5 w-1.5 rounded-full bg-[#4F46E5]" /> End Time
-                      </span>
+                      <span className="text-[11px] font-medium text-slate-500">End Time</span>
                       <div className="grid grid-cols-3 gap-1">
                         <Select value={sessionDetails.endTimeHour} onValueChange={(v) => handleSessionDetailChange('endTimeHour', v)}>
-                          <SelectTrigger className="h-8 text-xs bg-background dark:bg-slate-900 border-indigo-200 dark:border-indigo-800/80"><SelectValue /></SelectTrigger>
+                          <SelectTrigger className="h-8 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"><SelectValue /></SelectTrigger>
                           <SelectContent>{hours.map(h => <SelectItem key={`et-h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent>
                         </Select>
                         <Select value={sessionDetails.endTimeMinute} onValueChange={(v) => handleSessionDetailChange('endTimeMinute', v)}>
-                          <SelectTrigger className="h-8 text-xs bg-background dark:bg-slate-900 border-indigo-200 dark:border-indigo-800/80"><SelectValue /></SelectTrigger>
+                          <SelectTrigger className="h-8 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"><SelectValue /></SelectTrigger>
                           <SelectContent>{minutes.map(m => <SelectItem key={`et-m-${m}`} value={m}>{m}</SelectItem>)}</SelectContent>
                         </Select>
                         <Select value={sessionDetails.endTimePeriod} onValueChange={(v) => handleSessionDetailChange('endTimePeriod', v)}>
-                          <SelectTrigger className="h-8 text-xs bg-background dark:bg-slate-900 border-indigo-200 dark:border-indigo-800/80 font-semibold"><SelectValue /></SelectTrigger>
+                          <SelectTrigger className="h-8 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 font-semibold"><SelectValue /></SelectTrigger>
                           <SelectContent>{periods.map(p => <SelectItem key={`et-p-${p}`} value={p}>{p}</SelectItem>)}</SelectContent>
                         </Select>
                       </div>
@@ -828,8 +838,8 @@ export function ExaminationManagement() {
                 </div>
               </div>
 
-              {/* Actions Bar */}
-              <div className="flex flex-wrap justify-end items-center pt-4 gap-3 border-t border-border/60">
+              {/* Actions Bar (Right Aligned matching screenshot) */}
+              <div className="flex flex-wrap justify-end items-center pt-4 gap-3">
                 <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".xlsx, .xls, .csv" />
 
                 {editingExamId && (
@@ -840,7 +850,7 @@ export function ExaminationManagement() {
                       setEditingExamId(null);
                       setSessionDetails(prev => ({ ...prev, subject: '', rooms: 1, relievers: 0 }));
                     }}
-                    className="rounded-lg"
+                    className="rounded-xl border-slate-200 dark:border-slate-800"
                   >
                     Cancel Edit
                   </Button>
@@ -849,32 +859,32 @@ export function ExaminationManagement() {
                 <Button
                   type="button"
                   onClick={onSaveExamination}
-                  className="bg-[#4F46E5] hover:bg-[#4338ca] text-white font-semibold shadow-sm rounded-lg transition-all"
+                  className="bg-[#6342e8] hover:bg-[#5232d6] text-white font-semibold shadow-xs rounded-xl px-5 py-2.5 transition-all text-sm flex items-center gap-2"
                 >
                   {editingExamId ? (
                     <>
-                      <CheckCircle2 className="mr-2 h-4 w-4" />
-                      Update Examination
+                      <CheckCircle2 className="h-4 w-4" />
+                      <span>Update Examination</span>
                     </>
                   ) : (
                     <>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Examination
+                      <Plus className="h-4 w-4" />
+                      <span>Add Examination</span>
                     </>
                   )}
                 </Button>
 
                 {!editingExamId && (
                   <>
-                    <span className="text-xs uppercase font-medium text-muted-foreground px-1">or</span>
+                    <span className="text-xs uppercase font-bold text-slate-400 px-1">OR</span>
                     <Button
                       type="button"
                       variant="outline"
                       onClick={handleBulkUploadClick}
-                      className="border-[#0891B2]/40 text-[#0891B2] hover:bg-[#0891B2]/10 dark:text-cyan-400 font-semibold rounded-lg shadow-sm"
+                      className="border border-purple-300 dark:border-purple-800 text-[#6342e8] dark:text-purple-300 bg-purple-50/50 dark:bg-purple-950/30 hover:bg-purple-100/70 font-semibold rounded-xl px-5 py-2.5 shadow-2xs transition-all text-sm flex items-center gap-2"
                     >
-                      <Upload className="mr-2 h-4 w-4" />
-                      Import from Excel
+                      <Upload className="h-4 w-4" />
+                      <span>Import from Excel</span>
                     </Button>
                   </>
                 )}
@@ -885,21 +895,23 @@ export function ExaminationManagement() {
       </Card>
 
       {/* Added Examinations Modern Card */}
-      <Card className="border border-border/80 shadow-sm rounded-xl overflow-hidden bg-card">
-        <div className="h-1.5 w-full bg-gradient-to-r from-[#0891B2] via-[#4F46E5] to-[#F59E0B]" />
+      <Card className="border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl overflow-hidden bg-white dark:bg-slate-900">
         <CardHeader className="pb-4 pt-6 px-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-cyan-50 dark:bg-cyan-950/50 text-[#0891B2] dark:text-cyan-300">
-                <FileSpreadsheet className="h-5 w-5" />
+              <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-[#6342e8] dark:text-purple-400">
+                <CalendarDays className="h-5 w-5" />
               </div>
-              <div>
-                <CardTitle className="font-headline text-xl font-bold tracking-tight">Added Examinations</CardTitle>
+              <div className="flex items-center gap-3">
+                <CardTitle className="font-headline text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+                  Added Examinations
+                </CardTitle>
+                <div className="w-8 h-[2px] bg-[#6342e8] rounded-full hidden sm:block" />
               </div>
             </div>
 
             {examinations.length > 0 && (
-              <Badge className="w-fit bg-[#0891B2]/10 text-[#0891B2] dark:text-cyan-300 border-[#0891B2]/30 px-3 py-1 font-semibold rounded-full text-xs">
+              <Badge className="w-fit bg-[#6342e8]/10 text-[#6342e8] dark:text-purple-300 border-[#6342e8]/20 px-3 py-1 font-semibold rounded-full text-xs">
                 {examinations.length} {examinations.length === 1 ? 'Session Added' : 'Sessions Added'}
               </Badge>
             )}
@@ -908,20 +920,20 @@ export function ExaminationManagement() {
           {/* Quick Metrics Bar when exams exist */}
           {examinations.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4">
-              <div className="bg-muted/40 dark:bg-muted/20 border border-border/60 rounded-lg p-3 text-center">
-                <div className="text-xs font-medium text-muted-foreground">Total Sessions</div>
-                <div className="text-xl font-bold text-[#4F46E5] mt-0.5">{examinations.length}</div>
+              <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 rounded-xl p-3 text-center">
+                <div className="text-xs font-medium text-slate-500">Total Sessions</div>
+                <div className="text-xl font-bold text-[#6342e8] mt-0.5">{examinations.length}</div>
               </div>
-              <div className="bg-muted/40 dark:bg-muted/20 border border-border/60 rounded-lg p-3 text-center">
-                <div className="text-xs font-medium text-muted-foreground">Total Duties/Invigilators</div>
-                <div className="text-xl font-bold text-[#4F46E5] mt-0.5">{totalRooms}</div>
+              <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 rounded-xl p-3 text-center">
+                <div className="text-xs font-medium text-slate-500">Total Duties/Invigilators</div>
+                <div className="text-xl font-bold text-[#6342e8] mt-0.5">{totalRooms}</div>
               </div>
-              <div className="bg-muted/40 dark:bg-muted/20 border border-border/60 rounded-lg p-3 text-center">
-                <div className="text-xs font-medium text-muted-foreground">Total Relievers</div>
-                <div className="text-xl font-bold text-[#F59E0B] mt-0.5">{totalRelievers}</div>
+              <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 rounded-xl p-3 text-center">
+                <div className="text-xs font-medium text-slate-500">Total Relievers</div>
+                <div className="text-xl font-bold text-[#f59e0b] mt-0.5">{totalRelievers}</div>
               </div>
-              <div className="bg-muted/40 dark:bg-muted/20 border border-border/60 rounded-lg p-3 text-center">
-                <div className="text-xs font-medium text-muted-foreground">Total Staff Needed</div>
+              <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 rounded-xl p-3 text-center">
+                <div className="text-xs font-medium text-slate-500">Total Staff Needed</div>
                 <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">{totalRooms + totalRelievers}</div>
               </div>
             </div>
@@ -929,31 +941,29 @@ export function ExaminationManagement() {
         </CardHeader>
 
         <CardContent className="px-6 pb-6 pt-2">
-          <div className="rounded-xl border border-border/70 overflow-hidden shadow-xs">
+          <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/50 hover:bg-muted/50 border-b border-border/70">
-                  <TableHead className="font-bold text-xs uppercase tracking-wider text-muted-foreground w-14">#</TableHead>
-                  <TableHead className="font-bold text-xs uppercase tracking-wider text-muted-foreground">Date & Day</TableHead>
-                  <TableHead className="font-bold text-xs uppercase tracking-wider text-muted-foreground">Subject</TableHead>
-                  <TableHead className="font-bold text-xs uppercase tracking-wider text-muted-foreground">Timings</TableHead>
-                  <TableHead className="font-bold text-xs uppercase tracking-wider text-muted-foreground text-center">Invigilators</TableHead>
-                  <TableHead className="font-bold text-xs uppercase tracking-wider text-muted-foreground text-center">Relievers</TableHead>
-                  <TableHead className="font-bold text-xs uppercase tracking-wider text-muted-foreground text-right w-24">Actions</TableHead>
+                <TableRow className="bg-[#f8f9fc] dark:bg-slate-800/60 hover:bg-[#f8f9fc] border-b border-slate-200/80 dark:border-slate-800">
+                  <TableHead className="font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 w-12">#</TableHead>
+                  <TableHead className="font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">Date & Day</TableHead>
+                  <TableHead className="font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">Subject</TableHead>
+                  <TableHead className="font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">Timings</TableHead>
+                  <TableHead className="font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 text-center">Invigilators</TableHead>
+                  <TableHead className="font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 text-center">Relievers</TableHead>
+                  <TableHead className="font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 text-right w-24">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {examinations.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-12">
-                      <div className="flex flex-col items-center justify-center space-y-3">
-                        <div className="p-3 rounded-full bg-muted text-muted-foreground/60">
-                          <FileSpreadsheet className="h-6 w-6" />
+                      <div className="flex flex-col items-center justify-center space-y-2">
+                        <div className="h-10 w-10 rounded-xl bg-purple-100 dark:bg-purple-950/70 text-[#6342e8] flex items-center justify-center mb-1">
+                          <FileText className="h-5 w-5" />
                         </div>
-                        <div className="space-y-1">
-                          <p className="font-medium text-foreground">No examinations added yet</p>
-                          <p className="text-xs text-muted-foreground">Fill in the session details above or import from Excel.</p>
-                        </div>
+                        <p className="font-bold text-sm text-slate-800 dark:text-slate-200">No examinations added yet.</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Add a new examination or import from Excel to get started.</p>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -962,33 +972,33 @@ export function ExaminationManagement() {
                     <TableRow
                       key={exam.id}
                       className={cn(
-                        "transition-colors hover:bg-muted/40",
-                        index % 2 === 1 && "bg-muted/15"
+                        "transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/40",
+                        index % 2 === 1 && "bg-slate-50/30 dark:bg-slate-800/20"
                       )}
                     >
-                      <TableCell className="font-medium text-xs text-muted-foreground">{index + 1}</TableCell>
+                      <TableCell className="font-semibold text-xs text-slate-500">{index + 1}</TableCell>
                       <TableCell>
                         <div className="space-y-0.5">
-                          <div className="font-semibold text-sm">{format(new Date(exam.date), "dd/MM/yyyy")}</div>
-                          <div className="text-[11px] text-muted-foreground">{format(new Date(exam.date), "EEEE")}</div>
+                          <div className="font-semibold text-sm text-slate-900 dark:text-white">{format(new Date(exam.date), "dd/MM/yyyy")}</div>
+                          <div className="text-[11px] text-slate-500">{format(new Date(exam.date), "EEEE")}</div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className="font-semibold text-sm text-foreground">{exam.subject}</span>
+                        <span className="font-semibold text-sm text-slate-900 dark:text-white">{exam.subject}</span>
                       </TableCell>
                       <TableCell>
-                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/60 text-xs font-medium text-muted-foreground">
-                          <Clock className="h-3 w-3 text-[#F59E0B]" />
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-medium text-slate-600 dark:text-slate-300">
+                          <Clock className="h-3 w-3 text-[#f59e0b]" />
                           <span>{formatTimeTo12Hour(exam.startTime)} – {formatTimeTo12Hour(exam.endTime)}</span>
                         </div>
                       </TableCell>
                       <TableCell className="text-center">
-                        <span className="inline-flex items-center justify-center min-w-8 px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-[#4F46E5] dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-900/50">
+                        <span className="inline-flex items-center justify-center min-w-8 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-50 text-[#6342e8] dark:bg-purple-950/60 dark:text-purple-300 border border-purple-100 dark:border-purple-900/50">
                           {exam.rooms}
                         </span>
                       </TableCell>
                       <TableCell className="text-center">
-                        <span className="inline-flex items-center justify-center min-w-8 px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-[#4F46E5] dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-900/50">
+                        <span className="inline-flex items-center justify-center min-w-8 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-50 text-[#6342e8] dark:bg-purple-950/60 dark:text-purple-300 border border-purple-100 dark:border-purple-900/50">
                           {exam.relievers}
                         </span>
                       </TableCell>
@@ -997,7 +1007,7 @@ export function ExaminationManagement() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-[#4F46E5] hover:bg-indigo-50 dark:hover:bg-indigo-950/50"
+                            className="h-8 w-8 text-slate-500 hover:text-[#6342e8] hover:bg-purple-50 dark:hover:bg-purple-950/50 rounded-lg"
                             onClick={() => handleEdit(exam)}
                             title="Edit session"
                           >
@@ -1006,7 +1016,7 @@ export function ExaminationManagement() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            className="h-8 w-8 text-slate-500 hover:text-destructive hover:bg-destructive/10 rounded-lg"
                             onClick={() => handleDelete(exam.id)}
                             title="Remove session"
                           >
@@ -1019,15 +1029,15 @@ export function ExaminationManagement() {
                 )}
               </TableBody>
               {examinations.length > 0 && (
-                <TableFooter className="bg-muted/60 border-t-2 border-border font-medium">
+                <TableFooter className="bg-slate-50 dark:bg-slate-800/60 border-t border-slate-200 dark:border-slate-800 font-medium">
                   <TableRow>
-                    <TableCell colSpan={4} className="font-bold text-xs uppercase tracking-wider text-foreground">
+                    <TableCell colSpan={4} className="font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">
                       Total Requirements
                     </TableCell>
-                    <TableCell className="text-center font-bold text-sm text-[#4F46E5]">
+                    <TableCell className="text-center font-bold text-sm text-[#6342e8]">
                       {totalRooms}
                     </TableCell>
-                    <TableCell className="text-center font-bold text-sm text-[#0891B2]">
+                    <TableCell className="text-center font-bold text-sm text-purple-600 dark:text-purple-400">
                       {totalRelievers}
                     </TableCell>
                     <TableCell className="text-right font-bold text-xs text-emerald-600 dark:text-emerald-400">
@@ -1040,11 +1050,11 @@ export function ExaminationManagement() {
           </div>
         </CardContent>
 
-        <CardFooter className="justify-end px-6 py-4 bg-muted/10 border-t border-border/60">
+        <CardFooter className="justify-end px-6 py-4 bg-slate-50/50 dark:bg-slate-800/30 border-t border-slate-200/80 dark:border-slate-800">
           <Button
             type="button"
             size="lg"
-            className="bg-[#4F46E5] hover:bg-[#4338ca] text-white shadow-sm font-semibold rounded-lg transition-all flex items-center gap-2"
+            className="bg-[#6342e8] hover:bg-[#5232d6] text-white shadow-xs font-semibold rounded-xl transition-all flex items-center gap-2"
             onClick={handleContinue}
           >
             <span>Continue to Invigilator Details</span>

@@ -1,13 +1,66 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef } from 'react';
-import type { Invigilator, Examination, SavedAllotment, AllotmentResult } from '@/lib/types';
+import type { Invigilator, Examination, SavedAllotment, AllotmentResult, InstructionItem } from '@/lib/types';
 import { useAuth } from './auth-context';
 import {
   syncAllotmentToDatabase,
   fetchUserAllotmentsFromDatabase,
   deleteUserAllotmentFromDatabase
 } from './storage-service';
+
+export const DEFAULT_INSTRUCTIONS: InstructionItem[] = [
+  {
+    id: "inst-1",
+    text: "Report to the examination hall at least 15 minutes before the commencement of the examination.",
+    enabled: true,
+  },
+  {
+    id: "inst-2",
+    text: "Verify the question papers, answer booklets, and other required materials before the examination begins.",
+    enabled: true,
+  },
+  {
+    id: "inst-3",
+    text: "Ensure that students are seated according to the approved seating arrangement and that their identity is verified.",
+    enabled: true,
+  },
+  {
+    id: "inst-4",
+    text: "Instruct students to keep mobile phones, smart watches, electronic devices, and unauthorized materials away from the examination area.",
+    enabled: true,
+  },
+  {
+    id: "inst-5",
+    text: "Distribute question papers and answer booklets only at the scheduled time and ensure that students follow the instructions printed on them.",
+    enabled: true,
+  },
+  {
+    id: "inst-6",
+    text: "Maintain strict silence and discipline throughout the examination and avoid unnecessary conversation with students.",
+    enabled: true,
+  },
+  {
+    id: "inst-7",
+    text: "Do not provide students with any assistance relating to the content or answers to examination questions.",
+    enabled: true,
+  },
+  {
+    id: "inst-8",
+    text: "Monitor the examination hall continuously and report any malpractice, suspicious activity, or irregularity immediately to the Chief Superintendent.",
+    enabled: true,
+  },
+  {
+    id: "inst-9",
+    text: "Ensure that students do not leave the examination hall without permission and follow the prescribed rules regarding early submission.",
+    enabled: true,
+  },
+  {
+    id: "inst-10",
+    text: "At the end of the examination, collect and count all answer scripts carefully, arrange them as instructed, and hand them over to the designated authority.",
+    enabled: true,
+  },
+];
 
 interface AllotmentContextType {
   invigilators: Invigilator[];
@@ -22,6 +75,13 @@ interface AllotmentContextType {
   deleteSavedAllotment: (id: string) => void;
   clearCurrentAllotment: () => void;
   isCloudSynced: boolean;
+  instructions: InstructionItem[];
+  setInstructions: React.Dispatch<React.SetStateAction<InstructionItem[]>>;
+  addInstruction: (text: string) => void;
+  updateInstruction: (id: string, text: string) => void;
+  toggleInstruction: (id: string) => void;
+  deleteInstruction: (id: string) => void;
+  resetInstructionsToDefault: () => void;
 }
 
 const AllotmentContext = createContext<AllotmentContextType | undefined>(undefined);
@@ -32,6 +92,7 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
   const [examinations, setExaminations] = useState<Examination[]>([]);
   const [savedAllotments, setSavedAllotments] = useState<SavedAllotment[]>([]);
   const [activeAllotment, setActiveAllotment] = useState<SavedAllotment | null>(null);
+  const [instructions, setInstructions] = useState<InstructionItem[]>(DEFAULT_INSTRUCTIONS);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isCloudSynced, setIsCloudSynced] = useState(false);
 
@@ -50,6 +111,7 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem('dutyflow_examinations');
       localStorage.removeItem('dutyflow_invigilators');
       localStorage.removeItem('dutyflow_active_allotment');
+      localStorage.removeItem('dutyflow_instructions');
     } catch (_) {}
   }, []);
 
@@ -63,6 +125,7 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       setExaminations([]);
       setSavedAllotments([]);
       setActiveAllotment(null);
+      setInstructions(DEFAULT_INSTRUCTIONS);
       setIsCloudSynced(false);
       setIsLoaded(false);
     }
@@ -110,6 +173,26 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
             createdAt: new Date(parsed.createdAt),
             examinations: (parsed.examinations || []).map((e: any) => ({ ...e, date: new Date(e.date) })),
           });
+        }
+      }
+
+      // Check version of stored instructions to ensure upgrade to latest user-specified defaults
+      const versionKey = `dutyflow_${userScope}_inst_version`;
+      const storedVersion = localStorage.getItem(versionKey);
+
+      if (storedVersion !== 'v2') {
+        setInstructions(DEFAULT_INSTRUCTIONS);
+        localStorage.setItem(`dutyflow_${userScope}_instructions`, JSON.stringify(DEFAULT_INSTRUCTIONS));
+        localStorage.setItem(versionKey, 'v2');
+      } else {
+        const storedInstructions = localStorage.getItem(`dutyflow_${userScope}_instructions`);
+        if (storedInstructions) {
+          const parsed = JSON.parse(storedInstructions);
+          if (Array.isArray(parsed) && isMounted && parsed.length > 0) {
+            setInstructions(parsed);
+          }
+        } else {
+          setInstructions(DEFAULT_INSTRUCTIONS);
         }
       }
     } catch (err) {
@@ -179,6 +262,15 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       console.error("Failed to save active allotment to localStorage:", e);
     }
   }, [activeAllotment, isLoaded, getStorageKey]);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    try {
+      localStorage.setItem(getStorageKey('instructions'), JSON.stringify(instructions));
+    } catch (e) {
+      console.error("Failed to save instructions to localStorage:", e);
+    }
+  }, [instructions, isLoaded, getStorageKey]);
 
   // When activeAllotment changes to a specific saved allotment, sync its exams & invigilators
   useEffect(() => {
@@ -259,6 +351,35 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
     setExaminations([]);
   };
 
+  const addInstruction = (text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    const newItem: InstructionItem = {
+      id: `inst-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      text: trimmed,
+      enabled: true,
+    };
+    setInstructions(prev => [...prev, newItem]);
+  };
+
+  const updateInstruction = (id: string, text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    setInstructions(prev => prev.map(item => item.id === id ? { ...item, text: trimmed } : item));
+  };
+
+  const toggleInstruction = (id: string) => {
+    setInstructions(prev => prev.map(item => item.id === id ? { ...item, enabled: !item.enabled } : item));
+  };
+
+  const deleteInstruction = (id: string) => {
+    setInstructions(prev => prev.filter(item => item.id !== id));
+  };
+
+  const resetInstructionsToDefault = () => {
+    setInstructions(DEFAULT_INSTRUCTIONS);
+  };
+
   return (
     <AllotmentContext.Provider value={{
       invigilators, setInvigilators,
@@ -267,7 +388,13 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       activeAllotment, setActiveAllotment,
       updateSavedAllotment, deleteSavedAllotment,
       clearCurrentAllotment,
-      isCloudSynced
+      isCloudSynced,
+      instructions, setInstructions,
+      addInstruction,
+      updateInstruction,
+      toggleInstruction,
+      deleteInstruction,
+      resetInstructionsToDefault
     }}>
       {children}
     </AllotmentContext.Provider>

@@ -20,8 +20,11 @@ import {
   Building2,
   Briefcase,
   Layers,
-  Sparkles
+  Sparkles,
+  ListChecks,
+  Edit2
 } from 'lucide-react';
+import Link from 'next/link';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
@@ -59,7 +62,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false);
   const [customSubscriptionMessage, setCustomSubscriptionMessage] = useState<string | undefined>(undefined);
-  const { activeAllotment } = useAllotment();
+  const { activeAllotment, instructions } = useAllotment();
   const { user, isSubscribed, canDownload, recordCategoryDownload } = useAuth();
 
   useEffect(() => {
@@ -114,35 +117,36 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     const collegeName = examinations[0]?.college || activeAllotment?.examinations[0]?.college || "Seshadripuram Independent Pre - University College";
     const examName = assignedDuties.length > 0 ? assignedDuties[0].examName : (examinations[0]?.examName || activeAllotment?.examinations[0]?.examName || 'Annual Examination August 2026');
 
-    // 1. Top Header Card (Soft Indigo #EEF2FF, Deep Indigo Text #312E81)
+    // 1. Top Header Card (Matching Date, Day, Subject Table Header: Primary Indigo #4F46E5 & Crisp White Text)
     const cardX = 12;
     const cardY = 14;
     const cardW = pageWidth - 24; // 186mm
     const cardH = 48;
 
-    doc.setFillColor(238, 242, 255); // Soft Indigo Tint (#EEF2FF - indigo-50)
-    doc.setDrawColor(199, 210, 254); // Subtle Indigo Border (#C7D2FE - indigo-200)
+    doc.setFillColor(79, 70, 229); // Primary Indigo (#4F46E5 - matches table header background)
+    doc.setDrawColor(67, 56, 202); // Deep Indigo Border (#4338CA)
     doc.setLineWidth(0.3);
     doc.roundedRect(cardX, cardY, cardW, cardH, 5, 5, 'FD');
 
-    // Line 1: College / Institution Name (Deep Indigo #312E81, Bold, Centered)
-    const collegeFontSize = collegeName.length > 40 ? 15 : 17.5;
+    // Line 1: College / Institution Name (Crisp White, Bold, Centered)
+    const collegeFontSize = collegeName.length > 40 ? 15.5 : 18;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(collegeFontSize);
-    doc.setTextColor(49, 46, 129); // Deep Indigo (#312E81)
-    doc.text(collegeName, pageWidth / 2, cardY + 14, { align: 'center' });
+    doc.setTextColor(255, 255, 255); // Crisp White
+    doc.text(collegeName, pageWidth / 2, cardY + 13.5, { align: 'center' });
 
-    // Line 2: Examination Name (Primary Indigo #4F46E5, Centered)
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(11);
-    doc.setTextColor(79, 70, 229); // Primary Indigo (#4F46E5)
-    doc.text(examName, pageWidth / 2, cardY + 24.5, { align: 'center' });
+    // Line 2: Examination Name (Soft White / Lavender, Bold, Centered)
+    const examFontSize = examName.length > 35 ? 12.5 : 13.5;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(examFontSize);
+    doc.setTextColor(224, 231, 255); // Soft Light Indigo / White (#E0E7FF)
+    doc.text(examName, pageWidth / 2, cardY + 21, { align: 'center' });
 
-    // Line 3: Title (Deep Indigo #1E1B4B, Bold, Centered)
+    // Line 3: Title (Crisp White, Bold, Centered)
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(18);
-    doc.setTextColor(30, 27, 75); // #1E1B4B
-    doc.text("Invigilator's Duty Summary", pageWidth / 2, cardY + 38, { align: 'center' });
+    doc.setTextColor(255, 255, 255); // Crisp White
+    doc.text("Invigilator's Duty Summary", pageWidth / 2, cardY + 37, { align: 'center' });
 
     // 2. Faculty Profile Card (with Primary Indigo Border #4F46E5 & Duties Circle Badge)
     const profY = cardY + cardH + 7; // 69mm
@@ -203,8 +207,8 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     doc.text("DUTIES", dutiesBadgeX, dutiesBadgeY + 6.5, { align: 'center' });
 
     // 3. Duty Schedule Table (Primary Indigo Header #4F46E5 & Cyan Timings Pill #0891B2)
-    const tableStartY = profY + profH + 8; // 104mm
-    const tableHead = [['SN', 'Date', 'Day', 'Subject', 'Timings']];
+    const tableStartY = profY + profH + 7; // 103mm
+    const tableHead = [['#', 'Date', 'Day', 'Subject', 'Timings']];
     const tableBody = assignedDuties.map((duty, index) => {
       return [
         index + 1,
@@ -227,22 +231,22 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
         fontStyle: 'bold',
         halign: 'center',
         valign: 'middle',
-        fontSize: 10.5,
-        cellPadding: 4.5
+        fontSize: 10,
+        cellPadding: 3.5
       },
       columnStyles: {
-        0: { halign: 'center', cellWidth: 18 },
-        1: { halign: 'center', cellWidth: 35, fontSize: 10.5, textColor: [15, 23, 42] },
-        2: { halign: 'center', cellWidth: 35, fontSize: 10.5, textColor: [71, 85, 105] },
-        3: { halign: 'center', cellWidth: 54, fontStyle: 'bold', fontSize: 10.5, textColor: [15, 23, 42] },
+        0: { halign: 'center', cellWidth: 16 },
+        1: { halign: 'center', cellWidth: 35, fontSize: 10, textColor: [15, 23, 42] },
+        2: { halign: 'center', cellWidth: 35, fontSize: 10, textColor: [71, 85, 105] },
+        3: { halign: 'center', cellWidth: 56, fontStyle: 'bold', fontSize: 10, textColor: [15, 23, 42] },
         4: { halign: 'center', cellWidth: 44 }
       },
       alternateRowStyles: {
         fillColor: [248, 250, 255] // Soft Slate/Indigo Tint (#F8FAFF)
       },
       styles: {
-        fontSize: 10.5,
-        cellPadding: 4.5,
+        fontSize: 10,
+        cellPadding: 3.5,
         valign: 'middle',
         lineColor: [224, 231, 255], // Soft Indigo Gridlines (#E0E7FF)
         lineWidth: 0.2
@@ -261,19 +265,19 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
           const cy = y + height / 2;
 
           doc.setFillColor(79, 70, 229); // Primary Indigo (#4F46E5)
-          doc.circle(cx, cy, 4.6, 'F');
+          doc.circle(cx, cy, 4.2, 'F');
 
           doc.setFont('helvetica', 'bold');
-          doc.setFontSize(9.5);
+          doc.setFontSize(9);
           doc.setTextColor(255, 255, 255);
-          doc.text(String(data.row.index + 1), cx, cy + 3.2, { align: 'center' });
+          doc.text(String(data.row.index + 1), cx, cy + 3, { align: 'center' });
         }
 
         // 2. Column 4: Soft Cyan pill capsule with Cyan timings text (#0891B2)
         if (data.section === 'body' && data.column.index === 4) {
           const { x, y, width, height } = data.cell;
           const pillW = 36;
-          const pillH = 7.5;
+          const pillH = 7;
           const px = x + (width - pillW) / 2;
           const py = y + (height - pillH) / 2;
           const timingText = data.cell.raw;
@@ -284,26 +288,67 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
           doc.roundedRect(px, py, pillW, pillH, 3, 3, 'FD');
 
           doc.setFont('helvetica', 'bold');
-          doc.setFontSize(9.5);
+          doc.setFontSize(9);
           doc.setTextColor(8, 145, 178); // Secondary Cyan (#0891B2 - cyan-600)
-          doc.text(String(timingText), x + width / 2, y + height / 2 + 3, { align: 'center' });
+          doc.text(String(timingText), x + width / 2, y + height / 2 + 2.8, { align: 'center' });
         }
       }
     });
 
-    // 4. Bottom Footer Card (Soft Indigo #EEF2FF, Deep Indigo Message #312E81)
-    const bottomCardH = 22;
-    const bottomCardY = pageHeight - 16 - bottomCardH; // 259mm
+    // 4. General Instructions Section (Rendered in serial numbers after the duty schedule slot with exactly 2 cm gap)
+    const finalTableY = (doc as any).lastAutoTable?.finalY || (tableStartY + 30);
+    const enabledInstructions = (instructions || []).filter(i => i.enabled);
 
-    doc.setFillColor(238, 242, 255); // Soft Indigo (#EEF2FF)
-    doc.setDrawColor(199, 210, 254); // Subtle Indigo Border (#C7D2FE)
-    doc.setLineWidth(0.3);
-    doc.roundedRect(cardX, bottomCardY, cardW, bottomCardH, 5, 5, 'FD');
+    let currentY = finalTableY + 20; // Exactly 2 cm (20mm) gap between schedule allotment table and General Instructions
 
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11.5);
-    doc.setTextColor(49, 46, 129); // Deep Indigo (#312E81)
-    doc.text("Wishing you a smooth and successful examination duty", pageWidth / 2, bottomCardY + 13.5, { align: 'center' });
+    if (enabledInstructions.length > 0) {
+      // Check if currentY is getting close to page bottom
+      if (currentY > pageHeight - 65) {
+        doc.addPage();
+        currentY = 16;
+      }
+
+      // Title: "General Instructions to Invigilators" (without underline)
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(30, 27, 75); // Deep Midnight Indigo (#1E1B4B)
+      doc.text("General Instructions to Invigilators:", cardX, currentY);
+
+      currentY += 6.5;
+
+      const serialWidth = 6.5;
+      const textWidth = cardW - serialWidth; // Stretches cleanly from cardX + serialWidth to right margin (cardX + cardW)
+
+      enabledInstructions.forEach((item, index) => {
+        // Multi-line text calculation
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8.5);
+        const textLines = doc.splitTextToSize(item.text, textWidth);
+        const itemBlockHeight = textLines.length * 3.8 + 1.8;
+
+        if (currentY + itemBlockHeight > pageHeight - 20) {
+          doc.addPage();
+          currentY = 16;
+        }
+
+        // Serial number (bold purple)
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.5);
+        doc.setTextColor(99, 66, 232); // #6342e8
+        doc.text(`${index + 1}.`, cardX, currentY);
+
+        // Instruction text aligned evenly along left and right margins (justify)
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8.5);
+        doc.setTextColor(51, 65, 85); // Slate-700
+        doc.text(item.text, cardX + serialWidth, currentY, {
+          maxWidth: textWidth,
+          align: 'justify'
+        });
+
+        currentY += itemBlockHeight;
+      });
+    }
 
     return doc;
   };
@@ -587,6 +632,57 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
                   </TableBody>
                 </Table>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* General Instructions Preview Card */}
+          <Card className="border border-border/80 dark:border-slate-800 shadow-sm rounded-xl overflow-hidden bg-card">
+            <div className="h-1 w-full bg-gradient-to-r from-[#6342e8] to-[#8b5cf6]" />
+            <CardHeader className="pb-3 pt-5 px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-950/50 text-[#6342e8] dark:text-purple-300">
+                  <ListChecks className="h-4 w-4" />
+                </div>
+                <div>
+                  <CardTitle className="font-headline text-base font-bold text-foreground dark:text-slate-100">
+                    General Instructions to Invigilators
+                  </CardTitle>
+                  <CardDescription className="text-xs text-muted-foreground">
+                    Included on this invigilator&apos;s printed duty slip in serial order
+                  </CardDescription>
+                </div>
+              </div>
+
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs font-semibold rounded-lg border-purple-200 dark:border-purple-800/80 text-[#6342e8] hover:bg-purple-50 dark:hover:bg-purple-950/40"
+              >
+                <Link href="/dashboard/instructions">
+                  <Edit2 className="w-3.5 h-3.5 mr-1" />
+                  Customize Instructions
+                </Link>
+              </Button>
+            </CardHeader>
+
+            <CardContent className="px-6 pb-6 pt-0">
+              {instructions.filter(i => i.enabled).length > 0 ? (
+                <div className="rounded-xl border border-border/70 dark:border-slate-800 bg-purple-50/20 dark:bg-purple-950/10 p-4 space-y-2.5">
+                  {instructions
+                    .filter(i => i.enabled)
+                    .map((item, idx) => (
+                      <div key={item.id} className="flex items-start gap-2.5 text-xs text-foreground/90 dark:text-slate-200">
+                        <span className="font-bold text-[#6342e8] min-w-[20px]">{idx + 1}.</span>
+                        <span className="leading-relaxed">{item.text}</span>
+                      </div>
+                    ))}
+                </div>
+              ) : (
+                <div className="p-4 rounded-xl border border-dashed text-center text-xs text-muted-foreground">
+                  No general instructions currently selected for PDF slips. Click &quot;Customize Instructions&quot; to enable standard guidelines.
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
