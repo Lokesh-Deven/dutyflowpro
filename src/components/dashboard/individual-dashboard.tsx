@@ -308,11 +308,11 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
         currentY = 16;
       }
 
-      // Title: "General Instructions to Invigilators" (without underline)
+      // Title: "General Instructions:" (without underline)
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(11);
       doc.setTextColor(30, 27, 75); // Deep Midnight Indigo (#1E1B4B)
-      doc.text("General Instructions to Invigilators:", cardX, currentY);
+      doc.text("General Instructions:", cardX, currentY);
 
       currentY += 6.5;
 
@@ -645,7 +645,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
                 </div>
                 <div>
                   <CardTitle className="font-headline text-base font-bold text-foreground dark:text-slate-100">
-                    General Instructions to Invigilators
+                    General Instructions
                   </CardTitle>
                   <CardDescription className="text-xs text-muted-foreground">
                     Included on this invigilator&apos;s printed duty slip in serial order

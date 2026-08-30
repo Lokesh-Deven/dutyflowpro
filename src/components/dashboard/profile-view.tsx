@@ -336,7 +336,7 @@ export function ProfileView() {
       </div>
 
       {/* ========================================================================= */}
-      {/* 3. CONTACT TO SUBSCRIBE OR HELP CARD */}
+      {/* 3. SUBSCRIPTION ENQUIRIES & SUPPORT CARD */}
       {/* ========================================================================= */}
       <Card className="border border-purple-100 dark:border-purple-900/50 rounded-2xl shadow-xs overflow-hidden bg-white dark:bg-slate-900">
         <CardHeader className="pb-3">
@@ -344,10 +344,10 @@ export function ProfileView() {
             <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-950/50">
               <HelpCircle className="h-4 w-4" />
             </div>
-            <CardTitle className="text-base font-headline font-bold text-slate-900 dark:text-white">Contact to Subscribe or Help</CardTitle>
+            <CardTitle className="text-base font-headline font-bold text-slate-900 dark:text-white">Subscription Enquiries & Support</CardTitle>
           </div>
           <CardDescription className="text-xs text-slate-500">
-            Have questions about institutional subscriptions, annual licensing, or need technical help? Reach out directly.
+            Have questions about institutional subscriptions, annual licensing, or need technical assistance? Reach out directly.
           </CardDescription>
         </CardHeader>
         
