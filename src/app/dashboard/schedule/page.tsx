@@ -256,16 +256,6 @@ export default function SchedulePage() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="space-y-1">
-        <h1 className="text-2xl font-bold font-headline tracking-tight text-slate-900 dark:text-white">
-          Day-wise Schedule
-        </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          Inspect daily schedules and export printable timetable rosters
-        </p>
-      </div>
-
       <div className="grid gap-6 md:grid-cols-12">
         {/* Left Sidebar: Controls & Date Picker */}
         <div className="md:col-span-4 space-y-6">

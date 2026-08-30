@@ -574,16 +574,6 @@ export function ExaminationManagement() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="space-y-1">
-        <h1 className="text-2xl font-bold font-headline tracking-tight text-slate-900 dark:text-white">
-          Create New Allotment
-        </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          Provide examination details to get started
-        </p>
-      </div>
-
       {/* Top Card: Examination Details */}
       <Card className="border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl overflow-hidden bg-white dark:bg-slate-900">
         <div className="h-[3px] w-full bg-gradient-to-r from-[#6342e8] via-[#8b5cf6] to-[#f59e0b]" />

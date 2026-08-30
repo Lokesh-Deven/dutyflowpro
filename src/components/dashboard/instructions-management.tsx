@@ -121,25 +121,6 @@ export function InstructionsManagement() {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-bold font-headline tracking-tight text-slate-900 dark:text-white">
-            Add Instructions to Invigilators
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Checkmark and customize instructions to display under &quot;General Instructions&quot; on the Invigilator&apos;s Duty Summary PDF.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0">
-          <Badge className="bg-purple-50 text-[#6342e8] dark:bg-purple-950/60 dark:text-purple-300 border-purple-200 dark:border-purple-800 text-xs px-3 py-1 font-bold rounded-full shadow-2xs">
-            <Printer className="w-3.5 h-3.5 mr-1.5" />
-            {enabledCount} of {instructions.length} Active in PDF
-          </Badge>
-        </div>
-      </div>
-
       {/* Main Instructions Card */}
       <Card className="border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl overflow-hidden bg-white dark:bg-slate-900">
         {/* Top Accent Gradient Stripe */}
@@ -152,9 +133,15 @@ export function InstructionsManagement() {
                 <ListChecks className="h-5 w-5" />
               </div>
               <div>
-                <CardTitle className="text-lg font-bold text-slate-900 dark:text-white">
-                  General Instructions List
-                </CardTitle>
+                <div className="flex items-center gap-2.5">
+                  <CardTitle className="text-lg font-bold text-slate-900 dark:text-white">
+                    General Instructions List
+                  </CardTitle>
+                  <Badge className="bg-purple-50 text-[#6342e8] dark:bg-purple-950/60 dark:text-purple-300 border-purple-200 dark:border-purple-800 text-xs px-2.5 py-0.5 font-bold rounded-full shadow-2xs">
+                    <Printer className="w-3 h-3 mr-1" />
+                    {enabledCount} of {instructions.length} Active in PDF
+                  </Badge>
+                </div>
                 <CardDescription className="text-xs text-slate-500">
                   Select checkboxes to include items on the printable duty slip. Click edit to customize wording.
                 </CardDescription>

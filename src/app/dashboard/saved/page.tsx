@@ -58,16 +58,6 @@ export default function SavedAllotmentsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="space-y-1">
-        <h1 className="text-2xl font-bold font-headline tracking-tight text-slate-900 dark:text-white">
-          Saved Allotments
-        </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          Manage, export, and inspect your previously generated duty allotment sheets
-        </p>
-      </div>
-
       {savedAllotments.length === 0 ? (
         <Card className="text-center py-16 px-6 max-w-lg mx-auto border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl shadow-none bg-white dark:bg-slate-900">
           <div className="flex flex-col items-center space-y-4">
