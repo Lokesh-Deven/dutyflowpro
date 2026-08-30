@@ -85,14 +85,14 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
 
   const generateInvigilatorPDF = (invigilator: Invigilator, assignedDuties: Examination[]) => {
     const doc = new jsPDF({ orientation: 'portrait', format: 'a4' });
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
+    const pageWidth = doc.internal.pageSize.getWidth(); // 210mm
+    const pageHeight = doc.internal.pageSize.getHeight(); // 297mm
 
-    // 0. Clean crisp white background
+    // Clean white page background
     doc.setFillColor(255, 255, 255);
     doc.rect(0, 0, pageWidth, pageHeight, 'F');
 
-    // Helper to format timings as "10.00 - 01.00"
+    // Helper: Format timings cleanly
     const formatDutyTiming = (startTime: string, endTime: string) => {
       const formatSingle = (timeStr: string) => {
         if (!timeStr) return '';
@@ -100,124 +100,186 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
         if (parts.length >= 2) {
           let h = parseInt(parts[0], 10);
           const m = parts[1];
+          const ampm = h >= 12 ? 'PM' : 'AM';
           if (h > 12) h = h - 12;
           if (h === 0) h = 12;
-          return `${h.toString().padStart(2, '0')}.${m}`;
+          return `${h.toString().padStart(2, '0')}:${m} ${ampm}`;
         }
         return timeStr;
       };
-      return `${formatSingle(startTime)} - ${formatSingle(endTime)}`;
+      return `${formatSingle(startTime)} – ${formatSingle(endTime)}`;
     };
 
-    // Helper to compute single initial (first letter of first name)
-    const getInitial = (name: string) => {
-      return name.trim().charAt(0).toUpperCase() || '—';
-    };
+    const collegeName = examinations[0]?.college || activeAllotment?.examinations[0]?.college || "Seshadripuram Independent Pre-University College";
+    const examName = assignedDuties.length > 0
+      ? assignedDuties[0].examName
+      : (examinations[0]?.examName || activeAllotment?.examinations[0]?.examName || 'Annual Examination - August 2026');
 
-    const collegeName = examinations[0]?.college || activeAllotment?.examinations[0]?.college || "Seshadripuram Independent Pre - University College";
-    const examName = assignedDuties.length > 0 ? assignedDuties[0].examName : (examinations[0]?.examName || activeAllotment?.examinations[0]?.examName || 'Annual Examination August 2026');
-
-    // 1. Top Header Card (Matching Date, Day, Subject Table Header: Primary Indigo #4F46E5 & Crisp White Text)
     const cardX = 12;
-    const cardY = 14;
     const cardW = pageWidth - 24; // 186mm
-    const cardH = 48;
 
-    doc.setFillColor(79, 70, 229); // Primary Indigo (#4F46E5 - matches table header background)
-    doc.setDrawColor(67, 56, 202); // Deep Indigo Border (#4338CA)
-    doc.setLineWidth(0.3);
-    doc.roundedRect(cardX, cardY, cardW, cardH, 5, 5, 'FD');
+    // ═══════════════════════════════════════════════════════════════
+    // 1. TOP HERO BANNER CARD (Vibrant Royal Indigo & Purple Banner)
+    // ═══════════════════════════════════════════════════════════════
+    const headerY = 12;
+    const headerH = 42;
 
-    // Line 1: College / Institution Name (Crisp White, Bold, Centered)
-    const collegeFontSize = collegeName.length > 40 ? 15.5 : 18;
+    // Main Header Card Fill (Deep Royal Indigo #3730A3)
+    doc.setFillColor(55, 48, 163); // #3730A3
+    doc.roundedRect(cardX, headerY, cardW, headerH, 4, 4, 'F');
+
+    // Subtle Light Design Flourishes (Translucent Geometric Glow Rings)
+    doc.setDrawColor(99, 102, 241); // Indigo-500 (#6366F1)
+    doc.setLineWidth(0.4);
+    doc.circle(cardX + cardW - 16, headerY + 14, 16, 'S');
+    doc.setDrawColor(129, 140, 248); // Indigo-400 (#818CF8)
+    doc.setLineWidth(0.25);
+    doc.circle(cardX + cardW - 16, headerY + 14, 25, 'S');
+
+    // Geometric Dot Matrix on Top-Left (3 rows x 5 columns)
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 5; c++) {
+        doc.setFillColor(165, 180, 252); // #A5B4FC
+        doc.circle(cardX + 7 + c * 3.2, headerY + 7 + r * 3.2, 0.5, 'F');
+      }
+    }
+
+    // Golden / Amber Bottom Accent Stripe on the Banner
+    doc.setFillColor(245, 158, 11); // Amber-500 (#F59E0B)
+    doc.rect(cardX, headerY + headerH - 1.8, cardW, 1.8, 'F');
+
+    // Institution Name (Bold, Crisp White, Centered)
+    const collegeFontSize = collegeName.length > 42 ? 14 : 16;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(collegeFontSize);
-    doc.setTextColor(255, 255, 255); // Crisp White
-    doc.text(collegeName, pageWidth / 2, cardY + 13.5, { align: 'center' });
+    doc.setTextColor(255, 255, 255);
+    doc.text(collegeName.toUpperCase(), pageWidth / 2, headerY + 14.5, { align: 'center' });
 
-    // Line 2: Examination Name (Soft White / Lavender, Bold, Centered)
-    const examFontSize = examName.length > 35 ? 12.5 : 13.5;
+    // Examination Name Pill (Soft Lavender / Golden Tag)
+    const examBadgeY = headerY + 19;
+    const examText = examName.toUpperCase();
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(examFontSize);
-    doc.setTextColor(224, 231, 255); // Soft Light Indigo / White (#E0E7FF)
-    doc.text(examName, pageWidth / 2, cardY + 21, { align: 'center' });
+    doc.setFontSize(9);
+    const examTextW = doc.getTextWidth(examText);
+    const examPillW = examTextW + 10;
+    const examPillX = (pageWidth - examPillW) / 2;
 
-    // Line 3: Title (Crisp White, Bold, Centered)
+    doc.setFillColor(67, 56, 202); // #4338CA
+    doc.setDrawColor(165, 180, 252);
+    doc.setLineWidth(0.35);
+    doc.roundedRect(examPillX, examBadgeY, examPillW, 6, 2, 2, 'FD');
+
+    doc.setTextColor(254, 240, 138); // Soft Gold (#FEF08A)
+    doc.text(examText, pageWidth / 2, examBadgeY + 4.3, { align: 'center' });
+
+    // Title: "INVIGILATOR'S DUTY SUMMARY" (Crisp Bold White)
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(18);
-    doc.setTextColor(255, 255, 255); // Crisp White
-    doc.text("Invigilator's Duty Summary", pageWidth / 2, cardY + 37, { align: 'center' });
+    doc.setFontSize(14);
+    doc.setTextColor(255, 255, 255);
+    doc.text("INVIGILATOR'S DUTY SUMMARY", pageWidth / 2, headerY + 34.5, { align: 'center' });
 
-    // 2. Faculty Profile Card (with Primary Indigo Border #4F46E5 & Duties Circle Badge)
-    const profY = cardY + cardH + 7; // 69mm
-    const profH = 27;
+    // ═══════════════════════════════════════════════════════════════
+    // 2. FACULTY PROFILE CARD (Spacious Colorful Identity Card)
+    // ═══════════════════════════════════════════════════════════════
+    const profCardY = headerY + headerH + 6; // 60mm
+    const profCardH = 27;
 
-    doc.setFillColor(255, 255, 255);
-    doc.setDrawColor(79, 70, 229); // Primary Indigo Border (#4F46E5)
-    doc.setLineWidth(0.7);
-    doc.roundedRect(cardX, profY, cardW, profH, 4.5, 4.5, 'FD');
+    // Card Fill with Soft Border
+    doc.setFillColor(248, 250, 255); // #F8FAFF
+    doc.setDrawColor(224, 231, 255); // #E0E7FF
+    doc.setLineWidth(0.4);
+    doc.roundedRect(cardX, profCardY, cardW, profCardH, 4, 4, 'FD');
 
-    // Left: Primary Indigo Avatar Circle with Single Initial
-    const avatarX = cardX + 14;
-    const avatarY = profY + profH / 2;
-    doc.setFillColor(79, 70, 229); // Primary Indigo (#4F46E5)
-    doc.circle(avatarX, avatarY, 9, 'F');
+    // Left Vibrant Cyan/Teal Accent Bar
+    doc.setFillColor(14, 165, 233); // Sky-500 (#0EA5E9)
+    doc.roundedRect(cardX, profCardY, 4, profCardH, 1.8, 1.8, 'F');
 
+    // Circular Avatar Badge with Gradient feel (Royal Indigo)
+    const avatarX = cardX + 17;
+    const avatarY = profCardY + profCardH / 2;
+    doc.setFillColor(79, 70, 229); // #4F46E5
+    doc.circle(avatarX, avatarY, 8.5, 'F');
+
+    const initial = (invigilator.name.trim().charAt(0) || 'F').toUpperCase();
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
     doc.setTextColor(255, 255, 255);
-    doc.text(getInitial(invigilator.name), avatarX, avatarY + 4.2, { align: 'center' });
+    doc.text(initial, avatarX, avatarY + 4.2, { align: 'center' });
 
-    // Middle: Faculty Info Details
+    // Faculty Information Details
+    const infoX = cardX + 31;
+    
+    // Name (Bold Deep Slate)
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
-    doc.setTextColor(15, 23, 42); // Slate-900 (#0F172A)
-    doc.text(invigilator.name, cardX + 27, profY + 9);
+    doc.setTextColor(15, 23, 42); // #0F172A
+    doc.text(invigilator.name, infoX, profCardY + 8);
 
-    doc.setFont('helvetica', 'normal');
+    // Designation (Indigo Accent)
+    doc.setFont('helvetica', 'bold');
     doc.setFontSize(9.5);
-    doc.setTextColor(71, 85, 105); // Slate-600 (#475569)
-    doc.text(invigilator.designation, cardX + 27, profY + 15.5);
+    doc.setTextColor(79, 70, 229); // #4F46E5
+    doc.text(invigilator.designation || 'Faculty Invigilator', infoX, profCardY + 14.5);
 
-    const contactStr = `${invigilator.mobile || '—'} | ${invigilator.email || '—'}`;
+    // Contact Information (Clean text)
+    const phoneVal = invigilator.mobile ? `Phone: ${invigilator.mobile}` : 'Phone: —';
+    const emailVal = invigilator.email ? `Email: ${invigilator.email}` : 'Email: —';
+
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(100, 116, 139); // Slate-500 (#64748B)
-    doc.text(contactStr, cardX + 27, profY + 21.5);
+    doc.setFontSize(8.5);
+    doc.setTextColor(71, 85, 105); // Slate-600
+    doc.text(`${phoneVal}    •    ${emailVal}`, infoX, profCardY + 21.5);
 
-    // Right: Circular Duties Badge with Primary Indigo Ring
-    const dutiesBadgeX = cardX + cardW - 17;
-    const dutiesBadgeY = profY + profH / 2;
+    // Right Stat Box: "ALLOTTED DUTIES"
+    const statW = 42;
+    const statH = 20;
+    const statX = cardX + cardW - statW - 4;
+    const statY = profCardY + (profCardH - statH) / 2;
 
-    doc.setFillColor(255, 255, 255);
-    doc.setDrawColor(79, 70, 229); // Primary Indigo (#4F46E5)
-    doc.setLineWidth(0.7);
-    doc.circle(dutiesBadgeX, dutiesBadgeY, 10, 'FD');
+    doc.setFillColor(238, 242, 255); // #EEF2FF
+    doc.setDrawColor(199, 210, 254); // #C7D2FE
+    doc.setLineWidth(0.4);
+    doc.roundedRect(statX, statY, statW, statH, 3, 3, 'FD');
 
-    // Large Duty Count Number
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(18);
-    doc.setTextColor(79, 70, 229); // Primary Indigo
-    doc.text(assignedDuties.length.toString(), dutiesBadgeX, dutiesBadgeY + 2, { align: 'center' });
+    doc.setFontSize(6.5);
+    doc.setTextColor(79, 70, 229); // #4F46E5
+    doc.text("ALLOTTED DUTIES", statX + statW / 2, statY + 5.5, { align: 'center' });
 
-    // "DUTIES" Label
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(5.5);
-    doc.setTextColor(79, 70, 229); // Primary Indigo
-    doc.text("DUTIES", dutiesBadgeX, dutiesBadgeY + 6.5, { align: 'center' });
+    doc.setFontSize(15);
+    doc.setTextColor(55, 48, 163); // #3730A3
+    doc.text(String(assignedDuties.length), statX + statW / 2, statY + 13, { align: 'center' });
 
-    // 3. Duty Schedule Table (Primary Indigo Header #4F46E5 & Cyan Timings Pill #0891B2)
-    const tableStartY = profY + profH + 7; // 103mm
-    const tableHead = [['#', 'Date', 'Day', 'Subject', 'Timings']];
-    const tableBody = assignedDuties.map((duty, index) => {
-      return [
-        index + 1,
-        format(new Date(duty.date), "dd.MM.yyyy"),
-        format(new Date(duty.date), "EEEE"),
-        duty.subject,
-        formatDutyTiming(duty.startTime, duty.endTime)
-      ];
-    });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6);
+    doc.setTextColor(100, 116, 139);
+    doc.text("Sessions Assigned", statX + statW / 2, statY + 17.5, { align: 'center' });
+
+    // ═══════════════════════════════════════════════════════════════
+    // 3. DUTY SCHEDULE SECTION (Spacious Schedule Card + Table)
+    // ═══════════════════════════════════════════════════════════════
+    const schedY = profCardY + profCardH + 6; // 93mm
+
+    // Schedule Header Banner
+    const bannerH = 7.5;
+    doc.setFillColor(79, 70, 229); // #4F46E5
+    doc.roundedRect(cardX, schedY, cardW, bannerH, 2.5, 2.5, 'F');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.5);
+    doc.setTextColor(255, 255, 255);
+    doc.text("DUTY ALLOTMENT SCHEDULE", cardX + 7, schedY + 5.2);
+
+    const tableStartY = schedY + bannerH + 2;
+    const tableHead = [['#', 'Date', 'Day', 'Subject / Paper', 'Timings']];
+    const tableBody = assignedDuties.map((duty, index) => [
+      index + 1,
+      format(new Date(duty.date), "dd.MM.yyyy"),
+      format(new Date(duty.date), "EEEE"),
+      duty.subject,
+      formatDutyTiming(duty.startTime, duty.endTime)
+    ]);
 
     (doc as any).autoTable({
       head: tableHead,
@@ -226,127 +288,152 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
       margin: { left: cardX, right: cardX },
       theme: 'plain',
       headStyles: {
-        fillColor: [79, 70, 229], // Primary Indigo (#4F46E5)
+        fillColor: [67, 56, 202], // #4338CA
         textColor: [255, 255, 255],
         fontStyle: 'bold',
         halign: 'center',
         valign: 'middle',
-        fontSize: 10,
-        cellPadding: 3.5
+        fontSize: 9.5,
+        cellPadding: 3.8
       },
       columnStyles: {
-        0: { halign: 'center', cellWidth: 16 },
-        1: { halign: 'center', cellWidth: 35, fontSize: 10, textColor: [15, 23, 42] },
-        2: { halign: 'center', cellWidth: 35, fontSize: 10, textColor: [71, 85, 105] },
-        3: { halign: 'center', cellWidth: 56, fontStyle: 'bold', fontSize: 10, textColor: [15, 23, 42] },
-        4: { halign: 'center', cellWidth: 44 }
+        0: { halign: 'center', cellWidth: 14 },
+        1: { halign: 'center', cellWidth: 32, fontSize: 9.5, textColor: [30, 41, 59] },
+        2: { halign: 'center', cellWidth: 32, fontSize: 9.5, textColor: [71, 85, 105] },
+        3: { halign: 'left', cellWidth: 62, fontStyle: 'bold', fontSize: 9.5, textColor: [15, 23, 42] },
+        4: { halign: 'center', cellWidth: 46 }
       },
       alternateRowStyles: {
-        fillColor: [248, 250, 255] // Soft Slate/Indigo Tint (#F8FAFF)
+        fillColor: [248, 250, 255] // Soft Indigo Tint
       },
       styles: {
-        fontSize: 10,
-        cellPadding: 3.5,
+        fontSize: 9.5,
+        cellPadding: 3.8,
         valign: 'middle',
-        lineColor: [224, 231, 255], // Soft Indigo Gridlines (#E0E7FF)
-        lineWidth: 0.2
+        lineColor: [224, 231, 255],
+        lineWidth: 0.3
       },
       didParseCell: (data: any) => {
-        // Clear text for columns with custom drawing so autoTable doesn't overlay text
         if (data.section === 'body' && (data.column.index === 0 || data.column.index === 4)) {
           data.cell.text = [];
         }
       },
       didDrawCell: (data: any) => {
-        // 1. Column 0: Circular Primary Indigo badge with white serial number
+        // Col 0: Indigo circular badge
         if (data.section === 'body' && data.column.index === 0) {
           const { x, y, width, height } = data.cell;
           const cx = x + width / 2;
           const cy = y + height / 2;
-
-          doc.setFillColor(79, 70, 229); // Primary Indigo (#4F46E5)
-          doc.circle(cx, cy, 4.2, 'F');
-
+          doc.setFillColor(79, 70, 229);
+          doc.circle(cx, cy, 3.8, 'F');
           doc.setFont('helvetica', 'bold');
-          doc.setFontSize(9);
+          doc.setFontSize(8.5);
           doc.setTextColor(255, 255, 255);
-          doc.text(String(data.row.index + 1), cx, cy + 3, { align: 'center' });
+          doc.text(String(data.row.index + 1), cx, cy + 2.8, { align: 'center' });
         }
 
-        // 2. Column 4: Soft Cyan pill capsule with Cyan timings text (#0891B2)
+        // Col 4: Soft Cyan timing pill capsule
         if (data.section === 'body' && data.column.index === 4) {
           const { x, y, width, height } = data.cell;
-          const pillW = 36;
-          const pillH = 7;
+          const pillW = 42;
+          const pillH = 6.8;
           const px = x + (width - pillW) / 2;
           const py = y + (height - pillH) / 2;
           const timingText = data.cell.raw;
 
-          doc.setFillColor(236, 254, 255); // Soft Cyan Pill (#ECFEFF - cyan-50)
-          doc.setDrawColor(165, 243, 252); // Subtle Cyan Border (#A5F3FC - cyan-200)
-          doc.setLineWidth(0.2);
-          doc.roundedRect(px, py, pillW, pillH, 3, 3, 'FD');
+          doc.setFillColor(236, 254, 255); // Cyan-50 (#ECFEFF)
+          doc.setDrawColor(165, 243, 252); // Cyan-200 (#A5F3FC)
+          doc.setLineWidth(0.25);
+          doc.roundedRect(px, py, pillW, pillH, 2.5, 2.5, 'FD');
 
           doc.setFont('helvetica', 'bold');
-          doc.setFontSize(9);
-          doc.setTextColor(8, 145, 178); // Secondary Cyan (#0891B2 - cyan-600)
-          doc.text(String(timingText), x + width / 2, y + height / 2 + 2.8, { align: 'center' });
+          doc.setFontSize(8);
+          doc.setTextColor(8, 145, 178); // Cyan-600 (#0891B2)
+          doc.text(String(timingText), x + width / 2, y + height / 2 + 2.6, { align: 'center' });
         }
       }
     });
 
-    // 4. General Instructions Section (Rendered in serial numbers after the duty schedule slot with exactly 2 cm gap)
-    const finalTableY = (doc as any).lastAutoTable?.finalY || (tableStartY + 30);
+    const finalTableY = (doc as any).lastAutoTable?.finalY || 135;
+
+    // ═══════════════════════════════════════════════════════════════
+    // 4. GENERAL INSTRUCTIONS (Well-Spaced, Elegant 2-Column Card)
+    // ═══════════════════════════════════════════════════════════════
+    const instY = finalTableY + 6;
     const enabledInstructions = (instructions || []).filter(i => i.enabled);
 
-    let currentY = finalTableY + 20; // Exactly 2 cm (20mm) gap between schedule allotment table and General Instructions
-
     if (enabledInstructions.length > 0) {
-      // Check if currentY is getting close to page bottom
-      if (currentY > pageHeight - 65) {
-        doc.addPage();
-        currentY = 16;
-      }
+      // Instructions Header Mini-Banner (Cyan Accent)
+      const instBannerH = 7;
+      doc.setFillColor(14, 165, 233); // Sky-500 (#0EA5E9)
+      doc.roundedRect(cardX, instY, cardW, instBannerH, 2.5, 2.5, 'F');
 
-      // Title: "General Instructions:" (without underline)
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(11);
-      doc.setTextColor(30, 27, 75); // Deep Midnight Indigo (#1E1B4B)
-      doc.text("General Instructions:", cardX, currentY);
+      doc.setFontSize(9);
+      doc.setTextColor(255, 255, 255);
+      doc.text("GENERAL INSTRUCTIONS TO INVIGILATORS", cardX + 7, instY + 4.8);
 
-      currentY += 6.5;
+      // Well-spaced Instructions Box
+      const instBoxY = instY + instBannerH + 2;
+      const leftList = enabledInstructions.slice(0, 5);
+      const rightList = enabledInstructions.slice(5, 10);
+      const maxRows = Math.max(leftList.length, rightList.length, 1);
+      const rowStepH = 9.8;
+      const instBoxH = maxRows * rowStepH + 3;
 
-      const serialWidth = 6.5;
-      const textWidth = cardW - serialWidth; // Stretches cleanly from cardX + serialWidth to right margin (cardX + cardW)
+      doc.setFillColor(248, 250, 252); // #F8FAFC
+      doc.setDrawColor(226, 232, 240); // #E2E8F0
+      doc.setLineWidth(0.4);
+      doc.roundedRect(cardX, instBoxY, cardW, instBoxH, 3, 3, 'FD');
 
-      enabledInstructions.forEach((item, index) => {
-        // Multi-line text calculation
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(8.5);
-        const textLines = doc.splitTextToSize(item.text, textWidth);
-        const itemBlockHeight = textLines.length * 3.8 + 1.8;
+      // Center Divider Line
+      const midColX = cardX + cardW / 2;
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.35);
+      doc.line(midColX, instBoxY + 2.5, midColX, instBoxY + instBoxH - 2.5);
 
-        if (currentY + itemBlockHeight > pageHeight - 20) {
-          doc.addPage();
-          currentY = 16;
-        }
+      const colTextW = (cardW / 2) - 15;
 
-        // Serial number (bold purple)
+      // Left Column (Items 1 to 5)
+      leftList.forEach((item, idx) => {
+        const itemCenterY = instBoxY + 1.5 + idx * rowStepH + (rowStepH / 2);
+
+        // Circular indigo badge
+        doc.setFillColor(79, 70, 229);
+        doc.circle(cardX + 6, itemCenterY, 2.6, 'F');
+
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(8.5);
-        doc.setTextColor(99, 66, 232); // #6342e8
-        doc.text(`${index + 1}.`, cardX, currentY);
+        doc.setFontSize(7);
+        doc.setTextColor(255, 255, 255);
+        doc.text(String(idx + 1), cardX + 6, itemCenterY + 2.1, { align: 'center' });
 
-        // Instruction text aligned evenly along left and right margins (justify)
+        // Text
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(8.5);
-        doc.setTextColor(51, 65, 85); // Slate-700
-        doc.text(item.text, cardX + serialWidth, currentY, {
-          maxWidth: textWidth,
-          align: 'justify'
-        });
+        doc.setFontSize(7.2);
+        doc.setTextColor(30, 41, 59); // Slate-800
+        const textLines = doc.splitTextToSize(item.text, colTextW);
+        doc.text(textLines, cardX + 11.5, itemCenterY - 1, { lineHeightFactor: 1.2 });
+      });
 
-        currentY += itemBlockHeight;
+      // Right Column (Items 6 to 10)
+      rightList.forEach((item, idx) => {
+        const itemCenterY = instBoxY + 1.5 + idx * rowStepH + (rowStepH / 2);
+
+        // Circular indigo badge
+        doc.setFillColor(79, 70, 229);
+        doc.circle(midColX + 6, itemCenterY, 2.6, 'F');
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7);
+        doc.setTextColor(255, 255, 255);
+        doc.text(String(idx + 6), midColX + 6, itemCenterY + 2.1, { align: 'center' });
+
+        // Text
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.2);
+        doc.setTextColor(30, 41, 59); // Slate-800
+        const textLines = doc.splitTextToSize(item.text, colTextW);
+        doc.text(textLines, midColX + 11.5, itemCenterY - 1, { lineHeightFactor: 1.2 });
       });
     }
 
@@ -668,15 +755,19 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
 
             <CardContent className="px-6 pb-6 pt-0">
               {instructions.filter(i => i.enabled).length > 0 ? (
-                <div className="rounded-xl border border-border/70 dark:border-slate-800 bg-purple-50/20 dark:bg-purple-950/10 p-4 space-y-2.5">
-                  {instructions
-                    .filter(i => i.enabled)
-                    .map((item, idx) => (
-                      <div key={item.id} className="flex items-start gap-2.5 text-xs text-foreground/90 dark:text-slate-200">
-                        <span className="font-bold text-[#6342e8] min-w-[20px]">{idx + 1}.</span>
-                        <span className="leading-relaxed">{item.text}</span>
-                      </div>
-                    ))}
+                <div className="rounded-xl border border-indigo-100 dark:border-indigo-950/60 bg-[#F6F7FE] dark:bg-slate-900/60 p-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
+                    {instructions
+                      .filter(i => i.enabled)
+                      .map((item, idx) => (
+                        <div key={item.id} className="flex items-start gap-2.5 text-xs text-slate-800 dark:text-slate-200">
+                          <span className="flex items-center justify-center h-5 w-5 rounded-full bg-[#3B36DB] text-white font-bold text-[10px] shrink-0 mt-0.5 shadow-xs">
+                            {idx + 1}
+                          </span>
+                          <span className="leading-relaxed font-medium">{item.text}</span>
+                        </div>
+                      ))}
+                  </div>
                 </div>
               ) : (
                 <div className="p-4 rounded-xl border border-dashed text-center text-xs text-muted-foreground">
