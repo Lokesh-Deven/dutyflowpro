@@ -111,7 +111,7 @@ export function ProfileView() {
       {/* Page Header */}
       <div className="space-y-1">
         <h1 className="text-2xl font-bold font-headline tracking-tight text-slate-900 dark:text-white">
-          My Account & Subscription
+          Settings & Subscription
         </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
           Manage institutional profile settings, subscription status, and download quotas

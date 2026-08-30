@@ -43,7 +43,6 @@ export const navItems = [
   { href: '/dashboard/schedule', label: 'Day-wise Schedule', icon: CalendarDays },
   { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart2 },
   { href: '/dashboard/instructions', label: 'Add Instructions', icon: ListChecks },
-  { href: '/dashboard/profile', label: 'My Account', icon: UserCircle },
 ];
 
 export const newAllotmentSteps = [
@@ -279,8 +278,8 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
             <DropdownMenuSeparator className="bg-white/10" />
             <DropdownMenuItem asChild className="cursor-pointer m-1 rounded-lg hover:bg-white/10 focus:bg-white/10 text-white">
               <Link href="/dashboard/profile" onClick={handleNavClick} className="flex items-center gap-2 text-xs">
-                <UserCircle className="h-4 w-4 text-purple-400" />
-                <span>My Account</span>
+                <Settings className="h-4 w-4 text-purple-400" />
+                <span>Settings</span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-white/10" />

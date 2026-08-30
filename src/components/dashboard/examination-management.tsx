@@ -583,11 +583,10 @@ export function ExaminationManagement() {
               <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-[#6342e8] dark:text-purple-400">
                 <FileText className="h-5 w-5" />
               </div>
-              <div className="flex items-center gap-3">
+              <div>
                 <CardTitle className="font-headline text-lg font-bold tracking-tight text-slate-900 dark:text-white">
                   Examination Details
                 </CardTitle>
-                <div className="w-8 h-[2px] bg-[#6342e8] rounded-full hidden sm:block" />
               </div>
             </div>
             {editingExamId && (
@@ -892,11 +891,10 @@ export function ExaminationManagement() {
               <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-[#6342e8] dark:text-purple-400">
                 <CalendarDays className="h-5 w-5" />
               </div>
-              <div className="flex items-center gap-3">
+              <div>
                 <CardTitle className="font-headline text-lg font-bold tracking-tight text-slate-900 dark:text-white">
                   Added Examinations
                 </CardTitle>
-                <div className="w-8 h-[2px] bg-[#6342e8] rounded-full hidden sm:block" />
               </div>
             </div>
 

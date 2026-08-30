@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, Building2, UserCircle, ShieldCheck } from "lucide-react";
+import { LogOut, Building2, Settings, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -57,8 +57,8 @@ export function UserNav() {
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild className="cursor-pointer m-1 rounded-lg">
           <Link href="/dashboard/profile" className="flex items-center gap-2">
-            <UserCircle className="h-4 w-4 text-[#4F46E5]" />
-            <span className="font-medium text-xs">My Account</span>
+            <Settings className="h-4 w-4 text-[#4F46E5]" />
+            <span className="font-medium text-xs">Settings</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
