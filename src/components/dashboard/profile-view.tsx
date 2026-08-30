@@ -108,27 +108,25 @@ export function ProfileView() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-12 animate-in fade-in duration-300">
-      {/* Page Header */}
-      <div className="space-y-1">
-        <h1 className="text-2xl font-bold font-headline tracking-tight text-slate-900 dark:text-white">
-          Settings & Subscription
-        </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          Manage institutional profile settings, subscription status, and download quotas
-        </p>
-      </div>
       
       {/* ========================================================================= */}
-      {/* 1. HERO PROFILE CARD */}
+      {/* 1. HERO PROFILE CARD (Glossy Indigo Theme) */}
       {/* ========================================================================= */}
-      <Card className="border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl overflow-hidden bg-white dark:bg-slate-900 relative">
-        {/* Top Accent Strip */}
-        <div className="h-[3px] w-full bg-gradient-to-r from-[#6342e8] via-[#8b5cf6] to-[#f59e0b]" />
+      <Card className="border border-indigo-500/30 dark:border-indigo-400/20 shadow-xl rounded-2xl overflow-hidden bg-gradient-to-br from-[#4F46E5] via-[#4338CA] to-[#312E81] text-white relative">
+        {/* Glossy Top Glass Shimmer Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-white/15 via-white/5 to-transparent pointer-events-none" />
+        
+        {/* Glossy Ambient Glow Orbs */}
+        <div className="absolute -right-12 -top-12 w-60 h-60 bg-indigo-300/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -left-12 -bottom-12 w-52 h-52 bg-purple-400/20 rounded-full blur-2xl pointer-events-none" />
 
-        <CardContent className="p-6 sm:p-8">
+        {/* Top Accent Strip */}
+        <div className="h-[3px] w-full bg-gradient-to-r from-indigo-200 via-purple-300 to-amber-300 relative z-10" />
+
+        <CardContent className="p-6 sm:p-8 relative z-10">
           <div className="flex flex-col sm:flex-row items-center sm:items-center gap-6">
-            {/* Single Letter Avatar */}
-            <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl bg-[#6342e8] text-white flex items-center justify-center font-black text-3xl sm:text-4xl shadow-md ring-4 ring-purple-50 dark:ring-purple-950 shrink-0 select-none">
+            {/* Single Letter Avatar - Glassy Indigo style */}
+            <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl bg-white/20 backdrop-blur-md text-white flex items-center justify-center font-black text-3xl sm:text-4xl shadow-lg ring-4 ring-white/30 shrink-0 select-none border border-white/40">
               {singleInitial}
             </div>
 
@@ -137,32 +135,34 @@ export function ProfileView() {
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                 <div className="space-y-1.5 flex-1 min-w-0">
                   <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#6342e8]">Institution Profile</span>
+                    <span className="text-[11px] font-bold uppercase tracking-wider bg-white/15 text-indigo-100 px-2.5 py-0.5 rounded-full border border-white/20 backdrop-blur-xs">
+                      Institution Profile
+                    </span>
                     
                     {isSubscribed ? (
-                      <Badge className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 text-[10px] font-bold py-0 px-2 rounded-full">
-                        <ShieldCheck className="mr-1 h-3 w-3 text-emerald-600" />
+                      <Badge className="bg-emerald-400/20 text-emerald-100 border-emerald-300/40 text-[10px] font-bold py-0 px-2 rounded-full backdrop-blur-xs">
+                        <ShieldCheck className="mr-1 h-3 w-3 text-emerald-300" />
                         Subscribed (Full Access)
                       </Badge>
                     ) : isUnsubscribed ? (
-                      <Badge variant="destructive" className="text-[10px] font-bold py-0 px-2 rounded-full">
+                      <Badge variant="destructive" className="text-[10px] font-bold py-0 px-2 rounded-full bg-rose-500/80 text-white border-rose-300/40">
                         <ShieldX className="mr-1 h-3 w-3" />
                         Unsubscribed (Access Denied)
                       </Badge>
                     ) : (
-                      <Badge className="bg-purple-50 text-[#6342e8] dark:bg-purple-950/60 dark:text-purple-300 border-purple-200 text-[10px] font-bold py-0 px-2 rounded-full">
-                        <Sparkles className="mr-1 h-3 w-3 text-[#6342e8]" />
+                      <Badge className="bg-white/20 text-white border-white/30 text-[10px] font-bold py-0 px-2 rounded-full backdrop-blur-xs">
+                        <Sparkles className="mr-1 h-3 w-3 text-amber-300" />
                         Free Access (Quota Limited)
                       </Badge>
                     )}
                   </div>
                   
-                  <h1 className="text-2xl sm:text-3xl font-headline font-extrabold text-slate-900 dark:text-white tracking-tight break-words">
+                  <h1 className="text-2xl sm:text-3xl font-headline font-extrabold text-white tracking-tight break-words drop-shadow-xs">
                     {institutionName}
                   </h1>
 
-                  <p className="text-xs sm:text-sm text-slate-500 flex items-center justify-center sm:justify-start gap-1.5 font-medium">
-                    <Mail className="h-3.5 w-3.5 text-[#6342e8]" />
+                  <p className="text-xs sm:text-sm text-indigo-100/90 flex items-center justify-center sm:justify-start gap-1.5 font-medium">
+                    <Mail className="h-3.5 w-3.5 text-indigo-200" />
                     <span>{email}</span>
                   </p>
                 </div>
@@ -175,7 +175,7 @@ export function ProfileView() {
                       setEditedName(institutionName);
                       setIsEditing(true);
                     }}
-                    className="text-xs font-semibold self-center sm:self-auto rounded-xl border-purple-200 dark:border-purple-800 text-[#6342e8] hover:bg-purple-50/70 shrink-0 h-8"
+                    className="text-xs font-semibold self-center sm:self-auto rounded-xl border-white/30 text-white bg-white/10 hover:bg-white/20 backdrop-blur-xs shadow-xs shrink-0 h-8"
                   >
                     <Edit2 className="mr-1.5 h-3.5 w-3.5" />
                     Edit Institution
@@ -187,9 +187,9 @@ export function ProfileView() {
 
           {/* Edit Form if active */}
           {isEditing && (
-            <div className="mt-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-end gap-3 animate-in fade-in">
+            <div className="mt-5 p-4 rounded-xl bg-white/15 backdrop-blur-md border border-white/25 flex flex-col sm:flex-row items-end gap-3 animate-in fade-in">
               <div className="w-full space-y-1.5">
-                <Label htmlFor="edit-inst" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <Label htmlFor="edit-inst" className="text-xs font-semibold text-white">
                   Update Institution Name
                 </Label>
                 <Input
@@ -197,7 +197,7 @@ export function ProfileView() {
                   value={editedName}
                   onChange={(e) => setEditedName(e.target.value)}
                   placeholder="Enter full institution name"
-                  className="bg-white dark:bg-slate-900 h-9 text-sm rounded-lg"
+                  className="bg-white/20 text-white placeholder:text-white/60 border-white/30 focus-visible:ring-white h-9 text-sm rounded-lg"
                 />
               </div>
               <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -205,7 +205,7 @@ export function ProfileView() {
                   size="sm"
                   onClick={handleSaveInstitution}
                   disabled={isSaving}
-                  className="bg-[#6342e8] hover:bg-[#5232d6] text-white text-xs font-semibold h-9 px-4 rounded-lg shadow-xs"
+                  className="bg-white hover:bg-indigo-50 text-[#4338CA] text-xs font-bold h-9 px-4 rounded-lg shadow-md"
                 >
                   <Save className="mr-1.5 h-3.5 w-3.5" />
                   {isSaving ? "Saving..." : "Save"}
@@ -214,7 +214,7 @@ export function ProfileView() {
                   size="sm"
                   variant="ghost"
                   onClick={() => setIsEditing(false)}
-                  className="text-xs h-9 rounded-lg"
+                  className="text-xs text-white/90 hover:bg-white/10 hover:text-white h-9 rounded-lg"
                 >
                   Cancel
                 </Button>
