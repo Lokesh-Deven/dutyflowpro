@@ -10,8 +10,8 @@ import {
 } from './storage-service';
 
 export const DEFAULT_SIGNATORY: SignatoryInfo = {
-  name: "Lokesh D",
-  designation: "Principal & Chief Superintendent",
+  name: "",
+  designation: "",
 };
 
 export const DEFAULT_INSTRUCTIONS: InstructionItem[] = [
@@ -194,12 +194,16 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
         try {
           const parsed = JSON.parse(storedSignatory);
           if (parsed && typeof parsed === 'object' && isMounted) {
+            const isLegacyDefault = (parsed.name === 'LOKESH D' || parsed.name === 'Lokesh D') && 
+              parsed.designation === 'Principal & Chief Superintendent';
             setSignatory({
-              name: parsed.name || '',
-              designation: parsed.designation || '',
+              name: isLegacyDefault ? '' : (parsed.name || ''),
+              designation: isLegacyDefault ? '' : (parsed.designation || ''),
             });
           }
         } catch (_) {}
+      } else if (isMounted) {
+        setSignatory(DEFAULT_SIGNATORY);
       }
 
       // Check version of stored instructions to ensure upgrade to latest user-specified defaults

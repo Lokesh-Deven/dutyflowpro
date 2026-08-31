@@ -28,6 +28,7 @@ import {
   Check
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/lib/auth-context';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
@@ -45,9 +46,10 @@ export const DESIGNATION_PRESETS = [
 
 export function SignatoryManagement() {
   const { signatory, updateSignatory, resetSignatory, examinations, activeAllotment } = useAllotment();
+  const { profile } = useAuth();
   const { toast } = useToast();
 
-  const collegeName = examinations[0]?.college || activeAllotment?.examinations[0]?.college || 'Seshadripuram Independent Pre-University College';
+  const collegeName = profile?.institution_name || examinations[0]?.college || activeAllotment?.examinations[0]?.college || '';
 
   const [name, setName] = useState(signatory?.name || '');
   const [designation, setDesignation] = useState(signatory?.designation || '');
@@ -145,7 +147,7 @@ export function SignatoryManagement() {
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="e.g. Prof. Lokesh D"
+                      placeholder="e.g. Dr. Jane Doe"
                       className="h-11 px-3.5 text-sm rounded-xl border-border bg-background focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:border-transparent transition-all"
                     />
                   </div>
@@ -169,7 +171,7 @@ export function SignatoryManagement() {
                         type="text"
                         value={designation}
                         onChange={(e) => setDesignation(e.target.value)}
-                        placeholder="Select"
+                        placeholder="Select or type designation"
                         className="h-11 px-3.5 text-sm rounded-xl border-border bg-background focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:border-transparent transition-all"
                       />
                     </div>
@@ -261,11 +263,17 @@ export function SignatoryManagement() {
                 <div className="flex justify-end pt-1">
                   <div className="text-right space-y-0.5">
                     <div className="text-sm font-bold text-slate-900 dark:text-slate-100 tracking-tight">
-                      <span className="text-[#0891B2] dark:text-cyan-400 font-semibold mr-1.5">Issued by</span>
-                      {name.trim() ? name.trim() : "Lokesh D"}
+                      {name.trim() ? (
+                        <>
+                          <span className="text-[#0891B2] dark:text-cyan-400 font-semibold mr-1.5">Issued by</span>
+                          {name.trim()}
+                        </>
+                      ) : (
+                        <span className="text-slate-400 dark:text-slate-500 italic text-xs font-normal">Authorised Signatory</span>
+                      )}
                     </div>
                     <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                      {designation.trim() ? designation.trim() : "Principal & Chief Superintendent"}, {collegeName || "Seshadripuram Independent Pre-University College"}
+                      {[designation.trim(), collegeName].filter(Boolean).join(', ') || (collegeName ? collegeName : 'Institution / Department')}
                     </div>
                   </div>
                 </div>

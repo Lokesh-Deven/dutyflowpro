@@ -65,7 +65,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
   const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false);
   const [customSubscriptionMessage, setCustomSubscriptionMessage] = useState<string | undefined>(undefined);
   const { activeAllotment, instructions, signatory } = useAllotment();
-  const { user, isSubscribed, canDownload, recordCategoryDownload } = useAuth();
+  const { user, profile, isSubscribed, canDownload, recordCategoryDownload } = useAuth();
 
   useEffect(() => {
     if (invigilators.length > 0 && !selectedInvigilatorId) {
@@ -112,7 +112,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
       return `${formatSingle(startTime)} – ${formatSingle(endTime)}`;
     };
 
-    const collegeName = examinations[0]?.college || activeAllotment?.examinations[0]?.college || "Seshadripuram Independent Pre-University College";
+    const collegeName = profile?.institution_name || examinations[0]?.college || activeAllotment?.examinations[0]?.college || "Seshadripuram Independent Pre-University College";
     const examName = assignedDuties.length > 0
       ? assignedDuties[0].examName
       : (examinations[0]?.examName || activeAllotment?.examinations[0]?.examName || 'Annual Examination - August 2026');
@@ -431,28 +431,37 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     const footerW = cardW;
 
     // 5a. Signatory Details (Placed Just Above the Footer, 2 Lines Aligned to the Right)
-    const signatoryName = signatory?.name?.trim() || "Lokesh D";
-    const signatoryDesignation = signatory?.designation?.trim() || "Principal & Chief Superintendent";
-    const institutionName = collegeName?.trim() || "Seshadripuram Independent Pre-University College";
+    const signatoryName = signatory?.name?.trim() || "";
+    const signatoryDesignation = signatory?.designation?.trim() || "";
+    const institutionName = collegeName?.trim() || "";
     const sigRightX = cardX + footerW - 2;
     const signatoryY = footerY - 11;
 
-    // Line 1: "Issued by Lokesh D"
+    // Line 1: "Issued by [Name]" or "Authorised Signatory"
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
-    const nameText = signatoryName;
-    const prefix = "Issued by ";
-    const nameW = doc.getTextWidth(nameText);
-    doc.setTextColor(8, 145, 178); // Dark Cyan (#0891B2)
-    doc.text(prefix, sigRightX - nameW, signatoryY + 4, { align: 'right' });
-    doc.setTextColor(15, 23, 42); // Deep Slate (#0F172A)
-    doc.text(nameText, sigRightX, signatoryY + 4, { align: 'right' });
+    if (signatoryName) {
+      const nameText = signatoryName;
+      const prefix = "Issued by ";
+      const nameW = doc.getTextWidth(nameText);
+      doc.setTextColor(8, 145, 178); // Dark Cyan (#0891B2)
+      doc.text(prefix, sigRightX - nameW, signatoryY + 4, { align: 'right' });
+      doc.setTextColor(15, 23, 42); // Deep Slate (#0F172A)
+      doc.text(nameText, sigRightX, signatoryY + 4, { align: 'right' });
+    } else {
+      doc.setTextColor(15, 23, 42); // Deep Slate (#0F172A)
+      doc.text("Authorised Signatory", sigRightX, signatoryY + 4, { align: 'right' });
+    }
 
-    // Line 2: "Principal & Chief Superintendent, Seshadripuram Independent Pre-University College"
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.8);
-    doc.setTextColor(71, 85, 105); // Slate-600 (#475569)
-    doc.text(`${signatoryDesignation}, ${institutionName}`, sigRightX, signatoryY + 8.5, { align: 'right' });
+    // Line 2: "[Designation], [Institution]"
+    const line2Parts = [signatoryDesignation, institutionName].filter(Boolean);
+    const line2Text = line2Parts.join(', ');
+    if (line2Text) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.8);
+      doc.setTextColor(71, 85, 105); // Slate-600 (#475569)
+      doc.text(line2Text, sigRightX, signatoryY + 8.5, { align: 'right' });
+    }
 
     // 5b. Footer Bar (Single Line Compact Card matching header color #3730A3)
     doc.setFillColor(55, 48, 163); // #3730A3
@@ -572,7 +581,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
   };
 
   const examName = examinations[0]?.examName || activeAllotment?.examinations[0]?.examName || 'Examination Session';
-  const collegeName = examinations[0]?.college || activeAllotment?.examinations[0]?.college || 'Seshadripuram Independent Pre-University College';
+  const collegeName = profile?.institution_name || examinations[0]?.college || activeAllotment?.examinations[0]?.college || '';
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 pt-2">
@@ -850,11 +859,17 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
               <div className="flex justify-end pt-1">
                 <div className="text-right space-y-0.5">
                   <div className="text-sm font-bold text-foreground dark:text-slate-100 tracking-tight">
-                    <span className="text-[#0891B2] dark:text-cyan-400 font-semibold mr-1.5">Issued by</span>
-                    {signatory?.name?.trim() ? signatory.name.trim() : "Lokesh D"}
+                    {signatory?.name?.trim() ? (
+                      <>
+                        <span className="text-[#0891B2] dark:text-cyan-400 font-semibold mr-1.5">Issued by</span>
+                        {signatory.name.trim()}
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground text-xs italic font-normal">Authorised Signatory</span>
+                    )}
                   </div>
                   <div className="text-xs font-medium text-muted-foreground dark:text-slate-400">
-                    {signatory?.designation?.trim() ? signatory.designation.trim() : "Principal & Chief Superintendent"}, {collegeName || "Seshadripuram Independent Pre-University College"}
+                    {[signatory?.designation?.trim(), collegeName].filter(Boolean).join(', ') || (collegeName ? collegeName : 'Institution / Department')}
                   </div>
                 </div>
               </div>
