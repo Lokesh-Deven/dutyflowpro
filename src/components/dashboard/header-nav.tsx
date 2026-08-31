@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Plus, Bookmark, CalendarDays, BarChart2, ListChecks } from 'lucide-react';
+import { Plus, Bookmark, CalendarDays, BarChart2, ListChecks, Signature } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function HeaderNav() {
@@ -14,6 +14,7 @@ export function HeaderNav() {
     { href: '/dashboard/schedule', label: 'Day-wise Schedule', icon: CalendarDays },
     { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart2 },
     { href: '/dashboard/instructions', label: 'Instructions', icon: ListChecks },
+    { href: '/dashboard/signatory', label: 'Signatory', icon: Signature },
   ];
 
   return (

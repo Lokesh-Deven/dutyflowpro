@@ -1,13 +1,18 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef } from 'react';
-import type { Invigilator, Examination, SavedAllotment, AllotmentResult, InstructionItem } from '@/lib/types';
+import type { Invigilator, Examination, SavedAllotment, AllotmentResult, InstructionItem, SignatoryInfo } from '@/lib/types';
 import { useAuth } from './auth-context';
 import {
   syncAllotmentToDatabase,
   fetchUserAllotmentsFromDatabase,
   deleteUserAllotmentFromDatabase
 } from './storage-service';
+
+export const DEFAULT_SIGNATORY: SignatoryInfo = {
+  name: "Lokesh D",
+  designation: "Principal & Chief Superintendent",
+};
 
 export const DEFAULT_INSTRUCTIONS: InstructionItem[] = [
   {
@@ -82,6 +87,10 @@ interface AllotmentContextType {
   toggleInstruction: (id: string) => void;
   deleteInstruction: (id: string) => void;
   resetInstructionsToDefault: () => void;
+  signatory: SignatoryInfo;
+  setSignatory: React.Dispatch<React.SetStateAction<SignatoryInfo>>;
+  updateSignatory: (data: Partial<SignatoryInfo>) => void;
+  resetSignatory: () => void;
 }
 
 const AllotmentContext = createContext<AllotmentContextType | undefined>(undefined);
@@ -93,6 +102,7 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
   const [savedAllotments, setSavedAllotments] = useState<SavedAllotment[]>([]);
   const [activeAllotment, setActiveAllotment] = useState<SavedAllotment | null>(null);
   const [instructions, setInstructions] = useState<InstructionItem[]>(DEFAULT_INSTRUCTIONS);
+  const [signatory, setSignatory] = useState<SignatoryInfo>(DEFAULT_SIGNATORY);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isCloudSynced, setIsCloudSynced] = useState(false);
 
@@ -112,6 +122,7 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem('dutyflow_invigilators');
       localStorage.removeItem('dutyflow_active_allotment');
       localStorage.removeItem('dutyflow_instructions');
+      localStorage.removeItem('dutyflow_signatory');
     } catch (_) {}
   }, []);
 
@@ -126,6 +137,7 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       setSavedAllotments([]);
       setActiveAllotment(null);
       setInstructions(DEFAULT_INSTRUCTIONS);
+      setSignatory(DEFAULT_SIGNATORY);
       setIsCloudSynced(false);
       setIsLoaded(false);
     }
@@ -174,6 +186,20 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
             examinations: (parsed.examinations || []).map((e: any) => ({ ...e, date: new Date(e.date) })),
           });
         }
+      }
+
+      // Load user-scoped signatory from localStorage
+      const storedSignatory = localStorage.getItem(`dutyflow_${userScope}_signatory`);
+      if (storedSignatory) {
+        try {
+          const parsed = JSON.parse(storedSignatory);
+          if (parsed && typeof parsed === 'object' && isMounted) {
+            setSignatory({
+              name: parsed.name || '',
+              designation: parsed.designation || '',
+            });
+          }
+        } catch (_) {}
       }
 
       // Check version of stored instructions to ensure upgrade to latest user-specified defaults
@@ -271,6 +297,15 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       console.error("Failed to save instructions to localStorage:", e);
     }
   }, [instructions, isLoaded, getStorageKey]);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    try {
+      localStorage.setItem(getStorageKey('signatory'), JSON.stringify(signatory));
+    } catch (e) {
+      console.error("Failed to save signatory to localStorage:", e);
+    }
+  }, [signatory, isLoaded, getStorageKey]);
 
   // When activeAllotment changes to a specific saved allotment, sync its exams & invigilators
   useEffect(() => {
@@ -380,6 +415,14 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
     setInstructions(DEFAULT_INSTRUCTIONS);
   };
 
+  const updateSignatory = (data: Partial<SignatoryInfo>) => {
+    setSignatory(prev => ({ ...prev, ...data }));
+  };
+
+  const resetSignatory = () => {
+    setSignatory(DEFAULT_SIGNATORY);
+  };
+
   return (
     <AllotmentContext.Provider value={{
       invigilators, setInvigilators,
@@ -394,7 +437,10 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       updateInstruction,
       toggleInstruction,
       deleteInstruction,
-      resetInstructionsToDefault
+      resetInstructionsToDefault,
+      signatory, setSignatory,
+      updateSignatory,
+      resetSignatory
     }}>
       {children}
     </AllotmentContext.Provider>

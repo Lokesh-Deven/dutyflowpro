@@ -40,3 +40,8 @@ export type InstructionItem = {
   enabled: boolean;
 };
 
+export type SignatoryInfo = {
+  name: string;
+  designation: string;
+};
+

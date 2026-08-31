@@ -9,6 +9,7 @@ import {
   CalendarDays,
   BarChart2,
   ListChecks,
+  Signature,
   UserCircle,
   Settings,
   HelpCircle,
@@ -43,6 +44,7 @@ export const navItems = [
   { href: '/dashboard/schedule', label: 'Day-wise Schedule', icon: CalendarDays },
   { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart2 },
   { href: '/dashboard/instructions', label: 'Add Instructions', icon: ListChecks },
+  { href: '/dashboard/signatory', label: 'Add Signatory', icon: Signature },
 ];
 
 export const newAllotmentSteps = [

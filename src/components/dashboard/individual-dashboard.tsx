@@ -22,7 +22,9 @@ import {
   Layers,
   Sparkles,
   ListChecks,
-  Edit2
+  Edit2,
+  Signature,
+  ShieldCheck
 } from 'lucide-react';
 import Link from 'next/link';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -62,7 +64,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false);
   const [customSubscriptionMessage, setCustomSubscriptionMessage] = useState<string | undefined>(undefined);
-  const { activeAllotment, instructions } = useAllotment();
+  const { activeAllotment, instructions, signatory } = useAllotment();
   const { user, isSubscribed, canDownload, recordCategoryDownload } = useAuth();
 
   useEffect(() => {
@@ -128,22 +130,6 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     doc.setFillColor(55, 48, 163); // #3730A3
     doc.roundedRect(cardX, headerY, cardW, headerH, 4, 4, 'F');
 
-    // Subtle Light Design Flourishes (Translucent Geometric Glow Rings)
-    doc.setDrawColor(99, 102, 241); // Indigo-500 (#6366F1)
-    doc.setLineWidth(0.4);
-    doc.circle(cardX + cardW - 16, headerY + 14, 16, 'S');
-    doc.setDrawColor(129, 140, 248); // Indigo-400 (#818CF8)
-    doc.setLineWidth(0.25);
-    doc.circle(cardX + cardW - 16, headerY + 14, 25, 'S');
-
-    // Geometric Dot Matrix on Top-Left (3 rows x 5 columns)
-    for (let r = 0; r < 3; r++) {
-      for (let c = 0; c < 5; c++) {
-        doc.setFillColor(165, 180, 252); // #A5B4FC
-        doc.circle(cardX + 7 + c * 3.2, headerY + 7 + r * 3.2, 0.5, 'F');
-      }
-    }
-
     // Golden / Amber Bottom Accent Stripe on the Banner
     doc.setFillColor(245, 158, 11); // Amber-500 (#F59E0B)
     doc.rect(cardX, headerY + headerH - 1.8, cardW, 1.8, 'F');
@@ -208,7 +194,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
 
     // Faculty Information Details
     const infoX = cardX + 31;
-    
+
     // Name (Bold Deep Slate)
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
@@ -261,7 +247,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     // ═══════════════════════════════════════════════════════════════
     const schedY = profCardY + profCardH + 6; // 93mm
 
-    // Schedule Header Banner
+    // Schedule Header Banner (Royal Indigo / Blue #4F46E5)
     const bannerH = 7.5;
     doc.setFillColor(79, 70, 229); // #4F46E5
     doc.roundedRect(cardX, schedY, cardW, bannerH, 2.5, 2.5, 'F');
@@ -269,7 +255,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9.5);
     doc.setTextColor(255, 255, 255);
-    doc.text("DUTY ALLOTMENT SCHEDULE", cardX + 7, schedY + 5.2);
+    doc.text("ALLOTMENT SCHEDULE", cardX + 7, schedY + 5.2);
 
     const tableStartY = schedY + bannerH + 2;
     const tableHead = [['#', 'Date', 'Day', 'Subject / Paper', 'Timings']];
@@ -371,7 +357,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9);
       doc.setTextColor(255, 255, 255);
-      doc.text("GENERAL INSTRUCTIONS TO INVIGILATORS", cardX + 7, instY + 4.8);
+      doc.text("IMPORTANT INSTRUCTIONS", cardX + 7, instY + 4.8);
 
       // Well-spaced Instructions Box
       const instBoxY = instY + instBannerH + 2;
@@ -436,6 +422,51 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
         doc.text(textLines, midColX + 11.5, itemCenterY - 1, { lineHeightFactor: 1.2 });
       });
     }
+
+    // ═══════════════════════════════════════════════════════════════
+    // 5. AUTHORISED SIGNATORY & DIGITAL VERIFICATION FOOTER
+    // ═══════════════════════════════════════════════════════════════
+    const footerH = 8;
+    const footerY = pageHeight - footerH - 8; // 281mm on A4 portrait
+    const footerW = cardW;
+
+    // 5a. Signatory Details (Placed Just Above the Footer, 2 Lines Aligned to the Right)
+    const signatoryName = signatory?.name?.trim() || "Lokesh D";
+    const signatoryDesignation = signatory?.designation?.trim() || "Principal & Chief Superintendent";
+    const institutionName = collegeName?.trim() || "Seshadripuram Independent Pre-University College";
+    const sigRightX = cardX + footerW - 2;
+    const signatoryY = footerY - 11;
+
+    // Line 1: "Issued by Lokesh D"
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    const nameText = signatoryName;
+    const prefix = "Issued by ";
+    const nameW = doc.getTextWidth(nameText);
+    doc.setTextColor(8, 145, 178); // Dark Cyan (#0891B2)
+    doc.text(prefix, sigRightX - nameW, signatoryY + 4, { align: 'right' });
+    doc.setTextColor(15, 23, 42); // Deep Slate (#0F172A)
+    doc.text(nameText, sigRightX, signatoryY + 4, { align: 'right' });
+
+    // Line 2: "Principal & Chief Superintendent, Seshadripuram Independent Pre-University College"
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.8);
+    doc.setTextColor(71, 85, 105); // Slate-600 (#475569)
+    doc.text(`${signatoryDesignation}, ${institutionName}`, sigRightX, signatoryY + 8.5, { align: 'right' });
+
+    // 5b. Footer Bar (Single Line Compact Card matching header color #3730A3)
+    doc.setFillColor(55, 48, 163); // #3730A3
+    doc.roundedRect(cardX, footerY, footerW, footerH, 2, 2, 'F');
+
+    // Golden / Amber Top Accent Stripe
+    doc.setFillColor(245, 158, 11); // Amber-500 (#F59E0B)
+    doc.rect(cardX, footerY, footerW, 0.9, 'F');
+
+    // Right side: "Digitally Generated Document - Signature Not Required"
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6.8);
+    doc.setTextColor(224, 231, 255); // Indigo-100 (#E0E7FF)
+    doc.text("Digitally Generated Document - Signature Not Required", cardX + footerW - 5, footerY + 5.2, { align: 'right' });
 
     return doc;
   };
@@ -541,29 +572,38 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
   };
 
   const examName = examinations[0]?.examName || activeAllotment?.examinations[0]?.examName || 'Examination Session';
+  const collegeName = examinations[0]?.college || activeAllotment?.examinations[0]?.college || 'Seshadripuram Independent Pre-University College';
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 pt-2">
-      {/* Top Selector Card */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/60 bg-gradient-to-r from-indigo-50/70 via-indigo-50/25 to-card dark:from-indigo-950/40 dark:via-indigo-950/20 dark:to-slate-900/50 shadow-xs">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-indigo-100 dark:bg-indigo-900/60 text-[#4F46E5] dark:text-indigo-300 shadow-2xs">
-            <User className="h-5 w-5" />
+      {/* Top Selector Card - High Prominence Blue */}
+      <div className="relative overflow-hidden flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 text-white shadow-lg shadow-blue-900/25 border border-blue-400/30">
+        {/* Subtle background glow */}
+        <div className="absolute top-0 right-0 -mt-6 -mr-6 w-36 h-36 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+
+        <div className="relative z-10 flex items-center gap-3.5">
+          <div className="p-3 rounded-xl bg-white/15 text-white backdrop-blur-xs ring-1 ring-white/30 shadow-inner shrink-0">
+            <User className="h-6 w-6 text-white" />
           </div>
           <div>
-            <div className="text-sm font-bold text-foreground dark:text-slate-100">Select Invigilator</div>
+            <div className="text-base sm:text-lg font-black tracking-tight text-white font-headline">
+              Select Invigilator
+            </div>
+            <div className="text-xs text-blue-100/90 font-medium">
+              Choose an invigilator to preview and download duty summary slips
+            </div>
           </div>
         </div>
 
-        <div className="w-full sm:w-72">
+        <div className="relative z-10 w-full sm:w-80 md:w-96">
           <Select onValueChange={setSelectedInvigilatorId} value={selectedInvigilatorId ?? undefined}>
-            <SelectTrigger className="w-full h-10 bg-background/90 dark:bg-slate-900 border-indigo-200 dark:border-indigo-800/80 focus:ring-1 focus:ring-[#4F46E5] focus:border-[#4F46E5] rounded-lg text-sm font-semibold text-foreground dark:text-slate-100 shadow-2xs">
-              <SelectValue placeholder="Select an invigilator" />
+            <SelectTrigger className="w-full h-12 bg-white text-slate-900 font-bold border-2 border-white/90 focus:ring-2 focus:ring-amber-400 focus:border-amber-400 rounded-xl text-sm shadow-md hover:bg-slate-50 transition-all">
+              <SelectValue placeholder="Select an invigilator..." />
             </SelectTrigger>
-            <SelectContent className="max-h-64 rounded-xl dark:border-slate-800">
+            <SelectContent className="max-h-64 rounded-xl border-slate-200 dark:border-slate-800 shadow-2xl bg-popover text-popover-foreground">
               {invigilators.map(inv => (
-                <SelectItem key={inv.id} value={inv.id} className="cursor-pointer font-medium">
-                  {inv.name}
+                <SelectItem key={inv.id} value={inv.id} className="cursor-pointer font-semibold text-sm py-2.5">
+                  {inv.name} <span className="text-xs font-normal text-muted-foreground ml-1.5">({inv.designation || 'Invigilator'})</span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -774,6 +814,57 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
                   No general instructions currently selected for PDF slips. Click &quot;Customize Instructions&quot; to enable standard guidelines.
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Authorised Signatory & Footer Preview Card */}
+          <Card className="border border-border/80 dark:border-slate-800 shadow-sm rounded-xl overflow-hidden bg-card">
+            <div className="h-1 w-full bg-gradient-to-r from-[#3730A3] via-[#4F46E5] to-[#F59E0B]" />
+            <CardHeader className="pb-3 pt-5 px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-[#3730A3] dark:text-indigo-300">
+                  <Signature className="h-4 w-4" />
+                </div>
+                <div>
+                  <CardTitle className="font-headline text-base font-bold text-foreground dark:text-slate-100">
+                    Authorised Signatory
+                  </CardTitle>
+                </div>
+              </div>
+
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs font-semibold rounded-lg border-indigo-200 dark:border-indigo-800/80 text-[#4F46E5] hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
+              >
+                <Link href="/dashboard/signatory">
+                  <Edit2 className="w-3.5 h-3.5 mr-1" />
+                  Customize Signatory
+                </Link>
+              </Button>
+            </CardHeader>
+
+            <CardContent className="px-6 pb-6 pt-0 space-y-3">
+              {/* Signatory details above footer - 2 Lines Aligned Right */}
+              <div className="flex justify-end pt-1">
+                <div className="text-right space-y-0.5">
+                  <div className="text-sm font-bold text-foreground dark:text-slate-100 tracking-tight">
+                    <span className="text-[#0891B2] dark:text-cyan-400 font-semibold mr-1.5">Issued by</span>
+                    {signatory?.name?.trim() ? signatory.name.trim() : "Lokesh D"}
+                  </div>
+                  <div className="text-xs font-medium text-muted-foreground dark:text-slate-400">
+                    {signatory?.designation?.trim() ? signatory.designation.trim() : "Principal & Chief Superintendent"}, {collegeName || "Seshadripuram Independent Pre-University College"}
+                  </div>
+                </div>
+              </div>
+
+              {/* Single Line Footer Banner with Right Alignment */}
+              <div className="relative overflow-hidden rounded-lg bg-[#3730A3] py-2 px-3.5 text-white shadow-md border-t-2 border-amber-500 flex justify-end text-xs">
+                <span className="text-[10px] font-medium text-indigo-200 tracking-tight">
+                  Digitally Generated Document - Signature Not Required
+                </span>
+              </div>
             </CardContent>
           </Card>
         </div>

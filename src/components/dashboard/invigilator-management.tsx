@@ -247,7 +247,6 @@ export function InvigilatorManagement() {
                             <CardTitle className="font-headline text-lg font-bold tracking-tight text-slate-900 dark:text-white">
                                 Invigilator Details
                             </CardTitle>
-                            <div className="w-8 h-[2px] bg-[#6342e8] rounded-full hidden sm:block" />
                         </div>
                     </div>
                 </CardHeader>
@@ -373,7 +372,6 @@ export function InvigilatorManagement() {
                                 <CardTitle className="font-headline text-lg font-bold tracking-tight text-slate-900 dark:text-white">
                                     Added Invigilators
                                 </CardTitle>
-                                <div className="w-8 h-[2px] bg-[#6342e8] rounded-full hidden sm:block" />
                             </div>
                         </div>
 
