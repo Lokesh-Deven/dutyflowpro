@@ -5,16 +5,29 @@ import { generateAllotment } from '@/lib/allotment';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AllotmentSheet } from '@/components/dashboard/allotment-sheet';
 import IndividualDashboard from '@/components/dashboard/individual-dashboard';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, Suspense } from 'react';
 import type { AllotmentResult } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { FileSpreadsheet, UserCheck, AlertCircle, PlusCircle } from 'lucide-react';
-import { format } from 'date-fns';
+import { useSearchParams } from 'next/navigation';
 
-export default function AllotmentPage() {
+function AllotmentContent() {
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const initialTab = tabParam === 'individual-dashboard' || tabParam === 'individual' ? 'individual-dashboard' : 'allotment-sheet';
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  useEffect(() => {
+    if (tabParam === 'individual-dashboard' || tabParam === 'individual') {
+      setActiveTab('individual-dashboard');
+    } else if (tabParam === 'allotment-sheet') {
+      setActiveTab('allotment-sheet');
+    }
+  }, [tabParam]);
+
   const { invigilators, examinations, activeAllotment } = useAllotment();
   const [allotment, setAllotment] = useState<AllotmentResult>({ assignments: {} });
   
@@ -63,7 +76,7 @@ export default function AllotmentPage() {
 
   return (
     <div className="flex-1 space-y-6">
-      <Tabs defaultValue="allotment-sheet" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="flex justify-center mb-6">
           <TabsList className="bg-muted/60 p-1 rounded-xl border border-border/80 h-auto gap-1 shadow-2xs">
             <TabsTrigger 
@@ -108,5 +121,13 @@ export default function AllotmentPage() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+export default function AllotmentPage() {
+  return (
+    <Suspense fallback={<div className="flex-1 p-8 text-center text-sm text-muted-foreground">Loading allotment...</div>}>
+      <AllotmentContent />
+    </Suspense>
   );
 }

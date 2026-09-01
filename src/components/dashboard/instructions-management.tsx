@@ -353,7 +353,7 @@ export function InstructionsManagement() {
           </div>
 
           <Button asChild variant="outline" size="sm" className="rounded-xl border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-[#6342e8] shrink-0">
-            <Link href="/dashboard/allotment">
+            <Link href="/dashboard/allotment?tab=individual-dashboard">
               <FileSpreadsheet className="w-3.5 h-3.5 mr-1.5 text-[#6342e8]" />
               View Individual Slips
             </Link>

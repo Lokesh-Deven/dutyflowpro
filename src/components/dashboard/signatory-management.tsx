@@ -106,11 +106,11 @@ export function SignatoryManagement() {
           </div>
 
           <Link
-            href="/dashboard/schedule"
+            href="/dashboard/allotment?tab=individual-dashboard"
             className="shrink-0 text-xs font-semibold px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all duration-200 flex items-center gap-2 border border-white/10"
           >
-            <FileText className="w-4 h-4" />
-            <span>View Duty Summaries</span>
+            <UserCheck className="w-4 h-4" />
+            <span>Individual Dashboard</span>
           </Link>
         </div>
       </div>
