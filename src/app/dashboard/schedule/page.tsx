@@ -439,8 +439,8 @@ export default function SchedulePage() {
                               </TableRow>
                             ) : (
                               slot.invigilators.map((invigilator, invIndex) => (
-                                <TableRow 
-                                  key={invigilator.id} 
+                                <TableRow
+                                  key={invigilator.id}
                                   className={cn(
                                     "transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/40",
                                     invIndex % 2 === 1 && "bg-slate-50/30 dark:bg-slate-800/20"

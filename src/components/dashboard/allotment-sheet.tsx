@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Download, Save, FileSpreadsheet, Building2, GraduationCap, CalendarCheck, CheckCircle2, AlertTriangle, Users, BookOpen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { formatAppDate, formatAppDateWithDay } from '@/lib/date-utils';
 import { useAllotment } from '@/lib/allotment-context';
 import { useAuth } from '@/lib/auth-context';
 import { uploadUserFile } from '@/lib/storage-service';
@@ -154,7 +155,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
     doc.setFont('helvetica', 'normal');
 
     const examHeaderData = examinations.map(exam => ({
-      date: format(new Date(exam.date), "dd/MM/yy"),
+      date: formatAppDate(exam.date),
       subject: exam.subject,
       time: `${formatTimeTo12Hour(exam.startTime)} - ${formatTimeTo12Hour(exam.endTime)}`
     }));
@@ -364,13 +365,13 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                     Designation
                   </TableHead>
                   {examinations.map(exam => (
-                    <TableHead 
-                      key={exam.id} 
+                    <TableHead
+                      key={exam.id}
                       className="whitespace-nowrap h-44 p-2 text-center border-r border-slate-200/60 dark:border-slate-800/80 min-w-12"
                       style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
                     >
                       <div className="flex flex-col items-start justify-end w-full pl-1">
-                        <span className="text-[13px] font-bold text-[#6342e8] dark:text-purple-400">{format(new Date(exam.date), "dd/MM/yy")}</span>
+                        <span className="text-[13px] font-bold text-[#6342e8] dark:text-purple-400">{formatAppDate(exam.date)}</span>
                         <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate max-h-24 my-0.5">{exam.subject}</span>
                         <span className="text-[11px] text-slate-500 font-normal">{formatTimeTo12Hour(exam.startTime)}</span>
                       </div>
@@ -386,10 +387,10 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                 {invigilators.map((invigilator, index) => {
                   const duties = allotmentResult.assignments[invigilator.id] || [];
                   const dutyCount = duties.length;
-                  
+
                   return (
-                    <TableRow 
-                      key={invigilator.id} 
+                    <TableRow
+                      key={invigilator.id}
                       className={cn(
                         "transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/40 group/row",
                         index % 2 === 1 && "bg-slate-50/30 dark:bg-slate-800/20"
@@ -409,8 +410,8 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                         const examDate = format(new Date(exam.date), 'yyyy-MM-dd');
 
                         return (
-                          <TableCell 
-                            key={exam.id} 
+                          <TableCell
+                            key={exam.id}
                             className="p-1 text-center cursor-pointer transition-colors hover:bg-purple-50/60 dark:hover:bg-purple-950/40 border-r border-slate-200/40 dark:border-slate-800/70"
                             onClick={() => handleDutyToggle(invigilator.id, exam.id)}
                           >
@@ -432,7 +433,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                               <TooltipContent className="rounded-xl shadow-md border-slate-200 dark:border-slate-800 text-xs">
                                 <div className="space-y-0.5">
                                   <div className="font-bold text-slate-900 dark:text-white">{exam.subject}</div>
-                                  <div className="text-slate-500">{format(new Date(exam.date), 'PPP')} ({format(new Date(exam.date), 'EEEE')})</div>
+                                  <div className="text-slate-500">{formatAppDateWithDay(exam.date)}</div>
                                   <div className="text-[11px] text-slate-500">{formatTimeTo12Hour(exam.startTime)} – {formatTimeTo12Hour(exam.endTime)}</div>
                                 </div>
                               </TooltipContent>
@@ -506,8 +507,8 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                     const requiredInvigilators = exam.rooms + exam.relievers;
                     const isMismatch = count !== requiredInvigilators;
                     return (
-                      <TableCell 
-                        key={`total-duties-${exam.id}`} 
+                      <TableCell
+                        key={`total-duties-${exam.id}`}
                         className={cn(
                           "text-center text-xs font-bold",
                           isMismatch ? "text-destructive font-black" : "text-[#6342e8] dark:text-purple-400"

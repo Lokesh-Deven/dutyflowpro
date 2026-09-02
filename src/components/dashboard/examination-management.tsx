@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { format } from "date-fns";
+import { formatAppDate, parseAppDate } from "@/lib/date-utils";
 import { cn, formatTimeTo12Hour } from "@/lib/utils";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -191,7 +192,7 @@ export function ExaminationManagement() {
         relievers: Number(sessionDetails.relievers),
       };
       setExaminations(prev => [...prev, newExamination]);
-      toast({ title: "Examination Added", description: `${sessionDetails.subject} on ${format(examinationData.date, "PPP")} has been added.` });
+      toast({ title: "Examination Added", description: `${sessionDetails.subject} on ${formatAppDate(examinationData.date)} has been added.` });
     }
 
     // Reset session form but keep college/exam names as they are usually same for multiple entries
@@ -377,28 +378,7 @@ export function ExaminationManagement() {
 
         // 4. Flexible date & time parsers
         const parseFlexibleDate = (raw: any): Date | null => {
-          if (!raw) return null;
-          if (raw instanceof Date && !isNaN(raw.getTime())) return raw;
-          if (typeof raw === 'number') {
-            const utc = new Date(Date.UTC(0, 0, raw - 1));
-            return new Date(utc.getUTCFullYear(), utc.getUTCMonth(), utc.getUTCDate());
-          }
-          if (typeof raw === 'string') {
-            const trimmed = raw.trim();
-            // Match DD/MM/YY, DD/MM/YYYY, DD-MM-YYYY, DD.MM.YYYY
-            const dmy = trimmed.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})$/);
-            if (dmy) {
-              const day = parseInt(dmy[1], 10);
-              const month = parseInt(dmy[2], 10) - 1;
-              let year = parseInt(dmy[3], 10);
-              if (year < 100) year += 2000;
-              const dt = new Date(year, month, day);
-              if (!isNaN(dt.getTime())) return dt;
-            }
-            const standard = new Date(trimmed);
-            if (!isNaN(standard.getTime())) return standard;
-          }
-          return null;
+          return parseAppDate(raw);
         };
 
         const parseFlexibleTime = (raw: any, fallback = '10:00'): string => {
@@ -671,7 +651,7 @@ export function ExaminationManagement() {
                                 )}
                               >
                                 {field.value ? (
-                                  <span className="font-semibold text-foreground">{format(field.value, "PPP")}</span>
+                                  <span className="font-semibold text-foreground">{formatAppDate(field.value)}</span>
                                 ) : (
                                   <span>Select exam date</span>
                                 )}
@@ -967,7 +947,7 @@ export function ExaminationManagement() {
                       <TableCell className="font-semibold text-xs text-slate-500">{index + 1}</TableCell>
                       <TableCell>
                         <div className="space-y-0.5">
-                          <div className="font-semibold text-sm text-slate-900 dark:text-white">{format(new Date(exam.date), "dd/MM/yyyy")}</div>
+                          <div className="font-semibold text-sm text-slate-900 dark:text-white">{formatAppDate(exam.date)}</div>
                           <div className="text-[11px] text-slate-500">{format(new Date(exam.date), "EEEE")}</div>
                         </div>
                       </TableCell>

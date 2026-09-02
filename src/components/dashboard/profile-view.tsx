@@ -44,12 +44,12 @@ export function ProfileView() {
 
   const institutionName = profile?.institution_name || (user?.user_metadata?.institution_name as string) || "Guest Profile";
   const email = profile?.email || user?.email || "guest@dutyflow.in";
-  
+
   // Strictly single letter initial (first letter of institution name)
   const singleInitial = (institutionName.trim().charAt(0) || email.trim().charAt(0) || "G").toUpperCase();
 
   const subscriptionStatus = profile?.subscription_status || "Free Access";
-  
+
   const startDateFormatted = profile?.subscription_start_date
     ? format(new Date(profile.subscription_start_date), "dd MMM yyyy")
     : format(new Date(), "dd MMM yyyy");
@@ -108,14 +108,14 @@ export function ProfileView() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-12 animate-in fade-in duration-300">
-      
+
       {/* ========================================================================= */}
       {/* 1. HERO PROFILE CARD (Glossy Indigo Theme) */}
       {/* ========================================================================= */}
       <Card className="border border-indigo-500/30 dark:border-indigo-400/20 shadow-xl rounded-2xl overflow-hidden bg-gradient-to-br from-[#4F46E5] via-[#4338CA] to-[#312E81] text-white relative">
         {/* Glossy Top Glass Shimmer Overlay */}
         <div className="absolute inset-0 bg-gradient-to-b from-white/15 via-white/5 to-transparent pointer-events-none" />
-        
+
         {/* Glossy Ambient Glow Orbs */}
         <div className="absolute -right-12 -top-12 w-60 h-60 bg-indigo-300/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -left-12 -bottom-12 w-52 h-52 bg-purple-400/20 rounded-full blur-2xl pointer-events-none" />
@@ -138,7 +138,7 @@ export function ProfileView() {
                     <span className="text-[11px] font-bold uppercase tracking-wider bg-white/15 text-indigo-100 px-2.5 py-0.5 rounded-full border border-white/20 backdrop-blur-xs">
                       Institution Profile
                     </span>
-                    
+
                     {isSubscribed ? (
                       <Badge className="bg-emerald-400/20 text-emerald-100 border-emerald-300/40 text-[10px] font-bold py-0 px-2 rounded-full backdrop-blur-xs">
                         <ShieldCheck className="mr-1 h-3 w-3 text-emerald-300" />
@@ -156,7 +156,7 @@ export function ProfileView() {
                       </Badge>
                     )}
                   </div>
-                  
+
                   <h1 className="text-2xl sm:text-3xl font-headline font-extrabold text-white tracking-tight break-words drop-shadow-xs">
                     {institutionName}
                   </h1>
@@ -228,7 +228,7 @@ export function ProfileView() {
       {/* 2. PROFILE DETAILS & SUBSCRIPTION METRICS (Cards & Stacks) */}
       {/* ========================================================================= */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        
+
         {/* Card A: Account & Institution Details */}
         <Card className="border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs bg-white dark:bg-slate-900">
           <CardHeader className="pb-3">
@@ -263,18 +263,18 @@ export function ProfileView() {
                 <CardTitle className="text-base font-headline font-bold text-slate-900 dark:text-white">Subscription Status</CardTitle>
               </div>
               <Badge className={
-                isSubscribed 
+                isSubscribed
                   ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 font-bold text-xs rounded-full"
                   : isUnsubscribed
-                  ? "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200 font-bold text-xs rounded-full"
-                  : "bg-purple-50 text-[#6342e8] dark:bg-purple-950/60 dark:text-purple-300 border-purple-200 font-bold text-xs rounded-full"
+                    ? "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200 font-bold text-xs rounded-full"
+                    : "bg-purple-50 text-[#6342e8] dark:bg-purple-950/60 dark:text-purple-300 border-purple-200 font-bold text-xs rounded-full"
               }>
                 {subscriptionStatus}
               </Badge>
             </div>
             <CardDescription className="text-xs text-slate-500">Current tier permissions and download quota usage</CardDescription>
           </CardHeader>
-          
+
           <CardContent className="space-y-3 pt-1">
             {/* 3 Quota Breakdown Chips */}
             <div className="grid grid-cols-3 gap-2">
@@ -350,10 +350,10 @@ export function ProfileView() {
             Have questions about institutional subscriptions, annual licensing, or need technical assistance? Reach out directly.
           </CardDescription>
         </CardHeader>
-        
+
         <CardContent className="space-y-4 pt-1">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            
+
             {/* Email Contact Card */}
             <div className="p-4 rounded-xl bg-slate-50/50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-2">
               <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">

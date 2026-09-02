@@ -26,13 +26,15 @@ import {
   Signature,
   ShieldCheck,
   Send,
-  Loader2
+  Loader2,
+  CheckCircle2
 } from 'lucide-react';
 import Link from 'next/link';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { formatAppDate } from '@/lib/date-utils';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { useAllotment } from '@/lib/allotment-context';
@@ -52,6 +54,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { SubscriptionDialog } from '@/components/dashboard/subscription-dialog';
 
 type IndividualDashboardProps = {
@@ -69,6 +78,16 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
   const [isBulkEmailSending, setIsBulkEmailSending] = useState(false);
   const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false);
   const [customSubscriptionMessage, setCustomSubscriptionMessage] = useState<string | undefined>(undefined);
+  const [emailSuccessDialog, setEmailSuccessDialog] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    recipient?: string;
+  }>({
+    open: false,
+    title: 'Email Sent',
+    message: '',
+  });
   const { activeAllotment, instructions, signatory } = useAllotment();
   const { user, profile, isSubscribed, canDownload, recordCategoryDownload } = useAuth();
 
@@ -650,6 +669,12 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
           title: 'Email Sent Successfully!',
           description: `Personalized duty summary with PDF attachment has been delivered to ${selectedInvigilator.name} (${targetEmail}).`,
         });
+        setEmailSuccessDialog({
+          open: true,
+          title: 'Email Sent',
+          message: `Personalized duty summary with PDF attachment has been successfully delivered to ${selectedInvigilator.name}.`,
+          recipient: targetEmail,
+        });
       } else {
         toast({
           variant: 'destructive',
@@ -749,6 +774,11 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
         toast({
           title: 'Bulk Email Delivery Complete!',
           description: `Successfully dispatched duty summaries to ${totalSent} of ${items.length} invigilators.${totalFailed > 0 ? ` (${totalFailed} failed)` : ''}`,
+        });
+        setEmailSuccessDialog({
+          open: true,
+          title: 'Email Sent',
+          message: `Duty summaries have been successfully sent to ${totalSent} invigilator${totalSent > 1 ? 's' : ''}.`,
         });
       } else {
         toast({
@@ -1221,6 +1251,46 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
         category="individual_profile"
         customMessage={customSubscriptionMessage}
       />
+
+      {/* Pop-up Dialog stating Email Sent */}
+      <Dialog
+        open={emailSuccessDialog.open}
+        onOpenChange={(open) => setEmailSuccessDialog(prev => ({ ...prev, open }))}
+      >
+        <DialogContent className="sm:max-w-md rounded-2xl p-0 overflow-hidden border border-slate-200 dark:border-slate-800 shadow-2xl bg-white dark:bg-slate-900">
+          <div className="h-[3px] w-full bg-gradient-to-r from-[#6342e8] via-[#8b5cf6] to-[#10b981]" />
+          <div className="p-6 sm:p-7 text-center space-y-4">
+            <div className="mx-auto w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-xs ring-8 ring-emerald-50/50 dark:ring-emerald-950/30">
+              <CheckCircle2 className="w-7 h-7" />
+            </div>
+
+            <div className="space-y-1.5">
+              <DialogTitle className="text-xl font-headline font-bold text-slate-900 dark:text-white">
+                {emailSuccessDialog.title}
+              </DialogTitle>
+              <DialogDescription className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed max-w-sm mx-auto">
+                {emailSuccessDialog.message}
+              </DialogDescription>
+            </div>
+
+            {emailSuccessDialog.recipient && (
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center justify-center gap-2">
+                <Mail className="w-4 h-4 text-[#6342e8] shrink-0" />
+                <span className="truncate">{emailSuccessDialog.recipient}</span>
+              </div>
+            )}
+
+            <div className="pt-2">
+              <Button
+                onClick={() => setEmailSuccessDialog(prev => ({ ...prev, open: false }))}
+                className="w-full bg-[#6342e8] hover:bg-[#5232d6] text-white font-semibold rounded-xl h-10 shadow-xs"
+              >
+                OK
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

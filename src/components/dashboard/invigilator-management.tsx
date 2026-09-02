@@ -12,23 +12,23 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Upload, 
-  UserPlus, 
-  ArrowLeft, 
-  Trash2, 
-  Sparkles, 
-  ArrowRight,
-  Users,
-  User,
-  Mail,
-  Phone,
-  Briefcase,
-  CalendarCheck,
-  CalendarClock,
-  CheckCircle2,
-  SlidersHorizontal,
-  Plus
+import {
+    Upload,
+    UserPlus,
+    ArrowLeft,
+    Trash2,
+    Sparkles,
+    ArrowRight,
+    Users,
+    User,
+    Mail,
+    Phone,
+    Briefcase,
+    CalendarCheck,
+    CalendarClock,
+    CheckCircle2,
+    SlidersHorizontal,
+    Plus
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
@@ -41,10 +41,10 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 const invigilatorSchema = z.object({
-  name: z.string().min(1, "Name is required."),
-  designation: z.string().min(1, "Designation is required."),
-  mobile: z.string().regex(/^\d{10}$/, "Must be a 10-digit number."),
-  email: z.string().email("Invalid email address."),
+    name: z.string().min(1, "Name is required."),
+    designation: z.string().min(1, "Designation is required."),
+    mobile: z.string().regex(/^\d{10}$/, "Must be a 10-digit number."),
+    email: z.string().email("Invalid email address."),
 });
 
 export function InvigilatorManagement() {
@@ -62,18 +62,18 @@ export function InvigilatorManagement() {
         defaultValues: { name: '', designation: '', mobile: '', email: '' },
     });
 
-    const totalDutiesNeeded = useMemo(() => 
-        examinations.reduce((acc, exam) => acc + exam.rooms + exam.relievers, 0), 
+    const totalDutiesNeeded = useMemo(() =>
+        examinations.reduce((acc, exam) => acc + exam.rooms + exam.relievers, 0),
         [examinations]
     );
 
-    const availableAllDaysCount = useMemo(() => 
-        invigilators.filter(i => i.isAvailableAllDays).length, 
+    const availableAllDaysCount = useMemo(() =>
+        invigilators.filter(i => i.isAvailableAllDays).length,
         [invigilators]
     );
 
-    const customAvailabilityCount = useMemo(() => 
-        invigilators.filter(i => !i.isAvailableAllDays && i.availableExamIds && i.availableExamIds.length > 0).length, 
+    const customAvailabilityCount = useMemo(() =>
+        invigilators.filter(i => !i.isAvailableAllDays && i.availableExamIds && i.availableExamIds.length > 0).length,
         [invigilators]
     );
 
@@ -237,7 +237,7 @@ export function InvigilatorManagement() {
             {/* Add Invigilator Card */}
             <Card className="border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl overflow-hidden bg-white dark:bg-slate-900">
                 <div className="h-[3px] w-full bg-gradient-to-r from-[#6342e8] via-[#8b5cf6] to-[#f59e0b]" />
-                
+
                 <CardHeader className="pb-4 pt-6 px-6">
                     <div className="flex items-center gap-3">
                         <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-[#6342e8] dark:text-purple-400">
@@ -263,15 +263,15 @@ export function InvigilatorManagement() {
                                             <span className="text-slate-700 dark:text-slate-300">Invigilator&apos;s Name</span>
                                         </div>
                                         <FormControl>
-                                            <Input 
-                                                placeholder="e.g. Dr. Jane Doe" 
-                                                {...field} 
-                                                className="bg-slate-50/50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 focus-visible:border-[#6342e8] focus-visible:ring-[#6342e8]/20 transition-all rounded-xl h-10 font-medium text-sm text-foreground" 
+                                            <Input
+                                                placeholder="e.g. Dr. Jane Doe"
+                                                {...field}
+                                                className="bg-slate-50/50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 focus-visible:border-[#6342e8] focus-visible:ring-[#6342e8]/20 transition-all rounded-xl h-10 font-medium text-sm text-foreground"
                                             />
                                         </FormControl>
                                         <FormMessage className="text-xs mt-1" />
                                     </FormItem>
-                                )}/>
+                                )} />
 
                                 {/* Designation/Department */}
                                 <FormField control={form.control} name="designation" render={({ field }) => (
@@ -281,15 +281,15 @@ export function InvigilatorManagement() {
                                             <span className="text-slate-700 dark:text-slate-300">Designation / Department</span>
                                         </div>
                                         <FormControl>
-                                            <Input 
-                                                placeholder="e.g. Lecturer in English" 
-                                                {...field} 
-                                                className="bg-slate-50/50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 focus-visible:border-[#6342e8] focus-visible:ring-[#6342e8]/20 transition-all rounded-xl h-10 font-medium text-sm text-foreground" 
+                                            <Input
+                                                placeholder="e.g. Lecturer in English"
+                                                {...field}
+                                                className="bg-slate-50/50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 focus-visible:border-[#6342e8] focus-visible:ring-[#6342e8]/20 transition-all rounded-xl h-10 font-medium text-sm text-foreground"
                                             />
                                         </FormControl>
                                         <FormMessage className="text-xs mt-1" />
                                     </FormItem>
-                                )}/>
+                                )} />
 
                                 {/* Mobile No */}
                                 <FormField control={form.control} name="mobile" render={({ field }) => (
@@ -299,15 +299,15 @@ export function InvigilatorManagement() {
                                             <span className="text-slate-700 dark:text-slate-300">Mobile No</span>
                                         </div>
                                         <FormControl>
-                                            <Input 
-                                                placeholder="e.g. 9876543210" 
-                                                {...field} 
-                                                className="bg-slate-50/50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 focus-visible:border-[#6342e8] focus-visible:ring-[#6342e8]/20 transition-all rounded-xl h-10 font-medium text-sm text-foreground" 
+                                            <Input
+                                                placeholder="e.g. 9876543210"
+                                                {...field}
+                                                className="bg-slate-50/50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 focus-visible:border-[#6342e8] focus-visible:ring-[#6342e8]/20 transition-all rounded-xl h-10 font-medium text-sm text-foreground"
                                             />
                                         </FormControl>
                                         <FormMessage className="text-xs mt-1" />
                                     </FormItem>
-                                )}/>
+                                )} />
 
                                 {/* Email ID */}
                                 <FormField control={form.control} name="email" render={({ field }) => (
@@ -317,15 +317,15 @@ export function InvigilatorManagement() {
                                             <span className="text-slate-700 dark:text-slate-300">E-Mail ID</span>
                                         </div>
                                         <FormControl>
-                                            <Input 
-                                                placeholder="e.g. lokesh@gmail.com" 
-                                                {...field} 
-                                                className="bg-slate-50/50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 focus-visible:border-[#6342e8] focus-visible:ring-[#6342e8]/20 transition-all rounded-xl h-10 font-medium text-sm text-foreground" 
+                                            <Input
+                                                placeholder="e.g. lokesh@gmail.com"
+                                                {...field}
+                                                className="bg-slate-50/50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 focus-visible:border-[#6342e8] focus-visible:ring-[#6342e8]/20 transition-all rounded-xl h-10 font-medium text-sm text-foreground"
                                             />
                                         </FormControl>
                                         <FormMessage className="text-xs mt-1" />
                                     </FormItem>
-                                )}/>
+                                )} />
                             </div>
 
                             {/* Actions Bar */}
@@ -337,18 +337,18 @@ export function InvigilatorManagement() {
                                     className="hidden"
                                     accept=".xlsx, .xls, .csv"
                                 />
-                                <Button 
-                                    type="submit" 
+                                <Button
+                                    type="submit"
                                     className="bg-[#6342e8] hover:bg-[#5232d6] text-white font-semibold shadow-xs rounded-xl px-5 py-2.5 transition-all text-sm flex items-center gap-2"
                                 >
                                     <Plus className="h-4 w-4" />
                                     <span>Add Invigilator</span>
                                 </Button>
                                 <span className="text-xs uppercase font-bold text-slate-400 px-1">OR</span>
-                                <Button 
-                                    type="button" 
-                                    variant="outline" 
-                                    onClick={handleBulkUploadClick} 
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={handleBulkUploadClick}
                                     className="border border-purple-300 dark:border-purple-800 text-[#6342e8] dark:text-purple-300 bg-purple-50/50 dark:bg-purple-950/30 hover:bg-purple-100/70 font-semibold rounded-xl px-5 py-2.5 shadow-2xs transition-all text-sm flex items-center gap-2"
                                 >
                                     <Upload className="h-4 w-4" />
@@ -435,9 +435,9 @@ export function InvigilatorManagement() {
                                     invigilators.map((inv, index) => {
                                         const isAllDays = inv.isAvailableAllDays;
                                         const specificDaysCount = inv.availableExamIds?.length || 0;
-                                        
+
                                         return (
-                                            <TableRow 
+                                            <TableRow
                                                 key={inv.id}
                                                 className={cn(
                                                     "transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/40",
@@ -466,14 +466,14 @@ export function InvigilatorManagement() {
                                                     </div>
                                                 </TableCell>
                                                 <TableCell className="text-center">
-                                                    <Button 
-                                                        variant="ghost" 
-                                                        size="sm" 
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
                                                         className={cn(
                                                             "h-7 text-xs font-semibold px-3 rounded-full transition-all flex items-center gap-1.5 mx-auto",
-                                                            isAllDays 
-                                                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30" 
-                                                                : specificDaysCount > 0 
+                                                            isAllDays
+                                                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30"
+                                                                : specificDaysCount > 0
                                                                     ? "bg-purple-500/10 text-[#6342e8] dark:text-purple-300 hover:bg-purple-500/20 border border-purple-500/30"
                                                                     : "bg-destructive/10 text-destructive hover:bg-destructive/20 border border-destructive/30"
                                                         )}
@@ -488,9 +488,9 @@ export function InvigilatorManagement() {
                                                     </Button>
                                                 </TableCell>
                                                 <TableCell className="text-right">
-                                                    <Button 
-                                                        variant="ghost" 
-                                                        size="icon" 
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
                                                         className="h-8 w-8 text-slate-500 hover:text-destructive hover:bg-destructive/10 rounded-lg"
                                                         onClick={() => handleDelete(inv.id)}
                                                         title="Remove invigilator"
@@ -523,9 +523,9 @@ export function InvigilatorManagement() {
                 </CardContent>
 
                 <CardFooter className="justify-between px-6 py-4 bg-slate-50/50 dark:bg-slate-800/30 border-t border-slate-200/80 dark:border-slate-800">
-                    <Button 
-                        onClick={() => router.push('/dashboard/examinations')} 
-                        variant="ghost" 
+                    <Button
+                        onClick={() => router.push('/dashboard/examinations')}
+                        variant="ghost"
                         className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-semibold rounded-xl"
                     >
                         <ArrowLeft className="mr-2 h-4 w-4" />

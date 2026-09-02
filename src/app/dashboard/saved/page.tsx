@@ -194,9 +194,9 @@ export default function SavedAllotmentsPage() {
                 </div>
 
                 <CardFooter className="px-5 pb-5 pt-2">
-                  <Button 
-                    onClick={() => handleOpen(allotment.id)} 
-                    variant="outline" 
+                  <Button
+                    onClick={() => handleOpen(allotment.id)}
+                    variant="outline"
                     className="w-full justify-between font-semibold border-slate-200 dark:border-slate-800 hover:border-[#6342e8]/60 hover:bg-[#6342e8]/5 dark:hover:bg-purple-950/40 text-slate-800 dark:text-slate-200 group-hover:text-[#6342e8] dark:group-hover:text-purple-300 rounded-xl transition-all"
                   >
                     <span>Open Allotment</span>

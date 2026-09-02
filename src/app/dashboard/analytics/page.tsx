@@ -5,59 +5,59 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useState, useMemo } from "react";
-import { 
-    Bar, 
-    BarChart, 
-    XAxis, 
-    YAxis, 
-    CartesianGrid, 
-    Tooltip, 
-    Legend, 
-    ResponsiveContainer, 
-    Line, 
+import {
+    Bar,
+    BarChart,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    Legend,
+    ResponsiveContainer,
+    Line,
     LineChart
 } from "recharts";
 import { format } from "date-fns";
-import { 
-    BarChart3, 
-    Maximize2, 
-    Users, 
-    GraduationCap, 
-    CheckCircle2, 
-    FileSpreadsheet, 
-    TrendingUp, 
+import {
+    BarChart3,
+    Maximize2,
+    Users,
+    GraduationCap,
+    CheckCircle2,
+    FileSpreadsheet,
+    TrendingUp,
     Activity,
     CalendarDays,
     Layers
 } from "lucide-react";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
 } from "@/components/ui/dialog";
 
 const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-popover/95 backdrop-blur-md border border-border text-popover-foreground p-3.5 rounded-xl shadow-xl space-y-2 min-w-40 text-xs">
-        <div className="font-bold text-foreground border-b border-border/60 pb-1">{label}</div>
-        <div className="space-y-1">
-          {payload.map((entry: any, index: number) => (
-            <div key={index} className="flex items-center justify-between gap-4 font-medium">
-              <span className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: entry.color || entry.fill }} />
-                <span className="text-muted-foreground">{entry.name}</span>
-              </span>
-              <span className="font-bold text-foreground">{entry.value}</span>
+    if (active && payload && payload.length) {
+        return (
+            <div className="bg-popover/95 backdrop-blur-md border border-border text-popover-foreground p-3.5 rounded-xl shadow-xl space-y-2 min-w-40 text-xs">
+                <div className="font-bold text-foreground border-b border-border/60 pb-1">{label}</div>
+                <div className="space-y-1">
+                    {payload.map((entry: any, index: number) => (
+                        <div key={index} className="flex items-center justify-between gap-4 font-medium">
+                            <span className="flex items-center gap-1.5">
+                                <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: entry.color || entry.fill }} />
+                                <span className="text-muted-foreground">{entry.name}</span>
+                            </span>
+                            <span className="font-bold text-foreground">{entry.value}</span>
+                        </div>
+                    ))}
+                </div>
             </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-  return null;
+        );
+    }
+    return null;
 };
 
 export default function AnalyticsPage() {
@@ -71,7 +71,7 @@ export default function AnalyticsPage() {
     const dailyWorkloadData = useMemo(() => {
         if (!examinations.length || !invigilators.length || !activeAllotment) return [];
         const dailyData: Record<string, Set<string>> = {};
-        
+
         const sortedExams = [...examinations].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
         const examDates = [...new Set(sortedExams.map(e => format(new Date(e.date), "yyyy-MM-dd")))];
 
@@ -89,7 +89,7 @@ export default function AnalyticsPage() {
                 }
             }
         }
-        
+
         return Object.entries(dailyData).map(([date, invIds]) => ({
             date: format(new Date(date), "dd/MM"),
             Assigned: invIds.size,
@@ -100,7 +100,7 @@ export default function AnalyticsPage() {
     const sessionTrendsData = useMemo(() => {
         if (!examinations.length) return [];
         const dailyData: Record<string, { duties: number, relievers: number }> = {};
-        
+
         const sortedExams = [...examinations].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
         sortedExams.forEach(exam => {
@@ -109,7 +109,7 @@ export default function AnalyticsPage() {
             dailyData[date].duties += exam.rooms;
             dailyData[date].relievers += exam.relievers;
         });
-        
+
         return Object.entries(dailyData).map(([date, data]) => ({
             date: format(new Date(date), "dd/MM"),
             "Total Duties": data.duties,
@@ -121,7 +121,7 @@ export default function AnalyticsPage() {
     const dutiesRequiredData = useMemo(() => {
         if (!examinations.length) return [];
         const dailyData: Record<string, { rooms: number, relievers: number }> = {};
-        
+
         const sortedExams = [...examinations].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
         sortedExams.forEach(exam => {
@@ -227,15 +227,15 @@ export default function AnalyticsPage() {
                     </div>
                 </div>
             </div>
-            
+
             {/* Analytics Charts Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Daily Invigilator Workload Card */}
                 <Card className="border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl overflow-hidden bg-white dark:bg-slate-900 relative">
                     <div className="h-[3px] w-full bg-gradient-to-r from-[#6342e8] via-[#8b5cf6] to-[#f59e0b]" />
-                    <Button 
-                        variant="ghost" 
-                        size="icon" 
+                    <Button
+                        variant="ghost"
+                        size="icon"
                         className="absolute top-4 right-4 h-8 w-8 text-slate-500 hover:text-slate-900 dark:hover:text-white rounded-lg"
                         onClick={() => setExpandedChart('workload')}
                         title="Maximize Chart"
@@ -271,9 +271,9 @@ export default function AnalyticsPage() {
                 {/* Day-wise Session Trends Card */}
                 <Card className="border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl overflow-hidden bg-white dark:bg-slate-900 relative">
                     <div className="h-[3px] w-full bg-gradient-to-r from-[#6342e8] to-[#f59e0b]" />
-                    <Button 
-                        variant="ghost" 
-                        size="icon" 
+                    <Button
+                        variant="ghost"
+                        size="icon"
                         className="absolute top-4 right-4 h-8 w-8 text-slate-500 hover:text-slate-900 dark:hover:text-white rounded-lg"
                         onClick={() => setExpandedChart('trends')}
                         title="Maximize Chart"
@@ -299,20 +299,20 @@ export default function AnalyticsPage() {
                                 <YAxis domain={[0, 'auto']} stroke="currentColor" className="text-slate-400 dark:text-slate-500" tick={{ fill: 'currentColor', fontSize: 13 }} />
                                 <Tooltip content={<CustomTooltip />} />
                                 <Legend verticalAlign="bottom" height={36} wrapperStyle={{ fontSize: '14px', paddingTop: '10px' }} />
-                                <Line 
-                                    type="monotone" 
-                                    dataKey="Total Duties" 
-                                    stroke="#6342e8" 
-                                    strokeWidth={2.5} 
-                                    dot={{ r: 4, fill: "#fff", stroke: "#6342e8", strokeWidth: 2 }} 
+                                <Line
+                                    type="monotone"
+                                    dataKey="Total Duties"
+                                    stroke="#6342e8"
+                                    strokeWidth={2.5}
+                                    dot={{ r: 4, fill: "#fff", stroke: "#6342e8", strokeWidth: 2 }}
                                     activeDot={{ r: 6, fill: "#6342e8" }}
                                 />
-                                <Line 
-                                    type="monotone" 
-                                    dataKey="Total Relievers" 
-                                    stroke="#f59e0b" 
-                                    strokeWidth={2.5} 
-                                    dot={{ r: 4, fill: "#fff", stroke: "#f59e0b", strokeWidth: 2 }} 
+                                <Line
+                                    type="monotone"
+                                    dataKey="Total Relievers"
+                                    stroke="#f59e0b"
+                                    strokeWidth={2.5}
+                                    dot={{ r: 4, fill: "#fff", stroke: "#f59e0b", strokeWidth: 2 }}
                                     activeDot={{ r: 6, fill: "#f59e0b" }}
                                 />
                             </LineChart>
@@ -324,9 +324,9 @@ export default function AnalyticsPage() {
             {/* Duties Required per Exam Date Card */}
             <Card className="border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl overflow-hidden bg-white dark:bg-slate-900 relative">
                 <div className="h-[3px] w-full bg-gradient-to-r from-[#6342e8] via-[#8b5cf6] to-[#f59e0b]" />
-                <Button 
-                    variant="ghost" 
-                    size="icon" 
+                <Button
+                    variant="ghost"
+                    size="icon"
                     className="absolute top-4 right-4 h-8 w-8 text-slate-500 hover:text-slate-900 dark:hover:text-white rounded-lg"
                     onClick={() => setExpandedChart('requirements')}
                     title="Maximize Chart"
