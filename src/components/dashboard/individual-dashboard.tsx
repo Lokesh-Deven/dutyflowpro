@@ -24,7 +24,9 @@ import {
   ListChecks,
   Edit2,
   Signature,
-  ShieldCheck
+  ShieldCheck,
+  Send,
+  Loader2
 } from 'lucide-react';
 import Link from 'next/link';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -62,6 +64,9 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
   const { toast } = useToast();
   const [selectedInvigilatorId, setSelectedInvigilatorId] = useState<string | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isBulkEmailConfirmOpen, setIsBulkEmailConfirmOpen] = useState(false);
+  const [isSingleEmailSending, setIsSingleEmailSending] = useState(false);
+  const [isBulkEmailSending, setIsBulkEmailSending] = useState(false);
   const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false);
   const [customSubscriptionMessage, setCustomSubscriptionMessage] = useState<string | undefined>(undefined);
   const { activeAllotment, instructions, signatory } = useAllotment();
@@ -581,7 +586,188 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
   };
 
   const examName = examinations[0]?.examName || activeAllotment?.examinations[0]?.examName || 'Examination Session';
-  const collegeName = profile?.institution_name || examinations[0]?.college || activeAllotment?.examinations[0]?.college || '';
+  const collegeName = profile?.institution_name || examinations[0]?.college || activeAllotment?.examinations[0]?.college || "Seshadripuram Independent Pre-University College";
+
+  const docToBase64 = async (doc: jsPDF): Promise<string> => {
+    const blob = doc.output('blob');
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const dataUrl = reader.result as string;
+        const base64 = dataUrl.split(',')[1] || '';
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  };
+
+  const handleSendSingleEmail = async () => {
+    if (!selectedInvigilator) return;
+
+    const targetEmail = selectedInvigilator.email?.trim();
+    if (!targetEmail || !targetEmail.includes('@')) {
+      toast({
+        variant: 'destructive',
+        title: 'Email Address Missing',
+        description: `No valid email address found for ${selectedInvigilator.name}. Please ensure a valid email is present.`,
+      });
+      return;
+    }
+
+    try {
+      setIsSingleEmailSending(true);
+      toast({
+        title: 'Preparing Duty Summary...',
+        description: `Generating PDF and dispatching email to ${selectedInvigilator.name}...`,
+      });
+
+      const doc = generateInvigilatorPDF(selectedInvigilator, assignedDuties);
+      const pdfBase64 = await docToBase64(doc);
+      const fileName = `Duty_Summary_${selectedInvigilator.name.replace(/ /g, '_')}.pdf`;
+
+      const response = await fetch('/api/send-duty-summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: [
+            {
+              to: targetEmail,
+              invigilatorName: selectedInvigilator.name,
+              pdfBase64,
+              fileName,
+            },
+          ],
+          examName,
+          collegeName,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.sent > 0) {
+        toast({
+          title: 'Email Sent Successfully!',
+          description: `Personalized duty summary with PDF attachment has been delivered to ${selectedInvigilator.name} (${targetEmail}).`,
+        });
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Email Dispatch Failed',
+          description: result.error || result.results?.[0]?.error || 'Failed to send email. Please check your SendGrid configuration in .env.local.',
+        });
+      }
+    } catch (err: any) {
+      console.error('Error sending single duty summary email:', err);
+      toast({
+        variant: 'destructive',
+        title: 'Error Dispatching Email',
+        description: err.message || 'An unexpected network error occurred.',
+      });
+    } finally {
+      setIsSingleEmailSending(false);
+    }
+  };
+
+  const handleExecuteBulkEmail = async () => {
+    setIsBulkEmailConfirmOpen(false);
+
+    const eligibleInvigilators = invigilators.filter(i => i.email && i.email.includes('@'));
+    if (eligibleInvigilators.length === 0) {
+      toast({
+        variant: 'destructive',
+        title: 'No Valid Email Addresses',
+        description: 'None of the invigilators have valid email addresses configured.',
+      });
+      return;
+    }
+
+    setIsBulkEmailSending(true);
+    toast({
+      title: 'Preparing Bulk Email Dispatch...',
+      description: `Generating PDFs for ${eligibleInvigilators.length} invigilators. Please wait...`,
+    });
+
+    try {
+      const items: Array<{
+        to: string;
+        invigilatorName: string;
+        pdfBase64: string;
+        fileName: string;
+      }> = [];
+
+      for (const inv of eligibleInvigilators) {
+        const dutyIds = allotmentResult.assignments[inv.id] || [];
+        const duties = examinations
+          .filter(exam => dutyIds.includes(exam.id))
+          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+        const doc = generateInvigilatorPDF(inv, duties);
+        const pdfBase64 = await docToBase64(doc);
+        items.push({
+          to: inv.email.trim(),
+          invigilatorName: inv.name,
+          pdfBase64,
+          fileName: `Duty_Summary_${inv.name.replace(/ /g, '_')}.pdf`,
+        });
+      }
+
+      // Send in batches of 5 to avoid large HTTP payloads and rate limit spikes
+      const BATCH_SIZE = 5;
+      let totalSent = 0;
+      let totalFailed = 0;
+      const errorMessages: string[] = [];
+
+      for (let i = 0; i < items.length; i += BATCH_SIZE) {
+        const batch = items.slice(i, i + BATCH_SIZE);
+        const response = await fetch('/api/send-duty-summary', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            items: batch,
+            examName,
+            collegeName,
+          }),
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+          totalSent += result.sent || 0;
+          totalFailed += result.failed || 0;
+          if (result.results) {
+            result.results
+              .filter((r: any) => !r.success)
+              .forEach((r: any) => errorMessages.push(`${r.invigilatorName}: ${r.error}`));
+          }
+        } else {
+          totalFailed += batch.length;
+          errorMessages.push(result.error || `Batch ${Math.floor(i / BATCH_SIZE) + 1} failed`);
+        }
+      }
+
+      if (totalSent > 0) {
+        toast({
+          title: 'Bulk Email Delivery Complete!',
+          description: `Successfully dispatched duty summaries to ${totalSent} of ${items.length} invigilators.${totalFailed > 0 ? ` (${totalFailed} failed)` : ''}`,
+        });
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Bulk Delivery Failed',
+          description: errorMessages[0] || 'Unable to deliver emails. Please ensure SENDGRID_API_KEY and SENDGRID_FROM_EMAIL are set up.',
+        });
+      }
+    } catch (err: any) {
+      console.error('Error in bulk email dispatch:', err);
+      toast({
+        variant: 'destructive',
+        title: 'Bulk Delivery Error',
+        description: err.message || 'An unexpected error occurred during bulk email dispatch.',
+      });
+    } finally {
+      setIsBulkEmailSending(false);
+    }
+  };
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 pt-2">
@@ -886,27 +1072,67 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
       )}
 
       {/* Footer Action Buttons */}
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-3 pt-4 border-t border-border/70">
-        <Button
-          variant="outline"
-          className="w-full sm:w-auto border-[#0891B2]/40 text-[#0891B2] hover:bg-[#0891B2]/10 dark:text-cyan-400 font-semibold rounded-lg h-10 px-5"
-          onClick={() => {
-            if (!isSubscribed) {
-              setCustomSubscriptionMessage("Bulk download of all invigilators' summaries exceeds the 3-profile limit. Please subscribe to download the complete roster.");
-              setIsSubscriptionDialogOpen(true);
-            } else {
-              setIsConfirmOpen(true);
-            }
-          }}
-        >
-          <FolderArchive className="mr-2 h-4 w-4" /> Download All Invigilators&apos; Summaries
-        </Button>
-        <Button
-          className="w-full sm:w-auto bg-[#4F46E5] hover:bg-[#4338ca] text-white font-semibold rounded-lg h-10 px-6 shadow-sm"
-          onClick={handleDownload}
-        >
-          <Download className="mr-2 h-4 w-4" /> Download Individual PDF
-        </Button>
+      <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-start gap-4 pt-4 border-t border-border/70">
+        {/* Bulk Actions Column (Left) */}
+        <div className="flex flex-col gap-2.5 w-full sm:w-auto">
+          <Button
+            variant="outline"
+            className="w-full sm:w-auto border-[#0891B2]/40 text-[#0891B2] hover:bg-[#0891B2]/10 dark:text-cyan-400 font-semibold rounded-lg h-10 px-5"
+            onClick={() => {
+              if (!isSubscribed) {
+                setCustomSubscriptionMessage("Bulk download of all invigilators' summaries exceeds the 3-profile limit. Please subscribe to download the complete roster.");
+                setIsSubscriptionDialogOpen(true);
+              } else {
+                setIsConfirmOpen(true);
+              }
+            }}
+          >
+            <FolderArchive className="mr-2 h-4 w-4" /> Download All Invigilators&apos; Summaries
+          </Button>
+          <Button
+            variant="outline"
+            className="w-full sm:w-auto border-blue-600/40 text-blue-600 hover:bg-blue-50 dark:border-blue-500/30 dark:text-blue-400 dark:hover:bg-blue-950/40 font-semibold rounded-lg h-10 px-5 shadow-2xs"
+            onClick={() => setIsBulkEmailConfirmOpen(true)}
+            disabled={isBulkEmailSending}
+          >
+            {isBulkEmailSending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin text-blue-600 dark:text-blue-400" />
+                Sending emails to all...
+              </>
+            ) : (
+              <>
+                <Send className="mr-2 h-4 w-4" /> Send email to all Invigilators
+              </>
+            )}
+          </Button>
+        </div>
+
+        {/* Individual Actions Column (Right) */}
+        <div className="flex flex-col gap-2.5 w-full sm:w-auto">
+          <Button
+            className="w-full sm:w-auto bg-[#4F46E5] hover:bg-[#4338ca] text-white font-semibold rounded-lg h-10 px-6 shadow-sm"
+            onClick={handleDownload}
+          >
+            <Download className="mr-2 h-4 w-4" /> Download Individual PDF
+          </Button>
+          <Button
+            className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg h-10 px-6 shadow-sm"
+            onClick={handleSendSingleEmail}
+            disabled={isSingleEmailSending}
+          >
+            {isSingleEmailSending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin text-white" />
+                Sending email...
+              </>
+            ) : (
+              <>
+                <Mail className="mr-2 h-4 w-4" /> Send via email
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       {/* Confirmation Dialog for Downloading All Summaries */}
@@ -932,6 +1158,58 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
               className="bg-[#4F46E5] hover:bg-[#4338ca] text-white font-semibold rounded-lg shadow-sm"
             >
               Yes
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirmation Dialog for Sending Email to All Invigilators */}
+      <AlertDialog open={isBulkEmailConfirmOpen} onOpenChange={setIsBulkEmailConfirmOpen}>
+        <AlertDialogContent className="rounded-xl border-border dark:border-slate-800 shadow-xl max-w-lg">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-2.5 mb-1">
+              <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
+                <Mail className="h-5 w-5" />
+              </div>
+              <AlertDialogTitle className="font-headline text-lg font-bold">
+                Send Email to All Invigilators
+              </AlertDialogTitle>
+            </div>
+            <AlertDialogDescription asChild>
+              <div className="text-sm text-muted-foreground space-y-3 pt-1 text-left">
+                <p>
+                  Are you sure you want to send duty summaries via email to all{' '}
+                  <strong className="text-foreground">{invigilators.length}</strong> invigilators?
+                </p>
+                <div className="bg-muted/50 dark:bg-slate-900/60 p-3 rounded-lg border border-border/60 text-xs text-foreground space-y-1.5 text-left">
+                  <div className="font-semibold text-muted-foreground uppercase tracking-wider text-[11px]">
+                    Email Message Preview
+                  </div>
+                  <p className="italic text-muted-foreground">
+                    &ldquo;Dear [Mr./Ms. Invigilator Name], Your examination duties have been assigned. Please find the attached Duty Summary for your reference. Regards DutyFlow&rdquo;
+                  </p>
+                  <div className="text-[11px] text-muted-foreground pt-1">
+                    📎 Each invigilator will receive their respective individual duty summary PDF page as an attachment.
+                  </div>
+                </div>
+
+                {invigilators.some(inv => !inv.email || !inv.email.includes('@')) && (
+                  <div className="bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 p-2.5 rounded-lg text-xs text-left">
+                    ⚠️ <strong>Note:</strong> {invigilators.filter(inv => !inv.email || !inv.email.includes('@')).length} invigilator(s) without a valid email address will be skipped.
+                  </div>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:gap-2">
+            <AlertDialogCancel className="rounded-lg">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleExecuteBulkEmail}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm"
+            >
+              <Send className="mr-1.5 h-4 w-4" /> Yes, Send Emails
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
