@@ -40,7 +40,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export default function SavedAllotmentsPage() {
-  const { savedAllotments, setActiveAllotment, deleteSavedAllotment } = useAllotment();
+  const { savedAllotments, setActiveAllotment, deleteSavedAllotment, clearCurrentAllotment } = useAllotment();
   const router = useRouter();
 
   const handleOpen = (allotmentId: string) => {
@@ -71,7 +71,7 @@ export default function SavedAllotmentsPage() {
               </p>
             </div>
             <Button asChild className="bg-[#6342e8] hover:bg-[#5232d6] text-white font-semibold rounded-xl shadow-xs gap-2">
-              <Link href="/dashboard/examinations">
+              <Link href="/dashboard/examinations" onClick={() => clearCurrentAllotment()}>
                 <PlusCircle className="h-4 w-4" />
                 <span>Create New Allotment</span>
               </Link>

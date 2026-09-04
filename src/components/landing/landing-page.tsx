@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth, clearActiveAllotmentStorage } from '@/lib/auth-context';
 import { Loader2, Eye, EyeOff, Building2, Mail, Lock, Sparkles, CheckCircle2 } from 'lucide-react';
 
 export function LandingPage() {
@@ -119,6 +119,7 @@ export function LandingPage() {
 
   // Instant Guest Access
   const handleGuestDemo = () => {
+    clearActiveAllotmentStorage();
     toast({
       title: "Guest Session Started",
       description: "Entering New Allotment workspace...",

@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth-context';
+import { useAllotment } from '@/lib/allotment-context';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -68,7 +69,12 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
   const userRole = profile?.subscription_status === 'Subscribed' ? 'Pro Member' : 'Guest';
   const singleInitial = (institutionName.trim().charAt(0) || "G").toUpperCase();
 
-  const handleNavClick = () => {
+  const { clearCurrentAllotment } = useAllotment();
+
+  const handleNavClick = (itemLabel?: string | React.MouseEvent) => {
+    if (typeof itemLabel === 'string' && itemLabel === 'New Allotment') {
+      clearCurrentAllotment();
+    }
     if (onItemClick) {
       onItemClick();
     }
@@ -140,7 +146,7 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
                   <TooltipTrigger asChild>
                     <Link
                       href={item.href}
-                      onClick={handleNavClick}
+                      onClick={() => handleNavClick(item.label)}
                       className={cn(
                         "flex items-center justify-center w-11 h-11 mx-auto rounded-xl text-sm font-semibold transition-all duration-200 group relative",
                         isActive
@@ -162,7 +168,7 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
               <Link
                 key={item.href}
                 href={item.href}
-                onClick={handleNavClick}
+                onClick={() => handleNavClick(item.label)}
                 className={cn(
                   "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 group relative",
                   isActive

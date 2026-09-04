@@ -175,33 +175,21 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      const storedExams = localStorage.getItem(`dutyflow_${userScope}_examinations`);
-      if (storedExams) {
-        const parsed = JSON.parse(storedExams);
-        if (Array.isArray(parsed) && isMounted) {
-          setExaminations(parsed.map((e: any) => ({ ...e, date: new Date(e.date) })));
-        }
-      }
+      // Examination and invigilator details pages MUST start clear of all details on login
+      setExaminations([]);
+      setInvigilators([]);
+      setActiveAllotment(null);
 
-      const storedInvs = localStorage.getItem(`dutyflow_${userScope}_invigilators`);
-      if (storedInvs) {
-        const parsed = JSON.parse(storedInvs);
-        if (Array.isArray(parsed) && isMounted) {
-          setInvigilators(parsed);
-        }
-      }
-
-      const storedActive = localStorage.getItem(`dutyflow_${userScope}_active_allotment`);
-      if (storedActive) {
-        const parsed = JSON.parse(storedActive);
-        if (parsed && parsed.id && isMounted) {
-          setActiveAllotment({
-            ...parsed,
-            createdAt: new Date(parsed.createdAt),
-            examinations: (parsed.examinations || []).map((e: any) => ({ ...e, date: new Date(e.date) })),
-          });
-        }
-      }
+      // Purge any lingering draft keys from storage
+      localStorage.removeItem(`dutyflow_${userScope}_examinations`);
+      localStorage.removeItem(`dutyflow_${userScope}_invigilators`);
+      localStorage.removeItem(`dutyflow_${userScope}_active_allotment`);
+      localStorage.removeItem('dutyflow_guest_examinations');
+      localStorage.removeItem('dutyflow_guest_invigilators');
+      localStorage.removeItem('dutyflow_guest_active_allotment');
+      sessionStorage.removeItem(`dutyflow_${userScope}_examinations`);
+      sessionStorage.removeItem(`dutyflow_${userScope}_invigilators`);
+      sessionStorage.removeItem(`dutyflow_${userScope}_active_allotment`);
 
       // Load user-scoped directory invigilators from localStorage
       const storedDir = localStorage.getItem(`dutyflow_${userScope}_invigilator_directory`);
@@ -372,36 +360,6 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
     }
   }, [savedAllotments, isLoaded, getStorageKey]);
 
-  useEffect(() => {
-    if (!isLoaded) return;
-    try {
-      localStorage.setItem(getStorageKey('examinations'), JSON.stringify(examinations));
-    } catch (e) {
-      console.error("Failed to save examinations to localStorage:", e);
-    }
-  }, [examinations, isLoaded, getStorageKey]);
-
-  useEffect(() => {
-    if (!isLoaded) return;
-    try {
-      localStorage.setItem(getStorageKey('invigilators'), JSON.stringify(invigilators));
-    } catch (e) {
-      console.error("Failed to save invigilators to localStorage:", e);
-    }
-  }, [invigilators, isLoaded, getStorageKey]);
-
-  useEffect(() => {
-    if (!isLoaded) return;
-    try {
-      if (activeAllotment) {
-        localStorage.setItem(getStorageKey('active_allotment'), JSON.stringify(activeAllotment));
-      } else {
-        localStorage.removeItem(getStorageKey('active_allotment'));
-      }
-    } catch (e) {
-      console.error("Failed to save active allotment to localStorage:", e);
-    }
-  }, [activeAllotment, isLoaded, getStorageKey]);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -503,11 +461,25 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
     }
   };
   
-  const clearCurrentAllotment = () => {
+  const clearCurrentAllotment = useCallback(() => {
     setActiveAllotment(null);
     setInvigilators([]);
     setExaminations([]);
-  };
+    if (typeof window !== 'undefined') {
+      try {
+        const scope = user?.id ? user.id : 'guest';
+        localStorage.removeItem(`dutyflow_${scope}_examinations`);
+        localStorage.removeItem(`dutyflow_${scope}_invigilators`);
+        localStorage.removeItem(`dutyflow_${scope}_active_allotment`);
+        localStorage.removeItem('dutyflow_guest_examinations');
+        localStorage.removeItem('dutyflow_guest_invigilators');
+        localStorage.removeItem('dutyflow_guest_active_allotment');
+        sessionStorage.removeItem(`dutyflow_${scope}_examinations`);
+        sessionStorage.removeItem(`dutyflow_${scope}_invigilators`);
+        sessionStorage.removeItem(`dutyflow_${scope}_active_allotment`);
+      } catch (_) {}
+    }
+  }, [user?.id]);
 
   const addInstruction = (text: string) => {
     const trimmed = text.trim();

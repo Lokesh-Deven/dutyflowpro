@@ -4,9 +4,11 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Plus, Bookmark, CalendarDays, BarChart2, ListChecks, Signature, BookUser } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAllotment } from '@/lib/allotment-context';
 
 export function HeaderNav() {
   const pathname = usePathname();
+  const { clearCurrentAllotment } = useAllotment();
 
   const items = [
     { href: '/dashboard/examinations', label: 'New Allotment', icon: Plus, isAction: true },
@@ -33,6 +35,11 @@ export function HeaderNav() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => {
+                if (item.label === 'New Allotment') {
+                  clearCurrentAllotment();
+                }
+              }}
               className={cn(
                 "px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all duration-200 shadow-xs",
                 isActive

@@ -86,6 +86,33 @@ const getGuestProfile = (): UserProfile => {
   return DEFAULT_GUEST_PROFILE;
 };
 
+export const clearActiveAllotmentStorage = (userId?: string) => {
+  if (typeof window === 'undefined') return;
+  try {
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key) continue;
+      // Do NOT touch permanent user data: directory, signatory, instructions, saved allotments, profile
+      if (
+        key.includes('directory') ||
+        key.includes('saved_allotments') ||
+        key.includes('instructions') ||
+        key.includes('signatory') ||
+        key.includes('profile') ||
+        key.includes('inst_version')
+      ) {
+        continue;
+      }
+      if (key.includes('examinations') || key.includes('invigilators') || key.includes('active_allotment')) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach(k => localStorage.removeItem(k));
+    sessionStorage.clear();
+  } catch (_) {}
+};
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -159,10 +186,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     // Auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
+        if (event === 'SIGNED_IN') {
+          clearActiveAllotmentStorage(session.user.id);
+        }
         fetchProfile(session.user);
       } else {
         setProfile(getGuestProfile());
@@ -266,6 +296,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (data.user) {
+        clearActiveAllotmentStorage(data.user.id);
         setUser(data.user);
         setSession(data.session);
         await fetchProfile(data.user);
@@ -297,6 +328,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (data.user) {
+        clearActiveAllotmentStorage(data.user.id);
         const now = new Date();
         const endDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
@@ -368,6 +400,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       setSession(null);
       setProfile(DEFAULT_GUEST_PROFILE);
+      clearActiveAllotmentStorage();
 
       // Clean up all local storage session items on sign out
       if (typeof window !== 'undefined') {
