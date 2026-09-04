@@ -56,6 +56,11 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  const [arrowPositions, setArrowPositions] = useState<{
+    leftX: number;
+    rightX: number;
+    isVisible: boolean;
+  }>({ leftX: 0, rightX: 0, isVisible: false });
 
   // Auto-scroll interval and hold timer references
   const scrollIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -69,15 +74,54 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
     setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
   }, []);
 
+  const updateArrowPositions = useCallback(() => {
+    const container = tableContainerRef.current;
+    if (!container) return;
+
+    const rect = container.getBoundingClientRect();
+    const windowHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
+
+    // Check if table is currently intersecting the screen
+    const isVerticallyInView = rect.bottom > 120 && rect.top < windowHeight - 120;
+
+    setArrowPositions({
+      leftX: rect.left,
+      rightX: rect.right,
+      isVisible: isVerticallyInView,
+    });
+  }, []);
+
   useEffect(() => {
     checkScroll();
-    const timer = setTimeout(checkScroll, 120);
-    window.addEventListener('resize', checkScroll);
+    updateArrowPositions();
+    const timer = setTimeout(() => {
+      checkScroll();
+      updateArrowPositions();
+    }, 120);
+
+    const handleScrollOrResize = () => {
+      updateArrowPositions();
+    };
+
+    window.addEventListener('scroll', handleScrollOrResize, { passive: true });
+    window.addEventListener('resize', handleScrollOrResize, { passive: true });
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (tableContainerRef.current && typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => {
+        checkScroll();
+        updateArrowPositions();
+      });
+      resizeObserver.observe(tableContainerRef.current);
+    }
+
     return () => {
       clearTimeout(timer);
-      window.removeEventListener('resize', checkScroll);
+      window.removeEventListener('scroll', handleScrollOrResize);
+      window.removeEventListener('resize', handleScrollOrResize);
+      if (resizeObserver) resizeObserver.disconnect();
     };
-  }, [checkScroll, examinations]);
+  }, [checkScroll, updateArrowPositions, examinations]);
 
   const stopContinuousScroll = useCallback(() => {
     if (scrollHoldTimerRef.current) {
@@ -457,56 +501,66 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
 
         <CardContent className="px-3 sm:px-12 pb-6 pt-0">
           <div className="relative group/allotment-table">
-            {/* Sticky Floating Navigation Arrows Track (Floats at center of screen while scrolling down page) */}
-            <div className="pointer-events-none sticky top-1/2 z-30 h-0 flex justify-between items-center -translate-y-1/2">
-              {/* Flying Scrolling Arrow - Left Side (To the left of Serial No.) */}
-              <button
-                type="button"
-                onPointerDown={(e) => handlePointerDown('left', e)}
-                onPointerUp={handlePointerUp}
-                onPointerLeave={handlePointerUp}
-                onPointerCancel={handlePointerUp}
-                disabled={!canScrollLeft}
-                aria-label="Scroll left to see previous exam columns"
-                className={cn(
-                  "pointer-events-auto -ml-2 sm:-ml-11",
-                  "flex items-center justify-center h-10 w-10 sm:h-11 sm:w-11 rounded-full",
-                  "bg-white dark:bg-slate-900 border-2 border-[#6342e8] text-[#6342e8] dark:text-purple-300",
-                  "shadow-2xl shadow-purple-500/25 backdrop-blur-md transition-all duration-200 cursor-pointer select-none",
-                  "hover:bg-[#6342e8] hover:text-white hover:scale-110 active:scale-95 active:bg-[#5232d6]",
-                  canScrollLeft 
-                    ? "opacity-95 hover:opacity-100" 
-                    : "opacity-0 pointer-events-none scale-75"
-                )}
-                title="Click to scroll left, hold for continuous scroll"
-              >
-                <ChevronLeft className="h-6 w-6 stroke-[2.5]" />
-              </button>
+            {/* Viewport Center Flying Navigation Arrows (Fixed at 50% screen height, strictly on outer flanks) */}
+            {/* Left Flying Arrow (Strictly to the left of Serial No.) */}
+            <button
+              type="button"
+              onPointerDown={(e) => handlePointerDown('left', e)}
+              onPointerUp={handlePointerUp}
+              onPointerLeave={handlePointerUp}
+              onPointerCancel={handlePointerUp}
+              disabled={!canScrollLeft || !arrowPositions.isVisible}
+              aria-label="Scroll left to see previous exam columns"
+              style={{
+                position: 'fixed',
+                top: '50%',
+                left: `${Math.max(8, arrowPositions.leftX - 48)}px`,
+                transform: 'translateY(-50%)',
+                zIndex: 50,
+              }}
+              className={cn(
+                "flex items-center justify-center h-10 w-10 sm:h-11 sm:w-11 rounded-full",
+                "bg-white dark:bg-slate-900 border-2 border-[#6342e8] text-[#6342e8] dark:text-purple-300",
+                "shadow-2xl shadow-purple-500/30 backdrop-blur-md transition-opacity duration-200 cursor-pointer select-none",
+                "hover:bg-[#6342e8] hover:text-white hover:scale-110 active:scale-95 active:bg-[#5232d6]",
+                canScrollLeft && arrowPositions.isVisible
+                  ? "opacity-95 hover:opacity-100 pointer-events-auto" 
+                  : "opacity-0 pointer-events-none scale-75"
+              )}
+              title="Click to scroll left, hold for continuous scroll"
+            >
+              <ChevronLeft className="h-6 w-6 stroke-[2.5]" />
+            </button>
 
-              {/* Flying Scrolling Arrow - Right Side (To the right of Total) */}
-              <button
-                type="button"
-                onPointerDown={(e) => handlePointerDown('right', e)}
-                onPointerUp={handlePointerUp}
-                onPointerLeave={handlePointerUp}
-                onPointerCancel={handlePointerUp}
-                disabled={!canScrollRight}
-                aria-label="Scroll right to see more exam columns"
-                className={cn(
-                  "pointer-events-auto -mr-2 sm:-mr-11",
-                  "flex items-center justify-center h-10 w-10 sm:h-11 sm:w-11 rounded-full",
-                  "bg-white dark:bg-slate-900 border-2 border-[#6342e8] text-[#6342e8] dark:text-purple-300",
-                  "shadow-2xl shadow-purple-500/25 backdrop-blur-md transition-all duration-200 cursor-pointer select-none",
-                  "hover:bg-[#6342e8] hover:text-white hover:scale-110 active:scale-95 active:bg-[#5232d6]",
-                  canScrollRight 
-                    ? "opacity-95 hover:opacity-100 animate-pulse hover:animate-none" 
-                    : "opacity-0 pointer-events-none scale-75"
-                )}
-                title="Click to scroll right, hold for continuous scroll"
-              >
-                <ChevronRight className="h-6 w-6 stroke-[2.5]" />
-              </button>
-            </div>
+            {/* Right Flying Arrow (Strictly to the right of Total) */}
+            <button
+              type="button"
+              onPointerDown={(e) => handlePointerDown('right', e)}
+              onPointerUp={handlePointerUp}
+              onPointerLeave={handlePointerUp}
+              onPointerCancel={handlePointerUp}
+              disabled={!canScrollRight || !arrowPositions.isVisible}
+              aria-label="Scroll right to see more exam columns"
+              style={{
+                position: 'fixed',
+                top: '50%',
+                left: `${Math.min(typeof window !== 'undefined' ? window.innerWidth - 52 : 1200, arrowPositions.rightX + 4)}px`,
+                transform: 'translateY(-50%)',
+                zIndex: 50,
+              }}
+              className={cn(
+                "flex items-center justify-center h-10 w-10 sm:h-11 sm:w-11 rounded-full",
+                "bg-white dark:bg-slate-900 border-2 border-[#6342e8] text-[#6342e8] dark:text-purple-300",
+                "shadow-2xl shadow-purple-500/30 backdrop-blur-md transition-opacity duration-200 cursor-pointer select-none",
+                "hover:bg-[#6342e8] hover:text-white hover:scale-110 active:scale-95 active:bg-[#5232d6]",
+                canScrollRight && arrowPositions.isVisible
+                  ? "opacity-95 hover:opacity-100 pointer-events-auto animate-pulse hover:animate-none" 
+                  : "opacity-0 pointer-events-none scale-75"
+              )}
+              title="Click to scroll right, hold for continuous scroll"
+            >
+              <ChevronRight className="h-6 w-6 stroke-[2.5]" />
+            </button>
 
             {/* Normal Full-Height Table Container (no max-h, natural page height) */}
             <div 
