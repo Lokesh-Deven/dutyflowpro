@@ -8,6 +8,15 @@ export type Invigilator = {
   availableExamIds: string[];
 };
 
+export type DirectoryInvigilator = {
+  id: string;
+  name: string;
+  designation: string;
+  mobile: string;
+  email: string;
+  createdAt?: string;
+};
+
 export type Examination = {
   id:string;
   date: Date;

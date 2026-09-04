@@ -1,12 +1,14 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef } from 'react';
-import type { Invigilator, Examination, SavedAllotment, AllotmentResult, InstructionItem, SignatoryInfo } from '@/lib/types';
+import type { Invigilator, DirectoryInvigilator, Examination, SavedAllotment, AllotmentResult, InstructionItem, SignatoryInfo } from '@/lib/types';
 import { useAuth } from './auth-context';
 import {
   syncAllotmentToDatabase,
   fetchUserAllotmentsFromDatabase,
-  deleteUserAllotmentFromDatabase
+  deleteUserAllotmentFromDatabase,
+  saveUserDirectoryToCloud,
+  fetchUserDirectoryFromCloud,
 } from './storage-service';
 import { supabase } from './supabase';
 
@@ -92,6 +94,15 @@ interface AllotmentContextType {
   setSignatory: React.Dispatch<React.SetStateAction<SignatoryInfo>>;
   updateSignatory: (data: Partial<SignatoryInfo>) => Promise<void> | void;
   resetSignatory: () => Promise<void> | void;
+  directoryInvigilators: DirectoryInvigilator[];
+  setDirectoryInvigilators: React.Dispatch<React.SetStateAction<DirectoryInvigilator[]>>;
+  addDirectoryInvigilator: (item: Omit<DirectoryInvigilator, 'id'>) => void;
+  addDirectoryInvigilatorsBulk: (items: Omit<DirectoryInvigilator, 'id'>[]) => void;
+  updateDirectoryInvigilator: (id: string, updated: Partial<DirectoryInvigilator>) => void;
+  deleteDirectoryInvigilator: (id: string) => void;
+  clearDirectoryInvigilators: () => void;
+  saveDirectoryToCloud: () => Promise<{ success: boolean; error?: any }>;
+  isDirectoryCloudSynced: boolean;
 }
 
 const AllotmentContext = createContext<AllotmentContextType | undefined>(undefined);
@@ -104,8 +115,10 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
   const [activeAllotment, setActiveAllotment] = useState<SavedAllotment | null>(null);
   const [instructions, setInstructions] = useState<InstructionItem[]>(DEFAULT_INSTRUCTIONS);
   const [signatory, setSignatory] = useState<SignatoryInfo>(DEFAULT_SIGNATORY);
+  const [directoryInvigilators, setDirectoryInvigilators] = useState<DirectoryInvigilator[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isCloudSynced, setIsCloudSynced] = useState(false);
+  const [isDirectoryCloudSynced, setIsDirectoryCloudSynced] = useState(false);
 
   const prevUserIdRef = useRef<string | undefined>(undefined);
 
@@ -139,6 +152,7 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       setActiveAllotment(null);
       setInstructions(DEFAULT_INSTRUCTIONS);
       setSignatory(DEFAULT_SIGNATORY);
+      setDirectoryInvigilators([]);
       setIsCloudSynced(false);
       setIsLoaded(false);
     }
@@ -186,6 +200,28 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
             createdAt: new Date(parsed.createdAt),
             examinations: (parsed.examinations || []).map((e: any) => ({ ...e, date: new Date(e.date) })),
           });
+        }
+      }
+
+      // Load user-scoped directory invigilators from localStorage
+      const storedDir = localStorage.getItem(`dutyflow_${userScope}_invigilator_directory`);
+      if (storedDir) {
+        try {
+          const parsed = JSON.parse(storedDir);
+          if (Array.isArray(parsed) && isMounted) {
+            setDirectoryInvigilators(parsed);
+          }
+        } catch (_) {}
+      } else if (userScope !== 'guest') {
+        const guestDir = localStorage.getItem('dutyflow_guest_invigilator_directory');
+        if (guestDir) {
+          try {
+            const parsed = JSON.parse(guestDir);
+            if (Array.isArray(parsed) && isMounted && parsed.length > 0) {
+              setDirectoryInvigilators(parsed);
+              localStorage.setItem(`dutyflow_${userScope}_invigilator_directory`, guestDir);
+            }
+          } catch (_) {}
         }
       }
 
@@ -300,6 +336,23 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
           console.error("Cloud signatory fetch error:", err);
         }
       })();
+
+      // Also fetch cloud-saved invigilator directory from Supabase profiles
+      (async () => {
+        try {
+          const cloudDir = await fetchUserDirectoryFromCloud(currentUserId);
+          if (!isMounted) return;
+          if (cloudDir && Array.isArray(cloudDir) && cloudDir.length > 0) {
+            setDirectoryInvigilators(cloudDir);
+            setIsDirectoryCloudSynced(true);
+            try {
+              localStorage.setItem(`dutyflow_${userScope}_invigilator_directory`, JSON.stringify(cloudDir));
+            } catch (_) {}
+          }
+        } catch (err) {
+          console.error("Cloud directory fetch error:", err);
+        }
+      })();
     } else {
       setIsLoaded(true);
     }
@@ -367,6 +420,15 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       console.error("Failed to save signatory to localStorage:", e);
     }
   }, [signatory, isLoaded, getStorageKey]);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    try {
+      localStorage.setItem(getStorageKey('invigilator_directory'), JSON.stringify(directoryInvigilators));
+    } catch (e) {
+      console.error("Failed to save invigilator directory to localStorage:", e);
+    }
+  }, [directoryInvigilators, isLoaded, getStorageKey]);
 
   // When activeAllotment changes to a specific saved allotment, sync its exams & invigilators
   useEffect(() => {
@@ -547,6 +609,63 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const addDirectoryInvigilator = useCallback((item: Omit<DirectoryInvigilator, 'id'>) => {
+    const newItem: DirectoryInvigilator = {
+      id: `dir-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      ...item,
+      createdAt: new Date().toISOString(),
+    };
+    setDirectoryInvigilators(prev => [newItem, ...prev]);
+    setIsDirectoryCloudSynced(false);
+  }, []);
+
+  const addDirectoryInvigilatorsBulk = useCallback((items: Omit<DirectoryInvigilator, 'id'>[]) => {
+    const newItems: DirectoryInvigilator[] = items.map((item, index) => ({
+      id: `dir-bulk-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 4)}`,
+      ...item,
+      createdAt: new Date().toISOString(),
+    }));
+    setDirectoryInvigilators(prev => [...newItems, ...prev]);
+    setIsDirectoryCloudSynced(false);
+  }, []);
+
+  const updateDirectoryInvigilator = useCallback((id: string, updated: Partial<DirectoryInvigilator>) => {
+    setDirectoryInvigilators(prev => prev.map(inv => inv.id === id ? { ...inv, ...updated } : inv));
+    setIsDirectoryCloudSynced(false);
+  }, []);
+
+  const deleteDirectoryInvigilator = useCallback((id: string) => {
+    setDirectoryInvigilators(prev => prev.filter(inv => inv.id !== id));
+    setIsDirectoryCloudSynced(false);
+  }, []);
+
+  const clearDirectoryInvigilators = useCallback(() => {
+    setDirectoryInvigilators([]);
+    setIsDirectoryCloudSynced(false);
+  }, []);
+
+  const saveDirectoryToCloud = useCallback(async (): Promise<{ success: boolean; error?: any }> => {
+    const userScope = user?.id ? user.id : 'guest';
+    try {
+      localStorage.setItem(`dutyflow_${userScope}_invigilator_directory`, JSON.stringify(directoryInvigilators));
+      if (userScope === 'guest') {
+        localStorage.setItem('dutyflow_guest_invigilator_directory', JSON.stringify(directoryInvigilators));
+      }
+    } catch (e) {
+      console.error("Failed to save directory to localStorage:", e);
+    }
+
+    if (!user?.id) {
+      return { success: true };
+    }
+
+    const res = await saveUserDirectoryToCloud(directoryInvigilators, user.id);
+    if (res.success) {
+      setIsDirectoryCloudSynced(true);
+    }
+    return res;
+  }, [user?.id, directoryInvigilators]);
+
   return (
     <AllotmentContext.Provider value={{
       invigilators, setInvigilators,
@@ -564,7 +683,15 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       resetInstructionsToDefault,
       signatory, setSignatory,
       updateSignatory,
-      resetSignatory
+      resetSignatory,
+      directoryInvigilators, setDirectoryInvigilators,
+      addDirectoryInvigilator,
+      addDirectoryInvigilatorsBulk,
+      updateDirectoryInvigilator,
+      deleteDirectoryInvigilator,
+      clearDirectoryInvigilators,
+      saveDirectoryToCloud,
+      isDirectoryCloudSynced
     }}>
       {children}
     </AllotmentContext.Provider>

@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { SavedAllotment } from './types';
+import type { SavedAllotment, DirectoryInvigilator } from './types';
 
 export interface UserFileRecord {
   id: string;
@@ -307,3 +307,74 @@ export async function deleteUserAllotmentFromDatabase(allotmentId: string, userI
     return false;
   }
 }
+
+/**
+ * Permanently save the invigilator directory to the user's Supabase account profile.
+ */
+export async function saveUserDirectoryToCloud(
+  directory: DirectoryInvigilator[],
+  userId: string
+): Promise<{ success: boolean; error?: any }> {
+  if (!userId) return { success: false, error: 'User not authenticated' };
+
+  try {
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        invigilator_directory: directory,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', userId);
+
+    if (error) {
+      console.error('Error saving invigilator directory to profile:', error);
+      return { success: false, error };
+    }
+
+    // Also update auth user metadata as cloud backup
+    try {
+      await supabase.auth.updateUser({
+        data: {
+          invigilator_directory_count: directory.length,
+          invigilator_directory_updated_at: new Date().toISOString(),
+        },
+      });
+    } catch (_) {}
+
+    return { success: true };
+  } catch (err: any) {
+    console.error('Exception in saveUserDirectoryToCloud:', err);
+    return { success: false, error: err };
+  }
+}
+
+/**
+ * Fetch permanently saved invigilator directory for the specified user from Supabase.
+ */
+export async function fetchUserDirectoryFromCloud(
+  userId: string
+): Promise<DirectoryInvigilator[] | null> {
+  if (!userId) return null;
+
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('invigilator_directory')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error fetching invigilator directory from profile:', error);
+      return null;
+    }
+
+    if (data && Array.isArray(data.invigilator_directory)) {
+      return data.invigilator_directory;
+    }
+    return null;
+  } catch (err) {
+    console.error('Exception in fetchUserDirectoryFromCloud:', err);
+    return null;
+  }
+}
+

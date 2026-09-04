@@ -39,7 +39,8 @@ import {
     CalendarClock,
     CheckCircle2,
     SlidersHorizontal,
-    Plus
+    Plus,
+    BookUser
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
@@ -68,7 +69,7 @@ export function InvigilatorManagement() {
     const [isClearAllAlertOpen, setIsClearAllAlertOpen] = useState(false);
     const [isClearAllTableAlertOpen, setIsClearAllTableAlertOpen] = useState(false);
 
-    const { invigilators, setInvigilators, examinations, saveCurrentAllotment } = useAllotment();
+    const { invigilators, setInvigilators, examinations, saveCurrentAllotment, directoryInvigilators } = useAllotment();
 
     const form = useForm<z.infer<typeof invigilatorSchema>>({
         resolver: zodResolver(invigilatorSchema),
@@ -89,6 +90,59 @@ export function InvigilatorManagement() {
         invigilators.filter(i => !i.isAvailableAllDays && i.availableExamIds && i.availableExamIds.length > 0).length,
         [invigilators]
     );
+
+    const handleAddFromDirectory = () => {
+        if (!directoryInvigilators || directoryInvigilators.length === 0) {
+            toast({
+                variant: "destructive",
+                title: "Directory is Empty",
+                description: "No invigilators found in your directory. Please add faculty in the Invigilator Directory first.",
+            });
+            return;
+        }
+
+        // Deduplicate against faculty members already in the active list by Name (case-insensitive)
+        const existingNames = new Set(
+            invigilators.map(i => i.name.toLowerCase().trim()).filter(Boolean)
+        );
+
+        const newFromDirectory: Invigilator[] = [];
+        let duplicateCount = 0;
+
+        directoryInvigilators.forEach((dirItem, index) => {
+            const cleanName = dirItem.name ? dirItem.name.toLowerCase().trim() : '';
+            if (!cleanName) return;
+
+            if (existingNames.has(cleanName)) {
+                duplicateCount++;
+            } else {
+                newFromDirectory.push({
+                    id: `inv-dir-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 4)}`,
+                    name: dirItem.name.trim(),
+                    designation: dirItem.designation ? dirItem.designation.trim() : '',
+                    mobile: dirItem.mobile ? dirItem.mobile.trim() : '',
+                    email: dirItem.email ? dirItem.email.trim() : '',
+                    isAvailableAllDays: true,
+                    availableExamIds: [],
+                });
+                existingNames.add(cleanName);
+            }
+        });
+
+        if (newFromDirectory.length === 0) {
+            toast({
+                title: "Already in List",
+                description: "All invigilators from your directory are already present in the active list.",
+            });
+            return;
+        }
+
+        setInvigilators(prev => [...prev, ...newFromDirectory]);
+        toast({
+            title: "Added from Directory",
+            description: `${newFromDirectory.length} ${newFromDirectory.length === 1 ? 'invigilator' : 'invigilators'} added from your directory${duplicateCount > 0 ? ` (${duplicateCount} already present skipped)` : ''}.`,
+        });
+    };
 
     function onSubmit(values: z.infer<typeof invigilatorSchema>) {
         const newInvigilator: Invigilator = {
@@ -131,15 +185,22 @@ export function InvigilatorManagement() {
                 const worksheet = workbook.Sheets[sheetName];
                 const json = XLSX.utils.sheet_to_json(worksheet);
 
-                const newInvigilators: Invigilator[] = json.map((row: any, index) => ({
-                    id: `inv-bulk-${Date.now()}-${index}`,
-                    name: String(getColumnValue(row, ["Name", "Invigilator's Name"]) || ''),
-                    designation: String(getColumnValue(row, ["Designation"]) || ''),
-                    mobile: String(getColumnValue(row, ["Mobile", "Mobile No"]) || '').replace(/\D/g, ''),
-                    email: String(getColumnValue(row, ["E-Mail ID", "Email", "E-Mail"]) || ''),
-                    isAvailableAllDays: true,
-                    availableExamIds: [],
-                })).filter(inv => inv.name && inv.email);
+                const newInvigilators: Invigilator[] = json.map((row: any, index) => {
+                    const name = String(getColumnValue(row, ["Name", "Invigilator's Name", "Invigilator Name", "Faculty Name", "Staff Name", "Faculty"]) || '').trim();
+                    const designation = String(getColumnValue(row, ["Designation", "Department", "Designation/Department", "Designation / Department", "Dept"]) || '').trim();
+                    const rawMobile = String(getColumnValue(row, ["Mobile", "Mobile No", "Phone", "Contact", "Phone No", "Contact No"]) || '').replace(/\D/g, '').trim();
+                    const rawEmail = String(getColumnValue(row, ["E-Mail ID", "Email", "E-Mail", "Email ID", "Email Address"]) || '').trim();
+
+                    return {
+                        id: `inv-bulk-${Date.now()}-${index}`,
+                        name,
+                        designation: designation || 'Faculty',
+                        mobile: rawMobile.length >= 10 ? rawMobile.slice(-10) : (rawMobile || '9000000000'),
+                        email: rawEmail || `${name.toLowerCase().replace(/[^a-z0-9]/g, '') || `faculty${index + 1}`}@institution.local`,
+                        isAvailableAllDays: true,
+                        availableExamIds: [],
+                    };
+                }).filter(inv => Boolean(inv.name));
 
                 if (newInvigilators.length > 0) {
                     setInvigilators(prev => [...prev, ...newInvigilators]);
@@ -390,31 +451,52 @@ export function InvigilatorManagement() {
                             </div>
 
                             {/* Actions Bar */}
-                            <div className="flex flex-wrap items-center justify-end gap-3 pt-4">
-                                <input
-                                    type="file"
-                                    ref={fileInputRef}
-                                    onChange={handleFileChange}
-                                    className="hidden"
-                                    accept=".xlsx, .xls, .csv"
-                                />
-                                <Button
-                                    type="submit"
-                                    className="bg-[#6342e8] hover:bg-[#5232d6] text-white font-semibold shadow-xs rounded-xl px-5 py-2.5 transition-all text-sm flex items-center gap-2"
-                                >
-                                    <Plus className="h-4 w-4" />
-                                    <span>Add Invigilator</span>
-                                </Button>
-                                <span className="text-xs uppercase font-bold text-slate-400 px-1">OR</span>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={handleBulkUploadClick}
-                                    className="border border-purple-300 dark:border-purple-800 text-[#6342e8] dark:text-purple-300 bg-purple-50/50 dark:bg-purple-950/30 hover:bg-purple-100/70 font-semibold rounded-xl px-5 py-2.5 shadow-2xs transition-all text-sm flex items-center gap-2"
-                                >
-                                    <Upload className="h-4 w-4" />
-                                    <span>Import from Excel</span>
-                                </Button>
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4">
+                                {/* Extreme Left: Add from Directory */}
+                                <div>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={handleAddFromDirectory}
+                                        className="border border-indigo-200 dark:border-indigo-800/60 bg-indigo-50/60 dark:bg-indigo-950/30 text-[#6342e8] dark:text-purple-300 hover:bg-indigo-100/70 dark:hover:bg-indigo-900/50 font-semibold rounded-xl px-4 py-2.5 shadow-2xs transition-all text-sm flex items-center gap-2"
+                                    >
+                                        <BookUser className="h-4 w-4 text-[#6342e8] dark:text-purple-300" />
+                                        <span>Add from Directory</span>
+                                        {directoryInvigilators && directoryInvigilators.length > 0 && (
+                                            <span className="ml-1 px-2 py-0.5 bg-[#6342e8] text-white text-[11px] font-bold rounded-full">
+                                                {directoryInvigilators.length}
+                                            </span>
+                                        )}
+                                    </Button>
+                                </div>
+
+                                {/* Right Group: Add Invigilator OR Import from Excel */}
+                                <div className="flex flex-wrap items-center gap-3">
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        onChange={handleFileChange}
+                                        className="hidden"
+                                        accept=".xlsx, .xls, .csv"
+                                    />
+                                    <Button
+                                        type="submit"
+                                        className="bg-[#6342e8] hover:bg-[#5232d6] text-white font-semibold shadow-xs rounded-xl px-5 py-2.5 transition-all text-sm flex items-center gap-2"
+                                    >
+                                        <Plus className="h-4 w-4" />
+                                        <span>Add Invigilator</span>
+                                    </Button>
+                                    <span className="text-xs uppercase font-bold text-slate-400 px-1">OR</span>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={handleBulkUploadClick}
+                                        className="border border-purple-300 dark:border-purple-800 text-[#6342e8] dark:text-purple-300 bg-purple-50/50 dark:bg-purple-950/30 hover:bg-purple-100/70 font-semibold rounded-xl px-5 py-2.5 shadow-2xs transition-all text-sm flex items-center gap-2"
+                                    >
+                                        <Upload className="h-4 w-4" />
+                                        <span>Import from Excel</span>
+                                    </Button>
+                                </div>
                             </div>
                         </form>
                     </Form>

@@ -10,6 +10,7 @@ import {
   BarChart2,
   ListChecks,
   Signature,
+  BookUser,
   UserCircle,
   Settings,
   HelpCircle,
@@ -45,6 +46,7 @@ export const navItems = [
   { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart2 },
   { href: '/dashboard/instructions', label: 'Add Instructions', icon: ListChecks },
   { href: '/dashboard/signatory', label: 'Add Signatory', icon: Signature },
+  { href: '/dashboard/directory', label: 'Invigilator Directory', icon: BookUser },
 ];
 
 export const newAllotmentSteps = [
