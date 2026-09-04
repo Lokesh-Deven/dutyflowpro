@@ -30,83 +30,23 @@ export interface SendEmailSummary {
 }
 
 /**
- * Format invigilator name with appropriate honorific (Ms. for female, Mr. for male)
- * Preserves existing honorific titles (Dr., Prof., etc.) if already present.
+ * Format invigilator name directly for salutations without Mr./Ms. prefixes.
  */
 export function formatSalutationName(rawName: string): string {
-  const trimmed = rawName.trim();
+  const trimmed = (rawName || '').trim();
   if (!trimmed) return 'Invigilator';
-
-  // If name already starts with an existing honorific title, preserve it
-  const titleRegex = /^(dr\.?|prof\.?|mr\.?|ms\.?|mrs\.?|miss)\s+/i;
-  if (titleRegex.test(trimmed)) {
-    return trimmed;
-  }
-
-  // Extract first word (first name) for gender heuristic
-  const words = trimmed.split(/\s+/);
-  const firstName = (words[0] || '').toLowerCase().replace(/[^a-z]/g, '');
-
-  const femaleExactNames = new Set([
-    'pavithra', 'priya', 'kavitha', 'pooja', 'deepa', 'shweta', 'divya', 'ananya', 'sneha', 'neha',
-    'sunitha', 'geetha', 'radhika', 'vidya', 'rekha', 'anita', 'mamatha', 'sushma', 'bhavya', 'roopa',
-    'shruthi', 'shruti', 'preethi', 'preeti', 'sowmya', 'soumya', 'ashwini', 'aarthi', 'arti', 'shanthi',
-    'shanti', 'gayathri', 'gayatri', 'malathi', 'lakshmi', 'laxmi', 'swathi', 'swati', 'keerthi', 'kirthi',
-    'revathi', 'jyothi', 'jyoti', 'jayanthi', 'bharathi', 'barathi', 'padmavathi', 'padma', 'anjali', 'meena',
-    'sheela', 'leela', 'rani', 'seema', 'renu', 'tanu', 'madhu', 'poonam', 'parveen', 'shabana', 'fatima',
-    'ayesha', 'nasreen', 'susan', 'sarah', 'mary', 'pushpa', 'suma', 'usha', 'veena', 'vanitha', 'savitha',
-    'saritha', 'sudha', 'sujata', 'sujatha', 'chaitra', 'chaithra', 'harshitha', 'archana', 'arpitha',
-    'anupama', 'sandhya', 'shilpa', 'pallavi', 'rashmi', 'reshma', 'varsha', 'nandini', 'manjula', 'kusuma',
-    'kalpana', 'bindu', 'indira', 'komala', 'meenakshi', 'kamala', 'hema', 'nalini', 'shobha', 'rupa',
-    'leelavathi', 'bhagya', 'chandana', 'monika', 'tejaswini', 'hemavathi', 'shridevi', 'sridevi', 'renuka',
-    'ganga', 'yamuna', 'kavita', 'sunita', 'gita', 'mamta', 'anuradha', 'prathibha', 'pratibha', 'shalini',
-    'shobhana', 'bhavana', 'chethana', 'chetana', 'kalyani', 'uma', 'vasantha', 'lalitha', 'girija',
-    'sharada', 'sarada', 'anitha', 'madhuri', 'sheetal', 'shikha', 'tanuja', 'namrata', 'payal', 'kajal',
-    'alka', 'smita', 'sonal', 'sweta', 'swaroopa', 'meghana', 'sahana', 'spandana', 'nisarga',
-    'dhanalakshmi', 'nagaveni', 'rohini', 'yashodha', 'yashoda', 'amrutha', 'amrita', 'sahithi', 'shilpa'
-  ]);
-
-  const maleSpecialNamesEndingInA = new Set([
-    'krishna', 'rama', 'shiva', 'surya', 'aditya', 'chandra', 'raghu', 'buddha', 'siddhartha',
-    'rana', 'somanna', 'basappa', 'mallappa', 'ningappa', 'lingappa', 'sidda', 'malla', 'devendra',
-    'indra', 'sharma', 'gupta', 'verma', 'mishra', 'agarwal', 'bhat', 'rao'
-  ]);
-
-  let isFemale = false;
-
-  if (femaleExactNames.has(firstName)) {
-    isFemale = true;
-  } else if (
-    firstName.endsWith('shree') ||
-    firstName.endsWith('sri') ||
-    firstName.endsWith('vathi') ||
-    firstName.endsWith('wathi') ||
-    firstName.endsWith('kumari') ||
-    firstName.endsWith('devi') ||
-    firstName.endsWith('bai') ||
-    firstName.endsWith('priya') ||
-    firstName.endsWith('nisha') ||
-    firstName.endsWith('ika')
-  ) {
-    isFemale = true;
-  } else if (
-    (firstName.endsWith('a') || firstName.endsWith('i') || firstName.endsWith('ee')) &&
-    !maleSpecialNamesEndingInA.has(firstName)
-  ) {
-    isFemale = true;
-  }
-
-  const prefix = isFemale ? 'Ms.' : 'Mr.';
-  return `${prefix} ${trimmed}`;
+  // Strip any leading Mr./Ms. title so the name is addressed directly
+  const cleanName = trimmed.replace(/^(mr\.?|ms\.?)\s+/i, '');
+  return cleanName.trim() || trimmed || 'Invigilator';
 }
 
 /**
  * Generate plain text email body matching exact specification:
- * "Dear [Mr./Ms. Invigilator Name], Your examination duties have been assigned. Please find the attached Duty Summary for your reference. Regards DutyFlow - Examination Duty Management Platform"
+ * "Greetings! [Invigilator Name], Your examination duties have been assigned. Please find the attached Duty Summary for your reference. Regards DutyFlow - Examination Duty Management Platform"
  */
 export function generatePlainTextEmail(invigilatorName: string): string {
   const salutationName = formatSalutationName(invigilatorName);
-  return `Dear ${salutationName},\n\nYour examination duties have been assigned. Please find the attached Duty Summary for your reference.\n\nRegards,\nDutyFlow`;
+  return `Greetings! ${salutationName},\n\nYour examination duties have been assigned. Please find the attached Duty Summary for your reference.\n\nRegards,\nDutyFlow`;
 }
 
 /**
@@ -200,7 +140,7 @@ export function generateHtmlEmail(invigilatorName: string, examName?: string, co
       <p>${examinationSubtitle}</p>
     </div>
     <div class="content">
-      <div class="salutation">Dear <strong>${salutationName}</strong>,</div>
+      <div class="salutation">Greetings! <strong>${salutationName}</strong>,</div>
       <div class="body-message">
         Your examination duties have been assigned. Please find the attached Duty Summary for your reference.
       </div>

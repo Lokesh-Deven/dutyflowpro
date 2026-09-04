@@ -10,6 +10,17 @@ import { formatAppDate, parseAppDate } from "@/lib/date-utils";
 import { cn, formatTimeTo12Hour } from "@/lib/utils";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -92,6 +103,7 @@ export function ExaminationManagement() {
   const { user, profile } = useAuth();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [editingExamId, setEditingExamId] = useState<string | null>(null);
+  const [isClearAllAlertOpen, setIsClearAllAlertOpen] = useState(false);
 
   const [sessionDetails, setSessionDetails] = useState({
     subject: '',
@@ -233,6 +245,28 @@ export function ExaminationManagement() {
     if (editingExamId === id) setEditingExamId(null);
     toast({ title: "Examination Removed", variant: "destructive" });
   }
+
+  const handleClearAllExaminations = () => {
+    setExaminations([]);
+    setEditingExamId(null);
+    setSessionDetails({
+      subject: '',
+      startTimeHour: '09',
+      startTimeMinute: '00',
+      startTimePeriod: 'AM',
+      endTimeHour: '12',
+      endTimeMinute: '00',
+      endTimePeriod: 'PM',
+      rooms: 1,
+      relievers: 0,
+    });
+    setIsClearAllAlertOpen(false);
+    toast({
+      title: "All Examinations Cleared",
+      description: "All examination sessions have been removed.",
+      variant: "destructive",
+    });
+  };
 
   const handleBulkUploadClick = () => {
     fileInputRef.current?.click();
@@ -878,11 +912,47 @@ export function ExaminationManagement() {
               </div>
             </div>
 
-            {examinations.length > 0 && (
-              <Badge className="w-fit bg-[#6342e8]/10 text-[#6342e8] dark:text-purple-300 border-[#6342e8]/20 px-3 py-1 font-semibold rounded-full text-xs">
-                {examinations.length} {examinations.length === 1 ? 'Session Added' : 'Sessions Added'}
-              </Badge>
-            )}
+            <div className="flex items-center gap-2.5">
+              {examinations.length > 0 && (
+                <Badge className="w-fit bg-[#6342e8]/10 text-[#6342e8] dark:text-purple-300 border-[#6342e8]/20 px-3 py-1 font-semibold rounded-full text-xs">
+                  {examinations.length} {examinations.length === 1 ? 'Session Added' : 'Sessions Added'}
+                </Badge>
+              )}
+
+              <AlertDialog open={isClearAllAlertOpen} onOpenChange={setIsClearAllAlertOpen}>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={examinations.length === 0}
+                    className="border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:border-rose-900/50 dark:text-rose-400 dark:hover:bg-rose-950/50 font-medium text-xs rounded-xl shadow-2xs transition-all h-8 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                    Clear All Details
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="rounded-2xl border-slate-200 dark:border-slate-800">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="text-lg font-bold text-slate-900 dark:text-white">
+                      Clear All Examination Details?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="text-sm text-slate-500 dark:text-slate-400">
+                      Are you sure you want to clear all {examinations.length} added examination {examinations.length === 1 ? 'session' : 'sessions'}? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter className="gap-2 sm:gap-2">
+                    <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleClearAllExaminations}
+                      className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl"
+                    >
+                      Clear All Details
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </div>
 
           {/* Quick Metrics Bar when exams exist */}

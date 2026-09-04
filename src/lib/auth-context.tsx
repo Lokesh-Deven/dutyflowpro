@@ -31,6 +31,8 @@ export interface UserProfile {
   master_roster_downloads: number;
   individual_profile_downloads: number;
   daywise_profile_downloads: number;
+  signatory_name?: string | null;
+  signatory_designation?: string | null;
 }
 
 interface AuthContextType {
@@ -62,6 +64,8 @@ export const DEFAULT_GUEST_PROFILE: UserProfile = {
   master_roster_downloads: 0,
   individual_profile_downloads: 0,
   daywise_profile_downloads: 0,
+  signatory_name: null,
+  signatory_designation: null,
 };
 
 const getGuestProfile = (): UserProfile => {
@@ -113,6 +117,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           master_roster_downloads: data.master_roster_downloads ?? 0,
           individual_profile_downloads: data.individual_profile_downloads ?? 0,
           daywise_profile_downloads: data.daywise_profile_downloads ?? 0,
+          signatory_name: data.signatory_name || (currentUser.user_metadata?.signatory_name as string) || null,
+          signatory_designation: data.signatory_designation || (currentUser.user_metadata?.signatory_designation as string) || null,
         });
       } else {
         // Fallback default profile

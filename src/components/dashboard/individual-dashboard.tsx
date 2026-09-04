@@ -1216,7 +1216,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
                     Email Message Preview
                   </div>
                   <p className="italic text-muted-foreground">
-                    &ldquo;Dear [Mr./Ms. Invigilator Name], Your examination duties have been assigned. Please find the attached Duty Summary for your reference. Regards DutyFlow&rdquo;
+                    &ldquo;Greetings! [Invigilator Name], Your examination duties have been assigned. Please find the attached Duty Summary for your reference. Regards DutyFlow&rdquo;
                   </p>
                   <div className="text-[11px] text-muted-foreground pt-1">
                     📎 Each invigilator will receive their respective individual duty summary PDF page as an attachment.

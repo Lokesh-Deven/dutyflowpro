@@ -53,6 +53,7 @@ export function SignatoryManagement() {
 
   const [name, setName] = useState(signatory?.name || '');
   const [designation, setDesignation] = useState(signatory?.designation || '');
+  const [isSaving, setIsSaving] = useState(false);
 
   // Keep in sync with context when loaded
   useEffect(() => {
@@ -60,27 +61,39 @@ export function SignatoryManagement() {
     setDesignation(signatory?.designation || '');
   }, [signatory]);
 
-  const handleSave = (e?: React.FormEvent) => {
+  const handleSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    setIsSaving(true);
 
-    updateSignatory({
-      name: name.trim(),
-      designation: designation.trim()
-    });
+    try {
+      await updateSignatory({
+        name: name.trim(),
+        designation: designation.trim()
+      });
 
-    toast({
-      title: "Signatory Details Saved",
-      description: "Updated signatory will appear in the footer of all Invigilator Duty Summary PDFs.",
-    });
+      toast({
+        title: "Signatory Details Saved",
+        description: "Signatory details have been saved and permanently retained for your account.",
+      });
+    } catch (err) {
+      console.error("Error saving signatory details:", err);
+      toast({
+        variant: "destructive",
+        title: "Save Failed",
+        description: "Could not save signatory details. Please try again.",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleReset = () => {
-    resetSignatory();
+  const handleReset = async () => {
+    await resetSignatory();
     setName('');
     setDesignation('');
     toast({
-      title: "Signatory Cleared",
-      description: "Reset signatory information to default settings.",
+      title: "Signatory Reset",
+      description: "Signatory details have been reset.",
     });
   };
 
@@ -120,15 +133,18 @@ export function SignatoryManagement() {
         <div className="lg:col-span-7 space-y-6">
           <Card className="rounded-2xl border-border/80 shadow-md bg-card">
             <CardHeader className="pb-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
                   <CardTitle className="text-lg font-bold text-foreground">
                     Signatory Information
                   </CardTitle>
+                  <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                    Saved once, retained permanently for your account to avoid typing every time.
+                  </CardDescription>
                 </div>
-                <Badge variant="outline" className="text-[11px] font-semibold border-purple-500/30 text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/30">
+                <Badge variant="outline" className="w-fit text-[11px] font-semibold border-purple-500/30 text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/30">
                   <Sparkles className="w-3 h-3 mr-1" />
-                  Auto-synced
+                  Permanently Retained
                 </Badge>
               </div>
             </CardHeader>
@@ -147,7 +163,7 @@ export function SignatoryManagement() {
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="e.g. Dr. Jane Doe"
+                      placeholder="e.g. Prof. R K Narayan"
                       className="h-11 px-3.5 text-sm rounded-xl border-border bg-background focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:border-transparent transition-all"
                     />
                   </div>
@@ -230,10 +246,20 @@ export function SignatoryManagement() {
 
                   <Button
                     type="submit"
-                    className="h-10 px-5 rounded-xl bg-gradient-to-r from-[#6342e8] to-[#4323c9] hover:from-[#5434d8] hover:to-[#3519b5] text-white text-xs font-bold shadow-md shadow-purple-900/20 transition-all duration-200"
+                    disabled={isSaving}
+                    className="h-10 px-5 rounded-xl bg-gradient-to-r from-[#6342e8] to-[#4323c9] hover:from-[#5434d8] hover:to-[#3519b5] text-white text-xs font-bold shadow-md shadow-purple-900/20 transition-all duration-200 flex items-center gap-2"
                   >
-                    <Save className="w-4 h-4 mr-2" />
-                    Save Signatory Details
+                    {isSaving ? (
+                      <>
+                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin mr-1" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 mr-2" />
+                        Save Signatory Details
+                      </>
+                    )}
                   </Button>
                 </div>
               </form>

@@ -8,6 +8,7 @@ import {
   fetchUserAllotmentsFromDatabase,
   deleteUserAllotmentFromDatabase
 } from './storage-service';
+import { supabase } from './supabase';
 
 export const DEFAULT_SIGNATORY: SignatoryInfo = {
   name: "",
@@ -89,8 +90,8 @@ interface AllotmentContextType {
   resetInstructionsToDefault: () => void;
   signatory: SignatoryInfo;
   setSignatory: React.Dispatch<React.SetStateAction<SignatoryInfo>>;
-  updateSignatory: (data: Partial<SignatoryInfo>) => void;
-  resetSignatory: () => void;
+  updateSignatory: (data: Partial<SignatoryInfo>) => Promise<void> | void;
+  resetSignatory: () => Promise<void> | void;
 }
 
 const AllotmentContext = createContext<AllotmentContextType | undefined>(undefined);
@@ -189,21 +190,49 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       }
 
       // Load user-scoped signatory from localStorage
+      let initialSignatory: SignatoryInfo = DEFAULT_SIGNATORY;
       const storedSignatory = localStorage.getItem(`dutyflow_${userScope}_signatory`);
       if (storedSignatory) {
         try {
           const parsed = JSON.parse(storedSignatory);
-          if (parsed && typeof parsed === 'object' && isMounted) {
-            const isLegacyDefault = (parsed.name === 'LOKESH D' || parsed.name === 'Lokesh D') && 
-              parsed.designation === 'Principal & Chief Superintendent';
-            setSignatory({
-              name: isLegacyDefault ? '' : (parsed.name || ''),
-              designation: isLegacyDefault ? '' : (parsed.designation || ''),
-            });
+          if (parsed && typeof parsed === 'object') {
+            initialSignatory = {
+              name: parsed.name || '',
+              designation: parsed.designation || '',
+            };
           }
         } catch (_) {}
-      } else if (isMounted) {
-        setSignatory(DEFAULT_SIGNATORY);
+      } else if (userScope !== 'guest') {
+        const guestSig = localStorage.getItem('dutyflow_guest_signatory');
+        if (guestSig) {
+          try {
+            const parsed = JSON.parse(guestSig);
+            if (parsed && typeof parsed === 'object' && (parsed.name || parsed.designation)) {
+              initialSignatory = {
+                name: parsed.name || '',
+                designation: parsed.designation || '',
+              };
+              localStorage.setItem(`dutyflow_${userScope}_signatory`, JSON.stringify(initialSignatory));
+            }
+          } catch (_) {}
+        }
+      }
+
+      // Check user metadata fallback if local storage empty
+      if (!initialSignatory.name && !initialSignatory.designation && currentUserId) {
+        const metaName = (user?.user_metadata?.signatory_name as string) || '';
+        const metaDesig = (user?.user_metadata?.signatory_designation as string) || '';
+        if (metaName || metaDesig) {
+          initialSignatory = {
+            name: metaName,
+            designation: metaDesig,
+          };
+          localStorage.setItem(`dutyflow_${userScope}_signatory`, JSON.stringify(initialSignatory));
+        }
+      }
+
+      if (isMounted) {
+        setSignatory(initialSignatory);
       }
 
       // Check version of stored instructions to ensure upgrade to latest user-specified defaults
@@ -229,7 +258,7 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       console.error("Error loading user-scoped allotment data from localStorage:", err);
     }
 
-    // If logged in, fetch cloud allotments strictly for this specific user.id
+    // If logged in, fetch cloud allotments and cloud signatory strictly for this specific user.id
     if (currentUserId) {
       fetchUserAllotmentsFromDatabase(currentUserId).then((cloudAllotments) => {
         if (!isMounted) return;
@@ -243,6 +272,34 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       }).finally(() => {
         if (isMounted) setIsLoaded(true);
       });
+
+      // Also fetch cloud-saved signatory details from Supabase profiles
+      (async () => {
+        try {
+          const { data } = await supabase
+            .from('profiles')
+            .select('signatory_name, signatory_designation')
+            .eq('id', currentUserId)
+            .maybeSingle();
+
+          if (!isMounted) return;
+          if (data && (data.signatory_name || data.signatory_designation)) {
+            setSignatory(prev => {
+              if (prev.name || prev.designation) return prev;
+              const cloudSig: SignatoryInfo = {
+                name: data.signatory_name || '',
+                designation: data.signatory_designation || '',
+              };
+              try {
+                localStorage.setItem(`dutyflow_${userScope}_signatory`, JSON.stringify(cloudSig));
+              } catch (_) {}
+              return cloudSig;
+            });
+          }
+        } catch (err) {
+          console.error("Cloud signatory fetch error:", err);
+        }
+      })();
     } else {
       setIsLoaded(true);
     }
@@ -419,12 +476,75 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
     setInstructions(DEFAULT_INSTRUCTIONS);
   };
 
-  const updateSignatory = (data: Partial<SignatoryInfo>) => {
-    setSignatory(prev => ({ ...prev, ...data }));
+  const updateSignatory = async (data: Partial<SignatoryInfo>) => {
+    const updated: SignatoryInfo = {
+      name: data.name !== undefined ? data.name : signatory.name,
+      designation: data.designation !== undefined ? data.designation : signatory.designation,
+    };
+    setSignatory(updated);
+
+    const userScope = user?.id ? user.id : 'guest';
+    try {
+      localStorage.setItem(`dutyflow_${userScope}_signatory`, JSON.stringify(updated));
+      if (userScope === 'guest') {
+        localStorage.setItem('dutyflow_guest_signatory', JSON.stringify(updated));
+      }
+    } catch (e) {
+      console.error("Failed to save signatory to localStorage:", e);
+    }
+
+    if (user?.id) {
+      try {
+        const updatePayload: Record<string, any> = {
+          updated_at: new Date().toISOString(),
+        };
+        if (data.name !== undefined) updatePayload.signatory_name = data.name;
+        if (data.designation !== undefined) updatePayload.signatory_designation = data.designation;
+
+        await supabase.from('profiles').update(updatePayload).eq('id', user.id);
+
+        await supabase.auth.updateUser({
+          data: {
+            signatory_name: updated.name,
+            signatory_designation: updated.designation,
+          },
+        });
+      } catch (err) {
+        console.error("Failed to sync signatory to cloud profile:", err);
+      }
+    }
   };
 
-  const resetSignatory = () => {
+  const resetSignatory = async () => {
     setSignatory(DEFAULT_SIGNATORY);
+    const userScope = user?.id ? user.id : 'guest';
+    try {
+      localStorage.setItem(`dutyflow_${userScope}_signatory`, JSON.stringify(DEFAULT_SIGNATORY));
+      if (userScope === 'guest') {
+        localStorage.setItem('dutyflow_guest_signatory', JSON.stringify(DEFAULT_SIGNATORY));
+      }
+    } catch (e) {
+      console.error("Failed to reset signatory in localStorage:", e);
+    }
+
+    if (user?.id) {
+      try {
+        await supabase.from('profiles').update({
+          signatory_name: '',
+          signatory_designation: '',
+          updated_at: new Date().toISOString(),
+        }).eq('id', user.id);
+
+        await supabase.auth.updateUser({
+          data: {
+            signatory_name: '',
+            signatory_designation: '',
+          },
+        });
+      } catch (err) {
+        console.error("Failed to reset signatory in Supabase:", err);
+      }
+    }
   };
 
   return (

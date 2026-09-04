@@ -8,6 +8,17 @@ import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
@@ -54,6 +65,8 @@ export function InvigilatorManagement() {
     const router = useRouter();
     const [selectedInvigilator, setSelectedInvigilator] = useState<Invigilator | null>(null);
     const [isAvailabilityDialogOpen, setIsAvailabilityDialogOpen] = useState(false);
+    const [isClearAllAlertOpen, setIsClearAllAlertOpen] = useState(false);
+    const [isClearAllTableAlertOpen, setIsClearAllTableAlertOpen] = useState(false);
 
     const { invigilators, setInvigilators, examinations, saveCurrentAllotment } = useAllotment();
 
@@ -222,6 +235,18 @@ export function InvigilatorManagement() {
         });
     };
 
+    const handleClearAllInvigilators = () => {
+        setInvigilators([]);
+        form.reset({ name: '', designation: '', mobile: '', email: '' });
+        setIsClearAllAlertOpen(false);
+        setIsClearAllTableAlertOpen(false);
+        toast({
+            title: "All Invigilators Cleared",
+            description: "All invigilator details have been removed.",
+            variant: "destructive",
+        });
+    };
+
     return (
         <div className="space-y-6">
             {/* Page Header */}
@@ -239,15 +264,51 @@ export function InvigilatorManagement() {
                 <div className="h-[3px] w-full bg-gradient-to-r from-[#6342e8] via-[#8b5cf6] to-[#f59e0b]" />
 
                 <CardHeader className="pb-4 pt-6 px-6">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-[#6342e8] dark:text-purple-400">
-                            <UserPlus className="h-5 w-5" />
-                        </div>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div className="flex items-center gap-3">
-                            <CardTitle className="font-headline text-lg font-bold tracking-tight text-slate-900 dark:text-white">
-                                Invigilator Details
-                            </CardTitle>
+                            <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-[#6342e8] dark:text-purple-400">
+                                <UserPlus className="h-5 w-5" />
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <CardTitle className="font-headline text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+                                    Invigilator Details
+                                </CardTitle>
+                            </div>
                         </div>
+
+                        <AlertDialog open={isClearAllAlertOpen} onOpenChange={setIsClearAllAlertOpen}>
+                            <AlertDialogTrigger asChild>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={invigilators.length === 0}
+                                    className="border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:border-rose-900/50 dark:text-rose-400 dark:hover:bg-rose-950/50 font-medium text-xs rounded-xl shadow-2xs transition-all h-8 disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                    <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                                    Clear All Details
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent className="rounded-2xl border-slate-200 dark:border-slate-800">
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle className="text-lg font-bold text-slate-900 dark:text-white">
+                                        Clear All Invigilator Details?
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription className="text-sm text-slate-500 dark:text-slate-400">
+                                        Are you sure you want to clear all {invigilators.length} added invigilator {invigilators.length === 1 ? 'record' : 'records'}? This action cannot be undone.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter className="gap-2 sm:gap-2">
+                                    <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                        onClick={handleClearAllInvigilators}
+                                        className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl"
+                                    >
+                                        Clear All Details
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
                     </div>
                 </CardHeader>
 
@@ -375,11 +436,47 @@ export function InvigilatorManagement() {
                             </div>
                         </div>
 
-                        {invigilators.length > 0 && (
-                            <Badge className="w-fit bg-[#6342e8]/10 text-[#6342e8] dark:text-purple-300 border-[#6342e8]/20 px-3 py-1 font-semibold rounded-full text-xs">
-                                {invigilators.length} {invigilators.length === 1 ? 'Staff Member' : 'Staff Members'}
-                            </Badge>
-                        )}
+                        <div className="flex items-center gap-2.5">
+                            {invigilators.length > 0 && (
+                                <Badge className="w-fit bg-[#6342e8]/10 text-[#6342e8] dark:text-purple-300 border-[#6342e8]/20 px-3 py-1 font-semibold rounded-full text-xs">
+                                    {invigilators.length} {invigilators.length === 1 ? 'Staff Member' : 'Staff Members'}
+                                </Badge>
+                            )}
+
+                            <AlertDialog open={isClearAllTableAlertOpen} onOpenChange={setIsClearAllTableAlertOpen}>
+                                <AlertDialogTrigger asChild>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={invigilators.length === 0}
+                                        className="border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:border-rose-900/50 dark:text-rose-400 dark:hover:bg-rose-950/50 font-medium text-xs rounded-xl shadow-2xs transition-all h-8 disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                        <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                                        Clear All Details
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent className="rounded-2xl border-slate-200 dark:border-slate-800">
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle className="text-lg font-bold text-slate-900 dark:text-white">
+                                            Clear All Invigilator Details?
+                                        </AlertDialogTitle>
+                                        <AlertDialogDescription className="text-sm text-slate-500 dark:text-slate-400">
+                                            Are you sure you want to clear all {invigilators.length} added invigilator {invigilators.length === 1 ? 'record' : 'records'}? This action cannot be undone.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter className="gap-2 sm:gap-2">
+                                        <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+                                        <AlertDialogAction
+                                            onClick={handleClearAllInvigilators}
+                                            className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl"
+                                        >
+                                            Clear All Details
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </div>
                     </div>
 
                     {/* Summary Metric Cards */}
