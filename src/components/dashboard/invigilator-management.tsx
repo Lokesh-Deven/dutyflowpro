@@ -386,7 +386,7 @@ export function InvigilatorManagement() {
                                         </div>
                                         <FormControl>
                                             <Input
-                                                placeholder="e.g. Dr. Jane Doe"
+                                                placeholder="e.g. Lokesh D"
                                                 {...field}
                                                 className="bg-slate-50/50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 focus-visible:border-[#6342e8] focus-visible:ring-[#6342e8]/20 transition-all rounded-xl h-10 font-medium text-sm text-foreground"
                                             />

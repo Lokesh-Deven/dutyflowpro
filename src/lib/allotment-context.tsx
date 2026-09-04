@@ -76,7 +76,11 @@ interface AllotmentContextType {
   examinations: Examination[];
   setExaminations: React.Dispatch<React.SetStateAction<Examination[]>>;
   savedAllotments: SavedAllotment[];
-  saveCurrentAllotment: (name: string, assignments: AllotmentResult['assignments']) => SavedAllotment;
+  saveCurrentAllotment: (
+    name: string,
+    assignments: AllotmentResult['assignments'],
+    options?: { mode?: 'replace' | 'new'; targetId?: string }
+  ) => SavedAllotment;
   activeAllotment: SavedAllotment | null;
   setActiveAllotment: React.Dispatch<React.SetStateAction<SavedAllotment | null>>;
   updateSavedAllotment: (id: string, updatedAllotment: Partial<SavedAllotment>) => void;
@@ -396,12 +400,41 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
     }
   }, [activeAllotment]);
 
-  const saveCurrentAllotment = useCallback((name: string, assignments: AllotmentResult['assignments']) => {
-    if (activeAllotment && savedAllotments.some(sa => sa.id === activeAllotment.id)) {
-      // Update existing
+  const saveCurrentAllotment = useCallback((
+    name: string,
+    assignments: AllotmentResult['assignments'],
+    options?: { mode?: 'replace' | 'new'; targetId?: string }
+  ) => {
+    const trimmedName = name.trim() || 'Untitled Allotment';
+    const mode = options?.mode;
+    const targetId = options?.targetId;
+
+    // 1. Explicit replace mode for a specific target allotment ID
+    if (mode === 'replace' && targetId) {
+      const existing = savedAllotments.find(sa => sa.id === targetId);
+      if (existing) {
+        const updated: SavedAllotment = {
+          ...existing,
+          name: trimmedName,
+          invigilators,
+          examinations,
+          assignments,
+        };
+        setSavedAllotments(prev => prev.map(sa => sa.id === targetId ? updated : sa));
+        setActiveAllotment(updated);
+
+        if (user?.id) {
+          syncAllotmentToDatabase(updated, user.id);
+        }
+        return updated;
+      }
+    }
+
+    // 2. Default: If not explicitly 'new', and activeAllotment exists in savedAllotments, update it
+    if (mode !== 'new' && activeAllotment && savedAllotments.some(sa => sa.id === activeAllotment.id)) {
       const updated: SavedAllotment = {
         ...activeAllotment,
-        name,
+        name: trimmedName,
         invigilators,
         examinations,
         assignments,
@@ -413,25 +446,25 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
         syncAllotmentToDatabase(updated, user.id);
       }
       return updated;
-    } else {
-      // Create new
-      const newSavedAllotment: SavedAllotment = {
-        id: `allotment-${Date.now()}`,
-        name,
-        invigilators,
-        examinations,
-        assignments,
-        createdAt: new Date(),
-        status: 'Draft',
-      };
-      setSavedAllotments(prev => [newSavedAllotment, ...prev]);
-      setActiveAllotment(newSavedAllotment);
-
-      if (user?.id) {
-        syncAllotmentToDatabase(newSavedAllotment, user.id);
-      }
-      return newSavedAllotment;
     }
+
+    // 3. Otherwise (or if mode === 'new'): Create brand new SavedAllotment
+    const newSavedAllotment: SavedAllotment = {
+      id: `allotment-${Date.now()}`,
+      name: trimmedName,
+      invigilators,
+      examinations,
+      assignments,
+      createdAt: new Date(),
+      status: 'Draft',
+    };
+    setSavedAllotments(prev => [newSavedAllotment, ...prev]);
+    setActiveAllotment(newSavedAllotment);
+
+    if (user?.id) {
+      syncAllotmentToDatabase(newSavedAllotment, user.id);
+    }
+    return newSavedAllotment;
   }, [activeAllotment, savedAllotments, invigilators, examinations, user?.id]);
   
   const updateSavedAllotment = (id: string, updatedAllotment: Partial<SavedAllotment>) => {

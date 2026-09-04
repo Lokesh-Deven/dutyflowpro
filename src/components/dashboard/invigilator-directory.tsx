@@ -387,11 +387,11 @@ export function InvigilatorDirectory() {
                     <FormItem className="space-y-2">
                       <div className="flex items-center gap-2 text-[#6342e8] dark:text-purple-400 text-xs font-semibold">
                         <User className="h-4 w-4" />
-                        <span className="text-slate-700 dark:text-slate-300">Name</span>
+                        <span className="text-slate-700 dark:text-slate-300">Invigilator&apos;s Name</span>
                       </div>
                       <FormControl>
                         <Input
-                          placeholder="e.g. Dr. Jane Doe"
+                          placeholder="e.g. Lokesh D"
                           {...field}
                           className="bg-slate-50/50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 focus-visible:border-[#6342e8] focus-visible:ring-[#6342e8]/20 transition-all rounded-xl h-10 font-medium text-sm text-foreground"
                         />
@@ -413,7 +413,7 @@ export function InvigilatorDirectory() {
                       </div>
                       <FormControl>
                         <Input
-                          placeholder="e.g. Lecturer in Physics"
+                          placeholder="e.g. Lecturer in English"
                           {...field}
                           className="bg-slate-50/50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 focus-visible:border-[#6342e8] focus-visible:ring-[#6342e8]/20 transition-all rounded-xl h-10 font-medium text-sm text-foreground"
                         />

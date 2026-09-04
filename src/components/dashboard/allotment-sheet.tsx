@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import type { Invigilator, Examination, AllotmentResult } from '@/lib/types';
+import type { Invigilator, Examination, AllotmentResult, SavedAllotment } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Download, Save, FileSpreadsheet, Building2, GraduationCap, CalendarCheck, CheckCircle2, AlertTriangle, Users, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Download, Save, FileSpreadsheet, Building2, GraduationCap, CalendarCheck, CheckCircle2, AlertTriangle, Users, BookOpen, ChevronLeft, ChevronRight, RefreshCw, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { formatAppDate, formatAppDateWithDay } from '@/lib/date-utils';
@@ -46,10 +46,12 @@ type AllotmentSheetProps = {
 
 export function AllotmentSheet({ invigilators, examinations, allotmentResult: initialAllotmentResult, onAllotmentChange }: AllotmentSheetProps) {
   const { toast } = useToast();
-  const { activeAllotment, saveCurrentAllotment } = useAllotment();
+  const { activeAllotment, saveCurrentAllotment, savedAllotments } = useAllotment();
   const { user, canDownload, recordCategoryDownload } = useAuth();
   const [allotmentResult, setAllotmentResult] = useState<AllotmentResult>(initialAllotmentResult);
   const [isSaveAlertOpen, setIsSaveAlertOpen] = useState(false);
+  const [isDuplicateAlertOpen, setIsDuplicateAlertOpen] = useState(false);
+  const [duplicateTarget, setDuplicateTarget] = useState<SavedAllotment | null>(null);
   const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false);
 
   // Table horizontal scrolling & floating navigator state
@@ -258,11 +260,53 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
   };
 
   const handleSave = () => {
-    saveCurrentAllotment(saveName, allotmentResult.assignments);
+    const trimmed = saveName.trim() || 'Untitled Allotment';
+
+    // Check if an allotment with the same title already exists in Saved Allotments
+    const existingSameTitle = savedAllotments.find(
+      sa => sa.name.trim().toLowerCase() === trimmed.toLowerCase()
+    );
+
+    if (existingSameTitle) {
+      setDuplicateTarget(existingSameTitle);
+      setIsSaveAlertOpen(false);
+      setIsDuplicateAlertOpen(true);
+      return;
+    }
+
+    saveCurrentAllotment(trimmed, allotmentResult.assignments);
     setIsSaveAlertOpen(false);
     toast({
       title: "Allotment Saved",
-      description: `"${saveName}" has been saved successfully.`
+      description: `"${trimmed}" has been saved successfully.`
+    });
+  };
+
+  const handleReplaceAllotment = () => {
+    if (!duplicateTarget) return;
+    const trimmed = saveName.trim() || duplicateTarget.name;
+    saveCurrentAllotment(trimmed, allotmentResult.assignments, {
+      mode: 'replace',
+      targetId: duplicateTarget.id,
+    });
+    setIsDuplicateAlertOpen(false);
+    setDuplicateTarget(null);
+    toast({
+      title: "Allotment Replaced",
+      description: `"${trimmed}" has been replaced successfully.`
+    });
+  };
+
+  const handleSaveAsNewAllotment = () => {
+    const trimmed = saveName.trim() || 'Untitled Allotment';
+    saveCurrentAllotment(trimmed, allotmentResult.assignments, {
+      mode: 'new',
+    });
+    setIsDuplicateAlertOpen(false);
+    setDuplicateTarget(null);
+    toast({
+      title: "Allotment Saved as New",
+      description: `"${trimmed}" has been saved as a new allotment.`
     });
   };
 
@@ -773,10 +817,63 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
               </div>
               <AlertDialogFooter>
                 <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleSave} className="bg-[#6342e8] hover:bg-[#5232d6] text-white rounded-xl">
+                <Button
+                  type="button"
+                  onClick={handleSave}
+                  className="bg-[#6342e8] hover:bg-[#5232d6] text-white rounded-xl font-semibold text-xs px-4 py-2"
+                >
                   Save Allotment
-                </AlertDialogAction>
+                </Button>
               </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          {/* Duplicate Allotment Title Confirmation Dialog */}
+          <AlertDialog open={isDuplicateAlertOpen} onOpenChange={setIsDuplicateAlertOpen}>
+            <AlertDialogContent className="rounded-2xl border-slate-200 dark:border-slate-800 max-w-md">
+              <AlertDialogHeader className="space-y-3">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 ring-8 ring-amber-50/50 dark:ring-amber-950/20">
+                  <AlertTriangle className="h-6 w-6 stroke-[2.2]" />
+                </div>
+                <AlertDialogTitle className="text-center text-lg font-bold text-slate-900 dark:text-white">
+                  Allotment Already Exists
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-center text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                  An allotment titled <strong className="font-semibold text-slate-900 dark:text-white">&quot;{duplicateTarget?.name}&quot;</strong> already exists in your <span className="font-semibold text-[#6342e8]">Saved Allotments</span>.
+                  <br /><br />
+                  Would you like to replace the existing allotment, or save this as a new allotment?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+
+              <div className="flex flex-col gap-2.5 pt-3">
+                <Button
+                  type="button"
+                  onClick={handleReplaceAllotment}
+                  className="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl text-xs h-10 shadow-xs gap-2 transition-all"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  Replace the Allotment
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleSaveAsNewAllotment}
+                  className="w-full bg-[#6342e8] hover:bg-[#5232d6] text-white font-semibold rounded-xl text-xs h-10 shadow-xs gap-2 transition-all"
+                >
+                  <PlusCircle className="h-4 w-4" />
+                  Save as a New Allotment
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setIsDuplicateAlertOpen(false);
+                    setDuplicateTarget(null);
+                  }}
+                  className="w-full rounded-xl text-xs h-9 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 mt-1"
+                >
+                  Cancel
+                </Button>
+              </div>
             </AlertDialogContent>
           </AlertDialog>
 
