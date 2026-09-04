@@ -57,6 +57,10 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
+  // Auto-scroll interval and hold timer references
+  const scrollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const scrollHoldTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   const checkScroll = useCallback(() => {
     const container = tableContainerRef.current;
     if (!container) return;
@@ -74,6 +78,77 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
       window.removeEventListener('resize', checkScroll);
     };
   }, [checkScroll, examinations]);
+
+  const stopContinuousScroll = useCallback(() => {
+    if (scrollHoldTimerRef.current) {
+      clearTimeout(scrollHoldTimerRef.current);
+      scrollHoldTimerRef.current = null;
+    }
+    if (scrollIntervalRef.current) {
+      clearInterval(scrollIntervalRef.current);
+      scrollIntervalRef.current = null;
+    }
+  }, []);
+
+  const handlePointerDown = useCallback((direction: 'left' | 'right', e: React.PointerEvent<HTMLButtonElement>) => {
+    if (e.button !== 0) return; // Only primary button
+    e.preventDefault();
+
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      // Ignore if pointer capture is unsupported
+    }
+
+    const container = tableContainerRef.current;
+    if (!container) return;
+
+    stopContinuousScroll();
+
+    // 1. Immediate step scroll on click/press
+    const stepAmount = direction === 'left' ? -300 : 300;
+    container.scrollBy({ left: stepAmount, behavior: 'smooth' });
+
+    // 2. If held down for > 250ms, start continuous auto-scrolling
+    scrollHoldTimerRef.current = setTimeout(() => {
+      const scrollSpeed = direction === 'left' ? -16 : 16;
+      scrollIntervalRef.current = setInterval(() => {
+        const el = tableContainerRef.current;
+        if (!el) {
+          stopContinuousScroll();
+          return;
+        }
+
+        el.scrollLeft += scrollSpeed;
+
+        // Automatically stop when boundaries are reached
+        if (direction === 'left' && el.scrollLeft <= 0) {
+          stopContinuousScroll();
+        } else if (direction === 'right' && el.scrollLeft >= el.scrollWidth - el.clientWidth - 1) {
+          stopContinuousScroll();
+        }
+      }, 16);
+    }, 250);
+  }, [stopContinuousScroll]);
+
+  const handlePointerUp = useCallback((e?: React.PointerEvent<HTMLButtonElement>) => {
+    if (e) {
+      try {
+        if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+          e.currentTarget.releasePointerCapture(e.pointerId);
+        }
+      } catch {
+        // Ignore release errors
+      }
+    }
+    stopContinuousScroll();
+  }, [stopContinuousScroll]);
+
+  useEffect(() => {
+    return () => {
+      stopContinuousScroll();
+    };
+  }, [stopContinuousScroll]);
 
   const scrollTable = (direction: 'left' | 'right') => {
     const container = tableContainerRef.current;
@@ -367,9 +442,13 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => scrollTable('left')}
+                    onPointerDown={(e) => handlePointerDown('left', e)}
+                    onPointerUp={handlePointerUp}
+                    onPointerLeave={handlePointerUp}
+                    onPointerCancel={handlePointerUp}
                     disabled={!canScrollLeft}
-                    className="h-7 px-2.5 text-xs font-semibold text-[#6342e8] dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/60 disabled:opacity-30 rounded-lg cursor-pointer transition-colors"
+                    className="h-7 px-2.5 text-xs font-semibold text-[#6342e8] dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/60 disabled:opacity-30 rounded-lg cursor-pointer transition-colors select-none"
+                    title="Click to scroll, hold for continuous scroll"
                   >
                     <ChevronLeft className="h-4 w-4 mr-0.5" />
                     Prev Exams
@@ -381,9 +460,13 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => scrollTable('right')}
+                    onPointerDown={(e) => handlePointerDown('right', e)}
+                    onPointerUp={handlePointerUp}
+                    onPointerLeave={handlePointerUp}
+                    onPointerCancel={handlePointerUp}
                     disabled={!canScrollRight}
-                    className="h-7 px-2.5 text-xs font-semibold text-[#6342e8] dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/60 disabled:opacity-30 rounded-lg cursor-pointer transition-colors"
+                    className="h-7 px-2.5 text-xs font-semibold text-[#6342e8] dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/60 disabled:opacity-30 rounded-lg cursor-pointer transition-colors select-none"
+                    title="Click to scroll, hold for continuous scroll"
                   >
                     Next Exams
                     <ChevronRight className="h-4 w-4 ml-0.5" />
@@ -411,46 +494,52 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
           </div>
         </CardHeader>
 
-        <CardContent className="px-6 pb-6 pt-0">
+        <CardContent className="px-3 sm:px-12 pb-6 pt-0">
           <div className="relative group/allotment-table">
-            {/* Flying Scrolling Arrow - Left Side */}
+            {/* Flying Scrolling Arrow - Left Side (To the left of Serial No.) */}
             <button
               type="button"
-              onClick={() => scrollTable('left')}
+              onPointerDown={(e) => handlePointerDown('left', e)}
+              onPointerUp={handlePointerUp}
+              onPointerLeave={handlePointerUp}
+              onPointerCancel={handlePointerUp}
               disabled={!canScrollLeft}
               aria-label="Scroll left to see previous exam columns"
               className={cn(
-                "absolute left-2 sm:left-[232px] top-1/2 -translate-y-1/2 z-50",
-                "flex items-center justify-center h-12 w-12 rounded-full",
-                "bg-white/95 dark:bg-slate-900/95 border-2 border-[#6342e8] text-[#6342e8] dark:text-purple-300",
-                "shadow-2xl shadow-purple-500/25 backdrop-blur-md transition-all duration-300 cursor-pointer",
-                "hover:bg-[#6342e8] hover:text-white hover:scale-110 active:scale-95",
+                "absolute left-1 sm:-left-11 top-1/2 -translate-y-1/2 z-50",
+                "flex items-center justify-center h-10 w-10 sm:h-11 sm:w-11 rounded-full",
+                "bg-white dark:bg-slate-900 border-2 border-[#6342e8] text-[#6342e8] dark:text-purple-300",
+                "shadow-2xl shadow-purple-500/25 backdrop-blur-md transition-all duration-200 cursor-pointer select-none",
+                "hover:bg-[#6342e8] hover:text-white hover:scale-110 active:scale-95 active:bg-[#5232d6]",
                 canScrollLeft 
                   ? "opacity-95 hover:opacity-100 pointer-events-auto" 
                   : "opacity-0 pointer-events-none scale-75"
               )}
-              title="Scroll left (Previous exams)"
+              title="Click to scroll left, hold for continuous scroll"
             >
               <ChevronLeft className="h-6 w-6 stroke-[2.5]" />
             </button>
 
-            {/* Flying Scrolling Arrow - Right Side */}
+            {/* Flying Scrolling Arrow - Right Side (To the right of Total) */}
             <button
               type="button"
-              onClick={() => scrollTable('right')}
+              onPointerDown={(e) => handlePointerDown('right', e)}
+              onPointerUp={handlePointerUp}
+              onPointerLeave={handlePointerUp}
+              onPointerCancel={handlePointerUp}
               disabled={!canScrollRight}
               aria-label="Scroll right to see more exam columns"
               className={cn(
-                "absolute right-2 sm:right-[76px] top-1/2 -translate-y-1/2 z-50",
-                "flex items-center justify-center h-12 w-12 rounded-full",
-                "bg-white/95 dark:bg-slate-900/95 border-2 border-[#6342e8] text-[#6342e8] dark:text-purple-300",
-                "shadow-2xl shadow-purple-500/25 backdrop-blur-md transition-all duration-300 cursor-pointer",
-                "hover:bg-[#6342e8] hover:text-white hover:scale-110 active:scale-95",
+                "absolute right-1 sm:-right-11 top-1/2 -translate-y-1/2 z-50",
+                "flex items-center justify-center h-10 w-10 sm:h-11 sm:w-11 rounded-full",
+                "bg-white dark:bg-slate-900 border-2 border-[#6342e8] text-[#6342e8] dark:text-purple-300",
+                "shadow-2xl shadow-purple-500/25 backdrop-blur-md transition-all duration-200 cursor-pointer select-none",
+                "hover:bg-[#6342e8] hover:text-white hover:scale-110 active:scale-95 active:bg-[#5232d6]",
                 canScrollRight 
                   ? "opacity-95 hover:opacity-100 pointer-events-auto animate-pulse hover:animate-none" 
                   : "opacity-0 pointer-events-none scale-75"
               )}
-              title="Scroll right (More exams)"
+              title="Click to scroll right, hold for continuous scroll"
             >
               <ChevronRight className="h-6 w-6 stroke-[2.5]" />
             </button>
