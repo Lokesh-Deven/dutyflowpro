@@ -75,7 +75,9 @@ export default function SchedulePage() {
       const slots: Record<string, { duties: Examination[], invigilatorIds: Set<string> }> = {};
 
       for (const exam of examsOnDay) {
-        const timeSlot = `${formatTimeTo12Hour(exam.startTime)} - ${formatTimeTo12Hour(exam.endTime)}`;
+        const start = formatTimeTo12Hour(exam.startTime, true);
+        const end = formatTimeTo12Hour(exam.endTime, true);
+        const timeSlot = start && end ? `${start} - ${end}` : (start || end || 'Timings Not Specified');
         if (!slots[timeSlot]) {
           slots[timeSlot] = { duties: [], invigilatorIds: new Set<string>() };
         }
@@ -102,7 +104,11 @@ export default function SchedulePage() {
         duties: data.duties,
         invigilators: invigilators.filter(inv => data.invigilatorIds.has(inv.id)),
         subjects: data.duties.map(d => d.subject).join(' | '),
-      })).sort((a, b) => a.time.localeCompare(b.time));
+      })).sort((a, b) => {
+        const aStart = a.duties[0]?.startTime || '';
+        const bStart = b.duties[0]?.startTime || '';
+        return aStart.localeCompare(bStart) || a.time.localeCompare(b.time);
+      });
 
       allSlots.push(...daySlots);
     });
@@ -190,31 +196,47 @@ export default function SchedulePage() {
       doc.setTextColor(0);
 
       if (isFull) {
+        doc.setFont('helvetica', 'bold');
         doc.text(`${format(slot.date, "dd/MM/yyyy")} (${format(slot.date, "EEEE")})`, 15, startY);
         startY += 6;
       }
 
+      doc.setFont('helvetica', 'bold');
       doc.text('Subject:', 15, startY);
       doc.setFont('helvetica', 'normal');
       const subjectLines = doc.splitTextToSize(slot.subjects, pageWidth - 30 - 20);
       doc.text(subjectLines, 15 + 20, startY);
-      startY += (subjectLines.length * 5) + 5;
+      startY += (subjectLines.length * 5) + 2;
+
+      doc.setFont('helvetica', 'bold');
+      doc.text('Timings:', 15, startY);
+      doc.setFont('helvetica', 'normal');
+      doc.text(slot.time, 15 + 20, startY);
+      startY += 7;
 
       const head = [["Sl No", "Name of the Invigilators", "Designation", "Timings"]];
-      const body = slot.invigilators.map((inv, index) => [
-        index + 1,
-        inv.name,
-        inv.designation,
-        slot.time
-      ]);
+      const body = slot.invigilators.length > 0
+        ? slot.invigilators.map((inv, index) => [
+            index + 1,
+            inv.name,
+            inv.designation,
+            slot.time
+          ])
+        : [["-", "No invigilators assigned", "-", slot.time]];
 
       (doc as any).autoTable({
         head: head,
         body: body,
         startY: startY,
         theme: 'grid',
-        headStyles: { fillColor: [8, 37, 103], textColor: 255, fontStyle: 'bold', fontSize: 10 },
-        styles: { fontSize: 10 },
+        headStyles: { fillColor: [8, 37, 103], textColor: 255, fontStyle: 'bold', fontSize: 10, halign: 'center' },
+        styles: { fontSize: 9.5, cellPadding: 3 },
+        columnStyles: {
+          0: { cellWidth: 16, halign: 'center' },
+          1: { cellWidth: 'auto', halign: 'left' },
+          2: { cellWidth: 44, halign: 'left' },
+          3: { cellWidth: 48, halign: 'center', fontStyle: 'bold' },
+        },
       });
     });
 
@@ -427,7 +449,7 @@ export default function SchedulePage() {
                               <TableHead className="font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 w-12 text-center">#</TableHead>
                               <TableHead className="font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">Name of the Invigilator</TableHead>
                               <TableHead className="font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">Designation</TableHead>
-                              <TableHead className="font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 text-center w-36">Timings</TableHead>
+                              <TableHead className="font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 text-center w-44">Timings</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -455,7 +477,7 @@ export default function SchedulePage() {
                                   <TableCell className="text-xs text-slate-500">
                                     {invigilator.designation}
                                   </TableCell>
-                                  <TableCell className="text-center text-xs font-semibold text-[#6342e8] dark:text-purple-300">
+                                  <TableCell className="text-center text-xs font-semibold text-[#6342e8] dark:text-purple-300 whitespace-nowrap">
                                     {slot.time}
                                   </TableCell>
                                 </TableRow>
