@@ -433,47 +433,8 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
               </div>
             </div>
 
-            {/* Live Metrics Chips Bar & Column Navigator */}
+            {/* Live Metrics Chips Bar */}
             <div className="flex flex-wrap items-center gap-2.5">
-              {/* Exam Column Quick Navigator */}
-              {examinations.length > 5 && (
-                <div className="flex items-center gap-1 bg-purple-50/80 dark:bg-purple-950/40 border border-purple-200/80 dark:border-purple-900/60 rounded-xl p-1 shadow-2xs">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onPointerDown={(e) => handlePointerDown('left', e)}
-                    onPointerUp={handlePointerUp}
-                    onPointerLeave={handlePointerUp}
-                    onPointerCancel={handlePointerUp}
-                    disabled={!canScrollLeft}
-                    className="h-7 px-2.5 text-xs font-semibold text-[#6342e8] dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/60 disabled:opacity-30 rounded-lg cursor-pointer transition-colors select-none"
-                    title="Click to scroll, hold for continuous scroll"
-                  >
-                    <ChevronLeft className="h-4 w-4 mr-0.5" />
-                    Prev Exams
-                  </Button>
-                  <span className="text-[11px] font-bold text-[#6342e8] dark:text-purple-300 px-2 py-0.5 rounded-md bg-white dark:bg-slate-900 shadow-2xs border border-purple-100 dark:border-purple-900/50">
-                    {examinations.length} Sessions
-                  </span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onPointerDown={(e) => handlePointerDown('right', e)}
-                    onPointerUp={handlePointerUp}
-                    onPointerLeave={handlePointerUp}
-                    onPointerCancel={handlePointerUp}
-                    disabled={!canScrollRight}
-                    className="h-7 px-2.5 text-xs font-semibold text-[#6342e8] dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/60 disabled:opacity-30 rounded-lg cursor-pointer transition-colors select-none"
-                    title="Click to scroll, hold for continuous scroll"
-                  >
-                    Next Exams
-                    <ChevronRight className="h-4 w-4 ml-0.5" />
-                  </Button>
-                </div>
-              )}
-
               <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-1.5 text-center">
                 <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">INVIGILATORS</div>
                 <div className="text-sm font-bold text-[#6342e8]">{totalRooms}</div>
