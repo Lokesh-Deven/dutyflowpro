@@ -385,8 +385,10 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
 
       // Well-spaced Instructions Box
       const instBoxY = instY + instBannerH + 2;
-      const leftList = enabledInstructions.slice(0, 5);
-      const rightList = enabledInstructions.slice(5, 10);
+      const half = Math.ceil(enabledInstructions.length / 2);
+      const leftList = enabledInstructions.slice(0, half);
+      const rightList = enabledInstructions.slice(half);
+      const hasTwoColumns = rightList.length > 0;
       const maxRows = Math.max(leftList.length, rightList.length, 1);
       const rowStepH = 9.8;
       const instBoxH = maxRows * rowStepH + 3;
@@ -396,15 +398,17 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
       doc.setLineWidth(0.4);
       doc.roundedRect(cardX, instBoxY, cardW, instBoxH, 3, 3, 'FD');
 
-      // Center Divider Line
+      // Center Divider Line (only if 2 columns)
       const midColX = cardX + cardW / 2;
-      doc.setDrawColor(226, 232, 240);
-      doc.setLineWidth(0.35);
-      doc.line(midColX, instBoxY + 2.5, midColX, instBoxY + instBoxH - 2.5);
+      if (hasTwoColumns) {
+        doc.setDrawColor(226, 232, 240);
+        doc.setLineWidth(0.35);
+        doc.line(midColX, instBoxY + 2.5, midColX, instBoxY + instBoxH - 2.5);
+      }
 
-      const colTextW = (cardW / 2) - 15;
+      const colTextW = hasTwoColumns ? (cardW / 2) - 15 : cardW - 18;
 
-      // Left Column (Items 1 to 5)
+      // Left Column
       leftList.forEach((item, idx) => {
         const itemCenterY = instBoxY + 1.5 + idx * rowStepH + (rowStepH / 2);
 
@@ -425,7 +429,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
         doc.text(textLines, cardX + 11.5, itemCenterY - 1, { lineHeightFactor: 1.2 });
       });
 
-      // Right Column (Items 6 to 10)
+      // Right Column
       rightList.forEach((item, idx) => {
         const itemCenterY = instBoxY + 1.5 + idx * rowStepH + (rowStepH / 2);
 
@@ -436,7 +440,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(7);
         doc.setTextColor(255, 255, 255);
-        doc.text(String(idx + 6), midColX + 6, itemCenterY + 2.1, { align: 'center' });
+        doc.text(String(leftList.length + idx + 1), midColX + 6, itemCenterY + 2.1, { align: 'center' });
 
         // Text
         doc.setFont('helvetica', 'normal');
