@@ -457,88 +457,89 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
 
         <CardContent className="px-3 sm:px-12 pb-6 pt-0">
           <div className="relative group/allotment-table">
-            {/* Flying Scrolling Arrow - Left Side (To the left of Serial No.) */}
-            <button
-              type="button"
-              onPointerDown={(e) => handlePointerDown('left', e)}
-              onPointerUp={handlePointerUp}
-              onPointerLeave={handlePointerUp}
-              onPointerCancel={handlePointerUp}
-              disabled={!canScrollLeft}
-              aria-label="Scroll left to see previous exam columns"
-              className={cn(
-                "absolute left-1 sm:-left-11 top-1/2 -translate-y-1/2 z-50",
-                "flex items-center justify-center h-10 w-10 sm:h-11 sm:w-11 rounded-full",
-                "bg-white dark:bg-slate-900 border-2 border-[#6342e8] text-[#6342e8] dark:text-purple-300",
-                "shadow-2xl shadow-purple-500/25 backdrop-blur-md transition-all duration-200 cursor-pointer select-none",
-                "hover:bg-[#6342e8] hover:text-white hover:scale-110 active:scale-95 active:bg-[#5232d6]",
-                canScrollLeft 
-                  ? "opacity-95 hover:opacity-100 pointer-events-auto" 
-                  : "opacity-0 pointer-events-none scale-75"
-              )}
-              title="Click to scroll left, hold for continuous scroll"
-            >
-              <ChevronLeft className="h-6 w-6 stroke-[2.5]" />
-            </button>
+            {/* Sticky Floating Navigation Arrows Track (Floats at center of screen while scrolling down page) */}
+            <div className="pointer-events-none sticky top-1/2 z-30 h-0 flex justify-between items-center -translate-y-1/2">
+              {/* Flying Scrolling Arrow - Left Side (To the left of Serial No.) */}
+              <button
+                type="button"
+                onPointerDown={(e) => handlePointerDown('left', e)}
+                onPointerUp={handlePointerUp}
+                onPointerLeave={handlePointerUp}
+                onPointerCancel={handlePointerUp}
+                disabled={!canScrollLeft}
+                aria-label="Scroll left to see previous exam columns"
+                className={cn(
+                  "pointer-events-auto -ml-2 sm:-ml-11",
+                  "flex items-center justify-center h-10 w-10 sm:h-11 sm:w-11 rounded-full",
+                  "bg-white dark:bg-slate-900 border-2 border-[#6342e8] text-[#6342e8] dark:text-purple-300",
+                  "shadow-2xl shadow-purple-500/25 backdrop-blur-md transition-all duration-200 cursor-pointer select-none",
+                  "hover:bg-[#6342e8] hover:text-white hover:scale-110 active:scale-95 active:bg-[#5232d6]",
+                  canScrollLeft 
+                    ? "opacity-95 hover:opacity-100" 
+                    : "opacity-0 pointer-events-none scale-75"
+                )}
+                title="Click to scroll left, hold for continuous scroll"
+              >
+                <ChevronLeft className="h-6 w-6 stroke-[2.5]" />
+              </button>
 
-            {/* Flying Scrolling Arrow - Right Side (To the right of Total) */}
-            <button
-              type="button"
-              onPointerDown={(e) => handlePointerDown('right', e)}
-              onPointerUp={handlePointerUp}
-              onPointerLeave={handlePointerUp}
-              onPointerCancel={handlePointerUp}
-              disabled={!canScrollRight}
-              aria-label="Scroll right to see more exam columns"
-              className={cn(
-                "absolute right-1 sm:-right-11 top-1/2 -translate-y-1/2 z-50",
-                "flex items-center justify-center h-10 w-10 sm:h-11 sm:w-11 rounded-full",
-                "bg-white dark:bg-slate-900 border-2 border-[#6342e8] text-[#6342e8] dark:text-purple-300",
-                "shadow-2xl shadow-purple-500/25 backdrop-blur-md transition-all duration-200 cursor-pointer select-none",
-                "hover:bg-[#6342e8] hover:text-white hover:scale-110 active:scale-95 active:bg-[#5232d6]",
-                canScrollRight 
-                  ? "opacity-95 hover:opacity-100 pointer-events-auto animate-pulse hover:animate-none" 
-                  : "opacity-0 pointer-events-none scale-75"
-              )}
-              title="Click to scroll right, hold for continuous scroll"
-            >
-              <ChevronRight className="h-6 w-6 stroke-[2.5]" />
-            </button>
+              {/* Flying Scrolling Arrow - Right Side (To the right of Total) */}
+              <button
+                type="button"
+                onPointerDown={(e) => handlePointerDown('right', e)}
+                onPointerUp={handlePointerUp}
+                onPointerLeave={handlePointerUp}
+                onPointerCancel={handlePointerUp}
+                disabled={!canScrollRight}
+                aria-label="Scroll right to see more exam columns"
+                className={cn(
+                  "pointer-events-auto -mr-2 sm:-mr-11",
+                  "flex items-center justify-center h-10 w-10 sm:h-11 sm:w-11 rounded-full",
+                  "bg-white dark:bg-slate-900 border-2 border-[#6342e8] text-[#6342e8] dark:text-purple-300",
+                  "shadow-2xl shadow-purple-500/25 backdrop-blur-md transition-all duration-200 cursor-pointer select-none",
+                  "hover:bg-[#6342e8] hover:text-white hover:scale-110 active:scale-95 active:bg-[#5232d6]",
+                  canScrollRight 
+                    ? "opacity-95 hover:opacity-100 animate-pulse hover:animate-none" 
+                    : "opacity-0 pointer-events-none scale-75"
+                )}
+                title="Click to scroll right, hold for continuous scroll"
+              >
+                <ChevronRight className="h-6 w-6 stroke-[2.5]" />
+              </button>
+            </div>
 
-            {/* Dedicated Table Scroll Container with Sticky Header support */}
+            {/* Normal Full-Height Table Container (no max-h, natural page height) */}
             <div 
               ref={tableContainerRef}
               onScroll={checkScroll}
-              className="relative rounded-xl border border-slate-200/80 dark:border-slate-800 overflow-auto max-h-[calc(100vh-220px)] min-h-[420px] shadow-2xs bg-white dark:bg-slate-900 scroll-smooth"
+              className="rounded-xl border border-slate-200/80 dark:border-slate-800 overflow-x-auto shadow-2xs bg-white dark:bg-slate-900 scroll-smooth"
             >
-              <table className="w-max min-w-full border-separate border-spacing-0 text-sm">
-                <TableHeader className="bg-[#f8f9fc] dark:bg-slate-900">
-                  <TableRow className="hover:bg-[#f8f9fc]">
-                    <TableHead className="sticky top-0 left-0 bg-[#f8f9fc] dark:bg-slate-900 z-40 w-12 font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 text-center border-b-2 border-r border-slate-200/80 dark:border-slate-800">
+              <table className="min-w-full border-collapse text-sm">
+                <TableHeader>
+                  <TableRow className="bg-[#f8f9fc] dark:bg-slate-800/60 hover:bg-[#f8f9fc] border-b border-slate-200/80 dark:border-slate-800">
+                    <TableHead className="sticky left-0 bg-[#f8f9fc] dark:bg-slate-900/95 backdrop-blur-sm z-20 w-12 font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 text-center border-r border-slate-200/80 dark:border-slate-800">
                       #
                     </TableHead>
-                    <TableHead className="sticky top-0 left-12 bg-[#f8f9fc] dark:bg-slate-900 z-40 min-w-44 font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b-2 border-r border-slate-200/80 dark:border-slate-800">
+                    <TableHead className="sticky left-12 bg-[#f8f9fc] dark:bg-slate-900/95 backdrop-blur-sm z-20 min-w-44 font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 border-r border-slate-200/80 dark:border-slate-800">
                       Invigilator&apos;s Name
                     </TableHead>
-                    <TableHead className="sticky top-0 bg-[#f8f9fc] dark:bg-slate-900 z-30 min-w-40 font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b-2 border-r border-slate-200/80 dark:border-slate-800">
+                    <TableHead className="min-w-40 font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 border-r border-slate-200/80 dark:border-slate-800">
                       Designation
                     </TableHead>
                     {examinations.map(exam => (
                       <TableHead
                         key={exam.id}
-                        className="sticky top-0 z-30 bg-[#f8f9fc] dark:bg-slate-900 whitespace-nowrap h-44 p-2 text-center border-b-2 border-r border-slate-200/60 dark:border-slate-800/80 min-w-12 align-bottom"
+                        className="whitespace-nowrap h-44 p-2 text-center border-r border-slate-200/60 dark:border-slate-800/80 min-w-12"
+                        style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
                       >
-                        <div 
-                          className="flex flex-col items-start justify-end w-full h-full pl-1"
-                          style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
-                        >
+                        <div className="flex flex-col items-start justify-end w-full pl-1">
                           <span className="text-[13px] font-bold text-[#6342e8] dark:text-purple-400">{formatAppDate(exam.date)}</span>
                           <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate max-h-24 my-0.5">{exam.subject}</span>
                           <span className="text-[11px] text-slate-500 font-normal">{formatTimeTo12Hour(exam.startTime)}</span>
                         </div>
                       </TableHead>
                     ))}
-                    <TableHead className="sticky top-0 right-0 bg-[#f8f9fc] dark:bg-slate-900 z-40 min-w-16 font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 text-center border-b-2 border-l border-slate-200/80 dark:border-slate-800">
+                    <TableHead className="text-center sticky right-0 bg-[#f8f9fc] dark:bg-slate-900/95 backdrop-blur-sm z-20 min-w-16 font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 border-l border-slate-200/80 dark:border-slate-800">
                       Total
                     </TableHead>
                   </TableRow>
@@ -557,13 +558,13 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                           index % 2 === 1 && "bg-slate-50/30 dark:bg-slate-800/20"
                         )}
                       >
-                        <TableCell className="sticky left-0 bg-white group-hover/row:bg-slate-50 dark:bg-slate-900 dark:group-hover/row:bg-slate-850 z-20 text-center font-medium text-xs text-slate-500 border-b border-r border-slate-200/60 dark:border-slate-800">
+                        <TableCell className="sticky left-0 bg-white group-hover/row:bg-slate-50 dark:bg-slate-900 dark:group-hover/row:bg-slate-850 z-10 text-center font-medium text-xs text-slate-500 border-r border-slate-200/60 dark:border-slate-800">
                           {index + 1}
                         </TableCell>
-                        <TableCell className="font-semibold text-xs sticky left-12 bg-white group-hover/row:bg-slate-50 dark:bg-slate-900 dark:group-hover/row:bg-slate-850 z-20 text-slate-900 dark:text-slate-100 border-b border-r border-slate-200/60 dark:border-slate-800">
+                        <TableCell className="font-semibold text-xs sticky left-12 bg-white group-hover/row:bg-slate-50 dark:bg-slate-900 dark:group-hover/row:bg-slate-850 z-10 text-slate-900 dark:text-slate-100 border-r border-slate-200/60 dark:border-slate-800">
                           {invigilator.name}
                         </TableCell>
-                        <TableCell className="text-xs text-slate-500 border-b border-r border-slate-200/60 dark:border-slate-800">
+                        <TableCell className="text-xs text-slate-500 border-r border-slate-200/60 dark:border-slate-800">
                           {invigilator.designation}
                         </TableCell>
                         {examinations.map(exam => {
@@ -573,7 +574,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                           return (
                             <TableCell
                               key={exam.id}
-                              className="p-1 text-center cursor-pointer transition-colors hover:bg-purple-50/60 dark:hover:bg-purple-950/40 border-b border-r border-slate-200/40 dark:border-slate-800/70"
+                              className="p-1 text-center cursor-pointer transition-colors hover:bg-purple-50/60 dark:hover:bg-purple-950/40 border-r border-slate-200/40 dark:border-slate-800/70"
                               onClick={() => handleDutyToggle(invigilator.id, exam.id)}
                             >
                               <Tooltip>
@@ -602,7 +603,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                             </TableCell>
                           );
                         })}
-                        <TableCell className="text-center sticky right-0 bg-white group-hover/row:bg-slate-50 dark:bg-slate-900 dark:group-hover/row:bg-slate-850 z-20 border-b border-l border-slate-200/60 dark:border-slate-800">
+                        <TableCell className="text-center sticky right-0 bg-white group-hover/row:bg-slate-50 dark:bg-slate-900 dark:group-hover/row:bg-slate-850 z-10 border-l border-slate-200/60 dark:border-slate-800">
                           <div className="bg-purple-50 dark:bg-purple-950/60 text-[#6342e8] dark:text-purple-300 border border-purple-100 dark:border-purple-900/50 font-bold rounded-lg w-7 h-7 flex items-center justify-center mx-auto text-xs">
                             {dutyCount}
                           </div>
@@ -612,80 +613,56 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                   })}
                 </TableBody>
 
-                <TableFooter className="font-medium bg-slate-50/90 dark:bg-slate-900/90">
+                <TableFooter className="border-t-2 border-slate-200 dark:border-slate-800 font-medium bg-slate-50/50 dark:bg-slate-900/60">
                   {/* Invigilators Row */}
-                  <TableRow className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
-                    <TableCell className="sticky left-0 bg-slate-50 dark:bg-slate-900 z-20 border-t-2 border-b border-r border-slate-200/60 dark:border-slate-800 text-center font-bold text-xs text-slate-400">
-                      •
-                    </TableCell>
-                    <TableCell className="sticky left-12 bg-slate-50 dark:bg-slate-900 z-20 border-t-2 border-b border-r border-slate-200/60 dark:border-slate-800 font-bold text-xs uppercase tracking-wider text-slate-500">
+                  <TableRow className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 border-b border-slate-200/60 dark:border-slate-800/60">
+                    <TableCell colSpan={3} className="text-right font-bold text-xs uppercase tracking-wider text-slate-500 sticky left-0 bg-slate-50/90 dark:bg-slate-900/90 z-10">
                       No of Invigilators
                     </TableCell>
-                    <TableCell className="border-t-2 border-b border-r border-slate-200/60 dark:border-slate-800 text-xs text-slate-400 font-medium">
-                      Rooms
-                    </TableCell>
                     {examinations.map((exam) => (
-                      <TableCell key={`rooms-${exam.id}`} className="text-center text-xs font-bold text-[#6342e8] dark:text-purple-400 border-t-2 border-b border-r border-slate-200/40 dark:border-slate-800/70">
+                      <TableCell key={`rooms-${exam.id}`} className="text-center text-xs font-bold text-[#6342e8] dark:text-purple-400">
                         {exam.rooms}
                       </TableCell>
                     ))}
-                    <TableCell className="text-center font-bold text-xs text-[#6342e8] dark:text-purple-400 sticky right-0 bg-slate-50 dark:bg-slate-900 z-20 border-t-2 border-b border-l border-slate-200/60 dark:border-slate-800">
+                    <TableCell className="text-center font-bold text-xs text-[#6342e8] dark:text-purple-400 sticky right-0 bg-slate-50/90 dark:bg-slate-900/90 z-10 border-l border-slate-200/60 dark:border-slate-800">
                       {totalRooms}
                     </TableCell>
                   </TableRow>
 
                   {/* Relievers Row */}
-                  <TableRow className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
-                    <TableCell className="sticky left-0 bg-slate-50 dark:bg-slate-900 z-20 border-b border-r border-slate-200/60 dark:border-slate-800 text-center font-bold text-xs text-slate-400">
-                      •
-                    </TableCell>
-                    <TableCell className="sticky left-12 bg-slate-50 dark:bg-slate-900 z-20 border-b border-r border-slate-200/60 dark:border-slate-800 font-bold text-xs uppercase tracking-wider text-slate-500">
+                  <TableRow className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 border-b border-slate-200/60 dark:border-slate-800/60">
+                    <TableCell colSpan={3} className="text-right font-bold text-xs uppercase tracking-wider text-slate-500 sticky left-0 bg-slate-50/90 dark:bg-slate-900/90 z-10">
                       No of Relievers
                     </TableCell>
-                    <TableCell className="border-b border-r border-slate-200/60 dark:border-slate-800 text-xs text-slate-400 font-medium">
-                      Relievers
-                    </TableCell>
                     {examinations.map((exam) => (
-                      <TableCell key={`relievers-${exam.id}`} className="text-center text-xs font-bold text-[#8b5cf6] dark:text-purple-400 border-b border-r border-slate-200/40 dark:border-slate-800/70">
+                      <TableCell key={`relievers-${exam.id}`} className="text-center text-xs font-bold text-[#8b5cf6] dark:text-purple-400">
                         {exam.relievers}
                       </TableCell>
                     ))}
-                    <TableCell className="text-center font-bold text-xs text-[#8b5cf6] dark:text-purple-400 sticky right-0 bg-slate-50 dark:bg-slate-900 z-20 border-b border-l border-slate-200/60 dark:border-slate-800">
+                    <TableCell className="text-center font-bold text-xs text-[#8b5cf6] dark:text-purple-400 sticky right-0 bg-slate-50/90 dark:bg-slate-900/90 z-10 border-l border-slate-200/60 dark:border-slate-800">
                       {totalRelievers}
                     </TableCell>
                   </TableRow>
 
                   {/* Total Invigilators Required Row */}
-                  <TableRow className="hover:bg-slate-100/70 dark:hover:bg-slate-800/40 bg-slate-100/60 dark:bg-slate-900/80">
-                    <TableCell className="sticky left-0 bg-slate-100 dark:bg-slate-900 z-20 border-b border-r border-slate-200/80 dark:border-slate-800 text-center font-bold text-xs text-slate-500">
-                      =
-                    </TableCell>
-                    <TableCell className="sticky left-12 bg-slate-100 dark:bg-slate-900 z-20 border-b border-r border-slate-200/80 dark:border-slate-800 font-bold text-xs uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                  <TableRow className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 border-b border-slate-200/60 dark:border-slate-800/60 bg-slate-100/50 dark:bg-slate-900/80">
+                    <TableCell colSpan={3} className="text-right font-bold text-xs uppercase tracking-wider text-slate-800 dark:text-slate-200 sticky left-0 bg-slate-100/90 dark:bg-slate-900 z-10">
                       Total Required
                     </TableCell>
-                    <TableCell className="border-b border-r border-slate-200/80 dark:border-slate-800 text-xs text-slate-500 font-semibold">
-                      Rooms + Relievers
-                    </TableCell>
                     {examinations.map((exam) => (
-                      <TableCell key={`invigilators-${exam.id}`} className="text-center text-xs font-bold text-slate-800 dark:text-slate-200 border-b border-r border-slate-200/60 dark:border-slate-800/80">
+                      <TableCell key={`invigilators-${exam.id}`} className="text-center text-xs font-bold text-slate-800 dark:text-slate-200">
                         {exam.rooms + exam.relievers}
                       </TableCell>
                     ))}
-                    <TableCell className="text-center font-bold text-xs text-emerald-600 dark:text-emerald-400 sticky right-0 bg-slate-100 dark:bg-slate-900 z-20 border-b border-l border-slate-200/80 dark:border-slate-800">
+                    <TableCell className="text-center font-bold text-xs text-emerald-600 dark:text-emerald-400 sticky right-0 bg-slate-100 dark:bg-slate-900 z-10 border-l border-slate-200/60 dark:border-slate-800">
                       {totalInvigilatorsRequired}
                     </TableCell>
                   </TableRow>
 
                   {/* Total Duties Allotted Row */}
-                  <TableRow className="hover:bg-purple-50/60 dark:hover:bg-slate-800/40 bg-purple-50/40 dark:bg-purple-950/30">
-                    <TableCell className="sticky left-0 bg-purple-50 dark:bg-purple-950 z-20 border-b border-r border-purple-200/60 dark:border-purple-900/60 text-center font-black text-xs text-[#6342e8]">
-                      ✓
-                    </TableCell>
-                    <TableCell className="sticky left-12 bg-purple-50 dark:bg-purple-950 z-20 border-b border-r border-purple-200/60 dark:border-purple-900/60 font-bold text-xs uppercase tracking-wider text-[#6342e8] dark:text-purple-400">
+                  <TableRow className="hover:bg-purple-50/40 dark:hover:bg-slate-800/40 bg-purple-50/30 dark:bg-purple-950/20">
+                    <TableCell colSpan={3} className="text-right font-bold text-xs uppercase tracking-wider text-[#6342e8] dark:text-purple-400 sticky left-0 bg-purple-50/90 dark:bg-purple-950/90 z-10">
                       Total Allotted
-                    </TableCell>
-                    <TableCell className="border-b border-r border-purple-200/60 dark:border-purple-900/60 text-xs text-purple-700 dark:text-purple-300 font-semibold">
-                      Current Duties
                     </TableCell>
                     {dutiesPerExam.map((count, index) => {
                       const exam = examinations[index];
@@ -695,7 +672,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                         <TableCell
                           key={`total-duties-${exam.id}`}
                           className={cn(
-                            "text-center text-xs font-bold border-b border-r border-purple-200/40 dark:border-purple-900/40",
+                            "text-center text-xs font-bold",
                             isMismatch ? "text-destructive font-black" : "text-[#6342e8] dark:text-purple-400"
                           )}
                         >
@@ -703,7 +680,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                         </TableCell>
                       );
                     })}
-                    <TableCell className="text-center font-black text-xs text-[#6342e8] dark:text-purple-400 sticky right-0 bg-purple-50 dark:bg-purple-950 z-20 border-b border-l border-purple-200/60 dark:border-purple-900/60">
+                    <TableCell className="text-center font-black text-xs text-[#6342e8] dark:text-purple-400 sticky right-0 bg-purple-50/90 dark:bg-purple-950/90 z-10 border-l border-slate-200/60 dark:border-slate-800">
                       {totalDutiesAllotted}
                     </TableCell>
                   </TableRow>
