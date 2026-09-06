@@ -38,13 +38,24 @@ export function LandingPage() {
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
+
+    const cleanEmail = loginEmail.trim();
+    if (!cleanEmail) {
+      setErrorMessage("Please enter your registered email address.");
+      return;
+    }
+    if (!loginPassword) {
+      setErrorMessage("Please enter your password.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      const { error } = await signIn(loginEmail, loginPassword);
+      const { error } = await signIn(cleanEmail, loginPassword);
 
       if (error) {
-        setErrorMessage(error.message || "Invalid email or password. Please try again.");
+        setErrorMessage(error.message || "Invalid email or password. Please check your credentials and try again.");
         toast({
           variant: "destructive",
           title: "Login Failed",

@@ -42,11 +42,19 @@ export function ProfileView() {
   const [editedName, setEditedName] = useState(profile?.institution_name || '');
   const [isSaving, setIsSaving] = useState(false);
 
-  const institutionName = profile?.institution_name || (user?.user_metadata?.institution_name as string) || "Guest Profile";
-  const email = profile?.email || user?.email || "guest@dutyflow.in";
+  const isGuest = !user || profile?.id === 'guest-session';
+  const institutionName = isGuest
+    ? (profile?.institution_name || "Guest Profile")
+    : (profile?.institution_name && profile.institution_name !== 'Guest Profile' ? profile.institution_name : null)
+      || (user?.user_metadata?.institution_name as string)
+      || (user?.email ? user.email.split('@')[0] : "Institution");
+
+  const email = isGuest
+    ? "guest@dutyflow.in"
+    : (user?.email || (profile?.email && profile.email !== 'guest@dutyflow.in' ? profile.email : null) || "user@dutyflow.in");
 
   // Strictly single letter initial (first letter of institution name)
-  const singleInitial = (institutionName.trim().charAt(0) || email.trim().charAt(0) || "G").toUpperCase();
+  const singleInitial = (institutionName.trim().charAt(0) || email.trim().charAt(0) || "U").toUpperCase();
 
   const subscriptionStatus = profile?.subscription_status || "Free Access";
 

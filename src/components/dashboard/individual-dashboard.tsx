@@ -40,7 +40,7 @@ import 'jspdf-autotable';
 import { useAllotment } from '@/lib/allotment-context';
 import { useAuth } from '@/lib/auth-context';
 import { uploadUserFile } from '@/lib/storage-service';
-import { cn, formatTimeTo12Hour } from '@/lib/utils';
+import { cn, formatTimeTo12Hour, getInvigilatorInitial } from '@/lib/utils';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -136,7 +136,12 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
       return `${formatSingle(startTime)} – ${formatSingle(endTime)}`;
     };
 
-    const collegeName = profile?.institution_name || examinations[0]?.college || activeAllotment?.examinations[0]?.college || "Seshadripuram Independent Pre-University College";
+    const collegeName = examinations[0]?.college
+      || (profile?.institution_name && profile.institution_name !== 'Guest Profile' ? profile.institution_name : null)
+      || (user?.user_metadata?.institution_name as string)
+      || activeAllotment?.examinations[0]?.college
+      || profile?.institution_name
+      || "College Name";
     const examName = assignedDuties.length > 0
       ? assignedDuties[0].examName
       : (examinations[0]?.examName || activeAllotment?.examinations[0]?.examName || 'Annual Examination - August 2026');
@@ -210,11 +215,11 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     doc.setFillColor(79, 70, 229); // #4F46E5
     doc.circle(avatarX, avatarY, 8.5, 'F');
 
-    const initial = (invigilator.name.trim().charAt(0) || 'F').toUpperCase();
+    const initial = getInvigilatorInitial(invigilator.name);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(13);
+    doc.setFontSize(25);
     doc.setTextColor(255, 255, 255);
-    doc.text(initial, avatarX, avatarY + 4.2, { align: 'center' });
+    doc.text(initial, avatarX, avatarY + 0.4, { align: 'center', baseline: 'middle' });
 
     // Faculty Information Details
     const infoX = cardX + 31;
@@ -254,17 +259,18 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(6.5);
     doc.setTextColor(79, 70, 229); // #4F46E5
-    doc.text("ALLOTTED DUTIES", statX + statW / 2, statY + 5.5, { align: 'center' });
+    doc.text("ALLOTTED DUTIES", statX + statW / 2, statY + 4.6, { align: 'center' });
 
+    // Number: 25pt placed at center leaving equal space to top and bottom text
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(15);
+    doc.setFontSize(25);
     doc.setTextColor(55, 48, 163); // #3730A3
-    doc.text(String(assignedDuties.length), statX + statW / 2, statY + 13, { align: 'center' });
+    doc.text(String(assignedDuties.length), statX + statW / 2, statY + 10.0, { align: 'center', baseline: 'middle' });
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(6);
     doc.setTextColor(100, 116, 139);
-    doc.text("Sessions Assigned", statX + statW / 2, statY + 17.5, { align: 'center' });
+    doc.text("Sessions Assigned", statX + statW / 2, statY + 16.8, { align: 'center' });
 
     // ═══════════════════════════════════════════════════════════════
     // 3. DUTY SCHEDULE SECTION (Spacious Schedule Card + Table)
@@ -609,7 +615,12 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
   };
 
   const examName = examinations[0]?.examName || activeAllotment?.examinations[0]?.examName || 'Examination Session';
-  const collegeName = profile?.institution_name || examinations[0]?.college || activeAllotment?.examinations[0]?.college || "Seshadripuram Independent Pre-University College";
+  const collegeName = examinations[0]?.college
+    || (profile?.institution_name && profile.institution_name !== 'Guest Profile' ? profile.institution_name : null)
+    || (user?.user_metadata?.institution_name as string)
+    || activeAllotment?.examinations[0]?.college
+    || profile?.institution_name
+    || "College Name";
 
   const docToBase64 = async (doc: jsPDF): Promise<string> => {
     const blob = doc.output('blob');
@@ -849,8 +860,8 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
             <CardContent className="p-6 md:p-8 flex flex-col md:flex-row items-center gap-6">
               {/* Avatar */}
               <Avatar className="h-24 w-24 border-4 border-background dark:border-slate-800 shadow-md ring-2 ring-indigo-500/20">
-                <AvatarFallback className="text-3xl bg-[#4F46E5] dark:bg-indigo-600 text-white font-bold">
-                  {selectedInvigilator.name.charAt(0).toUpperCase()}
+                <AvatarFallback className="text-[52px] font-extrabold bg-[#4F46E5] dark:bg-indigo-600 text-white select-none leading-none flex items-center justify-center">
+                  {getInvigilatorInitial(selectedInvigilator.name)}
                 </AvatarFallback>
               </Avatar>
 
@@ -877,16 +888,16 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
 
               <div className="md:w-px h-16 bg-border/60 dark:bg-slate-800 hidden md:block" />
 
-              {/* Metric Pill Card */}
-              <div className="bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50 rounded-xl p-4 text-center min-w-44">
+              {/* Metric Pill Card: Allotted Duties */}
+              <div className="bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50 rounded-xl p-4 text-center min-w-44 flex flex-col justify-center">
                 <span className="text-[12px] font-bold text-muted-foreground dark:text-slate-400 uppercase tracking-widest block">
-                  Total Duties Assigned
+                  Allotted Duties
                 </span>
-                <span className="text-4xl font-extrabold text-[#4F46E5] dark:text-indigo-400 leading-none block my-1">
-                  {assignedDuties.length.toString().padStart(2, '0')}
+                <span className="text-6xl font-black text-[#4F46E5] dark:text-indigo-400 leading-none block my-2">
+                  {assignedDuties.length}
                 </span>
                 <span className="text-xs font-semibold text-muted-foreground dark:text-slate-400 truncate max-w-[150px] block mx-auto">
-                  {examName}
+                  {assignedDuties.length === 1 ? '1 Session' : `${assignedDuties.length} Sessions Assigned`}
                 </span>
               </div>
             </CardContent>

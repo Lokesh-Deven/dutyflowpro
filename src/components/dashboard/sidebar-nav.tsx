@@ -65,9 +65,20 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
   const pathname = usePathname();
   const { user, profile, signOut } = useAuth();
 
-  const institutionName = profile?.institution_name || (user?.user_metadata?.institution_name as string) || "Guest Profile";
-  const userRole = profile?.subscription_status === 'Subscribed' ? 'Pro Member' : 'Guest';
-  const singleInitial = (institutionName.trim().charAt(0) || "G").toUpperCase();
+  const isGuest = !user || profile?.id === 'guest-session';
+  const institutionName = isGuest
+    ? (profile?.institution_name || "Guest Profile")
+    : (profile?.institution_name && profile.institution_name !== 'Guest Profile' ? profile.institution_name : null)
+      || (user?.user_metadata?.institution_name as string)
+      || (user?.email ? user.email.split('@')[0] : "Institution");
+
+  const userRole = isGuest
+    ? 'Guest'
+    : profile?.subscription_status === 'Subscribed'
+      ? 'Pro Member'
+      : 'Free Access';
+
+  const singleInitial = (institutionName.trim().charAt(0) || user?.email?.trim().charAt(0) || "U").toUpperCase();
 
   const { clearCurrentAllotment } = useAllotment();
 
@@ -283,7 +294,7 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
           <DropdownMenuContent className="w-56 rounded-xl bg-[#1e1957] border-[#31297e] text-white shadow-xl mb-2" align={isCollapsed ? "center" : "start"} side="top">
             <DropdownMenuLabel className="font-normal p-3 pb-2 text-white">
               <p className="text-xs font-bold text-white truncate">{institutionName}</p>
-              <p className="text-[11px] text-purple-300/80 truncate pt-0.5">{profile?.email || user?.email || "guest@dutyflow.in"}</p>
+              <p className="text-[11px] text-purple-300/80 truncate pt-0.5">{user?.email || (profile?.email && profile.email !== 'guest@dutyflow.in' ? profile.email : null) || "guest@dutyflow.in"}</p>
             </DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-white/10" />
             <DropdownMenuItem asChild className="cursor-pointer m-1 rounded-lg hover:bg-white/10 focus:bg-white/10 text-white">

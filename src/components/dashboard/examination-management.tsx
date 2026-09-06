@@ -126,9 +126,17 @@ export function ExaminationManagement() {
   });
 
   React.useEffect(() => {
-    const institution = profile?.institution_name || (user?.user_metadata?.institution_name as string);
-    if (institution && !form.getValues('college')) {
-      form.setValue('college', institution);
+    const isGuest = !user || profile?.id === 'guest-session';
+    const institution = isGuest
+      ? ""
+      : (profile?.institution_name && profile.institution_name !== 'Guest Profile' ? profile.institution_name : null)
+        || (user?.user_metadata?.institution_name as string);
+
+    if (institution) {
+      const currentCollege = form.getValues('college');
+      if (!currentCollege || currentCollege === 'Guest Profile') {
+        form.setValue('college', institution);
+      }
     }
   }, [profile, user, form]);
 

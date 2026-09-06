@@ -29,6 +29,12 @@ export interface UploadUserFileOptions {
 
 export const STORAGE_BUCKET = 'dutyflow-files';
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isUUID(id: string | null | undefined): boolean {
+  return Boolean(id && id !== 'guest-session' && UUID_REGEX.test(id));
+}
+
 function sanitizeFileName(name: string): string {
   return name.trim().replace(/[^a-zA-Z0-9._-]/g, '_');
 }
@@ -70,8 +76,8 @@ export async function uploadUserFile({
   mimeType,
 }: UploadUserFileOptions): Promise<{ fileRecord: UserFileRecord | null; publicUrl: string | null; error: Error | null }> {
   try {
-    if (!userId) {
-      return { fileRecord: null, publicUrl: null, error: new Error('User ID is required to save files to cloud storage.') };
+    if (!userId || !isUUID(userId)) {
+      return { fileRecord: null, publicUrl: null, error: new Error('A valid User ID (UUID) is required to save files to cloud storage.') };
     }
 
     const sanitized = sanitizeFileName(fileName);
@@ -142,7 +148,7 @@ export async function uploadUserFile({
  * Fetch list of files strictly for the specified userId with fresh signed download URLs.
  */
 export async function getUserFiles(userId: string, category?: 'upload' | 'download'): Promise<UserFileRecord[]> {
-  if (!userId) return [];
+  if (!userId || !isUUID(userId)) return [];
 
   try {
     let query = supabase
@@ -183,7 +189,7 @@ export async function getUserFiles(userId: string, category?: 'upload' | 'downlo
  * Delete a user file from storage and database strictly matching userId.
  */
 export async function deleteUserFile(fileId: string, filePath: string, userId: string): Promise<{ success: boolean; error: Error | null }> {
-  if (!userId || !fileId) {
+  if (!userId || !fileId || !isUUID(userId)) {
     return { success: false, error: new Error('User authentication required') };
   }
 
@@ -220,7 +226,7 @@ export async function deleteUserFile(fileId: string, filePath: string, userId: s
  * Sync saved allotment plan to Supabase PostgreSQL database strictly matching userId.
  */
 export async function syncAllotmentToDatabase(allotment: SavedAllotment, userId: string): Promise<boolean> {
-  if (!userId || !allotment) return false;
+  if (!userId || !allotment || !isUUID(userId)) return false;
 
   try {
     const { error } = await supabase.from('saved_allotments').upsert({
@@ -250,7 +256,7 @@ export async function syncAllotmentToDatabase(allotment: SavedAllotment, userId:
  * Fetch all saved allotments strictly for the specified userId.
  */
 export async function fetchUserAllotmentsFromDatabase(userId: string): Promise<SavedAllotment[]> {
-  if (!userId) return [];
+  if (!userId || !isUUID(userId)) return [];
 
   try {
     const { data, error } = await supabase
@@ -260,7 +266,7 @@ export async function fetchUserAllotmentsFromDatabase(userId: string): Promise<S
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching saved allotments from Supabase:', error);
+      console.error('Error fetching saved allotments from Supabase:', error.message || error);
       return [];
     }
 
@@ -288,7 +294,7 @@ export async function fetchUserAllotmentsFromDatabase(userId: string): Promise<S
  * Delete a saved allotment from Supabase PostgreSQL database strictly matching userId.
  */
 export async function deleteUserAllotmentFromDatabase(allotmentId: string, userId: string): Promise<boolean> {
-  if (!userId || !allotmentId) return false;
+  if (!userId || !allotmentId || !isUUID(userId)) return false;
 
   try {
     const { error } = await supabase
@@ -298,7 +304,7 @@ export async function deleteUserAllotmentFromDatabase(allotmentId: string, userI
       .eq('user_id', userId);
 
     if (error) {
-      console.error('Error deleting allotment from database:', error);
+      console.error('Error deleting allotment from database:', error.message || error);
       return false;
     }
     return true;
@@ -315,7 +321,7 @@ export async function saveUserDirectoryToCloud(
   directory: DirectoryInvigilator[],
   userId: string
 ): Promise<{ success: boolean; error?: any }> {
-  if (!userId) return { success: false, error: 'User not authenticated' };
+  if (!userId || !isUUID(userId)) return { success: false, error: 'User not authenticated' };
 
   try {
     const { error } = await supabase
@@ -327,8 +333,8 @@ export async function saveUserDirectoryToCloud(
       .eq('id', userId);
 
     if (error) {
-      console.error('Error saving invigilator directory to profile:', error);
-      return { success: false, error };
+      console.error('Error saving invigilator directory to profile:', error.message || error);
+      return { success: false, error: error.message || error };
     }
 
     // Also update auth user metadata as cloud backup
@@ -339,7 +345,7 @@ export async function saveUserDirectoryToCloud(
           invigilator_directory_updated_at: new Date().toISOString(),
         },
       });
-    } catch (_) {}
+    } catch (_) { }
 
     return { success: true };
   } catch (err: any) {
@@ -354,7 +360,7 @@ export async function saveUserDirectoryToCloud(
 export async function fetchUserDirectoryFromCloud(
   userId: string
 ): Promise<DirectoryInvigilator[] | null> {
-  if (!userId) return null;
+  if (!userId || !isUUID(userId)) return null;
 
   try {
     const { data, error } = await supabase
@@ -364,7 +370,7 @@ export async function fetchUserDirectoryFromCloud(
       .maybeSingle();
 
     if (error) {
-      console.error('Error fetching invigilator directory from profile:', error);
+      console.error('Error fetching invigilator directory from profile:', error.message || error);
       return null;
     }
 

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Download, Save, FileSpreadsheet, Building2, GraduationCap, CalendarCheck, CheckCircle2, AlertTriangle, Users, BookOpen, ChevronLeft, ChevronRight, RefreshCw, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import { formatAppDate, formatAppDateWithDay } from '@/lib/date-utils';
+import { formatAppDate, formatAppDateWithDay, parseAppDate } from '@/lib/date-utils';
 import { useAllotment } from '@/lib/allotment-context';
 import { useAuth } from '@/lib/auth-context';
 import { uploadUserFile } from '@/lib/storage-service';
@@ -47,7 +47,7 @@ type AllotmentSheetProps = {
 export function AllotmentSheet({ invigilators, examinations, allotmentResult: initialAllotmentResult, onAllotmentChange }: AllotmentSheetProps) {
   const { toast } = useToast();
   const { activeAllotment, saveCurrentAllotment, savedAllotments } = useAllotment();
-  const { user, canDownload, recordCategoryDownload } = useAuth();
+  const { user, profile, canDownload, recordCategoryDownload } = useAuth();
   const [allotmentResult, setAllotmentResult] = useState<AllotmentResult>(initialAllotmentResult);
   const [isSaveAlertOpen, setIsSaveAlertOpen] = useState(false);
   const [isDuplicateAlertOpen, setIsDuplicateAlertOpen] = useState(false);
@@ -310,7 +310,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
     });
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     const check = canDownload('master_roster');
     if (!check.allowed) {
       setIsSubscriptionDialogOpen(true);
@@ -323,44 +323,113 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
       description: "Your download will begin shortly.",
     });
 
-    const doc = new jsPDF({ orientation: 'landscape' });
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
 
+    const pageWidth = doc.internal.pageSize.getWidth(); // 297 mm
+    const pageHeight = doc.internal.pageSize.getHeight(); // 210 mm
+    const leftMargin = 12;
+    const rightMargin = 12;
+    const tableWidth = pageWidth - leftMargin - rightMargin; // 273 mm
+
+    // 1. Top Navy Accent Stripe (centered across table width)
+    const stripeY = 10;
+    const stripeHeight = 2.2;
+    doc.setFillColor(31, 58, 95); // Deep Navy #1F3A5F
+    doc.rect(leftMargin, stripeY, tableWidth, stripeHeight, 'F');
+
+    // 2. Institution Header Block (Centered)
     const examInfo = examinations.length > 0 ? examinations[0] : null;
-    const title = `${examInfo?.college || 'College Name'}`;
-    const subtitle = `${examInfo?.examName || 'Invigilation Duty Allotment'}`;
-    const staticTitle = "Invigilation Duty Allotment Sheet";
+    const rawCollegeName = examInfo?.college || profile?.institution_name || 'College Name';
+    const collegeTitle = rawCollegeName.toUpperCase();
+    const subtitle = examInfo?.examName || 'Midterm Examination - September, 2026';
+    const footerInstitutionText = `${rawCollegeName} \u2022 ${subtitle}`;
 
-    let currentY = 12;
+    let currentY = 18;
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(20);
-    doc.text(title, doc.internal.pageSize.getWidth() / 2, currentY, { align: 'center' });
-
-    currentY += 8;
-    doc.setFont('helvetica', 'normal');
     doc.setFontSize(15);
-    doc.text(subtitle, doc.internal.pageSize.getWidth() / 2, currentY, { align: 'center' });
+    doc.setTextColor(31, 58, 95); // Deep Navy #1F3A5F
+    doc.text(collegeTitle, pageWidth / 2, currentY, { align: 'center' });
 
-    currentY += 10;
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(13);
-    doc.text(staticTitle, doc.internal.pageSize.getWidth() / 2, currentY, { align: 'center' });
-
+    currentY += 5.2;
     doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9.5);
+    doc.setTextColor(71, 85, 105); // Slate #475569
+    doc.text(subtitle, pageWidth / 2, currentY, { align: 'center' });
 
-    const examHeaderData = examinations.map(exam => ({
-      date: formatAppDate(exam.date),
-      subject: exam.subject,
-      time: `${formatTimeTo12Hour(exam.startTime)} - ${formatTimeTo12Hour(exam.endTime)}`
-    }));
+    currentY += 5.2;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10.5);
+    doc.setTextColor(31, 58, 95); // #1F3A5F
+    doc.text("INVIGILATION DUTY ALLOTMENT SHEET", pageWidth / 2, currentY, { align: 'center' });
+
+    // 4. Examination Schedule & Duty Overview Strip
+    const sortedExams = [...examinations].sort((a, b) => {
+      const da = parseAppDate(a.date)?.getTime() || 0;
+      const db = parseAppDate(b.date)?.getTime() || 0;
+      return da - db;
+    });
+
+    let scheduleRangeText = '';
+    if (sortedExams.length > 0) {
+      const firstDate = parseAppDate(sortedExams[0].date);
+      const lastDate = parseAppDate(sortedExams[sortedExams.length - 1].date);
+      if (firstDate && lastDate) {
+        if (firstDate.getTime() === lastDate.getTime()) {
+          scheduleRangeText = format(firstDate, 'd MMMM yyyy');
+        } else if (firstDate.getMonth() === lastDate.getMonth() && firstDate.getFullYear() === lastDate.getFullYear()) {
+          scheduleRangeText = `${format(firstDate, 'd')} \u2013 ${format(lastDate, 'd MMMM yyyy')}`;
+        } else if (firstDate.getFullYear() === lastDate.getFullYear()) {
+          scheduleRangeText = `${format(firstDate, 'd MMMM')} \u2013 ${format(lastDate, 'd MMMM yyyy')}`;
+        } else {
+          scheduleRangeText = `${format(firstDate, 'd MMMM yyyy')} \u2013 ${format(lastDate, 'd MMMM yyyy')}`;
+        }
+      } else {
+        scheduleRangeText = `${formatAppDate(sortedExams[0].date)} \u2013 ${formatAppDate(sortedExams[sortedExams.length - 1].date)}`;
+      }
+    }
+
+    currentY += 4.5;
+    const stripY = currentY;
+    const stripHeight = 6.2;
+    doc.setFillColor(228, 236, 244); // #E4ECF4
+    doc.rect(leftMargin, stripY, tableWidth, stripHeight, 'F');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(31, 58, 95); // #1F3A5F
+    doc.text(
+      scheduleRangeText ? `Examination Schedule \u2022 ${scheduleRangeText}` : 'Examination Schedule',
+      leftMargin + 3.5,
+      stripY + 4.2
+    );
+    doc.text('Duty Overview', leftMargin + tableWidth - 3.5, stripY + 4.2, { align: 'right' });
+
+    // 5. Table Header Data
+    const examHeaders = examinations.map(exam => {
+      const d = parseAppDate(exam.date);
+      const dateStr = d ? format(d, 'dd.MM') : formatAppDate(exam.date).slice(0, 5);
+      return {
+        id: exam.id,
+        headerText: `${dateStr}\n${exam.subject}`,
+        rooms: exam.rooms,
+        relievers: exam.relievers,
+      };
+    });
 
     const head = [
-      ['Sl.No', "Invigilator's Name", 'Designation', ...examinations.map(() => ''), 'Total']
+      [
+        'Sl.\nNo',
+        "Invigilator's Name",
+        'Designation',
+        ...examHeaders.map(e => e.headerText),
+        'Total'
+      ]
     ];
 
     const body = invigilators.map((invigilator, index) => {
       const duties = allotmentResult.assignments[invigilator.id] || [];
       const dutyCount = duties.length;
-      const row = [
+      return [
         index + 1,
         invigilator.name,
         invigilator.designation,
@@ -370,7 +439,6 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
         }),
         dutyCount
       ];
-      return row;
     });
 
     const dutiesPerExam = examinations.map(exam => {
@@ -384,73 +452,101 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
     const totalInvigilatorsRequired = examinations.reduce((acc, exam) => acc + exam.rooms + exam.relievers, 0);
     const totalDutiesAllotted = dutiesPerExam.reduce((sum, count) => sum + count, 0);
 
+    // Column widths matching reference PDF proportions
+    const slNoWidth = Math.max(9, Math.round(tableWidth * 0.036 * 10) / 10);
+    const nameWidth = Math.max(34, Math.round(tableWidth * 0.144 * 10) / 10);
+    const desigWidth = Math.max(34, Math.round(tableWidth * 0.149 * 10) / 10);
+    const totalWidth = Math.max(12, Math.round(tableWidth * 0.056 * 10) / 10);
+
+    const remainingWidth = tableWidth - slNoWidth - nameWidth - desigWidth - totalWidth;
+    const examColWidth = examHeaders.length > 0 ? remainingWidth / examHeaders.length : 20;
+
+    const columnStyles: Record<number, any> = {
+      0: { halign: 'center', cellWidth: slNoWidth },
+      1: { halign: 'left', cellWidth: nameWidth },
+      2: { halign: 'left', cellWidth: desigWidth },
+    };
+    examHeaders.forEach((_, idx) => {
+      columnStyles[3 + idx] = { halign: 'center', cellWidth: examColWidth };
+    });
+    columnStyles[3 + examHeaders.length] = { halign: 'center', cellWidth: totalWidth, fontStyle: 'bold' };
+
+    const foot = [
+      [
+        { content: 'No. of Invigilators', colSpan: 3, styles: { halign: 'left', fontStyle: 'bold', textColor: [31, 58, 95], fillColor: [255, 255, 255], cellPadding: { left: 3, top: 1.5, bottom: 1.5 } } },
+        ...examinations.map(exam => ({ content: String(exam.rooms), styles: { halign: 'center', fontStyle: 'bold', textColor: [31, 58, 95], fillColor: [228, 236, 244], cellPadding: { top: 1.5, bottom: 1.5 } } })),
+        { content: String(totalRooms), styles: { halign: 'center', fontStyle: 'bold', textColor: [31, 58, 95], fillColor: [228, 236, 244], cellPadding: { top: 1.5, bottom: 1.5 } } }
+      ],
+      [
+        { content: 'No. of Relievers', colSpan: 3, styles: { halign: 'left', fontStyle: 'bold', textColor: [31, 58, 95], fillColor: [255, 255, 255], cellPadding: { left: 3, top: 1.5, bottom: 1.5 } } },
+        ...examinations.map(exam => ({ content: String(exam.relievers), styles: { halign: 'center', fontStyle: 'bold', textColor: [31, 58, 95], fillColor: [228, 236, 244], cellPadding: { top: 1.5, bottom: 1.5 } } })),
+        { content: String(totalRelievers), styles: { halign: 'center', fontStyle: 'bold', textColor: [31, 58, 95], fillColor: [228, 236, 244], cellPadding: { top: 1.5, bottom: 1.5 } } }
+      ],
+      [
+        { content: 'Total Invigilators', colSpan: 3, styles: { halign: 'left', fontStyle: 'bold', textColor: [31, 58, 95], fillColor: [255, 255, 255], cellPadding: { left: 3, top: 1.5, bottom: 1.5 } } },
+        ...examinations.map(exam => ({ content: String(exam.rooms + exam.relievers), styles: { halign: 'center', fontStyle: 'bold', textColor: [31, 58, 95], fillColor: [228, 236, 244], cellPadding: { top: 1.5, bottom: 1.5 } } })),
+        { content: String(totalInvigilatorsRequired), styles: { halign: 'center', fontStyle: 'bold', textColor: [31, 58, 95], fillColor: [228, 236, 244], cellPadding: { top: 1.5, bottom: 1.5 } } }
+      ],
+      [
+        { content: 'Total Duties Allotted', colSpan: 3, styles: { halign: 'left', fontStyle: 'bold', textColor: [31, 58, 95], fillColor: [255, 255, 255], cellPadding: { left: 3, top: 1.5, bottom: 1.5 } } },
+        ...dutiesPerExam.map(count => ({ content: String(count), styles: { halign: 'center', fontStyle: 'bold', textColor: [31, 58, 95], fillColor: [228, 236, 244], cellPadding: { top: 1.5, bottom: 1.5 } } })),
+        { content: String(totalDutiesAllotted), styles: { halign: 'center', fontStyle: 'bold', textColor: [31, 58, 95], fillColor: [228, 236, 244], cellPadding: { top: 1.5, bottom: 1.5 } } }
+      ],
+    ];
+
+    const tableStartY = stripY + stripHeight + 2.2;
+
     (doc as any).autoTable({
       head: head,
       body: body,
-      foot: [
-        ['', 'No of Invigilators', '', ...examinations.map(exam => exam.rooms), totalRooms],
-        ['', 'No of Relievers', '', ...examinations.map(exam => exam.relievers), totalRelievers],
-        ['', 'Total Invigilators', '', ...examinations.map(exam => exam.rooms + exam.relievers), totalInvigilatorsRequired],
-        ['', 'Total Duties Allotted', '', ...dutiesPerExam, totalDutiesAllotted],
-      ],
-      startY: currentY + 7,
+      foot: foot,
+      startY: tableStartY,
+      margin: { left: leftMargin, right: rightMargin, bottom: 12 },
       theme: 'grid',
       headStyles: {
-        fillColor: [8, 37, 103], // Sapphire #082567
-        textColor: 255,
+        fillColor: [32, 59, 100], // #203B64 Navy
+        textColor: [255, 255, 255],
         fontStyle: 'bold',
         halign: 'center',
         valign: 'middle',
-        fontSize: 8,
-        minCellHeight: 35,
+        fontSize: 6.8,
+        lineWidth: 0.15,
+        lineColor: [205, 214, 225], // #CDD6E1
+        cellPadding: { top: 1.8, bottom: 1.8, left: 1, right: 1 },
+        minCellHeight: 10,
+      },
+      bodyStyles: {
+        textColor: [30, 41, 59], // #1E293B
+        fontSize: 7,
+        valign: 'middle',
+        lineWidth: 0.15,
+        lineColor: [212, 221, 230], // #D4DDE6
+        cellPadding: { top: 1.1, bottom: 1.1, left: 1.5, right: 1.5 },
+        minCellHeight: 4.6,
+      },
+      alternateRowStyles: {
+        fillColor: [238, 243, 248], // #EEF3F8
       },
       footStyles: {
-        fillColor: [243, 244, 246],
-        textColor: [0, 0, 0],
+        fontSize: 7,
         fontStyle: 'bold',
-        fontSize: 9,
-        halign: 'center'
+        textColor: [31, 58, 95],
+        valign: 'middle',
+        lineWidth: 0.15,
+        lineColor: [205, 214, 225],
       },
-      styles: {
-        cellPadding: 1,
-        fontSize: 9,
-        halign: 'center',
-        minCellHeight: 5,
-      },
-      columnStyles: {
-        0: { halign: 'center', cellWidth: 10 },
-        1: { halign: 'left', cellWidth: 35 },
-        2: { halign: 'left', cellWidth: 35 },
-        [examinations.length + 3]: { halign: 'center', cellWidth: 10, fontStyle: 'bold' }
-      },
-      didDrawCell: (data: any) => {
-        if (data.section === 'head' && data.column.index >= 3 && data.column.index < head[0].length - 1) {
-          const doc = data.doc;
-          const cell = data.cell;
-          const info = examHeaderData[data.column.index - 3];
-
-          doc.setFontSize(7);
-          doc.setTextColor(255);
-          doc.setFont('helvetica', 'bold');
-
-          const centerX = cell.x + (cell.width / 2);
-          const baselineY = cell.y + cell.height - 3;
-
-          doc.text(info.date, centerX - 3, baselineY, { angle: 90 });
-          doc.text(info.subject, centerX, baselineY, { angle: 90 });
-          doc.setFontSize(6);
-          doc.text(info.time, centerX + 3, baselineY, { angle: 90 });
-        }
-      },
-      didDrawPage: (data: any) => {
-        doc.setFontSize(10);
-        doc.text(
-          `Page ${data.pageNumber} of ${doc.getNumberOfPages()}`,
-          doc.internal.pageSize.getWidth() - 30,
-          doc.internal.pageSize.getHeight() - 10
-        );
-      }
+      columnStyles: columnStyles,
     });
+
+    const totalPages = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.setTextColor(100, 116, 139); // #64748B
+      doc.text(footerInstitutionText, leftMargin, pageHeight - 8);
+      doc.text(`Preview \u2022 Page ${i} of ${totalPages}`, pageWidth - rightMargin, pageHeight - 8, { align: 'right' });
+    }
 
     const fileName = `${saveName.replace(/ /g, '_')}.pdf`;
     const pdfBlob = doc.output('blob');
@@ -568,7 +664,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                 "shadow-2xl shadow-purple-500/30 backdrop-blur-md transition-opacity duration-200 cursor-pointer select-none",
                 "hover:bg-[#6342e8] hover:text-white hover:scale-110 active:scale-95 active:bg-[#5232d6]",
                 canScrollLeft && arrowPositions.isVisible
-                  ? "opacity-95 hover:opacity-100 pointer-events-auto" 
+                  ? "opacity-95 hover:opacity-100 pointer-events-auto"
                   : "opacity-0 pointer-events-none scale-75"
               )}
               title="Click to scroll left, hold for continuous scroll"
@@ -598,7 +694,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                 "shadow-2xl shadow-purple-500/30 backdrop-blur-md transition-opacity duration-200 cursor-pointer select-none",
                 "hover:bg-[#6342e8] hover:text-white hover:scale-110 active:scale-95 active:bg-[#5232d6]",
                 canScrollRight && arrowPositions.isVisible
-                  ? "opacity-95 hover:opacity-100 pointer-events-auto animate-pulse hover:animate-none" 
+                  ? "opacity-95 hover:opacity-100 pointer-events-auto animate-pulse hover:animate-none"
                   : "opacity-0 pointer-events-none scale-75"
               )}
               title="Click to scroll right, hold for continuous scroll"
@@ -607,7 +703,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
             </button>
 
             {/* Normal Full-Height Table Container (no max-h, natural page height) */}
-            <div 
+            <div
               ref={tableContainerRef}
               onScroll={checkScroll}
               className="rounded-xl border border-slate-200/80 dark:border-slate-800 overflow-x-auto shadow-2xs bg-white dark:bg-slate-900 scroll-smooth"
@@ -652,17 +748,30 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                       <TableRow
                         key={invigilator.id}
                         className={cn(
-                          "transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/40 group/row",
+                          "transition-colors hover:bg-slate-100/70 dark:hover:bg-slate-800/70 group/row",
                           index % 2 === 1 && "bg-slate-50/30 dark:bg-slate-800/20"
                         )}
                       >
-                        <TableCell className="sticky left-0 bg-white group-hover/row:bg-slate-50 dark:bg-slate-900 dark:group-hover/row:bg-slate-850 z-10 text-center font-medium text-xs text-slate-500 border-r border-slate-200/60 dark:border-slate-800">
+                        <TableCell
+                          className={cn(
+                            "sticky left-0 z-10 text-center font-medium text-xs text-slate-500 dark:text-slate-400 group-hover/row:text-slate-700 dark:group-hover/row:text-slate-200 border-r border-slate-200/60 dark:border-slate-800 transition-colors",
+                            index % 2 === 1 ? "bg-[#fbfcfe] dark:bg-[#0d1629]" : "bg-white dark:bg-slate-900",
+                            "group-hover/row:bg-slate-100 dark:group-hover/row:bg-slate-800"
+                          )}
+                        >
                           {index + 1}
                         </TableCell>
-                        <TableCell className="font-semibold text-xs sticky left-12 bg-white group-hover/row:bg-slate-50 dark:bg-slate-900 dark:group-hover/row:bg-slate-850 z-10 text-slate-900 dark:text-slate-100 border-r border-slate-200/60 dark:border-slate-800">
+                        <TableCell
+                          className={cn(
+                            "font-semibold text-xs sticky left-12 z-10 border-r border-slate-200/60 dark:border-slate-800 transition-colors",
+                            index % 2 === 1 ? "bg-[#fbfcfe] dark:bg-[#0d1629]" : "bg-white dark:bg-slate-900",
+                            "group-hover/row:bg-slate-100 dark:group-hover/row:bg-slate-800",
+                            "text-slate-900 dark:text-slate-100 group-hover/row:text-slate-950 dark:group-hover/row:text-white"
+                          )}
+                        >
                           {invigilator.name}
                         </TableCell>
-                        <TableCell className="text-xs text-slate-500 border-r border-slate-200/60 dark:border-slate-800">
+                        <TableCell className="text-xs text-slate-500 dark:text-slate-400 group-hover/row:text-slate-700 dark:group-hover/row:text-slate-200 border-r border-slate-200/60 dark:border-slate-800 transition-colors">
                           {invigilator.designation}
                         </TableCell>
                         {examinations.map(exam => {
@@ -701,7 +810,13 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                             </TableCell>
                           );
                         })}
-                        <TableCell className="text-center sticky right-0 bg-white group-hover/row:bg-slate-50 dark:bg-slate-900 dark:group-hover/row:bg-slate-850 z-10 border-l border-slate-200/60 dark:border-slate-800">
+                        <TableCell
+                          className={cn(
+                            "text-center sticky right-0 z-10 border-l border-slate-200/60 dark:border-slate-800 transition-colors",
+                            index % 2 === 1 ? "bg-[#fbfcfe] dark:bg-[#0d1629]" : "bg-white dark:bg-slate-900",
+                            "group-hover/row:bg-slate-100 dark:group-hover/row:bg-slate-800"
+                          )}
+                        >
                           <div className="bg-purple-50 dark:bg-purple-950/60 text-[#6342e8] dark:text-purple-300 border border-purple-100 dark:border-purple-900/50 font-bold rounded-lg w-7 h-7 flex items-center justify-center mx-auto text-xs">
                             {dutyCount}
                           </div>

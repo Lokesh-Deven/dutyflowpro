@@ -45,7 +45,7 @@ interface DutySlot {
 
 export default function SchedulePage() {
   const { invigilators, examinations, activeAllotment, savedAllotments, setActiveAllotment } = useAllotment();
-  const { user, canDownload, recordCategoryDownload } = useAuth();
+  const { user, profile, canDownload, recordCategoryDownload } = useAuth();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [showFullSchedule, setShowFullSchedule] = useState(false);
   const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false);
@@ -120,14 +120,16 @@ export default function SchedulePage() {
     return new Set(scheduleData.flatMap(slot => slot.invigilators.map(inv => inv.id))).size;
   }, [scheduleData]);
 
-  const handleDownload = (isFull: boolean = false) => {
+  const handleDownload = async (isFull: boolean = false) => {
     const check = canDownload('daywise_profile');
     if (!check.allowed) {
       setIsSubscriptionDialogOpen(true);
       return;
     }
 
-    const dataToExport = isFull ? scheduleData : scheduleData.filter(s => format(s.date, 'yyyy-MM-dd') === format(date || new Date(), 'yyyy-MM-dd'));
+    const dataToExport = isFull
+      ? scheduleData
+      : scheduleData.filter(s => format(s.date, 'yyyy-MM-dd') === format(date || new Date(), 'yyyy-MM-dd'));
 
     if (dataToExport.length === 0) {
       toast({
@@ -141,80 +143,100 @@ export default function SchedulePage() {
     recordCategoryDownload('daywise_profile');
     toast({ title: "Generating PDF...", description: "Your download will begin shortly." });
 
-    const doc = new jsPDF();
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const examDetails = examinations.length > 0 ? examinations[0] : null;
-    const pageWidth = doc.internal.pageSize.getWidth();
-    let currentY = 20;
+    const collegeName = (examDetails?.college || profile?.institution_name || 'College Name').trim();
+    const examName = (examDetails?.examName || activeAllotment?.name || 'Midterm Examination \u2013 September, 2026').trim();
 
-    const renderHeader = (titleDate?: Date) => {
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(20);
-      doc.text(examDetails?.college || 'College Name', pageWidth / 2, currentY, { align: 'center' });
-      currentY += 8;
-
-      doc.setFontSize(15);
-      doc.setFont('helvetica', 'normal');
-      doc.text(examDetails?.examName || 'Examination Name', pageWidth / 2, currentY, { align: 'center' });
-      currentY += 7;
-
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(13);
-      doc.text('Invigilation Duty Schedule', pageWidth / 2, currentY, { align: 'center' });
-      currentY += 7;
-
-      if (titleDate) {
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(100);
-        doc.text(format(titleDate, "MMMM do, yyyy (EEEE)"), pageWidth / 2, currentY, { align: 'center' });
-        currentY += 12;
-      } else {
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(100);
-        doc.text("Full Examination Period", pageWidth / 2, currentY, { align: 'center' });
-        currentY += 12;
-      }
-    };
-
-    renderHeader(isFull ? undefined : date);
-
-    let startY = currentY;
+    const pageWidth = doc.internal.pageSize.getWidth(); // 210 mm
+    const pageHeight = doc.internal.pageSize.getHeight(); // 297 mm
+    const leftMargin = 14;
+    const rightMargin = 14;
+    const contentWidth = pageWidth - leftMargin - rightMargin; // 182 mm
 
     dataToExport.forEach((slot, slotIndex) => {
       if (slotIndex > 0) {
-        startY = (doc as any).lastAutoTable.finalY + 15;
-        if (startY > doc.internal.pageSize.getHeight() - 60) {
-          doc.addPage();
-          startY = 20;
-          currentY = 20;
-        }
+        doc.addPage();
       }
 
+      // 1. Classic Executive Navy Banner Header
+      const bannerY = 12;
+      const bannerHeight = 25;
+      const goldStripeHeight = 1.4;
+
+      // Deep Executive Navy Box
+      doc.setFillColor(31, 58, 95); // Deep Executive Navy #1F3A5F
+      doc.rect(leftMargin, bannerY, contentWidth, bannerHeight, 'F');
+
+      // Classic Gold Accent Stripe at bottom edge of banner
+      doc.setFillColor(197, 168, 128); // Classic Gold #C5A880
+      doc.rect(leftMargin, bannerY + bannerHeight - goldStripeHeight, contentWidth, goldStripeHeight, 'F');
+
+      // Text inside Navy Banner (Centered)
+      let textY = bannerY + 7.5;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(16);
+      doc.setTextColor(255, 255, 255);
+      doc.text(collegeName, pageWidth / 2, textY, { align: 'center' });
+
+      textY += 6;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9.5);
+      doc.setTextColor(226, 232, 240); // #E2E8F0
+      doc.text(examName, pageWidth / 2, textY, { align: 'center' });
+
+      textY += 6.5;
+      doc.setFont('helvetica', 'bold');
       doc.setFontSize(11);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(0);
+      doc.setTextColor(255, 255, 255);
+      doc.text("INVIGILATION DUTY SCHEDULE", pageWidth / 2, textY, { align: 'center' });
 
-      if (isFull) {
-        doc.setFont('helvetica', 'bold');
-        doc.text(`${format(slot.date, "dd/MM/yyyy")} (${format(slot.date, "EEEE")})`, 15, startY);
-        startY += 6;
-      }
+      // 2. Metadata Grid (2 rows x 4 cols) with exact aligned columns
+      const metaStartY = bannerY + bannerHeight + 3.5;
+      const colWidths = [24, 67, 40, 51]; // Sum = 182mm
 
-      doc.setFont('helvetica', 'bold');
-      doc.text('Subject:', 15, startY);
-      doc.setFont('helvetica', 'normal');
-      const subjectLines = doc.splitTextToSize(slot.subjects, pageWidth - 30 - 20);
-      doc.text(subjectLines, 15 + 20, startY);
-      startY += (subjectLines.length * 5) + 2;
+      const formattedDate = format(slot.date, "MMMM do, yyyy (EEEE)");
+      const totalInvigilatorsCount = slot.invigilators.length;
 
-      doc.setFont('helvetica', 'bold');
-      doc.text('Timings:', 15, startY);
-      doc.setFont('helvetica', 'normal');
-      doc.text(slot.time, 15 + 20, startY);
-      startY += 7;
+      const metaData = [
+        [
+          { content: 'DATE', styles: { fontStyle: 'bold', textColor: [31, 58, 95], fillColor: [248, 250, 252] } },
+          { content: formattedDate, styles: { textColor: [30, 41, 59], fillColor: [255, 255, 255] } },
+          { content: 'SUBJECT', styles: { fontStyle: 'bold', textColor: [31, 58, 95], fillColor: [248, 250, 252] } },
+          { content: slot.subjects, styles: { textColor: [30, 41, 59], fillColor: [255, 255, 255] } },
+        ],
+        [
+          { content: 'TIMINGS', styles: { fontStyle: 'bold', textColor: [31, 58, 95], fillColor: [248, 250, 252] } },
+          { content: slot.time, styles: { textColor: [30, 41, 59], fillColor: [255, 255, 255] } },
+          { content: 'TOTAL INVIGILATORS', styles: { fontStyle: 'bold', textColor: [31, 58, 95], fillColor: [248, 250, 252] } },
+          { content: String(totalInvigilatorsCount), styles: { textColor: [30, 41, 59], fillColor: [255, 255, 255] } },
+        ]
+      ];
 
-      const head = [["Sl No", "Name of the Invigilators", "Designation", "Timings"]];
+      (doc as any).autoTable({
+        body: metaData,
+        startY: metaStartY,
+        margin: { left: leftMargin, right: rightMargin },
+        theme: 'grid',
+        styles: {
+          fontSize: 7.5,
+          valign: 'middle',
+          cellPadding: { top: 2, bottom: 2, left: 2.5, right: 2.5 },
+          lineWidth: 0.15,
+          lineColor: [203, 213, 225], // #CBD5E1
+        },
+        columnStyles: {
+          0: { cellWidth: colWidths[0] },
+          1: { cellWidth: colWidths[1] },
+          2: { cellWidth: colWidths[2] },
+          3: { cellWidth: colWidths[3] },
+        }
+      });
+
+      const tableStartY = (doc as any).lastAutoTable.finalY + 3.5;
+
+      // 3. Invigilator Duty Roster Table
+      const head = [["Sl. No.", "Name of the Invigilator", "Designation", "Timings"]];
       const body = slot.invigilators.length > 0
         ? slot.invigilators.map((inv, index) => [
             index + 1,
@@ -227,18 +249,54 @@ export default function SchedulePage() {
       (doc as any).autoTable({
         head: head,
         body: body,
-        startY: startY,
+        startY: tableStartY,
+        margin: { left: leftMargin, right: rightMargin, bottom: 15 },
         theme: 'grid',
-        headStyles: { fillColor: [8, 37, 103], textColor: 255, fontStyle: 'bold', fontSize: 10, halign: 'center' },
-        styles: { fontSize: 9.5, cellPadding: 3 },
+        headStyles: {
+          fillColor: [31, 58, 95], // #1F3A5F Deep Executive Navy
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          halign: 'center',
+          valign: 'middle',
+          fontSize: 7.5,
+          lineWidth: 0.15,
+          lineColor: [205, 214, 225],
+          cellPadding: { top: 2.2, bottom: 2.2, left: 1.5, right: 1.5 },
+        },
+        bodyStyles: {
+          textColor: [30, 41, 59], // #1E293B
+          fontSize: 7.2,
+          valign: 'middle',
+          lineWidth: 0.15,
+          lineColor: [212, 221, 230], // #D4DDE6
+          cellPadding: { top: 1.3, bottom: 1.3, left: 2, right: 2 },
+          minCellHeight: 4.8,
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252], // #F8FAFC
+        },
         columnStyles: {
-          0: { cellWidth: 16, halign: 'center' },
-          1: { cellWidth: 'auto', halign: 'left' },
-          2: { cellWidth: 44, halign: 'left' },
-          3: { cellWidth: 48, halign: 'center', fontStyle: 'bold' },
+          0: { cellWidth: 14, halign: 'center' },
+          1: { cellWidth: 66, halign: 'left' },
+          2: { cellWidth: 64, halign: 'left' },
+          3: { cellWidth: 38, halign: 'center', fontStyle: 'bold' },
         },
       });
     });
+
+    // 4. Elegant Footer across all pages
+    const totalPages = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.setTextColor(100, 116, 139); // #64748B
+      const footerText = `${collegeName} \u2022 ${examName}`;
+      doc.text(footerText, pageWidth / 2, pageHeight - 10, { align: 'center' });
+      if (totalPages > 1) {
+        doc.text(`Page ${i} of ${totalPages}`, pageWidth - rightMargin, pageHeight - 10, { align: 'right' });
+      }
+    }
 
     const fileName = isFull
       ? `Full_Schedule_${activeAllotment?.name ? activeAllotment.name.replace(/ /g, '_') : 'Comprehensive'}.pdf`

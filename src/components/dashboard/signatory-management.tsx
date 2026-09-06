@@ -46,10 +46,15 @@ export const DESIGNATION_PRESETS = [
 
 export function SignatoryManagement() {
   const { signatory, updateSignatory, resetSignatory, examinations, activeAllotment } = useAllotment();
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
 
-  const collegeName = profile?.institution_name || examinations[0]?.college || activeAllotment?.examinations[0]?.college || '';
+  const collegeName = examinations[0]?.college
+    || (profile?.institution_name && profile.institution_name !== 'Guest Profile' ? profile.institution_name : null)
+    || (user?.user_metadata?.institution_name as string)
+    || activeAllotment?.examinations[0]?.college
+    || (profile?.institution_name !== 'Guest Profile' ? profile?.institution_name : '')
+    || '';
 
   const [name, setName] = useState(signatory?.name || '');
   const [designation, setDesignation] = useState(signatory?.designation || '');

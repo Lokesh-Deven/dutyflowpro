@@ -9,6 +9,7 @@ import {
   deleteUserAllotmentFromDatabase,
   saveUserDirectoryToCloud,
   fetchUserDirectoryFromCloud,
+  isUUID,
 } from './storage-service';
 import { supabase } from './supabase';
 
@@ -141,7 +142,7 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem('dutyflow_active_allotment');
       localStorage.removeItem('dutyflow_instructions');
       localStorage.removeItem('dutyflow_signatory');
-    } catch (_) {}
+    } catch (_) { }
   }, []);
 
   // 1. When user logs in, switches accounts, or logs out: RESET and load strictly for this user
@@ -203,7 +204,7 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
           if (Array.isArray(parsed) && isMounted) {
             setDirectoryInvigilators(parsed);
           }
-        } catch (_) {}
+        } catch (_) { }
       } else if (userScope !== 'guest') {
         const guestDir = localStorage.getItem('dutyflow_guest_invigilator_directory');
         if (guestDir) {
@@ -213,7 +214,7 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
               setDirectoryInvigilators(parsed);
               localStorage.setItem(`dutyflow_${userScope}_invigilator_directory`, guestDir);
             }
-          } catch (_) {}
+          } catch (_) { }
         }
       }
 
@@ -229,7 +230,7 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
               designation: parsed.designation || '',
             };
           }
-        } catch (_) {}
+        } catch (_) { }
       } else if (userScope !== 'guest') {
         const guestSig = localStorage.getItem('dutyflow_guest_signatory');
         if (guestSig) {
@@ -242,7 +243,7 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
               };
               localStorage.setItem(`dutyflow_${userScope}_signatory`, JSON.stringify(initialSignatory));
             }
-          } catch (_) {}
+          } catch (_) { }
         }
       }
 
@@ -286,8 +287,8 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       console.error("Error loading user-scoped allotment data from localStorage:", err);
     }
 
-    // If logged in, fetch cloud allotments and cloud signatory strictly for this specific user.id
-    if (currentUserId) {
+    // If logged in with a valid user UUID, fetch cloud allotments and cloud signatory strictly for this specific user.id
+    if (currentUserId && isUUID(currentUserId)) {
       fetchUserAllotmentsFromDatabase(currentUserId).then((cloudAllotments) => {
         if (!isMounted) return;
         if (cloudAllotments) {
@@ -296,7 +297,7 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
           setIsCloudSynced(true);
         }
       }).catch(err => {
-        console.error("Cloud allotment fetch error:", err);
+        console.error("Cloud allotment fetch error:", err?.message || err);
       }).finally(() => {
         if (isMounted) setIsLoaded(true);
       });
@@ -304,11 +305,16 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       // Also fetch cloud-saved signatory details from Supabase profiles
       (async () => {
         try {
-          const { data } = await supabase
+          const { data, error } = await supabase
             .from('profiles')
             .select('signatory_name, signatory_designation')
             .eq('id', currentUserId)
             .maybeSingle();
+
+          if (error) {
+            console.error("Cloud signatory query error:", error.message || error);
+            return;
+          }
 
           if (!isMounted) return;
           if (data && (data.signatory_name || data.signatory_designation)) {
@@ -320,12 +326,12 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
               };
               try {
                 localStorage.setItem(`dutyflow_${userScope}_signatory`, JSON.stringify(cloudSig));
-              } catch (_) {}
+              } catch (_) { }
               return cloudSig;
             });
           }
-        } catch (err) {
-          console.error("Cloud signatory fetch error:", err);
+        } catch (err: any) {
+          console.error("Cloud signatory fetch error:", err?.message || err);
         }
       })();
 
@@ -339,10 +345,10 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
             setIsDirectoryCloudSynced(true);
             try {
               localStorage.setItem(`dutyflow_${userScope}_invigilator_directory`, JSON.stringify(cloudDir));
-            } catch (_) {}
+            } catch (_) { }
           }
-        } catch (err) {
-          console.error("Cloud directory fetch error:", err);
+        } catch (err: any) {
+          console.error("Cloud directory fetch error:", err?.message || err);
         }
       })();
     } else {
@@ -466,7 +472,7 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
     }
     return newSavedAllotment;
   }, [activeAllotment, savedAllotments, invigilators, examinations, user?.id]);
-  
+
   const updateSavedAllotment = (id: string, updatedAllotment: Partial<SavedAllotment>) => {
     setSavedAllotments(prev => prev.map(sa => {
       if (sa.id === id) {
@@ -493,7 +499,7 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       deleteUserAllotmentFromDatabase(id, user.id);
     }
   };
-  
+
   const clearCurrentAllotment = useCallback(() => {
     setActiveAllotment(null);
     setInvigilators([]);
@@ -510,7 +516,7 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
         sessionStorage.removeItem(`dutyflow_${scope}_examinations`);
         sessionStorage.removeItem(`dutyflow_${scope}_invigilators`);
         sessionStorage.removeItem(`dutyflow_${scope}_active_allotment`);
-      } catch (_) {}
+      } catch (_) { }
     }
   }, [user?.id]);
 
@@ -560,7 +566,7 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       console.error("Failed to save signatory to localStorage:", e);
     }
 
-    if (user?.id) {
+    if (user?.id && isUUID(user.id)) {
       try {
         const updatePayload: Record<string, any> = {
           updated_at: new Date().toISOString(),
@@ -576,8 +582,8 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
             signatory_designation: updated.designation,
           },
         });
-      } catch (err) {
-        console.error("Failed to sync signatory to cloud profile:", err);
+      } catch (err: any) {
+        console.error("Failed to sync signatory to cloud profile:", err?.message || err);
       }
     }
   };
@@ -594,7 +600,7 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       console.error("Failed to reset signatory in localStorage:", e);
     }
 
-    if (user?.id) {
+    if (user?.id && isUUID(user.id)) {
       try {
         await supabase.from('profiles').update({
           signatory_name: '',
@@ -608,8 +614,8 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
             signatory_designation: '',
           },
         });
-      } catch (err) {
-        console.error("Failed to reset signatory in Supabase:", err);
+      } catch (err: any) {
+        console.error("Failed to reset signatory in Supabase:", err?.message || err);
       }
     }
   };

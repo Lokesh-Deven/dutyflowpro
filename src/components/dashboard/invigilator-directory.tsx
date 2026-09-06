@@ -457,7 +457,7 @@ export function InvigilatorDirectory() {
                       </div>
                       <FormControl>
                         <Input
-                          placeholder="e.g. jane.doe@college.edu"
+                          placeholder="e.g. lokesh@gmail.com"
                           {...field}
                           className="bg-slate-50/50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 focus-visible:border-[#6342e8] focus-visible:ring-[#6342e8]/20 transition-all rounded-xl h-10 font-medium text-sm text-foreground"
                         />
@@ -820,7 +820,7 @@ export function InvigilatorDirectory() {
                   <FormItem className="space-y-1.5">
                     <FormLabel className="text-xs font-semibold text-slate-700 dark:text-slate-300">E-Mail ID</FormLabel>
                     <FormControl>
-                      <Input {...field} className="rounded-xl h-9 text-xs" />
+                      <Input {...field} placeholder="e.g. lokesh@gmail.com" className="rounded-xl h-9 text-xs" />
                     </FormControl>
                     <FormMessage className="text-xs" />
                   </FormItem>

@@ -19,11 +19,19 @@ export function UserNav() {
   const { user, profile, signOut } = useAuth();
   const router = useRouter();
 
-  const institutionName = profile?.institution_name || (user?.user_metadata?.institution_name as string) || "Guest Profile";
-  const userEmail = profile?.email || user?.email || "guest@dutyflow.in";
+  const isGuest = !user || profile?.id === 'guest-session';
+  const institutionName = isGuest
+    ? (profile?.institution_name || "Guest Profile")
+    : (profile?.institution_name && profile.institution_name !== 'Guest Profile' ? profile.institution_name : null)
+      || (user?.user_metadata?.institution_name as string)
+      || (user?.email ? user.email.split('@')[0] : "Institution");
+
+  const userEmail = isGuest
+    ? "guest@dutyflow.in"
+    : (user?.email || (profile?.email && profile.email !== 'guest@dutyflow.in' ? profile.email : null) || "user@dutyflow.in");
   
   // Single letter initial (first letter of institution name)
-  const singleInitial = (institutionName.trim().charAt(0) || userEmail.trim().charAt(0) || "G").toUpperCase();
+  const singleInitial = (institutionName.trim().charAt(0) || userEmail.trim().charAt(0) || "U").toUpperCase();
 
   const handleLogout = async () => {
     await signOut();

@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode, useCa
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import { useRouter } from 'next/navigation';
+import { isUUID } from './storage-service';
 
 export type SubscriptionStatus = 'Subscribed' | 'Unsubscribed' | 'Free Access';
 export type DownloadCategory = 'master_roster' | 'individual_profile' | 'daywise_profile';
@@ -74,6 +75,7 @@ const getGuestProfile = (): UserProfile => {
       const stored = localStorage.getItem('dutyflow_guest_profile');
       if (stored) {
         const parsed = JSON.parse(stored);
+        delete parsed.institution_logo;
         const email = parsed.email === 'guestuser@dutyflow.in' ? 'guest@dutyflow.in' : (parsed.email || 'guest@dutyflow.in');
         return {
           ...DEFAULT_GUEST_PROFILE,
@@ -81,9 +83,45 @@ const getGuestProfile = (): UserProfile => {
           email,
         };
       }
-    } catch (_) {}
+    } catch (_) { }
   }
   return DEFAULT_GUEST_PROFILE;
+};
+
+// Helper to construct an authenticated UserProfile from Supabase User object
+export const createProfileFromUser = (currentUser: User, dbData?: any): UserProfile => {
+  const meta = currentUser.user_metadata || {};
+  const institutionName = (dbData?.institution_name && dbData.institution_name !== 'Guest Profile' ? dbData.institution_name : null)
+    || (meta.institution_name as string)
+    || (currentUser.email ? currentUser.email.split('@')[0] : 'Institution');
+
+  const signatoryName = dbData?.signatory_name
+    || (meta.signatory_name as string)
+    || null;
+
+  const signatoryDesignation = dbData?.signatory_designation
+    || (meta.signatory_designation as string)
+    || null;
+
+  const subscriptionStatus = (dbData?.subscription_status as SubscriptionStatus)
+    || 'Free Access';
+
+  const downloadCount = dbData?.download_count ?? 0;
+
+  return {
+    id: currentUser.id,
+    email: dbData?.email || currentUser.email || '',
+    institution_name: institutionName,
+    subscription_status: subscriptionStatus,
+    subscription_start_date: dbData?.subscription_start_date || dbData?.created_at || currentUser.created_at || new Date().toISOString(),
+    subscription_end_date: dbData?.subscription_end_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    download_count: downloadCount,
+    master_roster_downloads: downloadCount,
+    individual_profile_downloads: downloadCount,
+    daywise_profile_downloads: downloadCount,
+    signatory_name: signatoryName,
+    signatory_designation: signatoryDesignation,
+  };
 };
 
 export const clearActiveAllotmentStorage = (userId?: string) => {
@@ -93,24 +131,23 @@ export const clearActiveAllotmentStorage = (userId?: string) => {
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (!key) continue;
-      // Do NOT touch permanent user data: directory, signatory, instructions, saved allotments, profile
+      // Do NOT touch permanent user data: directory, signatory, instructions, saved allotments
       if (
         key.includes('directory') ||
         key.includes('saved_allotments') ||
         key.includes('instructions') ||
         key.includes('signatory') ||
-        key.includes('profile') ||
         key.includes('inst_version')
       ) {
         continue;
       }
-      if (key.includes('examinations') || key.includes('invigilators') || key.includes('active_allotment')) {
+      if (key.includes('examinations') || key.includes('invigilators') || key.includes('active_allotment') || (userId && key === 'dutyflow_guest_profile')) {
         keysToRemove.push(key);
       }
     }
     keysToRemove.forEach(k => localStorage.removeItem(k));
     sessionStorage.clear();
-  } catch (_) {}
+  } catch (_) { }
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -118,68 +155,85 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(() => {
-    return typeof window !== 'undefined' ? getGuestProfile() : DEFAULT_GUEST_PROFILE;
-  });
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   const fetchProfile = useCallback(async (currentUser: User) => {
+    if (!currentUser?.id || currentUser.id === 'guest-session') {
+      setProfile(getGuestProfile());
+      setIsLoading(false);
+      return;
+    }
+
+    // Immediately establish an authenticated profile from currentUser to prevent any guest flash
+    setProfile(prev => {
+      if (prev && prev.id === currentUser.id && prev.institution_name !== 'Guest Profile') {
+        return prev;
+      }
+      return createProfileFromUser(currentUser);
+    });
+
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, email, institution_name, subscription_status, subscription_start_date, subscription_end_date, download_count, signatory_name, signatory_designation')
         .eq('id', currentUser.id)
         .maybeSingle();
 
+      if (error) {
+        console.error('Error fetching profile from database:', error.message || error);
+        // Retain user metadata profile even if remote query had issue
+        setProfile(createProfileFromUser(currentUser));
+        return;
+      }
+
       if (data) {
-        setProfile({
-          id: data.id,
-          email: data.email || currentUser.email || '',
-          institution_name: data.institution_name || (currentUser.user_metadata?.institution_name as string) || 'Institution',
-          subscription_status: (data.subscription_status as SubscriptionStatus) || 'Free Access',
-          subscription_start_date: data.subscription_start_date || data.created_at || new Date().toISOString(),
-          subscription_end_date: data.subscription_end_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          download_count: data.download_count ?? 0,
-          master_roster_downloads: data.master_roster_downloads ?? 0,
-          individual_profile_downloads: data.individual_profile_downloads ?? 0,
-          daywise_profile_downloads: data.daywise_profile_downloads ?? 0,
-          signatory_name: data.signatory_name || (currentUser.user_metadata?.signatory_name as string) || null,
-          signatory_designation: data.signatory_designation || (currentUser.user_metadata?.signatory_designation as string) || null,
-        });
+        setProfile(createProfileFromUser(currentUser, data));
       } else {
-        // Fallback default profile
-        const defaultProfile: UserProfile = {
+        // First-time user without profile row: construct and persist sanitized row
+        const newProfile = createProfileFromUser(currentUser);
+        setProfile(newProfile);
+
+        const insertRow = {
           id: currentUser.id,
           email: currentUser.email || '',
-          institution_name: (currentUser.user_metadata?.institution_name as string) || 'Institution',
-          subscription_status: 'Free Access',
-          subscription_start_date: new Date().toISOString(),
-          subscription_end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          institution_name: newProfile.institution_name,
+          subscription_status: newProfile.subscription_status,
+          subscription_start_date: newProfile.subscription_start_date,
+          subscription_end_date: newProfile.subscription_end_date,
           download_count: 0,
-          master_roster_downloads: 0,
-          individual_profile_downloads: 0,
-          daywise_profile_downloads: 0,
+          signatory_name: newProfile.signatory_name,
+          signatory_designation: newProfile.signatory_designation,
         };
-        setProfile(defaultProfile);
-        // Persist default row in database
-        await supabase.from('profiles').upsert(defaultProfile);
+        await supabase.from('profiles').upsert(insertRow);
       }
-    } catch (err) {
-      console.error('Error fetching profile:', err);
+    } catch (err: any) {
+      console.error('Error in fetchProfile:', err?.message || err);
+      setProfile(createProfileFromUser(currentUser));
     } finally {
       setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    let isMounted = true;
+
     // Initial session load
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!isMounted) return;
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
+        setProfile(createProfileFromUser(session.user));
         fetchProfile(session.user);
       } else {
+        setProfile(getGuestProfile());
+        setIsLoading(false);
+      }
+    }).catch(err => {
+      console.error('getSession error:', err);
+      if (isMounted) {
         setProfile(getGuestProfile());
         setIsLoading(false);
       }
@@ -187,12 +241,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!isMounted) return;
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
         if (event === 'SIGNED_IN') {
           clearActiveAllotmentStorage(session.user.id);
         }
+        setProfile(createProfileFromUser(session.user));
         fetchProfile(session.user);
       } else {
         setProfile(getGuestProfile());
@@ -201,6 +257,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, [fetchProfile]);
@@ -241,8 +298,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const countKey = category === 'master_roster'
       ? 'master_roster_downloads'
       : category === 'individual_profile'
-      ? 'individual_profile_downloads'
-      : 'daywise_profile_downloads';
+        ? 'individual_profile_downloads'
+        : 'daywise_profile_downloads';
 
     if (!user) {
       setProfile(prev => {
@@ -256,7 +313,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (typeof window !== 'undefined') {
           try {
             localStorage.setItem('dutyflow_guest_profile', JSON.stringify(newProfile));
-          } catch (_) {}
+          } catch (_) { }
         }
         return newProfile;
       });
@@ -299,6 +356,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         clearActiveAllotmentStorage(data.user.id);
         setUser(data.user);
         setSession(data.session);
+        // Immediately set authenticated profile from user object
+        setProfile(createProfileFromUser(data.user));
         await fetchProfile(data.user);
       }
 
@@ -343,13 +402,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           master_roster_downloads: 0,
           individual_profile_downloads: 0,
           daywise_profile_downloads: 0,
+          signatory_name: null,
+          signatory_designation: null,
         };
 
         if (data.session) {
           setUser(data.user);
           setSession(data.session);
-          await supabase.from('profiles').upsert(newProfileData);
           setProfile(newProfileData);
+          const insertRow = {
+            id: data.user.id,
+            email: trimmedEmail,
+            institution_name: trimmedInst,
+            subscription_status: 'Free Access',
+            subscription_start_date: now.toISOString(),
+            subscription_end_date: endDate.toISOString(),
+            download_count: 0,
+          };
+          await supabase.from('profiles').upsert(insertRow);
           return { error: null, needsEmailConfirmation: false };
         } else {
           return { error: null, needsEmailConfirmation: true };
@@ -363,13 +433,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const updateProfile = async (updated: Partial<UserProfile>) => {
-    if (!user) {
+    if (!user || !isUUID(user.id)) {
       const updatedProfile = { ...(profile || DEFAULT_GUEST_PROFILE), ...updated };
       setProfile(updatedProfile);
       if (typeof window !== 'undefined') {
         try {
           localStorage.setItem('dutyflow_guest_profile', JSON.stringify(updatedProfile));
-        } catch (_) {}
+        } catch (_) { }
       }
       return { error: null };
     }
@@ -380,6 +450,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .eq('id', user.id);
 
       if (error) return { error };
+
+      if (updated.institution_name !== undefined) {
+        supabase.auth.updateUser({
+          data: {
+            institution_name: updated.institution_name,
+          }
+        }).catch(err => console.error('Error updating user metadata:', err));
+      }
 
       setProfile(prev => prev ? { ...prev, ...updated } : null);
       return { error: null };
