@@ -15,9 +15,10 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { CalendarClock, CheckCheck, Calendar, BookOpen } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { CalendarClock, CheckCheck, Calendar, BookOpen, Sparkles, Check } from 'lucide-react';
+import { cn, formatWorkingDaysSummary, isDateInWorkingDays, getMatchingExamIdsForWorkingDays } from '@/lib/utils';
 
 type SetAvailabilityDialogProps = {
   invigilator: Invigilator | null;
@@ -69,6 +70,13 @@ export function SetAvailabilityDialog({ invigilator, isOpen, onClose, onSave, ex
     }
   };
 
+  const handleApplyWorkingDays = () => {
+    if (!invigilator.workingDays || invigilator.workingDays.length === 0) return;
+    const result = getMatchingExamIdsForWorkingDays(examinations, invigilator.workingDays);
+    setIsAllDays(result.isAvailableAllDays);
+    setSelectedExamIds(result.availableExamIds);
+  };
+
   const handleSave = () => {
     onSave(invigilator.id, {
       isAvailableAllDays: isAllDays,
@@ -86,6 +94,8 @@ export function SetAvailabilityDialog({ invigilator, isOpen, onClose, onSave, ex
     setSelectedExamIds(examinations.map(e => e.id));
     setIsAllDays(false);
   };
+
+  const hasConfiguredWorkingDays = invigilator.workingDays && invigilator.workingDays.length > 0;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -107,6 +117,31 @@ export function SetAvailabilityDialog({ invigilator, isOpen, onClose, onSave, ex
               </div>
             </div>
           </DialogHeader>
+
+          {/* Directory Working Days Banner (if configured) */}
+          {hasConfiguredWorkingDays && (
+            <div className="flex items-center justify-between p-3 rounded-xl bg-purple-50/80 dark:bg-purple-950/30 border border-purple-200/80 dark:border-purple-900/40">
+              <div className="flex items-center gap-2.5">
+                <Calendar className="h-4 w-4 text-[#6342e8] dark:text-purple-400 shrink-0" />
+                <div className="text-xs">
+                  <span className="font-bold text-slate-900 dark:text-white">Directory Working Days: </span>
+                  <span className="font-semibold text-[#6342e8] dark:text-purple-300">
+                    {formatWorkingDaysSummary(invigilator.workingDays)}
+                  </span>
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleApplyWorkingDays}
+                className="h-7 text-xs font-semibold rounded-lg bg-white dark:bg-slate-900 border-purple-200 text-[#6342e8] hover:bg-purple-100/60 shadow-2xs gap-1 shrink-0"
+              >
+                <Sparkles className="h-3 w-3 text-[#f59e0b]" />
+                <span>Apply</span>
+              </Button>
+            </div>
+          )}
 
           {/* All Days Option Card */}
           <div
@@ -172,6 +207,7 @@ export function SetAvailabilityDialog({ invigilator, isOpen, onClose, onSave, ex
               <div className="space-y-1.5">
                 {sortedExams.map(exam => {
                   const isSelected = selectedExamIds.includes(exam.id);
+                  const isWorkDay = !hasConfiguredWorkingDays || isDateInWorkingDays(exam.date, invigilator.workingDays);
 
                   return (
                     <div
@@ -192,10 +228,23 @@ export function SetAvailabilityDialog({ invigilator, isOpen, onClose, onSave, ex
                           className="data-[state=checked]:bg-[#4F46E5] data-[state=checked]:border-[#4F46E5]"
                         />
                         <div>
-                          <div className="font-semibold text-xs text-foreground flex items-center gap-1.5">
+                          <div className="font-semibold text-xs text-foreground flex items-center gap-1.5 flex-wrap">
                             <Calendar className="h-3 w-3 text-[#4F46E5]" />
                             <span>{format(new Date(exam.date), "dd/MM/yyyy")}</span>
                             <span className="text-muted-foreground font-normal">({format(new Date(exam.date), "EEEE")})</span>
+                            {hasConfiguredWorkingDays && (
+                              <Badge
+                                variant="outline"
+                                className={cn(
+                                  "text-[10px] px-1.5 py-0 font-medium",
+                                  isWorkDay
+                                    ? "bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300"
+                                    : "bg-slate-100 text-slate-500 border-slate-300 dark:bg-slate-800 dark:text-slate-400"
+                                )}
+                              >
+                                {isWorkDay ? "Working Day" : "Off Day"}
+                              </Badge>
+                            )}
                           </div>
                           <div className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
                             <BookOpen className="h-3 w-3 text-[#0891B2]" />
@@ -233,3 +282,4 @@ export function SetAvailabilityDialog({ invigilator, isOpen, onClose, onSave, ex
     </Dialog>
   );
 }
+

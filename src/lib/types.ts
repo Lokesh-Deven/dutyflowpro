@@ -1,3 +1,6 @@
+export const ALL_WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as const;
+export type Weekday = typeof ALL_WEEKDAYS[number];
+
 export type Invigilator = {
   id: string;
   name: string;
@@ -6,6 +9,7 @@ export type Invigilator = {
   email: string;
   isAvailableAllDays: boolean;
   availableExamIds: string[];
+  workingDays?: string[];
 };
 
 export type DirectoryInvigilator = {
@@ -14,6 +18,7 @@ export type DirectoryInvigilator = {
   designation: string;
   mobile: string;
   email: string;
+  workingDays?: string[];
   createdAt?: string;
 };
 

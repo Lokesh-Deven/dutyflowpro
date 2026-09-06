@@ -49,8 +49,7 @@ import { useAllotment } from '@/lib/allotment-context';
 import { useAuth } from '@/lib/auth-context';
 import { uploadUserFile } from '@/lib/storage-service';
 import { generateAllotment } from '@/lib/allotment';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { cn, getMatchingExamIdsForWorkingDays, formatWorkingDaysSummary } from '@/lib/utils';
 
 const invigilatorSchema = z.object({
     name: z.string().min(1, "Name is required."),
@@ -108,6 +107,7 @@ export function InvigilatorManagement() {
 
         const newFromDirectory: Invigilator[] = [];
         let duplicateCount = 0;
+        let partialDaysCount = 0;
 
         directoryInvigilators.forEach((dirItem, index) => {
             const cleanName = dirItem.name ? dirItem.name.toLowerCase().trim() : '';
@@ -116,14 +116,21 @@ export function InvigilatorManagement() {
             if (existingNames.has(cleanName)) {
                 duplicateCount++;
             } else {
+                // Auto-match availability against current examination timetable based on working days
+                const availability = getMatchingExamIdsForWorkingDays(examinations, dirItem.workingDays);
+                if (!availability.isAvailableAllDays && availability.availableExamIds.length > 0) {
+                    partialDaysCount++;
+                }
+
                 newFromDirectory.push({
                     id: `inv-dir-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 4)}`,
                     name: dirItem.name.trim(),
                     designation: dirItem.designation ? dirItem.designation.trim() : '',
                     mobile: dirItem.mobile ? dirItem.mobile.trim() : '',
                     email: dirItem.email ? dirItem.email.trim() : '',
-                    isAvailableAllDays: true,
-                    availableExamIds: [],
+                    workingDays: dirItem.workingDays,
+                    isAvailableAllDays: availability.isAvailableAllDays,
+                    availableExamIds: availability.availableExamIds,
                 });
                 existingNames.add(cleanName);
             }
@@ -140,16 +147,66 @@ export function InvigilatorManagement() {
         setInvigilators(prev => [...prev, ...newFromDirectory]);
         toast({
             title: "Added from Directory",
-            description: `${newFromDirectory.length} ${newFromDirectory.length === 1 ? 'invigilator' : 'invigilators'} added from your directory${duplicateCount > 0 ? ` (${duplicateCount} already present skipped)` : ''}.`,
+            description: `${newFromDirectory.length} ${newFromDirectory.length === 1 ? 'invigilator' : 'invigilators'} added. ${
+                partialDaysCount > 0
+                    ? `Availability automatically tailored for ${partialDaysCount} faculty with working days restrictions.`
+                    : 'All working days matched with timetable.'
+            }${duplicateCount > 0 ? ` (${duplicateCount} already present skipped)` : ''}`,
+        });
+    };
+
+    const handleSyncWorkingDays = () => {
+        if (!examinations || examinations.length === 0) {
+            toast({
+                variant: "destructive",
+                title: "No Examinations Found",
+                description: "Please configure examination dates in the timetable first to match working days.",
+            });
+            return;
+        }
+
+        let syncedCount = 0;
+        setInvigilators(prev =>
+            prev.map(inv => {
+                const matchingDir = directoryInvigilators?.find(
+                    d => d.name && d.name.toLowerCase().trim() === inv.name.toLowerCase().trim()
+                );
+                const workingDays = inv.workingDays || matchingDir?.workingDays;
+
+                if (!workingDays || workingDays.length === 0) {
+                    return inv;
+                }
+
+                const availability = getMatchingExamIdsForWorkingDays(examinations, workingDays);
+                syncedCount++;
+                return {
+                    ...inv,
+                    workingDays,
+                    isAvailableAllDays: availability.isAvailableAllDays,
+                    availableExamIds: availability.availableExamIds,
+                };
+            })
+        );
+
+        toast({
+            title: "Working Days Synchronized",
+            description: `Availability updated for ${syncedCount} faculty member${syncedCount === 1 ? '' : 's'} based on their directory working days and current exam dates.`,
         });
     };
 
     function onSubmit(values: z.infer<typeof invigilatorSchema>) {
+        const matchingDir = directoryInvigilators?.find(
+            d => d.name && d.name.toLowerCase().trim() === values.name.toLowerCase().trim()
+        );
+        const workingDays = matchingDir?.workingDays;
+        const availability = getMatchingExamIdsForWorkingDays(examinations, workingDays);
+
         const newInvigilator: Invigilator = {
             id: `inv-${Date.now()}`,
             ...values,
-            isAvailableAllDays: true,
-            availableExamIds: [],
+            workingDays,
+            isAvailableAllDays: availability.isAvailableAllDays,
+            availableExamIds: availability.availableExamIds,
         };
         setInvigilators(prev => [...prev, newInvigilator]);
         toast({ title: "Invigilator Added", description: `${values.name} has been added to the list.` });
@@ -191,14 +248,33 @@ export function InvigilatorManagement() {
                     const rawMobile = String(getColumnValue(row, ["Mobile", "Mobile No", "Phone", "Contact", "Phone No", "Contact No"]) || '').replace(/\D/g, '').trim();
                     const rawEmail = String(getColumnValue(row, ["E-Mail ID", "Email", "E-Mail", "Email ID", "Email Address"]) || '').trim();
 
+                    // Optional Working Days column from Excel, or inherit from Directory if available
+                    const rawDays = getColumnValue(row, ["Working Days", "WorkingDays", "Days", "Availability", "Available Days"]);
+                    let workingDays: string[] | undefined = undefined;
+                    if (rawDays) {
+                        const parsed = String(rawDays).split(/[,;/|]+/).map(d => d.trim()).filter(Boolean);
+                        if (parsed.length > 0) workingDays = parsed;
+                    }
+                    if (!workingDays) {
+                        const matchingDir = directoryInvigilators?.find(
+                            d => d.name && d.name.toLowerCase().trim() === name.toLowerCase().trim()
+                        );
+                        if (matchingDir?.workingDays) {
+                            workingDays = matchingDir.workingDays;
+                        }
+                    }
+
+                    const availability = getMatchingExamIdsForWorkingDays(examinations, workingDays);
+
                     return {
                         id: `inv-bulk-${Date.now()}-${index}`,
                         name,
                         designation: designation || 'Faculty',
                         mobile: rawMobile.length >= 10 ? rawMobile.slice(-10) : (rawMobile || '9000000000'),
                         email: rawEmail || `${name.toLowerCase().replace(/[^a-z0-9]/g, '') || `faculty${index + 1}`}@institution.local`,
-                        isAvailableAllDays: true,
-                        availableExamIds: [],
+                        workingDays,
+                        isAvailableAllDays: availability.isAvailableAllDays,
+                        availableExamIds: availability.availableExamIds,
                     };
                 }).filter(inv => Boolean(inv.name));
 
@@ -452,8 +528,8 @@ export function InvigilatorManagement() {
 
                             {/* Actions Bar */}
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4">
-                                {/* Extreme Left: Add from Directory */}
-                                <div>
+                                {/* Extreme Left: Add from Directory & Sync Working Days */}
+                                <div className="flex items-center gap-2">
                                     <Button
                                         type="button"
                                         variant="outline"
@@ -468,6 +544,19 @@ export function InvigilatorManagement() {
                                             </span>
                                         )}
                                     </Button>
+
+                                    {invigilators.length > 0 && examinations.length > 0 && (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onClick={handleSyncWorkingDays}
+                                            className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-medium rounded-xl px-3.5 py-2.5 shadow-2xs transition-all text-sm flex items-center gap-1.5"
+                                            title="Re-match active faculty availability against examination dates using their directory working days"
+                                        >
+                                            <CalendarCheck className="h-4 w-4 text-emerald-600" />
+                                            <span>Sync Working Days</span>
+                                        </Button>
+                                    )}
                                 </div>
 
                                 {/* Right Group: Add Invigilator OR Import from Excel */}
@@ -657,7 +746,11 @@ export function InvigilatorManagement() {
                                                                     : "bg-destructive/10 text-destructive hover:bg-destructive/20 border border-destructive/30"
                                                         )}
                                                         onClick={() => handleOpenAvailabilityDialog(inv)}
-                                                        title="Click to modify availability"
+                                                        title={
+                                                            inv.workingDays && inv.workingDays.length > 0
+                                                                ? `Directory Working Days: ${formatWorkingDaysSummary(inv.workingDays)}. Click to customize.`
+                                                                : "Click to modify availability"
+                                                        }
                                                     >
                                                         <CalendarClock className="h-3.5 w-3.5" />
                                                         <span>
@@ -665,6 +758,11 @@ export function InvigilatorManagement() {
                                                         </span>
                                                         <SlidersHorizontal className="h-3 w-3 opacity-60 ml-0.5" />
                                                     </Button>
+                                                    {inv.workingDays && inv.workingDays.length > 0 && inv.workingDays.length < 6 && (
+                                                        <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+                                                            {formatWorkingDaysSummary(inv.workingDays)}
+                                                        </div>
+                                                    )}
                                                 </TableCell>
                                                 <TableCell className="text-right">
                                                     <Button

@@ -285,7 +285,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9.5);
     doc.setTextColor(255, 255, 255);
-    doc.text("ALLOTMENT SCHEDULE", cardX + 7, schedY + 5.2);
+    doc.text("ALLOTMENT SCHEDULE", cardX + cardW / 2, schedY + bannerH / 2, { align: 'center', baseline: 'middle' });
 
     const tableStartY = schedY + bannerH + 2;
     const tableHead = [['#', 'Date', 'Day', 'Subject / Paper', 'Timings']];
@@ -345,7 +345,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
           doc.setFont('helvetica', 'bold');
           doc.setFontSize(8.5);
           doc.setTextColor(255, 255, 255);
-          doc.text(String(data.row.index + 1), cx, cy + 2.8, { align: 'center' });
+          doc.text(String(data.row.index + 1), cx, cy, { align: 'center', baseline: 'middle' });
         }
 
         // Col 4: Soft Cyan timing pill capsule
@@ -365,7 +365,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
           doc.setFont('helvetica', 'bold');
           doc.setFontSize(8);
           doc.setTextColor(8, 145, 178); // Cyan-600 (#0891B2)
-          doc.text(String(timingText), x + width / 2, y + height / 2 + 2.6, { align: 'center' });
+          doc.text(String(timingText), px + pillW / 2, py + pillH / 2, { align: 'center', baseline: 'middle' });
         }
       }
     });
@@ -387,7 +387,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9);
       doc.setTextColor(255, 255, 255);
-      doc.text("IMPORTANT INSTRUCTIONS", cardX + 7, instY + 4.8);
+      doc.text("IMPORTANT INSTRUCTIONS", cardX + cardW / 2, instY + instBannerH / 2, { align: 'center', baseline: 'middle' });
 
       // Well-spaced Instructions Box
       const instBoxY = instY + instBannerH + 2;
@@ -425,7 +425,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(7);
         doc.setTextColor(255, 255, 255);
-        doc.text(String(idx + 1), cardX + 6, itemCenterY + 2.1, { align: 'center' });
+        doc.text(String(idx + 1), cardX + 6, itemCenterY, { align: 'center', baseline: 'middle' });
 
         // Text
         doc.setFont('helvetica', 'normal');
@@ -446,7 +446,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(7);
         doc.setTextColor(255, 255, 255);
-        doc.text(String(leftList.length + idx + 1), midColX + 6, itemCenterY + 2.1, { align: 'center' });
+        doc.text(String(leftList.length + idx + 1), midColX + 6, itemCenterY, { align: 'center', baseline: 'middle' });
 
         // Text
         doc.setFont('helvetica', 'normal');
@@ -469,20 +469,28 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     const signatoryDesignation = signatory?.designation?.trim() || "";
     const institutionName = collegeName?.trim() || "";
     const sigRightX = cardX + footerW - 2;
-    const signatoryY = footerY - 11;
+    const signatoryY = footerY - 13;
 
-    // Line 1: "Issued by [Name]" or "Authorised Signatory"
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
+    // Line 1: Signatory Name (13pt bold matching invigilator name size) or "Authorised Signatory"
     if (signatoryName) {
       const nameText = signatoryName;
       const prefix = "Issued by ";
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
       const nameW = doc.getTextWidth(nameText);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9.5);
       doc.setTextColor(8, 145, 178); // Dark Cyan (#0891B2)
       doc.text(prefix, sigRightX - nameW, signatoryY + 4, { align: 'right' });
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
       doc.setTextColor(15, 23, 42); // Deep Slate (#0F172A)
       doc.text(nameText, sigRightX, signatoryY + 4, { align: 'right' });
     } else {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
       doc.setTextColor(15, 23, 42); // Deep Slate (#0F172A)
       doc.text("Authorised Signatory", sigRightX, signatoryY + 4, { align: 'right' });
     }
@@ -492,9 +500,9 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     const line2Text = line2Parts.join(', ');
     if (line2Text) {
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7.8);
+      doc.setFontSize(8.5);
       doc.setTextColor(71, 85, 105); // Slate-600 (#475569)
-      doc.text(line2Text, sigRightX, signatoryY + 8.5, { align: 'right' });
+      doc.text(line2Text, sigRightX, signatoryY + 9.5, { align: 'right' });
     }
 
     // 5b. Footer Bar (Single Line Compact Card matching header color #3730A3)

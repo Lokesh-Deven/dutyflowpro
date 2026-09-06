@@ -777,6 +777,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                         {examinations.map(exam => {
                           const hasDuty = duties.includes(exam.id);
                           const examDate = format(new Date(exam.date), 'yyyy-MM-dd');
+                          const isAvailable = invigilator.isAvailableAllDays !== false || Boolean(invigilator.availableExamIds?.includes(exam.id));
 
                           return (
                             <TableCell
@@ -799,11 +800,19 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                                     )}
                                   </div>
                                 </TooltipTrigger>
-                                <TooltipContent className="rounded-xl shadow-md border-slate-200 dark:border-slate-800 text-xs">
-                                  <div className="space-y-0.5">
+                                <TooltipContent className="rounded-xl shadow-md border-slate-200 dark:border-slate-800 text-xs py-2 px-3">
+                                  <div className="space-y-1">
                                     <div className="font-bold text-slate-900 dark:text-white">{exam.subject}</div>
-                                    <div className="text-slate-500">{formatAppDateWithDay(exam.date)}</div>
-                                    <div className="text-[11px] text-slate-500">{formatTimeTo12Hour(exam.startTime)} – {formatTimeTo12Hour(exam.endTime)}</div>
+                                    <div className="text-slate-500 dark:text-slate-400">{formatAppDateWithDay(exam.date)}</div>
+                                    <div className="text-[11px] text-slate-500 dark:text-slate-400">{formatTimeTo12Hour(exam.startTime)} – {formatTimeTo12Hour(exam.endTime)}</div>
+                                    <div className={cn(
+                                      "text-xs font-bold pt-0.5",
+                                      isAvailable
+                                        ? "text-emerald-600 dark:text-emerald-400"
+                                        : "text-red-600 dark:text-red-400"
+                                    )}>
+                                      {isAvailable ? "Available" : "Not Available"}
+                                    </div>
                                   </div>
                                 </TooltipContent>
                               </Tooltip>

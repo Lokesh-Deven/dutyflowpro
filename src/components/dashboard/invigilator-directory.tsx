@@ -47,14 +47,16 @@ import {
   AlertCircle,
   Save,
   CloudUpload,
-  Loader2
+  Loader2,
+  Calendar
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { useAllotment } from '@/lib/allotment-context';
 import { useAuth } from '@/lib/auth-context';
 import { uploadUserFile } from '@/lib/storage-service';
-import { cn } from '@/lib/utils';
+import { cn, formatWorkingDaysSummary } from '@/lib/utils';
+import { SetWorkingDaysDialog } from './set-working-days-dialog';
 
 const directoryInvigilatorSchema = z.object({
   name: z.string().min(1, "Name is required."),
@@ -94,6 +96,23 @@ export function InvigilatorDirectory() {
   // Edit dialog state
   const [editingInvigilator, setEditingInvigilator] = useState<DirectoryInvigilator | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  // Working days dialog state
+  const [workingDaysTarget, setWorkingDaysTarget] = useState<DirectoryInvigilator | null>(null);
+  const [isWorkingDaysDialogOpen, setIsWorkingDaysDialogOpen] = useState(false);
+
+  const handleOpenWorkingDays = (inv: DirectoryInvigilator) => {
+    setWorkingDaysTarget(inv);
+    setIsWorkingDaysDialogOpen(true);
+  };
+
+  const handleSaveWorkingDays = (invigilatorId: string, workingDays: string[]) => {
+    updateDirectoryInvigilator(invigilatorId, { workingDays });
+    toast({
+      title: "Working Days Saved",
+      description: `Working days for ${workingDaysTarget?.name || 'faculty'} have been updated.`,
+    });
+  };
 
   // Main Add Form
   const form = useForm<FormValues>({
@@ -247,12 +266,25 @@ export function InvigilatorDirectory() {
           const designation = String(getColumnValue(row, ["Designation", "Department", "Designation/Department", "Designation / Department", "Dept"]) || '').trim();
           const rawMobile = String(getColumnValue(row, ["Mobile", "Mobile No", "Phone", "Contact", "Phone No", "Contact No"]) || '').replace(/\D/g, '').trim();
           const rawEmail = String(getColumnValue(row, ["E-Mail ID", "Email", "E-Mail", "Email ID", "Email Address"]) || '').trim();
+          const rawDays = String(getColumnValue(row, ["Working Days", "Availability", "Available Days", "Days", "WorkingDays"]) || '').trim();
+          let workingDays: string[] | undefined = undefined;
+          if (rawDays) {
+            const dayCandidates = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            const matched = dayCandidates.filter(d => 
+              rawDays.toLowerCase().includes(d.toLowerCase()) || 
+              rawDays.toLowerCase().includes(d.slice(0, 3).toLowerCase())
+            );
+            if (matched.length > 0) {
+              workingDays = matched;
+            }
+          }
 
           return {
             name,
             designation: designation || 'Faculty',
             mobile: rawMobile.length >= 10 ? rawMobile.slice(-10) : (rawMobile || '9000000000'),
             email: rawEmail || `${name.toLowerCase().replace(/[^a-z0-9]/g, '') || `faculty${index + 1}`}@institution.local`,
+            workingDays,
           };
         }).filter(inv => Boolean(inv.name));
 
@@ -568,13 +600,14 @@ export function InvigilatorDirectory() {
                   <TableHead className="font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">Designation / Department</TableHead>
                   <TableHead className="font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">Mobile No</TableHead>
                   <TableHead className="font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">E-Mail ID</TableHead>
+                  <TableHead className="font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 text-center min-w-36">Working Days</TableHead>
                   <TableHead className="font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 text-right w-24">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredInvigilators.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-12">
+                    <TableCell colSpan={7} className="text-center py-12">
                       <div className="flex flex-col items-center justify-center space-y-2">
                         <BookUser className="h-8 w-8 text-slate-300 dark:text-slate-600" />
                         <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
@@ -611,6 +644,26 @@ export function InvigilatorDirectory() {
                       </TableCell>
                       <TableCell className="text-xs text-slate-600 dark:text-slate-300">
                         {inv.email}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleOpenWorkingDays(inv)}
+                          className={cn(
+                            "h-7 text-xs font-semibold rounded-lg px-2.5 gap-1.5 transition-all shadow-2xs",
+                            inv.workingDays && inv.workingDays.length > 0 && inv.workingDays.length < 6
+                              ? "bg-purple-50 hover:bg-purple-100 text-[#6342e8] border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-900/50"
+                              : inv.workingDays && inv.workingDays.length === 0
+                              ? "bg-rose-50 hover:bg-rose-100 text-rose-600 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-900/50"
+                              : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800/40 dark:text-slate-300 dark:border-slate-700"
+                          )}
+                          title="Click to configure weekly working days"
+                        >
+                          <Calendar className="h-3 w-3 shrink-0" />
+                          <span>{formatWorkingDaysSummary(inv.workingDays)}</span>
+                        </Button>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
@@ -714,22 +767,24 @@ export function InvigilatorDirectory() {
                 </div>
               </div>
             </div>
-            <AlertDialogDescription className="text-sm text-slate-600 dark:text-slate-400 space-y-2 pt-2">
-              <p>
-                Are you sure you want to permanently save this list of <strong className="text-slate-900 dark:text-white">{directoryInvigilators.length} faculty member{directoryInvigilators.length === 1 ? '' : 's'}</strong> to your account?
-              </p>
-              {user?.email ? (
-                <div className="text-xs bg-purple-50 dark:bg-purple-950/40 p-3 rounded-xl border border-purple-200/60 dark:border-purple-900/40 text-purple-950 dark:text-purple-300 space-y-1">
-                  <div>Account: <strong className="font-semibold text-[#6342e8] dark:text-purple-300">{user.email}</strong></div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Once saved, these faculty records will be permanently preserved in your account and accessible from any device or browser whenever you allocate duties.
+            <AlertDialogDescription asChild>
+              <div className="text-sm text-slate-600 dark:text-slate-400 space-y-2 pt-2">
+                <div>
+                  Are you sure you want to permanently save this list of <strong className="text-slate-900 dark:text-white">{directoryInvigilators.length} faculty member{directoryInvigilators.length === 1 ? '' : 's'}</strong> to your account?
+                </div>
+                {user?.email ? (
+                  <div className="text-xs bg-purple-50 dark:bg-purple-950/40 p-3 rounded-xl border border-purple-200/60 dark:border-purple-900/40 text-purple-950 dark:text-purple-300 space-y-1">
+                    <div>Account: <strong className="font-semibold text-[#6342e8] dark:text-purple-300">{user.email}</strong></div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                      Once saved, these faculty records will be permanently preserved in your account and accessible from any device or browser whenever you allocate duties.
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div className="text-xs bg-amber-50 dark:bg-amber-950/40 p-3 rounded-xl border border-amber-200/60 text-amber-800 dark:text-amber-300">
-                  You are currently in guest mode. This directory will be saved to your local browser storage. Log in to permanently attach it to your account.
-                </div>
-              )}
+                ) : (
+                  <div className="text-xs bg-amber-50 dark:bg-amber-950/40 p-3 rounded-xl border border-amber-200/60 text-amber-800 dark:text-amber-300">
+                    You are currently in guest mode. This directory will be saved to your local browser storage. Log in to permanently attach it to your account.
+                  </div>
+                )}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2 sm:gap-2 pt-2">
@@ -849,6 +904,19 @@ export function InvigilatorDirectory() {
           </Form>
         </DialogContent>
       </Dialog>
+
+      {/* Set Working Days Dialog */}
+      {workingDaysTarget && (
+        <SetWorkingDaysDialog
+          isOpen={isWorkingDaysDialogOpen}
+          onClose={() => {
+            setIsWorkingDaysDialogOpen(false);
+            setWorkingDaysTarget(null);
+          }}
+          invigilator={workingDaysTarget}
+          onSave={handleSaveWorkingDays}
+        />
+      )}
     </div>
   );
 }
