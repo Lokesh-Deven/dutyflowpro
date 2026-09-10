@@ -151,7 +151,7 @@ export function LandingPage() {
             {/* Soft vector ambient glow echoing the illustration fluid background */}
             <div className="absolute -inset-x-8 -inset-y-3 bg-gradient-to-r from-[#CADDFE]/50 via-[#DBEAFE]/40 to-[#CADDFE]/50 rounded-3xl blur-xl -z-10 pointer-events-none" />
 
-            <h1 className="font-headline text-4xl sm:text-5xl lg:text-[54px] font-black tracking-tight text-center leading-none">
+            <h1 className="font-headline text-[33.33px] sm:text-[45.33px] lg:text-[51.33px] font-black tracking-tight text-center leading-none">
               <span className="text-[#1E2A5E] drop-shadow-[0_1px_2px_rgba(30,42,94,0.12)]">Duty</span>
               <span className="bg-gradient-to-br from-[#1E40AF] via-[#3B82F6] to-[#60A5FA] bg-clip-text text-transparent drop-shadow-[0_2px_14px_rgba(59,130,246,0.3)]">
                 Flow
