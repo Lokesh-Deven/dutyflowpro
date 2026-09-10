@@ -111,13 +111,13 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
               <Link
                 href="/dashboard/examinations"
                 onClick={handleNavClick}
-                className="flex items-center justify-center hover:scale-110 transition-all duration-200 mx-auto w-8 h-8"
+                className="flex items-center justify-center hover:scale-105 transition-all duration-200 mx-auto w-9 h-9 rounded-xl bg-[#BAE6FD] p-1.5 shadow-md shadow-indigo-950/40 ring-1 ring-sky-300/40"
               >
                 <Image
                   src="/images/dutyflow-logo.png"
                   alt="DutyFlow Logo"
-                  width={32}
-                  height={32}
+                  width={24}
+                  height={24}
                   priority
                   className="w-full h-full object-contain"
                 />
@@ -131,14 +131,14 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
           <Link
             href="/dashboard/examinations"
             onClick={handleNavClick}
-            className="flex items-center gap-2.5 group select-none"
+            className="flex items-center gap-3 group select-none"
           >
-            <div className="relative w-[21.33px] h-[21.33px] flex items-center justify-center shrink-0 translate-y-[2.5px] group-hover:scale-105 transition-transform duration-200">
+            <div className="relative w-7 h-7 rounded-lg bg-[#BAE6FD] p-1 flex items-center justify-center shrink-0 shadow-md shadow-indigo-950/40 ring-1 ring-sky-300/40 group-hover:scale-105 transition-transform duration-200">
               <Image
                 src="/images/dutyflow-logo.png"
                 alt="DutyFlow Logo"
-                width={22}
-                height={22}
+                width={20}
+                height={20}
                 priority
                 className="w-full h-full object-contain"
               />
