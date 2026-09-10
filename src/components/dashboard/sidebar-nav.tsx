@@ -3,8 +3,8 @@
 import React from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
-  CalendarCheck2,
   Bookmark,
   CalendarDays,
   BarChart2,
@@ -69,8 +69,8 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
   const institutionName = isGuest
     ? (profile?.institution_name || "Guest Profile")
     : (profile?.institution_name && profile.institution_name !== 'Guest Profile' ? profile.institution_name : null)
-      || (user?.user_metadata?.institution_name as string)
-      || (user?.email ? user.email.split('@')[0] : "Institution");
+    || (user?.user_metadata?.institution_name as string)
+    || (user?.email ? user.email.split('@')[0] : "Institution");
 
   const userRole = isGuest
     ? 'Guest'
@@ -111,9 +111,16 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
               <Link
                 href="/dashboard/examinations"
                 onClick={handleNavClick}
-                className="flex items-center justify-center p-2.5 rounded-2xl bg-gradient-to-br from-[#6342e8] to-[#4323c9] text-white shadow-md shadow-purple-950/40 ring-1 ring-purple-400/30 hover:scale-105 transition-all duration-200 mx-auto w-11 h-11"
+                className="flex items-center justify-center hover:scale-110 transition-all duration-200 mx-auto w-8 h-8"
               >
-                <CalendarCheck2 className="w-5 h-5 text-white" />
+                <Image
+                  src="/images/dutyflow-logo.png"
+                  alt="DutyFlow Logo"
+                  width={32}
+                  height={32}
+                  priority
+                  className="w-full h-full object-contain"
+                />
               </Link>
             </TooltipTrigger>
             <TooltipContent side="right" className="bg-[#1e1957] text-white border-[#31297e] font-semibold text-xs">
@@ -124,20 +131,22 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
           <Link
             href="/dashboard/examinations"
             onClick={handleNavClick}
-            className="flex items-center gap-3 group"
+            className="flex items-center gap-2.5 group select-none"
           >
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-[#6342e8] to-[#4323c9] text-white shadow-md shadow-purple-950/40 ring-1 ring-purple-400/30 group-hover:scale-105 transition-all duration-200 flex items-center justify-center shrink-0">
-              <CalendarCheck2 className="w-5 h-5 text-white" />
+            <div className="relative w-[21.33px] h-[21.33px] flex items-center justify-center shrink-0 translate-y-[2.5px] group-hover:scale-105 transition-transform duration-200">
+              <Image
+                src="/images/dutyflow-logo.png"
+                alt="DutyFlow Logo"
+                width={22}
+                height={22}
+                priority
+                className="w-full h-full object-contain"
+              />
             </div>
 
-            <div className="flex flex-col min-w-0">
-              <span className="text-xl font-black font-headline tracking-tight text-white leading-tight">
-                Duty<span className="text-purple-300">Flow</span>
-              </span>
-              <span className="text-[10px] font-medium tracking-tight text-purple-200/70 mt-0.5 truncate">
-                Exam Duty Allocation Software
-              </span>
-            </div>
+            <span className="text-2xl font-black font-headline tracking-tight text-white leading-none">
+              Duty<span className="text-sky-400">Flow</span>
+            </span>
           </Link>
         )}
 

@@ -11,8 +11,9 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Sparkles, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -86,8 +87,15 @@ export function SignupForm() {
 
       <CardHeader className="text-center pt-6">
         <div className="flex justify-center mb-3">
-          <div className="h-12 w-12 rounded-2xl bg-[#6342e8] text-white flex items-center justify-center shadow-md shadow-purple-500/20 ring-4 ring-purple-100 dark:ring-purple-950">
-            <Sparkles className="w-6 h-6" />
+          <div className="h-12 w-12 flex items-center justify-center">
+            <Image
+              src="/images/dutyflow-logo.png"
+              alt="DutyFlow Logo"
+              width={48}
+              height={48}
+              priority
+              className="w-full h-full object-contain"
+            />
           </div>
         </div>
         <CardTitle className="text-2xl font-headline font-bold text-slate-900 dark:text-white">Create an Account</CardTitle>

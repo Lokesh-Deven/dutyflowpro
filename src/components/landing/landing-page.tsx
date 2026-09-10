@@ -18,7 +18,7 @@ export function LandingPage() {
 
   // Mode: 'login' | 'signup'
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
-  
+
   // Login fields
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -141,15 +141,23 @@ export function LandingPage() {
   return (
     <main className="min-h-screen w-full bg-white text-slate-900 flex items-center justify-center p-4 sm:p-8 selection:bg-[#1E2A5E] selection:text-white">
       <div className="w-full max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-center gap-8 md:gap-12 lg:gap-16 py-6">
-        
+
         {/* ========================================================================= */}
         {/* LEFT COLUMN: Title & Vector Illustration */}
         {/* ========================================================================= */}
         <div className="w-full md:w-1/2 flex flex-col items-center justify-center space-y-5 px-2">
           {/* Main Title */}
-          <h1 className="font-headline text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-black text-center select-none">
-            DutyFlow
-          </h1>
+          <div className="relative inline-flex flex-col items-center select-none">
+            {/* Soft vector ambient glow echoing the illustration fluid background */}
+            <div className="absolute -inset-x-8 -inset-y-3 bg-gradient-to-r from-[#CADDFE]/50 via-[#DBEAFE]/40 to-[#CADDFE]/50 rounded-3xl blur-xl -z-10 pointer-events-none" />
+
+            <h1 className="font-headline text-4xl sm:text-5xl lg:text-[54px] font-black tracking-tight text-center leading-none">
+              <span className="text-[#1E2A5E] drop-shadow-[0_1px_2px_rgba(30,42,94,0.12)]">Duty</span>
+              <span className="bg-gradient-to-br from-[#1E40AF] via-[#3B82F6] to-[#60A5FA] bg-clip-text text-transparent drop-shadow-[0_2px_14px_rgba(59,130,246,0.3)]">
+                Flow
+              </span>
+            </h1>
+          </div>
 
           {/* Vector Illustration */}
           <div className="relative w-full max-w-[320px] sm:max-w-[380px] lg:max-w-[420px] flex items-center justify-center">
@@ -177,7 +185,7 @@ export function LandingPage() {
         {/* ========================================================================= */}
         <div className="w-full md:w-1/2 flex justify-center">
           <div className="w-full max-w-[400px] bg-white border border-slate-400/80 rounded-2xl p-7 sm:p-9 shadow-sm transition-all">
-            
+
             {/* Header Tabs: Log In / Sign Up */}
             <div className="flex items-center justify-center border-b border-slate-200 pb-3 mb-5">
               <div className="flex bg-slate-100 p-1 rounded-xl w-full">
@@ -187,11 +195,10 @@ export function LandingPage() {
                     setAuthMode('login');
                     setErrorMessage(null);
                   }}
-                  className={`flex-1 py-1.5 text-xs sm:text-sm font-bold rounded-lg transition-all ${
-                    authMode === 'login'
-                      ? 'bg-white text-[#1E2A5E] shadow-xs'
-                      : 'text-slate-500 hover:text-slate-900'
-                  }`}
+                  className={`flex-1 py-1.5 text-xs sm:text-sm font-bold rounded-lg transition-all ${authMode === 'login'
+                    ? 'bg-white text-[#1E2A5E] shadow-xs'
+                    : 'text-slate-500 hover:text-slate-900'
+                    }`}
                 >
                   Log In
                 </button>
@@ -201,11 +208,10 @@ export function LandingPage() {
                     setAuthMode('signup');
                     setErrorMessage(null);
                   }}
-                  className={`flex-1 py-1.5 text-xs sm:text-sm font-bold rounded-lg transition-all ${
-                    authMode === 'signup'
-                      ? 'bg-white text-[#1E2A5E] shadow-xs'
-                      : 'text-slate-500 hover:text-slate-900'
-                  }`}
+                  className={`flex-1 py-1.5 text-xs sm:text-sm font-bold rounded-lg transition-all ${authMode === 'signup'
+                    ? 'bg-white text-[#1E2A5E] shadow-xs'
+                    : 'text-slate-500 hover:text-slate-900'
+                    }`}
                 >
                   Sign Up
                 </button>
