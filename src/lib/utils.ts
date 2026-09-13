@@ -154,5 +154,33 @@ export function getMatchingExamIdsForWorkingDays(
   return { isAvailableAllDays: false, availableExamIds: matching };
 }
 
+/**
+ * Generates the standardized PDF filename for an invigilator's duty summary.
+ * Removes "Duty_Summary" prefix and saves with name and designation/department.
+ * Format: "[Name]_[Designation_Or_Department].pdf"
+ * Example: "Ms._Elizabeth_R_Lecturer_in_Chemistry.pdf"
+ */
+export function getDutySummaryFileName(invigilator?: { name?: string; designation?: string | null } | null): string {
+  const sanitize = (val?: string | null) => {
+    if (!val) return '';
+    return val
+      .trim()
+      .replace(/[\s/\\?%*:|"<>]+/g, '_')
+      .replace(/[^a-zA-Z0-9.\-_]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .replace(/\.+$/, '');
+  };
 
+  const cleanName = sanitize(invigilator?.name);
+  const cleanDesignation = sanitize(invigilator?.designation);
 
+  if (cleanName && cleanDesignation) {
+    return `${cleanName}_${cleanDesignation}.pdf`;
+  }
+  const primary = cleanName || cleanDesignation;
+  if (primary) {
+    return `${primary}.pdf`;
+  }
+  return 'Summary.pdf';
+}

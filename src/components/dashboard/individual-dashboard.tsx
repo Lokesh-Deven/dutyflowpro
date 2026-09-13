@@ -40,7 +40,7 @@ import 'jspdf-autotable';
 import { useAllotment } from '@/lib/allotment-context';
 import { useAuth } from '@/lib/auth-context';
 import { uploadUserFile } from '@/lib/storage-service';
-import { cn, formatTimeTo12Hour, getInvigilatorInitial } from '@/lib/utils';
+import { cn, formatTimeTo12Hour, getInvigilatorInitial, getDutySummaryFileName } from '@/lib/utils';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -537,7 +537,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
       description: `Preparing summary for ${selectedInvigilator.name}.`,
     });
     const doc = generateInvigilatorPDF(selectedInvigilator, assignedDuties);
-    const fileName = `Duty_Summary_${selectedInvigilator.name.replace(/ /g, '_')}.pdf`;
+    const fileName = getDutySummaryFileName(selectedInvigilator);
     const pdfBlob = doc.output('blob');
     doc.save(fileName);
 
@@ -590,7 +590,8 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
       const doc = generateInvigilatorPDF(inv, duties);
-      zip.file(`Duty_Summary_${inv.name.replace(/ /g, '_')}.pdf`, doc.output('blob'));
+      const fileName = getDutySummaryFileName(inv);
+      zip.file(fileName, doc.output('blob'));
     }
 
     const content = await zip.generateAsync({ type: 'blob' });
@@ -666,7 +667,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
 
       const doc = generateInvigilatorPDF(selectedInvigilator, assignedDuties);
       const pdfBase64 = await docToBase64(doc);
-      const fileName = `Duty_Summary_${selectedInvigilator.name.replace(/ /g, '_')}.pdf`;
+      const fileName = getDutySummaryFileName(selectedInvigilator);
 
       const response = await fetch('/api/send-duty-summary', {
         method: 'POST',
@@ -752,11 +753,12 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
 
         const doc = generateInvigilatorPDF(inv, duties);
         const pdfBase64 = await docToBase64(doc);
+        const fileName = getDutySummaryFileName(inv);
         items.push({
           to: inv.email.trim(),
           invigilatorName: inv.name,
           pdfBase64,
-          fileName: `Duty_Summary_${inv.name.replace(/ /g, '_')}.pdf`,
+          fileName,
         });
       }
 

@@ -207,7 +207,7 @@ export async function sendDutySummaryEmails(payload: SendEmailPayload): Promise<
     }
 
     const cleanName = item.invigilatorName.replace(/[^a-zA-Z0-9_\-]/g, '_');
-    const safeFileName = item.fileName || `Duty_Summary_${cleanName}.pdf`;
+    const safeFileName = item.fileName || `${cleanName}.pdf`;
 
     const mailData: sgMail.MailDataRequired = {
       to: toEmail,
