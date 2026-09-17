@@ -161,9 +161,9 @@ export function generateHtmlEmail(invigilatorName: string, examName?: string, co
  * Sends one or more emails with base64 PDF attachments through SendGrid.
  */
 export async function sendDutySummaryEmails(payload: SendEmailPayload): Promise<SendEmailSummary> {
-  const apiKey = process.env.SENDGRID_API_KEY;
-  const fromEmail = process.env.SENDGRID_FROM_EMAIL;
-  const fromName = process.env.SENDGRID_FROM_NAME || 'DutyFlow';
+  const apiKey = (process.env.SENDGRID_API_KEY || '').trim().replace(/^["']|["']$/g, '');
+  const fromEmail = (process.env.SENDGRID_FROM_EMAIL || '').trim().replace(/^["']|["']$/g, '');
+  const fromName = (process.env.SENDGRID_FROM_NAME || 'DutyFlow').trim().replace(/^["']|["']$/g, '');
 
   if (!apiKey) {
     return {

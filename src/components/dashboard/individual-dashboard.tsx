@@ -27,7 +27,8 @@ import {
   ShieldCheck,
   Send,
   Loader2,
-  CheckCircle2
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react';
 import Link from 'next/link';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -78,13 +79,15 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
   const [isBulkEmailSending, setIsBulkEmailSending] = useState(false);
   const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false);
   const [customSubscriptionMessage, setCustomSubscriptionMessage] = useState<string | undefined>(undefined);
-  const [emailSuccessDialog, setEmailSuccessDialog] = useState<{
+  const [emailStatusDialog, setEmailStatusDialog] = useState<{
     open: boolean;
+    type: 'success' | 'error';
     title: string;
     message: string;
     recipient?: string;
   }>({
     open: false,
+    type: 'success',
     title: 'Email Sent',
     message: '',
   });
@@ -682,32 +685,55 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
         }),
       });
 
-      const result = await response.json();
+      let result: any = null;
+      const responseText = await response.text();
+      try {
+        result = JSON.parse(responseText);
+      } catch {
+        result = { error: responseText || `Server returned HTTP ${response.status} ${response.statusText}` };
+      }
 
-      if (response.ok && result.sent > 0) {
+      if (response.ok && result?.sent > 0) {
         toast({
           title: 'Email Sent Successfully!',
           description: `Personalized duty summary with PDF attachment has been delivered to ${selectedInvigilator.name} (${targetEmail}).`,
         });
-        setEmailSuccessDialog({
+        setEmailStatusDialog({
           open: true,
-          title: 'Email Sent',
+          type: 'success',
+          title: 'Email Sent Successfully',
           message: `Personalized duty summary with PDF attachment has been successfully delivered to ${selectedInvigilator.name}.`,
           recipient: targetEmail,
         });
       } else {
+        const errorMsg = result?.error || result?.results?.[0]?.error || `Failed to dispatch email (HTTP ${response.status}). Please verify SendGrid environment variables on your server.`;
         toast({
           variant: 'destructive',
           title: 'Email Dispatch Failed',
-          description: result.error || result.results?.[0]?.error || 'Failed to send email. Please check your SendGrid configuration in .env.local.',
+          description: errorMsg,
+        });
+        setEmailStatusDialog({
+          open: true,
+          type: 'error',
+          title: 'Email Dispatch Failed',
+          message: errorMsg,
+          recipient: targetEmail,
         });
       }
     } catch (err: any) {
       console.error('Error sending single duty summary email:', err);
+      const errorMsg = err?.message || 'An unexpected network error occurred while dispatching email.';
       toast({
         variant: 'destructive',
         title: 'Error Dispatching Email',
-        description: err.message || 'An unexpected network error occurred.',
+        description: errorMsg,
+      });
+      setEmailStatusDialog({
+        open: true,
+        type: 'error',
+        title: 'Error Dispatching Email',
+        message: errorMsg,
+        recipient: targetEmail,
       });
     } finally {
       setIsSingleEmailSending(false);
@@ -776,7 +802,14 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
           }),
         });
 
-        const result = await response.json();
+        let result: any = null;
+        const text = await response.text();
+        try {
+          result = JSON.parse(text);
+        } catch {
+          result = { error: text || `Batch ${Math.floor(i / BATCH_SIZE) + 1} failed with HTTP ${response.status}` };
+        }
+
         if (response.ok) {
           totalSent += result.sent || 0;
           totalFailed += result.failed || 0;
@@ -787,33 +820,49 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
           }
         } else {
           totalFailed += batch.length;
-          errorMessages.push(result.error || `Batch ${Math.floor(i / BATCH_SIZE) + 1} failed`);
+          errorMessages.push(result.error || `Batch ${Math.floor(i / BATCH_SIZE) + 1} failed (HTTP ${response.status})`);
         }
       }
 
       if (totalSent > 0) {
+        const successMsg = `Duty summaries have been successfully sent to ${totalSent} invigilator${totalSent > 1 ? 's' : ''}.${totalFailed > 0 ? ` (${totalFailed} failed)` : ''}`;
         toast({
           title: 'Bulk Email Delivery Complete!',
-          description: `Successfully dispatched duty summaries to ${totalSent} of ${items.length} invigilators.${totalFailed > 0 ? ` (${totalFailed} failed)` : ''}`,
+          description: successMsg,
         });
-        setEmailSuccessDialog({
+        setEmailStatusDialog({
           open: true,
-          title: 'Email Sent',
-          message: `Duty summaries have been successfully sent to ${totalSent} invigilator${totalSent > 1 ? 's' : ''}.`,
+          type: 'success',
+          title: 'Bulk Delivery Complete',
+          message: successMsg,
         });
       } else {
+        const errorMsg = errorMessages[0] || 'Unable to deliver emails. Please ensure SendGrid environment variables are configured.';
         toast({
           variant: 'destructive',
           title: 'Bulk Delivery Failed',
-          description: errorMessages[0] || 'Unable to deliver emails. Please ensure SENDGRID_API_KEY and SENDGRID_FROM_EMAIL are set up.',
+          description: errorMsg,
+        });
+        setEmailStatusDialog({
+          open: true,
+          type: 'error',
+          title: 'Bulk Delivery Failed',
+          message: errorMsg,
         });
       }
     } catch (err: any) {
       console.error('Error in bulk email dispatch:', err);
+      const errorMsg = err?.message || 'An unexpected error occurred during bulk email dispatch.';
       toast({
         variant: 'destructive',
         title: 'Bulk Delivery Error',
-        description: err.message || 'An unexpected error occurred during bulk email dispatch.',
+        description: errorMsg,
+      });
+      setEmailStatusDialog({
+        open: true,
+        type: 'error',
+        title: 'Bulk Delivery Error',
+        message: errorMsg,
       });
     } finally {
       setIsBulkEmailSending(false);
@@ -1273,38 +1322,57 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
         customMessage={customSubscriptionMessage}
       />
 
-      {/* Pop-up Dialog stating Email Sent */}
+      {/* Pop-up Dialog stating Email Status (Success or Error) */}
       <Dialog
-        open={emailSuccessDialog.open}
-        onOpenChange={(open) => setEmailSuccessDialog(prev => ({ ...prev, open }))}
+        open={emailStatusDialog.open}
+        onOpenChange={(open) => setEmailStatusDialog(prev => ({ ...prev, open }))}
       >
         <DialogContent className="sm:max-w-md rounded-2xl p-0 overflow-hidden border border-slate-200 dark:border-slate-800 shadow-2xl bg-white dark:bg-slate-900">
-          <div className="h-[3px] w-full bg-gradient-to-r from-[#6342e8] via-[#8b5cf6] to-[#10b981]" />
+          <div className={cn(
+            "h-[3px] w-full",
+            emailStatusDialog.type === 'error'
+              ? "bg-gradient-to-r from-rose-500 via-red-500 to-amber-500"
+              : "bg-gradient-to-r from-[#6342e8] via-[#8b5cf6] to-[#10b981]"
+          )} />
           <div className="p-6 sm:p-7 text-center space-y-4">
-            <div className="mx-auto w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-xs ring-8 ring-emerald-50/50 dark:ring-emerald-950/30">
-              <CheckCircle2 className="w-7 h-7" />
+            <div className={cn(
+              "mx-auto w-14 h-14 rounded-2xl border flex items-center justify-center shadow-xs ring-8",
+              emailStatusDialog.type === 'error'
+                ? "bg-rose-50 dark:bg-rose-950/60 border-rose-200 dark:border-rose-800/60 text-rose-600 dark:text-rose-400 ring-rose-50/50 dark:ring-rose-950/30"
+                : "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800/60 text-emerald-600 dark:text-emerald-400 ring-emerald-50/50 dark:ring-emerald-950/30"
+            )}>
+              {emailStatusDialog.type === 'error' ? (
+                <AlertCircle className="w-7 h-7" />
+              ) : (
+                <CheckCircle2 className="w-7 h-7" />
+              )}
             </div>
 
             <div className="space-y-1.5">
               <DialogTitle className="text-xl font-headline font-bold text-slate-900 dark:text-white">
-                {emailSuccessDialog.title}
+                {emailStatusDialog.title}
               </DialogTitle>
-              <DialogDescription className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed max-w-sm mx-auto">
-                {emailSuccessDialog.message}
+              <DialogDescription className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed max-w-sm mx-auto break-words">
+                {emailStatusDialog.message}
               </DialogDescription>
             </div>
 
-            {emailSuccessDialog.recipient && (
+            {emailStatusDialog.recipient && (
               <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center justify-center gap-2">
                 <Mail className="w-4 h-4 text-[#6342e8] shrink-0" />
-                <span className="truncate">{emailSuccessDialog.recipient}</span>
+                <span className="truncate">{emailStatusDialog.recipient}</span>
               </div>
             )}
 
             <div className="pt-2">
               <Button
-                onClick={() => setEmailSuccessDialog(prev => ({ ...prev, open: false }))}
-                className="w-full bg-[#6342e8] hover:bg-[#5232d6] text-white font-semibold rounded-xl h-10 shadow-xs"
+                onClick={() => setEmailStatusDialog(prev => ({ ...prev, open: false }))}
+                className={cn(
+                  "w-full text-white font-semibold rounded-xl h-10 shadow-xs",
+                  emailStatusDialog.type === 'error'
+                    ? "bg-rose-600 hover:bg-rose-700"
+                    : "bg-[#6342e8] hover:bg-[#5232d6]"
+                )}
               >
                 OK
               </Button>

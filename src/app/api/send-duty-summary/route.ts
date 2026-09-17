@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendDutySummaryEmails, SendEmailPayload } from '@/lib/sendgrid';
 
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json() as SendEmailPayload;
@@ -19,7 +22,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!process.env.SENDGRID_API_KEY) {
+    const apiKey = (process.env.SENDGRID_API_KEY || '').trim().replace(/^["']|["']$/g, '');
+    if (!apiKey) {
       return NextResponse.json(
         {
           success: false,
@@ -33,7 +37,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!process.env.SENDGRID_FROM_EMAIL) {
+    const fromEmail = (process.env.SENDGRID_FROM_EMAIL || '').trim().replace(/^["']|["']$/g, '');
+    if (!fromEmail) {
       return NextResponse.json(
         {
           success: false,
