@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
           sent: 0,
           failed: body.items.length,
           results: [],
-          error: 'SendGrid API Key (SENDGRID_API_KEY) is not configured in the server environment (.env.local).',
+          error: 'SendGrid API Key (SENDGRID_API_KEY) is not configured in the server environment variables.',
         },
         { status: 400 }
       );
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
           sent: 0,
           failed: body.items.length,
           results: [],
-          error: 'SendGrid Sender Email (SENDGRID_FROM_EMAIL) is not configured in the server environment (.env.local).',
+          error: 'SendGrid Sender Email (SENDGRID_FROM_EMAIL) is not configured in the server environment variables.',
         },
         { status: 400 }
       );

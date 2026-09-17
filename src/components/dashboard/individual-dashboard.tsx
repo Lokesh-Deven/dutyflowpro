@@ -631,18 +631,14 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     || profile?.institution_name
     || "College Name";
 
-  const docToBase64 = async (doc: jsPDF): Promise<string> => {
-    const blob = doc.output('blob');
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const dataUrl = reader.result as string;
-        const base64 = dataUrl.split(',')[1] || '';
-        resolve(base64);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
+  const docToBase64 = (doc: jsPDF): string => {
+    try {
+      const dataUri = doc.output('datauristring');
+      return dataUri.split(',')[1] || '';
+    } catch (err) {
+      console.error('Failed to convert PDF to base64:', err);
+      return '';
+    }
   };
 
   const handleSendSingleEmail = async () => {

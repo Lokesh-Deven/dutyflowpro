@@ -209,6 +209,19 @@ export async function sendDutySummaryEmails(payload: SendEmailPayload): Promise<
     const cleanName = item.invigilatorName.replace(/[^a-zA-Z0-9_\-]/g, '_');
     const safeFileName = item.fileName || `${cleanName}.pdf`;
 
+    // Ensure raw clean base64 attachment content without data uri prefix or whitespace
+    const cleanBase64 = (item.pdfBase64 || '').replace(/^data:[^;]+;base64,/, '').replace(/\s+/g, '');
+    if (!cleanBase64) {
+      results.push({
+        to: toEmail,
+        invigilatorName: item.invigilatorName,
+        success: false,
+        error: 'PDF attachment data is missing or corrupted.',
+      });
+      failedCount++;
+      continue;
+    }
+
     const mailData: sgMail.MailDataRequired = {
       to: toEmail,
       from: {
@@ -220,7 +233,7 @@ export async function sendDutySummaryEmails(payload: SendEmailPayload): Promise<
       html: generateHtmlEmail(item.invigilatorName, payload.examName, payload.collegeName),
       attachments: [
         {
-          content: item.pdfBase64,
+          content: cleanBase64,
           filename: safeFileName,
           type: 'application/pdf',
           disposition: 'attachment',
