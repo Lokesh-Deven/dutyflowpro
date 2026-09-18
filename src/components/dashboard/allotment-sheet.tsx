@@ -360,7 +360,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10.5);
     doc.setTextColor(31, 58, 95); // #1F3A5F
-    doc.text("INVIGILATION DUTY ALLOTMENT SHEET", pageWidth / 2, currentY, { align: 'center' });
+    doc.text("MASTER ALLOTMENT SHEET", pageWidth / 2, currentY, { align: 'center' });
 
     // 4. Examination Schedule & Duty Overview Strip
     const sortedExams = [...examinations].sort((a, b) => {

@@ -43,7 +43,6 @@ import {
   BookUser,
   Plus,
   Search,
-  CheckCircle2,
   AlertCircle,
   Save,
   CloudUpload,
@@ -345,7 +344,7 @@ export function InvigilatorDirectory() {
           Invigilator Directory
         </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Permanent repository of faculty members. Store once and reuse across all future examination allotments.
+          Repository of faculty members. Store once and reuse across all future examination allotments.
         </p>
       </div>
 
@@ -699,54 +698,6 @@ export function InvigilatorDirectory() {
             </Table>
           </div>
 
-          {/* Bottom Action Bar: Save Directory to User Account Permanently */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-5 mt-4 border-t border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-4 sm:p-5 rounded-2xl border border-slate-200/60 dark:border-slate-800/80">
-            <div className="flex items-center gap-3 w-full sm:w-auto">
-              <div className="p-3 rounded-xl bg-purple-100 dark:bg-purple-950/80 text-[#6342e8] dark:text-purple-300 shrink-0">
-                <CloudUpload className="h-6 w-6" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-slate-900 dark:text-white">
-                    Permanent Account Storage
-                  </span>
-                  {isDirectoryCloudSynced ? (
-                    <Badge className="bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border-none text-[10px] font-bold py-0.5 px-2 rounded-full">
-                      <CheckCircle2 className="h-3 w-3 mr-1 inline" /> Cloud Saved
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="text-amber-600 border-amber-300 dark:border-amber-700 text-[10px] font-medium py-0.5 px-2 rounded-full">
-                      Unsaved changes
-                    </Badge>
-                  )}
-                </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  {user?.email
-                    ? `Save all ${directoryInvigilators.length} faculty details permanently to your account (${user.email}).`
-                    : `Save all ${directoryInvigilators.length} faculty details to your browser, or log in to sync permanently.`}
-                </p>
-              </div>
-            </div>
-
-            <Button
-              type="button"
-              onClick={() => setIsSaveAlertOpen(true)}
-              disabled={directoryInvigilators.length === 0 || isSaving}
-              className="w-full sm:w-auto bg-gradient-to-r from-[#6342e8] to-[#8b5cf6] hover:from-[#5232d6] hover:to-[#7c3aed] text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 h-11 shrink-0 disabled:opacity-40 cursor-pointer"
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Saving to Account...</span>
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" />
-                  <span>Save Directory</span>
-                </>
-              )}
-            </Button>
-          </div>
         </CardContent>
       </Card>
 

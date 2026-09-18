@@ -189,7 +189,7 @@ export default function SchedulePage() {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(11);
       doc.setTextColor(255, 255, 255);
-      doc.text("INVIGILATION DUTY SCHEDULE", pageWidth / 2, textY, { align: 'center' });
+      doc.text("DAY-WISE ALLOTMENT", pageWidth / 2, textY, { align: 'center' });
 
       // 2. Metadata Grid (2 rows x 4 cols) with exact aligned columns
       const metaStartY = bannerY + bannerHeight + 3.5;

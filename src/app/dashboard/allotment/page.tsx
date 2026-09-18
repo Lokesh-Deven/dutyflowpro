@@ -88,7 +88,7 @@ function AllotmentContent() {
               )}
             >
               <FileSpreadsheet className="h-4 w-4" />
-              <span>Duty Allotment Sheet</span>
+              <span>Master Allotment</span>
             </TabsTrigger>
             <TabsTrigger 
               value="individual-dashboard" 

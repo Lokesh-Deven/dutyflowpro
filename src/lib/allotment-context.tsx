@@ -12,6 +12,7 @@ import {
   isUUID,
 } from './storage-service';
 import { supabase } from './supabase';
+import { PaletteId, DEFAULT_PALETTE_ID, PDF_PALETTES } from './pdf-palette';
 
 export const DEFAULT_SIGNATORY: SignatoryInfo = {
   name: "",
@@ -108,6 +109,8 @@ interface AllotmentContextType {
   clearDirectoryInvigilators: () => void;
   saveDirectoryToCloud: () => Promise<{ success: boolean; error?: any }>;
   isDirectoryCloudSynced: boolean;
+  pdfPaletteId: PaletteId;
+  setPdfPaletteId: (id: PaletteId) => void;
 }
 
 const AllotmentContext = createContext<AllotmentContextType | undefined>(undefined);
@@ -121,6 +124,7 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
   const [instructions, setInstructions] = useState<InstructionItem[]>(DEFAULT_INSTRUCTIONS);
   const [signatory, setSignatory] = useState<SignatoryInfo>(DEFAULT_SIGNATORY);
   const [directoryInvigilators, setDirectoryInvigilators] = useState<DirectoryInvigilator[]>([]);
+  const [pdfPaletteId, setPdfPaletteIdState] = useState<PaletteId>(DEFAULT_PALETTE_ID);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isCloudSynced, setIsCloudSynced] = useState(false);
   const [isDirectoryCloudSynced, setIsDirectoryCloudSynced] = useState(false);
@@ -217,6 +221,14 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
           } catch (_) { }
         }
       }
+
+      // Load user-scoped PDF palette from localStorage
+      try {
+        const storedPalette = localStorage.getItem(`dutyflow_${userScope}_pdf_color_palette`) || localStorage.getItem('dutyflow_pdf_color_palette');
+        if (storedPalette && storedPalette in PDF_PALETTES && isMounted) {
+          setPdfPaletteIdState(storedPalette as PaletteId);
+        }
+      } catch (_) { }
 
       // Load user-scoped signatory from localStorage
       let initialSignatory: SignatoryInfo = DEFAULT_SIGNATORY;
@@ -655,6 +667,17 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
     setIsDirectoryCloudSynced(false);
   }, []);
 
+  const setPdfPaletteId = useCallback((id: PaletteId) => {
+    setPdfPaletteIdState(id);
+    const scope = user?.id ? user.id : 'guest';
+    try {
+      localStorage.setItem(`dutyflow_${scope}_pdf_color_palette`, id);
+      localStorage.setItem('dutyflow_pdf_color_palette', id);
+    } catch (e) {
+      console.error("Failed to save PDF palette to localStorage:", e);
+    }
+  }, [user?.id]);
+
   const saveDirectoryToCloud = useCallback(async (): Promise<{ success: boolean; error?: any }> => {
     const userScope = user?.id ? user.id : 'guest';
     try {
@@ -702,7 +725,9 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       deleteDirectoryInvigilator,
       clearDirectoryInvigilators,
       saveDirectoryToCloud,
-      isDirectoryCloudSynced
+      isDirectoryCloudSynced,
+      pdfPaletteId,
+      setPdfPaletteId,
     }}>
       {children}
     </AllotmentContext.Provider>

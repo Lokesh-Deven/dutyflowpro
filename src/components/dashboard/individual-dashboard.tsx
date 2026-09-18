@@ -42,6 +42,7 @@ import { useAllotment } from '@/lib/allotment-context';
 import { useAuth } from '@/lib/auth-context';
 import { uploadUserFile } from '@/lib/storage-service';
 import { cn, formatTimeTo12Hour, getInvigilatorInitial, getDutySummaryFileName } from '@/lib/utils';
+import { getPdfPalette } from '@/lib/pdf-palette';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -91,7 +92,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     title: 'Email Sent',
     message: '',
   });
-  const { activeAllotment, instructions, signatory } = useAllotment();
+  const { activeAllotment, instructions, signatory, pdfPaletteId } = useAllotment();
   const { user, profile, isSubscribed, canDownload, recordCategoryDownload } = useAuth();
 
   useEffect(() => {
@@ -116,6 +117,10 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     const doc = new jsPDF({ orientation: 'portrait', format: 'a4' });
     const pageWidth = doc.internal.pageSize.getWidth(); // 210mm
     const pageHeight = doc.internal.pageSize.getHeight(); // 297mm
+
+    // Retrieve active color palette for Individual Duty Summary
+    const palette = getPdfPalette(pdfPaletteId);
+    const { rgb } = palette;
 
     // Clean white page background
     doc.setFillColor(255, 255, 255);
@@ -153,17 +158,17 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     const cardW = pageWidth - 24; // 186mm
 
     // ═══════════════════════════════════════════════════════════════
-    // 1. TOP HERO BANNER CARD (Vibrant Royal Indigo & Purple Banner)
+    // 1. TOP HERO BANNER CARD (Themed Banner)
     // ═══════════════════════════════════════════════════════════════
     const headerY = 12;
     const headerH = 42;
 
-    // Main Header Card Fill (Deep Royal Indigo #3730A3)
-    doc.setFillColor(55, 48, 163); // #3730A3
+    // Main Header Card Fill (Palette Primary)
+    doc.setFillColor(...rgb.primary);
     doc.roundedRect(cardX, headerY, cardW, headerH, 4, 4, 'F');
 
-    // Golden / Amber Bottom Accent Stripe on the Banner
-    doc.setFillColor(245, 158, 11); // Amber-500 (#F59E0B)
+    // Accent Stripe on the Banner (Palette Stripe)
+    doc.setFillColor(...rgb.stripe);
     doc.rect(cardX, headerY + headerH - 1.8, cardW, 1.8, 'F');
 
     // Institution Name (Bold, Crisp White, Centered)
@@ -173,7 +178,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     doc.setTextColor(255, 255, 255);
     doc.text(collegeName.toUpperCase(), pageWidth / 2, headerY + 14.5, { align: 'center' });
 
-    // Examination Name Pill (Soft Lavender / Golden Tag)
+    // Examination Name Pill (Palette Secondary & Pill Border)
     const examBadgeY = headerY + 19;
     const examText = examName.toUpperCase();
     doc.setFont('helvetica', 'bold');
@@ -182,12 +187,12 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     const examPillW = examTextW + 10;
     const examPillX = (pageWidth - examPillW) / 2;
 
-    doc.setFillColor(67, 56, 202); // #4338CA
-    doc.setDrawColor(165, 180, 252);
+    doc.setFillColor(...rgb.secondary);
+    doc.setDrawColor(...rgb.pillBorder);
     doc.setLineWidth(0.35);
     doc.roundedRect(examPillX, examBadgeY, examPillW, 6, 2, 2, 'FD');
 
-    doc.setTextColor(254, 240, 138); // Soft Gold (#FEF08A)
+    doc.setTextColor(...rgb.pillText);
     doc.text(examText, pageWidth / 2, examBadgeY + 4.3, { align: 'center' });
 
     // Title: "INVIGILATOR'S DUTY SUMMARY" (Crisp Bold White)
@@ -203,19 +208,19 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     const profCardH = 27;
 
     // Card Fill with Soft Border
-    doc.setFillColor(248, 250, 255); // #F8FAFF
-    doc.setDrawColor(224, 231, 255); // #E0E7FF
+    doc.setFillColor(...rgb.cardBg);
+    doc.setDrawColor(...rgb.cardBorder);
     doc.setLineWidth(0.4);
     doc.roundedRect(cardX, profCardY, cardW, profCardH, 4, 4, 'FD');
 
-    // Left Vibrant Cyan/Teal Accent Bar
-    doc.setFillColor(14, 165, 233); // Sky-500 (#0EA5E9)
+    // Left Accent Bar (Palette Accent Light)
+    doc.setFillColor(...rgb.accentLight);
     doc.roundedRect(cardX, profCardY, 4, profCardH, 1.8, 1.8, 'F');
 
-    // Circular Avatar Badge with Gradient feel (Royal Indigo)
+    // Circular Avatar Badge with Palette Accent
     const avatarX = cardX + 17;
     const avatarY = profCardY + profCardH / 2;
-    doc.setFillColor(79, 70, 229); // #4F46E5
+    doc.setFillColor(...rgb.accent);
     doc.circle(avatarX, avatarY, 8.5, 'F');
 
     const initial = getInvigilatorInitial(invigilator.name);
@@ -233,10 +238,10 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     doc.setTextColor(15, 23, 42); // #0F172A
     doc.text(invigilator.name, infoX, profCardY + 8);
 
-    // Designation (Indigo Accent)
+    // Designation (Palette Accent)
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9.5);
-    doc.setTextColor(79, 70, 229); // #4F46E5
+    doc.setTextColor(...rgb.accent);
     doc.text(invigilator.designation || 'Faculty Invigilator', infoX, profCardY + 14.5);
 
     // Contact Information (Clean text)
@@ -254,20 +259,20 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     const statX = cardX + cardW - statW - 4;
     const statY = profCardY + (profCardH - statH) / 2;
 
-    doc.setFillColor(238, 242, 255); // #EEF2FF
-    doc.setDrawColor(199, 210, 254); // #C7D2FE
+    doc.setFillColor(...rgb.statBoxBg);
+    doc.setDrawColor(...rgb.statBoxBorder);
     doc.setLineWidth(0.4);
     doc.roundedRect(statX, statY, statW, statH, 3, 3, 'FD');
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(6.5);
-    doc.setTextColor(79, 70, 229); // #4F46E5
+    doc.setTextColor(...rgb.accent);
     doc.text("ALLOTTED DUTIES", statX + statW / 2, statY + 4.6, { align: 'center' });
 
     // Number: 25pt placed at center leaving equal space to top and bottom text
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(25);
-    doc.setTextColor(55, 48, 163); // #3730A3
+    doc.setTextColor(...rgb.statNumber);
     doc.text(String(assignedDuties.length), statX + statW / 2, statY + 10.0, { align: 'center', baseline: 'middle' });
 
     doc.setFont('helvetica', 'normal');
@@ -280,9 +285,9 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     // ═══════════════════════════════════════════════════════════════
     const schedY = profCardY + profCardH + 6; // 93mm
 
-    // Schedule Header Banner (Royal Indigo / Blue #4F46E5)
+    // Schedule Header Banner (Palette Accent)
     const bannerH = 7.5;
-    doc.setFillColor(79, 70, 229); // #4F46E5
+    doc.setFillColor(...rgb.accent);
     doc.roundedRect(cardX, schedY, cardW, bannerH, 2.5, 2.5, 'F');
 
     doc.setFont('helvetica', 'bold');
@@ -307,7 +312,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
       margin: { left: cardX, right: cardX },
       theme: 'plain',
       headStyles: {
-        fillColor: [67, 56, 202], // #4338CA
+        fillColor: rgb.secondary,
         textColor: [255, 255, 255],
         fontStyle: 'bold',
         halign: 'center',
@@ -323,13 +328,13 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
         4: { halign: 'center', cellWidth: 46 }
       },
       alternateRowStyles: {
-        fillColor: [248, 250, 255] // Soft Indigo Tint
+        fillColor: rgb.cardBg
       },
       styles: {
         fontSize: 9.5,
         cellPadding: 3.8,
         valign: 'middle',
-        lineColor: [224, 231, 255],
+        lineColor: rgb.cardBorder,
         lineWidth: 0.3
       },
       didParseCell: (data: any) => {
@@ -338,12 +343,12 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
         }
       },
       didDrawCell: (data: any) => {
-        // Col 0: Indigo circular badge
+        // Col 0: Circular badge
         if (data.section === 'body' && data.column.index === 0) {
           const { x, y, width, height } = data.cell;
           const cx = x + width / 2;
           const cy = y + height / 2;
-          doc.setFillColor(79, 70, 229);
+          doc.setFillColor(...rgb.accent);
           doc.circle(cx, cy, 3.8, 'F');
           doc.setFont('helvetica', 'bold');
           doc.setFontSize(8.5);
@@ -351,7 +356,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
           doc.text(String(data.row.index + 1), cx, cy, { align: 'center', baseline: 'middle' });
         }
 
-        // Col 4: Soft Cyan timing pill capsule
+        // Col 4: Timing pill capsule
         if (data.section === 'body' && data.column.index === 4) {
           const { x, y, width, height } = data.cell;
           const pillW = 42;
@@ -360,14 +365,14 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
           const py = y + (height - pillH) / 2;
           const timingText = data.cell.raw;
 
-          doc.setFillColor(236, 254, 255); // Cyan-50 (#ECFEFF)
-          doc.setDrawColor(165, 243, 252); // Cyan-200 (#A5F3FC)
+          doc.setFillColor(...rgb.timingBg);
+          doc.setDrawColor(...rgb.timingBorder);
           doc.setLineWidth(0.25);
           doc.roundedRect(px, py, pillW, pillH, 2.5, 2.5, 'FD');
 
           doc.setFont('helvetica', 'bold');
           doc.setFontSize(8);
-          doc.setTextColor(8, 145, 178); // Cyan-600 (#0891B2)
+          doc.setTextColor(...rgb.timingText);
           doc.text(String(timingText), px + pillW / 2, py + pillH / 2, { align: 'center', baseline: 'middle' });
         }
       }
@@ -382,9 +387,9 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     const enabledInstructions = (instructions || []).filter(i => i.enabled);
 
     if (enabledInstructions.length > 0) {
-      // Instructions Header Mini-Banner (Cyan Accent)
+      // Instructions Header Mini-Banner (Palette Accent Light)
       const instBannerH = 7;
-      doc.setFillColor(14, 165, 233); // Sky-500 (#0EA5E9)
+      doc.setFillColor(...rgb.accentLight);
       doc.roundedRect(cardX, instY, cardW, instBannerH, 2.5, 2.5, 'F');
 
       doc.setFont('helvetica', 'bold');
@@ -421,8 +426,8 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
       leftList.forEach((item, idx) => {
         const itemCenterY = instBoxY + 1.5 + idx * rowStepH + (rowStepH / 2);
 
-        // Circular indigo badge
-        doc.setFillColor(79, 70, 229);
+        // Circular badge
+        doc.setFillColor(...rgb.accent);
         doc.circle(cardX + 6, itemCenterY, 2.6, 'F');
 
         doc.setFont('helvetica', 'bold');
@@ -442,8 +447,8 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
       rightList.forEach((item, idx) => {
         const itemCenterY = instBoxY + 1.5 + idx * rowStepH + (rowStepH / 2);
 
-        // Circular indigo badge
-        doc.setFillColor(79, 70, 229);
+        // Circular badge
+        doc.setFillColor(...rgb.accent);
         doc.circle(midColX + 6, itemCenterY, 2.6, 'F');
 
         doc.setFont('helvetica', 'bold');
@@ -484,7 +489,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9.5);
-      doc.setTextColor(8, 145, 178); // Dark Cyan (#0891B2)
+      doc.setTextColor(...rgb.issuedByText);
       doc.text(prefix, sigRightX - nameW, signatoryY + 4, { align: 'right' });
 
       doc.setFont('helvetica', 'bold');
@@ -508,18 +513,18 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
       doc.text(line2Text, sigRightX, signatoryY + 9.5, { align: 'right' });
     }
 
-    // 5b. Footer Bar (Single Line Compact Card matching header color #3730A3)
-    doc.setFillColor(55, 48, 163); // #3730A3
+    // 5b. Footer Bar (Single Line Compact Card matching header color)
+    doc.setFillColor(...rgb.primary);
     doc.roundedRect(cardX, footerY, footerW, footerH, 2, 2, 'F');
 
     // Golden / Amber Top Accent Stripe
-    doc.setFillColor(245, 158, 11); // Amber-500 (#F59E0B)
+    doc.setFillColor(...rgb.stripe);
     doc.rect(cardX, footerY, footerW, 0.9, 'F');
 
     // Right side: "Digitally Generated Document - Signature Not Required"
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(6.8);
-    doc.setTextColor(224, 231, 255); // Indigo-100 (#E0E7FF)
+    doc.setTextColor(...rgb.footerText);
     doc.text("Digitally Generated Document - Signature Not Required", cardX + footerW - 5, footerY + 5.2, { align: 'right' });
 
     return doc;

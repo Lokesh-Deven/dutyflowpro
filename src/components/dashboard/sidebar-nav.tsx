@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -19,11 +19,14 @@ import {
   PlusSquare,
   Sparkles,
   FileText,
-  Users
+  Users,
+  Palette
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth-context';
 import { useAllotment } from '@/lib/allotment-context';
+import { ColorPaletteDialog } from './color-palette-dialog';
+import { getPdfPalette } from '@/lib/pdf-palette';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -80,7 +83,9 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
 
   const singleInitial = (institutionName.trim().charAt(0) || user?.email?.trim().charAt(0) || "U").toUpperCase();
 
-  const { clearCurrentAllotment } = useAllotment();
+  const [isColorPaletteDialogOpen, setIsColorPaletteDialogOpen] = useState(false);
+  const { clearCurrentAllotment, pdfPaletteId } = useAllotment();
+  const activePalette = getPdfPalette(pdfPaletteId);
 
   const handleNavClick = (itemLabel?: string | React.MouseEvent) => {
     if (typeof itemLabel === 'string' && itemLabel === 'New Allotment') {
@@ -201,6 +206,52 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
               </Link>
             );
           })}
+
+          {/* Color Palettes Button below Invigilator Directory */}
+          {isCollapsed ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsColorPaletteDialogOpen(true);
+                    if (onItemClick) onItemClick();
+                  }}
+                  className="flex items-center justify-center w-11 h-11 mx-auto rounded-xl text-sm font-semibold transition-all duration-200 text-[#b4b1db] hover:text-white hover:bg-white/[0.07] group relative cursor-pointer"
+                >
+                  <Palette className="w-5 h-5 shrink-0 transition-transform group-hover:scale-110 text-[#9d99ce]" />
+                  <span
+                    className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full ring-2 ring-[#151241]"
+                    style={{ backgroundColor: activePalette.hex.accent }}
+                  />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="bg-[#1e1957] text-white border-[#31297e] font-semibold text-xs">
+                Color Palettes
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setIsColorPaletteDialogOpen(true);
+                if (onItemClick) onItemClick();
+              }}
+              className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 text-[#b4b1db] hover:text-white hover:bg-white/[0.07] group cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <Palette className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110 text-[#9d99ce]" />
+                <span className="truncate">Color Palettes</span>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span
+                  className="w-2.5 h-2.5 rounded-full ring-1 ring-white/20 shadow-xs"
+                  style={{ backgroundColor: activePalette.hex.accent }}
+                  title={activePalette.name}
+                />
+              </div>
+            </button>
+          )}
         </nav>
       </div>
 
@@ -320,6 +371,11 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      <ColorPaletteDialog
+        open={isColorPaletteDialogOpen}
+        onOpenChange={setIsColorPaletteDialogOpen}
+      />
     </aside>
   );
 }
