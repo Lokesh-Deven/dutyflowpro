@@ -111,7 +111,7 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
               <Link
                 href="/dashboard/examinations"
                 onClick={handleNavClick}
-                className="flex items-center justify-center hover:scale-105 transition-all duration-200 mx-auto w-9 h-9 rounded-xl bg-[#BAE6FD] p-1.5 shadow-md shadow-indigo-950/40 ring-1 ring-sky-300/40"
+                className="flex items-center justify-center hover:scale-105 transition-all duration-200 mx-auto w-9 h-9 rounded-xl bg-white p-1.5 shadow-md shadow-indigo-950/40 ring-1 ring-white/30"
               >
                 <Image
                   src="/images/dutyflow-logo.png"
@@ -133,7 +133,7 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
             onClick={handleNavClick}
             className="flex items-center gap-3 group select-none"
           >
-            <div className="relative w-7 h-7 rounded-lg bg-[#BAE6FD] p-1 flex items-center justify-center shrink-0 shadow-md shadow-indigo-950/40 ring-1 ring-sky-300/40 group-hover:scale-105 transition-transform duration-200">
+            <div className="relative w-7 h-7 rounded-lg bg-white p-1 flex items-center justify-center shrink-0 shadow-md shadow-indigo-950/40 ring-1 ring-white/30 group-hover:scale-105 transition-transform duration-200">
               <Image
                 src="/images/dutyflow-logo.png"
                 alt="DutyFlow Logo"
