@@ -382,7 +382,7 @@ export function ExaminationManagement() {
             const norm = normalize(cell);
             if (!norm) continue;
 
-            if (dIdx === -1 && (norm === 'date' || norm.includes('examdate') || norm.includes('sessiondate') || norm === 'dates')) {
+            if (dIdx === -1 && (norm === 'date' || norm.startsWith('date') || norm.includes('examdate') || norm.includes('sessiondate') || norm === 'dates')) {
               dIdx = c;
             } else if (sIdx === -1 && (norm === 'subject' || norm.includes('subjectname') || norm.includes('paper') || norm.includes('course') || norm.includes('subjectpaper') || norm === 'subjects')) {
               sIdx = c;

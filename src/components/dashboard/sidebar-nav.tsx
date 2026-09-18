@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import {
   Bookmark,
   CalendarDays,
@@ -20,7 +19,8 @@ import {
   Sparkles,
   FileText,
   Users,
-  Palette
+  Palette,
+  FileSpreadsheet
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth-context';
@@ -51,6 +51,7 @@ export const navItems = [
   { href: '/dashboard/instructions', label: 'Add Instructions', icon: ListChecks },
   { href: '/dashboard/signatory', label: 'Add Signatory', icon: Signature },
   { href: '/dashboard/directory', label: 'Invigilator Directory', icon: BookUser },
+  { href: '/dashboard/templates', label: 'Download Templates', icon: FileSpreadsheet },
 ];
 
 export const newAllotmentSteps = [
@@ -116,16 +117,9 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
               <Link
                 href="/dashboard/examinations"
                 onClick={handleNavClick}
-                className="flex items-center justify-center hover:scale-105 transition-all duration-200 mx-auto w-9 h-9 rounded-xl bg-white p-1.5 shadow-md shadow-indigo-950/40 ring-1 ring-white/30"
+                className="flex items-center justify-center hover:scale-105 transition-all duration-200 mx-auto w-10 h-10 rounded-xl bg-white/10 hover:bg-white/15 text-white font-black text-base select-none tracking-tight font-headline"
               >
-                <Image
-                  src="/images/dutyflow-logo.png"
-                  alt="DutyFlow Logo"
-                  width={24}
-                  height={24}
-                  priority
-                  className="w-full h-full object-contain"
-                />
+                D<span className="text-sky-400">F</span>
               </Link>
             </TooltipTrigger>
             <TooltipContent side="right" className="bg-[#1e1957] text-white border-[#31297e] font-semibold text-xs">
@@ -136,19 +130,8 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
           <Link
             href="/dashboard/examinations"
             onClick={handleNavClick}
-            className="flex items-center gap-3 group select-none"
+            className="flex items-center group select-none px-1"
           >
-            <div className="relative w-7 h-7 rounded-lg bg-white p-1 flex items-center justify-center shrink-0 shadow-md shadow-indigo-950/40 ring-1 ring-white/30 group-hover:scale-105 transition-transform duration-200">
-              <Image
-                src="/images/dutyflow-logo.png"
-                alt="DutyFlow Logo"
-                width={20}
-                height={20}
-                priority
-                className="w-full h-full object-contain"
-              />
-            </div>
-
             <span className="text-2xl font-black font-headline tracking-tight text-white leading-none">
               Duty<span className="text-sky-400">Flow</span>
             </span>
