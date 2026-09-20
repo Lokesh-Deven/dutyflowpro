@@ -5,12 +5,13 @@ import type { Invigilator, Examination, AllotmentResult, SavedAllotment } from '
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Download, Save, FileSpreadsheet, Building2, GraduationCap, CalendarCheck, CheckCircle2, AlertTriangle, Users, BookOpen, ChevronLeft, ChevronRight, RefreshCw, PlusCircle } from 'lucide-react';
+import { Download, Save, FileSpreadsheet, Building2, GraduationCap, CalendarCheck, CheckCircle2, AlertTriangle, Users, BookOpen, ChevronLeft, ChevronRight, RefreshCw, PlusCircle, Maximize2, Minimize2, StretchHorizontal } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { formatAppDate, formatAppDateWithDay, parseAppDate } from '@/lib/date-utils';
 import { useAllotment } from '@/lib/allotment-context';
 import { useAuth } from '@/lib/auth-context';
+import { useDashboardLayout } from '@/app/dashboard/layout';
 import { uploadUserFile } from '@/lib/storage-service';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -48,6 +49,8 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
   const { toast } = useToast();
   const { activeAllotment, saveCurrentAllotment, savedAllotments } = useAllotment();
   const { user, profile, canDownload, recordCategoryDownload } = useAuth();
+  const { isDesktopSidebarCollapsed, setIsDesktopSidebarCollapsed } = useDashboardLayout();
+  const [isCompactDensity, setIsCompactDensity] = useState(() => examinations.length > 8);
   const [allotmentResult, setAllotmentResult] = useState<AllotmentResult>(initialAllotmentResult);
   const [isSaveAlertOpen, setIsSaveAlertOpen] = useState(false);
   const [isDuplicateAlertOpen, setIsDuplicateAlertOpen] = useState(false);
@@ -360,7 +363,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10.5);
     doc.setTextColor(31, 58, 95); // #1F3A5F
-    doc.text("MASTER ALLOTMENT SHEET", pageWidth / 2, currentY, { align: 'center' });
+    doc.text("MASTER ALLOTMENT", pageWidth / 2, currentY, { align: 'center' });
 
     // 4. Examination Schedule & Duty Overview Strip
     const sortedExams = [...examinations].sort((a, b) => {
@@ -592,57 +595,143 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
         {/* Top Accent Gradient Line */}
         <div className="h-[3px] w-full bg-gradient-to-r from-[#6342e8] via-[#8b5cf6] to-[#f59e0b]" />
 
-        <CardHeader className="pb-5 pt-6 px-6">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            {/* Institution & Examination Cards */}
-            <div className="flex flex-wrap items-center gap-2.5">
-              <div className="bg-purple-50/60 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900/40 rounded-xl px-3.5 py-1.5 min-w-[140px]">
-                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold text-slate-500">
-                  <Building2 className="h-3 w-3 text-[#6342e8]" />
-                  <span>Institution</span>
+        <CardHeader className="pb-4 pt-5 px-4 sm:px-6">
+          <div className="flex flex-col gap-4">
+            {/* Top Row: Institution, Examination & Live Metrics Chips */}
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              {/* Institution & Examination Cards */}
+              <div className="flex flex-wrap items-center gap-2.5">
+                <div className="bg-purple-50/60 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900/40 rounded-xl px-3.5 py-1.5 min-w-[130px]">
+                  <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold text-slate-500">
+                    <Building2 className="h-3 w-3 text-[#6342e8]" />
+                    <span>Institution</span>
+                  </div>
+                  <div className="text-sm font-bold text-[#6342e8] dark:text-purple-300">
+                    {examInfo?.college || 'College Name'}
+                  </div>
                 </div>
-                <div className="text-sm font-bold text-[#6342e8] dark:text-purple-300">
-                  {examInfo?.college || 'College Name'}
+
+                <div className="bg-purple-50/60 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900/40 rounded-xl px-3.5 py-1.5 min-w-[150px]">
+                  <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold text-slate-500">
+                    <GraduationCap className="h-3 w-3 text-[#6342e8]" />
+                    <span>Examination</span>
+                  </div>
+                  <div className="text-sm font-bold text-[#6342e8] dark:text-purple-300">
+                    {activeAllotment?.name || examInfo?.examName || 'Examination Duty Allotment'}
+                  </div>
                 </div>
               </div>
 
-              <div className="bg-purple-50/60 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900/40 rounded-xl px-3.5 py-1.5 min-w-[160px]">
-                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold text-slate-500">
-                  <GraduationCap className="h-3 w-3 text-[#6342e8]" />
-                  <span>Examination</span>
+              {/* Live Metrics Chips Bar */}
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-1 text-center">
+                  <div className="text-[9px] uppercase tracking-wider font-semibold text-slate-500">INVIGILATORS</div>
+                  <div className="text-sm font-bold text-[#6342e8]">{totalRooms}</div>
                 </div>
-                <div className="text-sm font-bold text-[#6342e8] dark:text-purple-300">
-                  {activeAllotment?.name || examInfo?.examName || 'Examination Duty Allotment'}
+                <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-1 text-center">
+                  <div className="text-[9px] uppercase tracking-wider font-semibold text-slate-500">Relievers</div>
+                  <div className="text-sm font-bold text-[#8b5cf6]">{totalRelievers}</div>
+                </div>
+                <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-1 text-center">
+                  <div className="text-[9px] uppercase tracking-wider font-semibold text-slate-500">Staff Req.</div>
+                  <div className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{totalInvigilatorsRequired}</div>
+                </div>
+                <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-1 text-center">
+                  <div className="text-[9px] uppercase tracking-wider font-semibold text-slate-500">Allotted</div>
+                  <div className="text-sm font-bold text-[#f59e0b]">{totalDutiesAllotted}</div>
                 </div>
               </div>
             </div>
 
-            {/* Live Metrics Chips Bar */}
-            <div className="flex flex-wrap items-center gap-2.5">
-              <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-1.5 text-center">
-                <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">INVIGILATORS</div>
-                <div className="text-sm font-bold text-[#6342e8]">{totalRooms}</div>
+            {/* Bottom Row: Viewport Optimization Controls & Quick Scrolling */}
+            <div className="flex flex-wrap items-center justify-between gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800/80">
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Maximize Workspace Button */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsDesktopSidebarCollapsed(prev => !prev)}
+                  className={cn(
+                    "h-8 px-3 rounded-lg text-xs font-semibold gap-1.5 transition-all",
+                    isDesktopSidebarCollapsed
+                      ? "bg-[#6342e8]/10 text-[#6342e8] border-[#6342e8]/30 dark:bg-purple-950/50 dark:text-purple-300"
+                      : "text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50"
+                  )}
+                  title={isDesktopSidebarCollapsed ? "Restore navigation sidebar" : "Collapse sidebar to maximize horizontal allotment space"}
+                >
+                  {isDesktopSidebarCollapsed ? (
+                    <>
+                      <Minimize2 className="h-3.5 w-3.5" />
+                      <span>Restore Sidebar</span>
+                    </>
+                  ) : (
+                    <>
+                      <Maximize2 className="h-3.5 w-3.5" />
+                      <span>Maximize Workspace</span>
+                    </>
+                  )}
+                </Button>
+
+                {/* Density Toggle (Normal vs Compact/Fit More) */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsCompactDensity(prev => !prev)}
+                  className={cn(
+                    "h-8 px-3 rounded-lg text-xs font-semibold gap-1.5 transition-all",
+                    isCompactDensity
+                      ? "bg-[#6342e8] text-white border-[#6342e8] hover:bg-[#5232d6] shadow-2xs"
+                      : "text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50"
+                  )}
+                  title={isCompactDensity ? "Switch to standard spacious view" : "Compact columns to view maximum sessions in one sight"}
+                >
+                  <StretchHorizontal className="h-3.5 w-3.5" />
+                  <span>{isCompactDensity ? "Compact View (Fitted)" : "Fit More Sessions"}</span>
+                </Button>
+
+                <Badge variant="secondary" className="text-[11px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/60 border-0 h-6">
+                  {examinations.length} {examinations.length === 1 ? 'Session' : 'Sessions'} Total
+                </Badge>
               </div>
-              <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-1.5 text-center">
-                <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">Relievers</div>
-                <div className="text-sm font-bold text-[#8b5cf6]">{totalRelievers}</div>
-              </div>
-              <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-1.5 text-center">
-                <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">Staff Req.</div>
-                <div className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{totalInvigilatorsRequired}</div>
-              </div>
-              <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-1.5 text-center">
-                <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">Allotted</div>
-                <div className="text-sm font-bold text-[#f59e0b]">{totalDutiesAllotted}</div>
-              </div>
+
+              {/* Quick Horizontal Navigators */}
+              {(canScrollLeft || canScrollRight) && (
+                <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800/50 p-1 rounded-lg border border-slate-200/80 dark:border-slate-800">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 px-1.5">Scroll Sessions</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 rounded-md"
+                    disabled={!canScrollLeft}
+                    onClick={() => tableContainerRef.current?.scrollBy({ left: -250, behavior: 'smooth' })}
+                    aria-label="Scroll left"
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 rounded-md"
+                    disabled={!canScrollRight}
+                    onClick={() => tableContainerRef.current?.scrollBy({ left: 250, behavior: 'smooth' })}
+                    aria-label="Scroll right"
+                  >
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </CardHeader>
 
-        <CardContent className="px-3 sm:px-12 pb-6 pt-0">
+        <CardContent className="px-1 sm:px-2.5 pb-6 pt-0">
           <div className="relative group/allotment-table">
-            {/* Viewport Center Flying Navigation Arrows (Fixed at 50% screen height, strictly on outer flanks) */}
-            {/* Left Flying Arrow (Strictly to the left of Serial No.) */}
+            {/* Viewport Center Flying Navigation Arrows */}
+            {/* Left Flying Arrow */}
             <button
               type="button"
               onPointerDown={(e) => handlePointerDown('left', e)}
@@ -654,7 +743,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
               style={{
                 position: 'fixed',
                 top: '50%',
-                left: `${Math.max(8, arrowPositions.leftX - 48)}px`,
+                left: `${Math.max(12, arrowPositions.leftX + 8)}px`,
                 transform: 'translateY(-50%)',
                 zIndex: 50,
               }}
@@ -672,7 +761,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
               <ChevronLeft className="h-6 w-6 stroke-[2.5]" />
             </button>
 
-            {/* Right Flying Arrow (Strictly to the right of Total) */}
+            {/* Right Flying Arrow */}
             <button
               type="button"
               onPointerDown={(e) => handlePointerDown('right', e)}
@@ -684,7 +773,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
               style={{
                 position: 'fixed',
                 top: '50%',
-                left: `${Math.min(typeof window !== 'undefined' ? window.innerWidth - 52 : 1200, arrowPositions.rightX + 4)}px`,
+                left: `${Math.min(typeof window !== 'undefined' ? window.innerWidth - 56 : 1200, arrowPositions.rightX - 44)}px`,
                 transform: 'translateY(-50%)',
                 zIndex: 50,
               }}
@@ -702,7 +791,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
               <ChevronRight className="h-6 w-6 stroke-[2.5]" />
             </button>
 
-            {/* Normal Full-Height Table Container (no max-h, natural page height) */}
+            {/* Normal Full-Height Table Container */}
             <div
               ref={tableContainerRef}
               onScroll={checkScroll}
@@ -711,29 +800,53 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
               <table className="min-w-full border-collapse text-sm">
                 <TableHeader>
                   <TableRow className="bg-[#f8f9fc] dark:bg-slate-800/60 hover:bg-[#f8f9fc] border-b border-slate-200/80 dark:border-slate-800">
-                    <TableHead className="sticky left-0 bg-[#f8f9fc] dark:bg-slate-900/95 backdrop-blur-sm z-20 w-12 font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 text-center border-r border-slate-200/80 dark:border-slate-800">
+                    <TableHead className={cn(
+                      "sticky left-0 bg-[#f8f9fc] dark:bg-slate-900/95 backdrop-blur-sm z-20 font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-center border-r border-slate-200/80 dark:border-slate-800",
+                      isCompactDensity ? "w-10 text-[10px] px-1" : "w-12 text-[11px] px-2"
+                    )}>
                       #
                     </TableHead>
-                    <TableHead className="sticky left-12 bg-[#f8f9fc] dark:bg-slate-900/95 backdrop-blur-sm z-20 min-w-44 font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 border-r border-slate-200/80 dark:border-slate-800">
+                    <TableHead className={cn(
+                      "sticky bg-[#f8f9fc] dark:bg-slate-900/95 backdrop-blur-sm z-20 font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-r border-slate-200/80 dark:border-slate-800",
+                      isCompactDensity ? "left-10 min-w-[130px] max-w-[170px] text-[10px] px-2" : "left-12 min-w-[150px] max-w-[210px] text-[11px] px-3"
+                    )}>
                       Invigilator&apos;s Name
                     </TableHead>
-                    <TableHead className="min-w-40 font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 border-r border-slate-200/80 dark:border-slate-800">
+                    <TableHead className={cn(
+                      "font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-r border-slate-200/80 dark:border-slate-800",
+                      isCompactDensity ? "min-w-[85px] sm:min-w-[95px] max-w-[130px] text-[10px] px-2" : "min-w-[105px] sm:min-w-[125px] max-w-[160px] text-[11px] px-3"
+                    )}>
                       Designation
                     </TableHead>
                     {examinations.map(exam => (
                       <TableHead
                         key={exam.id}
-                        className="whitespace-nowrap h-44 p-2 text-center border-r border-slate-200/60 dark:border-slate-800/80 min-w-12"
+                        className={cn(
+                          "whitespace-nowrap text-center border-r border-slate-200/60 dark:border-slate-800/80",
+                          isCompactDensity ? "h-36 px-1 py-1.5 min-w-[34px]" : "h-44 px-1.5 py-2 min-w-[42px]"
+                        )}
                         style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
                       >
-                        <div className="flex flex-col items-start justify-end w-full pl-1">
-                          <span className="text-[13px] font-bold text-[#6342e8] dark:text-purple-400">{formatAppDate(exam.date)}</span>
-                          <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate max-h-24 my-0.5">{exam.subject}</span>
-                          <span className="text-[11px] text-slate-500 font-normal">{formatTimeTo12Hour(exam.startTime)}</span>
+                        <div className="flex flex-col items-start justify-end w-full pl-0.5">
+                          <span className={cn(
+                            "font-bold text-[#6342e8] dark:text-purple-400",
+                            isCompactDensity ? "text-xs leading-none" : "text-[13px]"
+                          )}>{formatAppDate(exam.date)}</span>
+                          <span className={cn(
+                            "font-semibold text-slate-800 dark:text-slate-200 truncate my-0.5",
+                            isCompactDensity ? "text-[11px] max-h-20" : "text-xs max-h-24"
+                          )}>{exam.subject}</span>
+                          <span className={cn(
+                            "text-slate-500 font-normal",
+                            isCompactDensity ? "text-[10px]" : "text-[11px]"
+                          )}>{formatTimeTo12Hour(exam.startTime)}</span>
                         </div>
                       </TableHead>
                     ))}
-                    <TableHead className="text-center sticky right-0 bg-[#f8f9fc] dark:bg-slate-900/95 backdrop-blur-sm z-20 min-w-16 font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 border-l border-slate-200/80 dark:border-slate-800">
+                    <TableHead className={cn(
+                      "text-center sticky right-0 bg-[#f8f9fc] dark:bg-slate-900/95 backdrop-blur-sm z-20 font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-l border-slate-200/80 dark:border-slate-800",
+                      isCompactDensity ? "min-w-14 text-[10px] px-1" : "min-w-16 text-[11px] px-2"
+                    )}>
                       Total
                     </TableHead>
                   </TableRow>
@@ -754,7 +867,8 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                       >
                         <TableCell
                           className={cn(
-                            "sticky left-0 z-10 text-center font-medium text-xs text-slate-500 dark:text-slate-400 group-hover/row:text-slate-700 dark:group-hover/row:text-slate-200 border-r border-slate-200/60 dark:border-slate-800 transition-colors",
+                            "sticky left-0 z-10 text-center font-medium text-slate-500 dark:text-slate-400 group-hover/row:text-slate-700 dark:group-hover/row:text-slate-200 border-r border-slate-200/60 dark:border-slate-800 transition-colors",
+                            isCompactDensity ? "w-10 text-[11px] px-1 py-1" : "w-12 text-xs px-2 py-1.5",
                             index % 2 === 1 ? "bg-[#fbfcfe] dark:bg-[#0d1629]" : "bg-white dark:bg-slate-900",
                             "group-hover/row:bg-slate-100 dark:group-hover/row:bg-slate-800"
                           )}
@@ -763,15 +877,23 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                         </TableCell>
                         <TableCell
                           className={cn(
-                            "font-semibold text-xs sticky left-12 z-10 border-r border-slate-200/60 dark:border-slate-800 transition-colors",
+                            "font-semibold sticky z-10 border-r border-slate-200/60 dark:border-slate-800 transition-colors truncate",
+                            isCompactDensity ? "left-10 min-w-[130px] max-w-[170px] text-xs px-2 py-1" : "left-12 min-w-[150px] max-w-[210px] text-xs px-3 py-1.5",
                             index % 2 === 1 ? "bg-[#fbfcfe] dark:bg-[#0d1629]" : "bg-white dark:bg-slate-900",
                             "group-hover/row:bg-slate-100 dark:group-hover/row:bg-slate-800",
                             "text-slate-900 dark:text-slate-100 group-hover/row:text-slate-950 dark:group-hover/row:text-white"
                           )}
+                          title={invigilator.name}
                         >
                           {invigilator.name}
                         </TableCell>
-                        <TableCell className="text-xs text-slate-500 dark:text-slate-400 group-hover/row:text-slate-700 dark:group-hover/row:text-slate-200 border-r border-slate-200/60 dark:border-slate-800 transition-colors">
+                        <TableCell 
+                          className={cn(
+                            "text-slate-500 dark:text-slate-400 group-hover/row:text-slate-700 dark:group-hover/row:text-slate-200 border-r border-slate-200/60 dark:border-slate-800 transition-colors truncate",
+                            isCompactDensity ? "min-w-[85px] sm:min-w-[95px] max-w-[130px] text-[11px] px-2 py-1" : "min-w-[105px] sm:min-w-[125px] max-w-[160px] text-xs px-3 py-1.5"
+                          )}
+                          title={invigilator.designation}
+                        >
                           {invigilator.designation}
                         </TableCell>
                         {examinations.map(exam => {
@@ -782,21 +904,31 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                           return (
                             <TableCell
                               key={exam.id}
-                              className="p-1 text-center cursor-pointer transition-colors hover:bg-purple-50/60 dark:hover:bg-purple-950/40 border-r border-slate-200/40 dark:border-slate-800/70"
+                              className={cn(
+                                "text-center cursor-pointer transition-colors hover:bg-purple-50/60 dark:hover:bg-purple-950/40 border-r border-slate-200/40 dark:border-slate-800/70",
+                                isCompactDensity ? "p-0.5 min-w-[34px]" : "p-1 min-w-[42px]"
+                              )}
                               onClick={() => handleDutyToggle(invigilator.id, exam.id)}
                             >
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <div className="w-full h-8 flex items-center justify-center">
+                                  <div className={cn(
+                                    "w-full flex items-center justify-center",
+                                    isCompactDensity ? "h-7" : "h-8"
+                                  )}>
                                     {hasDuty ? (
                                       <div className={cn(
-                                        "font-bold text-xs rounded-md w-6 h-6 flex items-center justify-center shadow-xs transition-all hover:scale-110",
+                                        "font-bold rounded-md flex items-center justify-center shadow-xs transition-all hover:scale-110",
+                                        isCompactDensity ? "w-5 h-5 text-[11px]" : "w-6 h-6 text-xs",
                                         dateColorMap[examDate] || 'bg-purple-100 text-[#6342e8] border border-purple-200 dark:bg-purple-950/70 dark:text-purple-300'
                                       )}>
                                         1
                                       </div>
                                     ) : (
-                                      <span className="text-xs text-slate-300 hover:text-slate-500">0</span>
+                                      <span className={cn(
+                                        "text-slate-300 hover:text-slate-500",
+                                        isCompactDensity ? "text-[11px]" : "text-xs"
+                                      )}>0</span>
                                     )}
                                   </div>
                                 </TooltipTrigger>
@@ -822,11 +954,15 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                         <TableCell
                           className={cn(
                             "text-center sticky right-0 z-10 border-l border-slate-200/60 dark:border-slate-800 transition-colors",
+                            isCompactDensity ? "min-w-14 p-1" : "min-w-16 p-1.5",
                             index % 2 === 1 ? "bg-[#fbfcfe] dark:bg-[#0d1629]" : "bg-white dark:bg-slate-900",
                             "group-hover/row:bg-slate-100 dark:group-hover/row:bg-slate-800"
                           )}
                         >
-                          <div className="bg-purple-50 dark:bg-purple-950/60 text-[#6342e8] dark:text-purple-300 border border-purple-100 dark:border-purple-900/50 font-bold rounded-lg w-7 h-7 flex items-center justify-center mx-auto text-xs">
+                          <div className={cn(
+                            "bg-purple-50 dark:bg-purple-950/60 text-[#6342e8] dark:text-purple-300 border border-purple-100 dark:border-purple-900/50 font-bold rounded-lg flex items-center justify-center mx-auto",
+                            isCompactDensity ? "w-6 h-6 text-[11px]" : "w-7 h-7 text-xs"
+                          )}>
                             {dutyCount}
                           </div>
                         </TableCell>
@@ -838,52 +974,91 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                 <TableFooter className="border-t-2 border-slate-200 dark:border-slate-800 font-medium bg-slate-50/50 dark:bg-slate-900/60">
                   {/* Invigilators Row */}
                   <TableRow className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 border-b border-slate-200/60 dark:border-slate-800/60">
-                    <TableCell colSpan={3} className="text-right font-bold text-xs uppercase tracking-wider text-slate-500 sticky left-0 bg-slate-50/90 dark:bg-slate-900/90 z-10">
+                    <TableCell colSpan={3} className={cn(
+                      "text-right font-bold uppercase tracking-wider text-slate-500 sticky left-0 bg-slate-50/90 dark:bg-slate-900/90 z-10",
+                      isCompactDensity ? "text-[10px] px-2 py-1" : "text-xs px-3 py-1.5"
+                    )}>
                       No of Invigilators
                     </TableCell>
                     {examinations.map((exam) => (
-                      <TableCell key={`rooms-${exam.id}`} className="text-center text-xs font-bold text-[#6342e8] dark:text-purple-400">
+                      <TableCell 
+                        key={`rooms-${exam.id}`} 
+                        className={cn(
+                          "text-center font-bold text-[#6342e8] dark:text-purple-400",
+                          isCompactDensity ? "text-[11px] p-0.5 min-w-[34px]" : "text-xs p-1 min-w-[42px]"
+                        )}
+                      >
                         {exam.rooms}
                       </TableCell>
                     ))}
-                    <TableCell className="text-center font-bold text-xs text-[#6342e8] dark:text-purple-400 sticky right-0 bg-slate-50/90 dark:bg-slate-900/90 z-10 border-l border-slate-200/60 dark:border-slate-800">
+                    <TableCell className={cn(
+                      "text-center font-bold text-[#6342e8] dark:text-purple-400 sticky right-0 bg-slate-50/90 dark:bg-slate-900/90 z-10 border-l border-slate-200/60 dark:border-slate-800",
+                      isCompactDensity ? "min-w-14 text-[11px]" : "min-w-16 text-xs"
+                    )}>
                       {totalRooms}
                     </TableCell>
                   </TableRow>
 
                   {/* Relievers Row */}
                   <TableRow className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 border-b border-slate-200/60 dark:border-slate-800/60">
-                    <TableCell colSpan={3} className="text-right font-bold text-xs uppercase tracking-wider text-slate-500 sticky left-0 bg-slate-50/90 dark:bg-slate-900/90 z-10">
+                    <TableCell colSpan={3} className={cn(
+                      "text-right font-bold uppercase tracking-wider text-slate-500 sticky left-0 bg-slate-50/90 dark:bg-slate-900/90 z-10",
+                      isCompactDensity ? "text-[10px] px-2 py-1" : "text-xs px-3 py-1.5"
+                    )}>
                       No of Relievers
                     </TableCell>
                     {examinations.map((exam) => (
-                      <TableCell key={`relievers-${exam.id}`} className="text-center text-xs font-bold text-[#8b5cf6] dark:text-purple-400">
+                      <TableCell 
+                        key={`relievers-${exam.id}`} 
+                        className={cn(
+                          "text-center font-bold text-[#8b5cf6] dark:text-purple-400",
+                          isCompactDensity ? "text-[11px] p-0.5 min-w-[34px]" : "text-xs p-1 min-w-[42px]"
+                        )}
+                      >
                         {exam.relievers}
                       </TableCell>
                     ))}
-                    <TableCell className="text-center font-bold text-xs text-[#8b5cf6] dark:text-purple-400 sticky right-0 bg-slate-50/90 dark:bg-slate-900/90 z-10 border-l border-slate-200/60 dark:border-slate-800">
+                    <TableCell className={cn(
+                      "text-center font-bold text-[#8b5cf6] dark:text-purple-400 sticky right-0 bg-slate-50/90 dark:bg-slate-900/90 z-10 border-l border-slate-200/60 dark:border-slate-800",
+                      isCompactDensity ? "min-w-14 text-[11px]" : "min-w-16 text-xs"
+                    )}>
                       {totalRelievers}
                     </TableCell>
                   </TableRow>
 
                   {/* Total Invigilators Required Row */}
                   <TableRow className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 border-b border-slate-200/60 dark:border-slate-800/60 bg-slate-100/50 dark:bg-slate-900/80">
-                    <TableCell colSpan={3} className="text-right font-bold text-xs uppercase tracking-wider text-slate-800 dark:text-slate-200 sticky left-0 bg-slate-100/90 dark:bg-slate-900 z-10">
+                    <TableCell colSpan={3} className={cn(
+                      "text-right font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 sticky left-0 bg-slate-100/90 dark:bg-slate-900 z-10",
+                      isCompactDensity ? "text-[10px] px-2 py-1" : "text-xs px-3 py-1.5"
+                    )}>
                       Total Required
                     </TableCell>
                     {examinations.map((exam) => (
-                      <TableCell key={`invigilators-${exam.id}`} className="text-center text-xs font-bold text-slate-800 dark:text-slate-200">
+                      <TableCell 
+                        key={`invigilators-${exam.id}`} 
+                        className={cn(
+                          "text-center font-bold text-slate-800 dark:text-slate-200",
+                          isCompactDensity ? "text-[11px] p-0.5 min-w-[34px]" : "text-xs p-1 min-w-[42px]"
+                        )}
+                      >
                         {exam.rooms + exam.relievers}
                       </TableCell>
                     ))}
-                    <TableCell className="text-center font-bold text-xs text-emerald-600 dark:text-emerald-400 sticky right-0 bg-slate-100 dark:bg-slate-900 z-10 border-l border-slate-200/60 dark:border-slate-800">
+                    <TableCell className={cn(
+                      "text-center font-bold text-emerald-600 dark:text-emerald-400 sticky right-0 bg-slate-100 dark:bg-slate-900 z-10 border-l border-slate-200/60 dark:border-slate-800",
+                      isCompactDensity ? "min-w-14 text-[11px]" : "min-w-16 text-xs"
+                    )}>
                       {totalInvigilatorsRequired}
                     </TableCell>
                   </TableRow>
 
                   {/* Total Duties Allotted Row */}
                   <TableRow className="hover:bg-purple-50/40 dark:hover:bg-slate-800/40 bg-purple-50/30 dark:bg-purple-950/20">
-                    <TableCell colSpan={3} className="text-right font-bold text-xs uppercase tracking-wider text-[#6342e8] dark:text-purple-400 sticky left-0 bg-purple-50/90 dark:bg-purple-950/90 z-10">
+                    <TableCell colSpan={3} className={cn(
+                      "text-right font-bold uppercase tracking-wider text-[#6342e8] dark:text-purple-400 sticky left-0 bg-purple-50/90 dark:bg-purple-950/90 z-10",
+                      isCompactDensity ? "text-[10px] px-2 py-1" : "text-xs px-3 py-1.5"
+                    )}>
                       Total Allotted
                     </TableCell>
                     {dutiesPerExam.map((count, index) => {
@@ -894,7 +1069,8 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                         <TableCell
                           key={`total-duties-${exam.id}`}
                           className={cn(
-                            "text-center text-xs font-bold",
+                            "text-center font-bold",
+                            isCompactDensity ? "text-[11px] p-0.5 min-w-[34px]" : "text-xs p-1 min-w-[42px]",
                             isMismatch ? "text-destructive font-black" : "text-[#6342e8] dark:text-purple-400"
                           )}
                         >
@@ -902,7 +1078,10 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                         </TableCell>
                       );
                     })}
-                    <TableCell className="text-center font-black text-xs text-[#6342e8] dark:text-purple-400 sticky right-0 bg-purple-50/90 dark:bg-purple-950/90 z-10 border-l border-slate-200/60 dark:border-slate-800">
+                    <TableCell className={cn(
+                      "text-center font-black text-[#6342e8] dark:text-purple-400 sticky right-0 bg-purple-50/90 dark:bg-purple-950/90 z-10 border-l border-slate-200/60 dark:border-slate-800",
+                      isCompactDensity ? "min-w-14 text-[11px]" : "min-w-16 text-xs"
+                    )}>
                       {totalDutiesAllotted}
                     </TableCell>
                   </TableRow>

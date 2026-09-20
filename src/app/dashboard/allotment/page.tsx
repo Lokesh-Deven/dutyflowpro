@@ -75,9 +75,9 @@ function AllotmentContent() {
   }
 
   return (
-    <div className="flex-1 space-y-6">
+    <div className="w-full space-y-4">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="flex justify-center mb-6">
+        <div className="flex justify-center mb-4">
           <TabsList className="bg-muted/60 p-1 rounded-xl border border-border/80 h-auto gap-1 shadow-2xs">
             <TabsTrigger 
               value="allotment-sheet" 
