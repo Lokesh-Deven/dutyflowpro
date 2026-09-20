@@ -52,6 +52,8 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   updateProfile: (updated: Partial<UserProfile>) => Promise<{ error: Error | null }>;
   recordDownload: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error: Error | null }>;
+  updatePassword: (newPassword: string) => Promise<{ error: Error | null }>;
 }
 
 export const DEFAULT_GUEST_PROFILE: UserProfile = {
@@ -499,6 +501,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const resetPassword = async (email: string) => {
+    try {
+      const cleanEmail = email.trim();
+      const redirectUrl = typeof window !== 'undefined'
+        ? `${window.location.origin}/reset-password`
+        : undefined;
+      const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
+        redirectTo: redirectUrl,
+      });
+      if (error) {
+        return { error };
+      }
+      return { error: null };
+    } catch (err: any) {
+      return { error: err };
+    }
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+      if (error) {
+        return { error };
+      }
+      return { error: null };
+    } catch (err: any) {
+      return { error: err };
+    }
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -516,6 +550,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signOut,
       updateProfile,
       recordDownload,
+      resetPassword,
+      updatePassword,
     }}>
       {children}
     </AuthContext.Provider>

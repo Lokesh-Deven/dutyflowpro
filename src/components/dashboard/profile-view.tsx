@@ -116,6 +116,15 @@ export function ProfileView() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-12 animate-in fade-in duration-300">
+      {/* Page Header Banner */}
+      <div className="space-y-1">
+        <h1 className="text-2xl sm:text-3xl font-bold font-headline tracking-tight text-slate-900 dark:text-white">
+          User Settings
+        </h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Manage your institution profile, active subscription plan, download quota, and account preferences.
+        </p>
+      </div>
 
       {/* ========================================================================= */}
       {/* 1. HERO PROFILE CARD (Glossy Indigo Theme) */}

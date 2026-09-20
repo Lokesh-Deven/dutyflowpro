@@ -9,20 +9,24 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth, clearActiveAllotmentStorage } from '@/lib/auth-context';
-import { Loader2, Eye, EyeOff, Building2, Mail, Lock, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff, Building2, Mail, Lock, Sparkles, CheckCircle2, ArrowLeft, KeyRound, HelpCircle } from 'lucide-react';
 
 export function LandingPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, resetPassword } = useAuth();
 
-  // Mode: 'login' | 'signup'
-  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  // Mode: 'login' | 'signup' | 'forgot'
+  const [authMode, setAuthMode] = useState<'login' | 'signup' | 'forgot'>('login');
 
   // Login fields
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [showLoginPassword, setShowLoginPassword] = useState(false);
+
+  // Forgot password fields
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotSuccess, setForgotSuccess] = useState(false);
 
   // Sign up fields
   const [institutionName, setInstitutionName] = useState('');
@@ -128,6 +132,43 @@ export function LandingPage() {
     }
   };
 
+  // Handle Forgot Password
+  const handleForgotSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+
+    const cleanEmail = forgotEmail.trim();
+    if (!cleanEmail) {
+      setErrorMessage("Please enter your registered email address.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await resetPassword(cleanEmail);
+
+      if (error) {
+        setErrorMessage(error.message || "Failed to send password reset link. Please check your email.");
+        toast({
+          variant: "destructive",
+          title: "Reset Request Failed",
+          description: error.message || "Could not process password reset.",
+        });
+      } else {
+        setForgotSuccess(true);
+        toast({
+          title: "Reset Link Sent",
+          description: `A password reset link has been dispatched to ${cleanEmail}.`,
+        });
+      }
+    } catch (err: any) {
+      setErrorMessage(err?.message || "An unexpected error occurred.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // Instant Guest Access
   const handleGuestDemo = () => {
     clearActiveAllotmentStorage();
@@ -186,37 +227,55 @@ export function LandingPage() {
         <div className="w-full md:w-1/2 flex justify-center">
           <div className="w-full max-w-[400px] bg-white border border-slate-400/80 rounded-2xl p-7 sm:p-9 shadow-sm transition-all">
 
-            {/* Header Tabs: Log In / Sign Up */}
-            <div className="flex items-center justify-center border-b border-slate-200 pb-3 mb-5">
-              <div className="flex bg-slate-100 p-1 rounded-xl w-full">
+            {/* Header Tabs: Log In / Sign Up / Forgot */}
+            {authMode === 'forgot' ? (
+              <div className="flex items-center justify-between border-b border-slate-200 pb-3 mb-5">
                 <button
                   type="button"
                   onClick={() => {
                     setAuthMode('login');
                     setErrorMessage(null);
+                    setForgotSuccess(false);
                   }}
-                  className={`flex-1 py-1.5 text-xs sm:text-sm font-bold rounded-lg transition-all ${authMode === 'login'
-                    ? 'bg-white text-[#1E2A5E] shadow-xs'
-                    : 'text-slate-500 hover:text-slate-900'
-                    }`}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#1E2A5E] hover:underline"
                 >
-                  Log In
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  Back to Sign In
                 </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAuthMode('signup');
-                    setErrorMessage(null);
-                  }}
-                  className={`flex-1 py-1.5 text-xs sm:text-sm font-bold rounded-lg transition-all ${authMode === 'signup'
-                    ? 'bg-white text-[#1E2A5E] shadow-xs'
-                    : 'text-slate-500 hover:text-slate-900'
-                    }`}
-                >
-                  Sign Up
-                </button>
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Recovery</span>
               </div>
-            </div>
+            ) : (
+              <div className="flex items-center justify-center border-b border-slate-200 pb-3 mb-5">
+                <div className="flex bg-slate-100 p-1 rounded-xl w-full">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthMode('login');
+                      setErrorMessage(null);
+                    }}
+                    className={`flex-1 py-1.5 text-xs sm:text-sm font-bold rounded-lg transition-all ${authMode === 'login'
+                      ? 'bg-white text-[#1E2A5E] shadow-xs'
+                      : 'text-slate-500 hover:text-slate-900'
+                      }`}
+                  >
+                    Log In
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthMode('signup');
+                      setErrorMessage(null);
+                    }}
+                    className={`flex-1 py-1.5 text-xs sm:text-sm font-bold rounded-lg transition-all ${authMode === 'signup'
+                      ? 'bg-white text-[#1E2A5E] shadow-xs'
+                      : 'text-slate-500 hover:text-slate-900'
+                      }`}
+                  >
+                    Sign Up
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Error Banner if any */}
             {errorMessage && (
@@ -316,10 +375,10 @@ export function LandingPage() {
                     <button
                       type="button"
                       onClick={() => {
-                        toast({
-                          title: "Password Reset",
-                          description: "Please enter your registered email and contact your system administrator or check Supabase auth settings.",
-                        });
+                        setAuthMode('forgot');
+                        setErrorMessage(null);
+                        setForgotSuccess(false);
+                        setForgotEmail(loginEmail || '');
                       }}
                       className="hover:underline text-slate-700 font-medium"
                     >
@@ -340,6 +399,97 @@ export function LandingPage() {
                     </button>
                   </div>
                 </div>
+              </form>
+            ) : authMode === 'forgot' ? (
+              /* =================================================================== */
+              /* FORGOT USERNAME / PASSWORD FORM */
+              /* =================================================================== */
+              <form onSubmit={handleForgotSubmit} className="space-y-4">
+                <div className="text-center mb-1">
+                  <div className="h-11 w-11 bg-indigo-50 text-[#1E2A5E] rounded-xl flex items-center justify-center mx-auto mb-2.5 ring-4 ring-indigo-50/50">
+                    <KeyRound className="h-5 w-5" />
+                  </div>
+                  <h2 className="font-headline text-2xl font-bold text-slate-800">
+                    Forgot Credentials?
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                    Enter your registered email to reset your password or recover access.
+                  </p>
+                </div>
+
+                {forgotSuccess ? (
+                  <div className="text-center space-y-3.5 py-2 animate-in fade-in">
+                    <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs leading-relaxed">
+                      <div className="flex items-center justify-center gap-1.5 font-bold mb-1 text-emerald-700 text-sm">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                        Reset Link Dispatched!
+                      </div>
+                      We have sent password reset instructions to <strong>{forgotEmail}</strong>. Please check your inbox and spam folder.
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        setAuthMode('login');
+                        setForgotSuccess(false);
+                      }}
+                      className="w-full bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs h-10 rounded-md shadow-xs"
+                    >
+                      RETURN TO SIGN IN
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    {/* Username Reminder Banner */}
+                    <div className="p-3 rounded-lg bg-blue-50/80 border border-blue-200/80 text-[11px] text-blue-900 leading-relaxed">
+                      <strong>Username Reminder:</strong> In DutyFlow, your username is your institution&apos;s registered email address.
+                    </div>
+
+                    {/* Email Input */}
+                    <div className="space-y-1.5">
+                      <Label htmlFor="forgot-email" className="text-xs font-semibold text-slate-700">
+                        Registered Email:
+                      </Label>
+                      <Input
+                        id="forgot-email"
+                        type="email"
+                        placeholder="e.g., admin@college.edu"
+                        value={forgotEmail}
+                        onChange={(e) => setForgotEmail(e.target.value)}
+                        className="rounded-md h-10 bg-white border-slate-300 text-sm text-slate-800 placeholder:text-slate-400 focus-visible:border-[#1E2A5E] focus-visible:ring-0"
+                      />
+                    </div>
+
+                    {/* Submit Button */}
+                    <Button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs tracking-wider py-2.5 rounded-md shadow-xs transition-colors mt-2 h-10"
+                    >
+                      {isSubmitting ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          SENDING RESET LINK...
+                        </span>
+                      ) : (
+                        "SEND PASSWORD RESET LINK"
+                      )}
+                    </Button>
+
+                    {/* Support Contact Assistance */}
+                    <div className="pt-2 text-center text-[11px] text-slate-500 border-t border-slate-100 mt-3 space-y-1">
+                      <p>Don&apos;t remember which email was registered?</p>
+                      <a
+                        href="https://wa.me/919113815925?text=Hi%20DutyFlow%20Admin,%20I%20forgot%20my%20registered%20email/username%20and%20need%20account%20assistance."
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-bold text-[#1E2A5E] hover:underline inline-flex items-center gap-1"
+                      >
+                        <HelpCircle className="w-3.5 h-3.5" />
+                        Contact Admin on WhatsApp (+91 91138 15925)
+                      </a>
+                    </div>
+                  </>
+                )}
               </form>
             ) : (
               /* =================================================================== */

@@ -255,7 +255,7 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
                   </Link>
                 </TooltipTrigger>
                 <TooltipContent side="right" className="bg-[#1e1957] text-white border-[#31297e] font-semibold text-xs">
-                  Settings
+                  User Settings
                 </TooltipContent>
               </Tooltip>
 
@@ -283,7 +283,7 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
                 className="flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-medium text-[#b4b1db] hover:text-white hover:bg-white/[0.07] transition-all"
               >
                 <Settings className="w-4 h-4 text-[#9d99ce]" />
-                <span>Settings</span>
+                <span>User Settings</span>
               </Link>
 
               <a
@@ -343,7 +343,7 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
             <DropdownMenuItem asChild className="cursor-pointer m-1 rounded-lg hover:bg-white/10 focus:bg-white/10 text-white">
               <Link href="/dashboard/profile" onClick={handleNavClick} className="flex items-center gap-2 text-xs">
                 <Settings className="h-4 w-4 text-purple-400" />
-                <span>Settings</span>
+                <span>User Settings</span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-white/10" />
