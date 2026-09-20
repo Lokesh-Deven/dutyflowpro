@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,16 @@ export function LandingPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { signIn, signUp, resetPassword } = useAuth();
+
+  // Detect recovery token in hash and immediately forward to reset-password
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash;
+      if (hash && (hash.includes('type=recovery') || (hash.includes('access_token=') && hash.includes('recovery')))) {
+        router.push(`/reset-password${hash}`);
+      }
+    }
+  }, [router]);
 
   // Mode: 'login' | 'signup' | 'forgot'
   const [authMode, setAuthMode] = useState<'login' | 'signup' | 'forgot'>('login');

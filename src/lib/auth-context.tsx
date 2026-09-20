@@ -250,6 +250,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (event === 'SIGNED_IN') {
           clearActiveAllotmentStorage(session.user.id);
         }
+        if (event === 'PASSWORD_RECOVERY') {
+          setProfile(createProfileFromUser(session.user));
+          fetchProfile(session.user);
+          router.push('/reset-password');
+          return;
+        }
         setProfile(createProfileFromUser(session.user));
         fetchProfile(session.user);
       } else {
