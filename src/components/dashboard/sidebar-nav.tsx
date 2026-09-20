@@ -20,7 +20,8 @@ import {
   FileText,
   Users,
   Palette,
-  FileSpreadsheet
+  FileSpreadsheet,
+  DoorOpen
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth-context';
@@ -46,6 +47,7 @@ import {
 export const navItems = [
   { href: '/dashboard/examinations', label: 'New Allotment', icon: PlusSquare },
   { href: '/dashboard/saved', label: 'Saved Allotments', icon: Bookmark },
+  { href: '/dashboard/room-allocations', label: 'Room Allocations', icon: DoorOpen },
   { href: '/dashboard/schedule', label: 'Day-wise Schedule', icon: CalendarDays },
   { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart2 },
   { href: '/dashboard/instructions', label: 'Add Instructions', icon: ListChecks },

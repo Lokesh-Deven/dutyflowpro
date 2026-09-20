@@ -229,6 +229,12 @@ export async function syncAllotmentToDatabase(allotment: SavedAllotment, userId:
   if (!userId || !allotment || !isUUID(userId)) return false;
 
   try {
+    // Preserve roomAllocations within assignments envelope for resilient cloud persistence
+    const assignmentsPayload: Record<string, any> = { ...allotment.assignments };
+    if (allotment.roomAllocations) {
+      assignmentsPayload._room_allocations = allotment.roomAllocations;
+    }
+
     const { error } = await supabase.from('saved_allotments').upsert({
       id: allotment.id,
       user_id: userId,
@@ -236,7 +242,7 @@ export async function syncAllotmentToDatabase(allotment: SavedAllotment, userId:
       status: allotment.status || 'Draft',
       invigilators: allotment.invigilators,
       examinations: allotment.examinations,
-      assignments: allotment.assignments,
+      assignments: assignmentsPayload,
       created_at: allotment.createdAt instanceof Date ? allotment.createdAt.toISOString() : allotment.createdAt,
       updated_at: new Date().toISOString(),
     });
@@ -272,18 +278,31 @@ export async function fetchUserAllotmentsFromDatabase(userId: string): Promise<S
 
     if (!data || !Array.isArray(data)) return [];
 
-    return data.map((row: any) => ({
-      id: row.id,
-      name: row.name,
-      status: row.status || 'Draft',
-      invigilators: Array.isArray(row.invigilators) ? row.invigilators : [],
-      examinations: Array.isArray(row.examinations) ? row.examinations.map((e: any) => ({
-        ...e,
-        date: new Date(e.date),
-      })) : [],
-      assignments: row.assignments || {},
-      createdAt: new Date(row.created_at || Date.now()),
-    }));
+    return data.map((row: any) => {
+      const rawAssignments = row.assignments || {};
+      const roomAllocations = row.room_allocations || rawAssignments._room_allocations || undefined;
+      // Clean up assignments so helper keys aren't treated as invigilators
+      const cleanAssignments: Record<string, string[]> = {};
+      Object.entries(rawAssignments).forEach(([k, v]) => {
+        if (!k.startsWith('_') && Array.isArray(v)) {
+          cleanAssignments[k] = v;
+        }
+      });
+
+      return {
+        id: row.id,
+        name: row.name,
+        status: row.status || 'Draft',
+        invigilators: Array.isArray(row.invigilators) ? row.invigilators : [],
+        examinations: Array.isArray(row.examinations) ? row.examinations.map((e: any) => ({
+          ...e,
+          date: new Date(e.date),
+        })) : [],
+        assignments: cleanAssignments,
+        roomAllocations,
+        createdAt: new Date(row.created_at || Date.now()),
+      };
+    });
   } catch (err) {
     console.error('Error in fetchUserAllotmentsFromDatabase:', err);
     return [];

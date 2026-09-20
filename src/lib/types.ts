@@ -38,6 +38,38 @@ export interface AllotmentResult {
   assignments: Record<string, string[]>; // invigilatorId -> examId[]
 }
 
+export type RoomAllocationStatus = 'Pending' | 'Generated' | 'Locked';
+
+export type MasterRoom = {
+  id: string;
+  name: string;
+};
+
+export type InvigilatorRoomDuty = {
+  invigilatorId: string;
+  invigilatorName: string;
+  designation?: string;
+  room: string;
+};
+
+export type RelieverRoomDuty = {
+  relieverId: string;
+  relieverName: string;
+  designation?: string;
+  rooms: string[];
+};
+
+export type SessionRoomAllocation = {
+  examId: string;
+  selectedRooms: string[];
+  invigilatorDuties: InvigilatorRoomDuty[];
+  relieverDuties: RelieverRoomDuty[];
+  status: RoomAllocationStatus;
+  warnings?: string[];
+  generatedAt?: string;
+  lockedAt?: string;
+};
+
 export type SavedAllotment = {
   id: string;
   name: string;
@@ -46,6 +78,7 @@ export type SavedAllotment = {
   assignments: AllotmentResult['assignments'];
   createdAt: Date;
   status: 'Draft' | 'Finalized';
+  roomAllocations?: Record<string, SessionRoomAllocation>; // examId -> SessionRoomAllocation
 };
 
 export type InstructionItem = {

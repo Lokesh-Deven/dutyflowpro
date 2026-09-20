@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef } from 'react';
-import type { Invigilator, DirectoryInvigilator, Examination, SavedAllotment, AllotmentResult, InstructionItem, SignatoryInfo } from '@/lib/types';
+import type { Invigilator, DirectoryInvigilator, Examination, SavedAllotment, AllotmentResult, InstructionItem, SignatoryInfo, MasterRoom, SessionRoomAllocation } from '@/lib/types';
 import { useAuth } from './auth-context';
 import {
   syncAllotmentToDatabase,
@@ -13,6 +13,16 @@ import {
 } from './storage-service';
 import { supabase } from './supabase';
 import { PaletteId, DEFAULT_PALETTE_ID, PDF_PALETTES } from './pdf-palette';
+
+export const DEFAULT_MASTER_ROOMS: MasterRoom[] = [
+  { id: 'room-101', name: '101' },
+  { id: 'room-102', name: '102' },
+  { id: 'room-n102', name: 'N102' },
+  { id: 'room-103', name: '103' },
+  { id: 'room-104', name: '104' },
+  { id: 'room-conf', name: 'Conference Room' },
+  { id: 'room-sem', name: 'Seminar Hall' },
+];
 
 export const DEFAULT_SIGNATORY: SignatoryInfo = {
   name: "",
@@ -111,6 +121,13 @@ interface AllotmentContextType {
   isDirectoryCloudSynced: boolean;
   pdfPaletteId: PaletteId;
   setPdfPaletteId: (id: PaletteId) => void;
+  masterRooms: MasterRoom[];
+  setMasterRooms: React.Dispatch<React.SetStateAction<MasterRoom[]>>;
+  addMasterRoom: (name: string) => void;
+  updateMasterRoom: (id: string, name: string) => void;
+  deleteMasterRoom: (id: string) => void;
+  saveSessionRooms: (examId: string, rooms: string[]) => void;
+  saveSessionAllocation: (examId: string, allocation: SessionRoomAllocation) => void;
 }
 
 const AllotmentContext = createContext<AllotmentContextType | undefined>(undefined);
@@ -125,6 +142,7 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
   const [signatory, setSignatory] = useState<SignatoryInfo>(DEFAULT_SIGNATORY);
   const [directoryInvigilators, setDirectoryInvigilators] = useState<DirectoryInvigilator[]>([]);
   const [pdfPaletteId, setPdfPaletteIdState] = useState<PaletteId>(DEFAULT_PALETTE_ID);
+  const [masterRooms, setMasterRooms] = useState<MasterRoom[]>(DEFAULT_MASTER_ROOMS);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isCloudSynced, setIsCloudSynced] = useState(false);
   const [isDirectoryCloudSynced, setIsDirectoryCloudSynced] = useState(false);
@@ -227,6 +245,26 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
         const storedPalette = localStorage.getItem(`dutyflow_${userScope}_pdf_color_palette`) || localStorage.getItem('dutyflow_pdf_color_palette');
         if (storedPalette && storedPalette in PDF_PALETTES && isMounted) {
           setPdfPaletteIdState(storedPalette as PaletteId);
+        }
+      } catch (_) { }
+
+      // Load user-scoped master rooms from localStorage
+      try {
+        const storedRooms = localStorage.getItem(`dutyflow_${userScope}_master_rooms`);
+        if (storedRooms) {
+          const parsed = JSON.parse(storedRooms);
+          if (Array.isArray(parsed) && isMounted) {
+            setMasterRooms(parsed);
+          }
+        } else if (userScope !== 'guest') {
+          const guestRooms = localStorage.getItem('dutyflow_guest_master_rooms');
+          if (guestRooms) {
+            const parsed = JSON.parse(guestRooms);
+            if (Array.isArray(parsed) && isMounted && parsed.length > 0) {
+              setMasterRooms(parsed);
+              localStorage.setItem(`dutyflow_${userScope}_master_rooms`, guestRooms);
+            }
+          }
         }
       } catch (_) { }
 
@@ -700,6 +738,77 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
     return res;
   }, [user?.id, directoryInvigilators]);
 
+  const addMasterRoom = useCallback((name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    const newRoom: MasterRoom = {
+      id: `room-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      name: trimmed,
+    };
+    setMasterRooms(prev => {
+      const updated = [...prev, newRoom];
+      try {
+        localStorage.setItem(getStorageKey('master_rooms'), JSON.stringify(updated));
+      } catch (_) { }
+      return updated;
+    });
+  }, [getStorageKey]);
+
+  const updateMasterRoom = useCallback((id: string, name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    setMasterRooms(prev => {
+      const updated = prev.map(r => r.id === id ? { ...r, name: trimmed } : r);
+      try {
+        localStorage.setItem(getStorageKey('master_rooms'), JSON.stringify(updated));
+      } catch (_) { }
+      return updated;
+    });
+  }, [getStorageKey]);
+
+  const deleteMasterRoom = useCallback((id: string) => {
+    setMasterRooms(prev => {
+      const updated = prev.filter(r => r.id !== id);
+      try {
+        localStorage.setItem(getStorageKey('master_rooms'), JSON.stringify(updated));
+      } catch (_) { }
+      return updated;
+    });
+  }, [getStorageKey]);
+
+  const saveSessionRooms = useCallback((examId: string, rooms: string[]) => {
+    if (!activeAllotment) return;
+    const currentAllocation: SessionRoomAllocation = activeAllotment.roomAllocations?.[examId] || {
+      examId,
+      selectedRooms: [],
+      invigilatorDuties: [],
+      relieverDuties: [],
+      status: 'Pending',
+    };
+    const updatedAllocation: SessionRoomAllocation = {
+      ...currentAllocation,
+      selectedRooms: rooms,
+    };
+    const updatedRoomAllocations = {
+      ...(activeAllotment.roomAllocations || {}),
+      [examId]: updatedAllocation,
+    };
+    updateSavedAllotment(activeAllotment.id, {
+      roomAllocations: updatedRoomAllocations,
+    });
+  }, [activeAllotment, updateSavedAllotment]);
+
+  const saveSessionAllocation = useCallback((examId: string, allocation: SessionRoomAllocation) => {
+    if (!activeAllotment) return;
+    const updatedRoomAllocations = {
+      ...(activeAllotment.roomAllocations || {}),
+      [examId]: allocation,
+    };
+    updateSavedAllotment(activeAllotment.id, {
+      roomAllocations: updatedRoomAllocations,
+    });
+  }, [activeAllotment, updateSavedAllotment]);
+
   return (
     <AllotmentContext.Provider value={{
       invigilators, setInvigilators,
@@ -728,6 +837,13 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       isDirectoryCloudSynced,
       pdfPaletteId,
       setPdfPaletteId,
+      masterRooms,
+      setMasterRooms,
+      addMasterRoom,
+      updateMasterRoom,
+      deleteMasterRoom,
+      saveSessionRooms,
+      saveSessionAllocation,
     }}>
       {children}
     </AllotmentContext.Provider>
