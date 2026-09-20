@@ -149,13 +149,15 @@ export function RoomAllocationView({
                 </Badge>
               )}
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">
-              {isLocked
-                ? "Confirmed and locked against accidental changes."
-                : isGenerated
-                ? "Generated based on fair reliever distribution and room non-repetition."
-                : "Select rooms above, then click 'Generate Allocation'."}
-            </p>
+            {isLocked ? (
+              <p className="text-xs text-slate-500 mt-0.5">
+                Confirmed and locked against accidental changes.
+              </p>
+            ) : !isGenerated ? (
+              <p className="text-xs text-slate-500 mt-0.5">
+                Select rooms above, then click 'Generate Allocation'.
+              </p>
+            ) : null}
           </div>
         </div>
 
@@ -331,35 +333,26 @@ export function RoomAllocationView({
           </div>
 
           {/* Section 3: PDF Generation Action Bar */}
-          <div className="pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50/60 p-4 rounded-xl">
-            <div>
-              <div className="font-bold text-xs text-slate-800">Printable Outputs</div>
-              <div className="text-[11px] text-slate-500">
-                Generate official Room Allocation sheet or 2-slips-per-page Reliever Duty Slips.
-              </div>
-            </div>
+          <div className="pt-4 border-t border-slate-200 flex flex-wrap items-center justify-end gap-2.5 bg-slate-50/60 p-4 rounded-xl">
+            <Button
+              type="button"
+              onClick={onGenerateRoomAllocationPdf}
+              disabled={isGeneratingPdf}
+              className="bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs h-9 px-4 gap-1.5 shadow-xs"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              Room Allocation PDF
+            </Button>
 
-            <div className="flex flex-wrap items-center gap-2.5">
-              <Button
-                type="button"
-                onClick={onGenerateRoomAllocationPdf}
-                disabled={isGeneratingPdf}
-                className="bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs h-9 px-4 gap-1.5 shadow-xs"
-              >
-                <FileText className="w-3.5 h-3.5" />
-                Room Allocation PDF
-              </Button>
-
-              <Button
-                type="button"
-                onClick={onGenerateRelieverSlipsPdf}
-                disabled={isGeneratingPdf}
-                className="bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs h-9 px-4 gap-1.5 shadow-xs"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                Reliever Duty Slips (2 / Page)
-              </Button>
-            </div>
+            <Button
+              type="button"
+              onClick={onGenerateRelieverSlipsPdf}
+              disabled={isGeneratingPdf}
+              className="bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs h-9 px-4 gap-1.5 shadow-xs"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              Reliever Duty Slips
+            </Button>
           </div>
         </div>
       ) : (

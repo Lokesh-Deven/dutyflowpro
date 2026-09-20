@@ -8,7 +8,19 @@ import { useToast } from '@/hooks/use-toast';
 import { RoomMasterDialog } from '@/components/dashboard/room-allocations/room-master-dialog';
 import { SessionRoomSelector } from '@/components/dashboard/room-allocations/session-room-selector';
 import { RoomAllocationView } from '@/components/dashboard/room-allocations/room-allocation-view';
-import { generateRoomAllocationPdf, generateRelieverDutySlipsPdf } from '@/lib/room-pdf-service';
+import { MasterAllocationsDialog } from '@/components/dashboard/room-allocations/master-allocations-dialog';
+import {
+  generateRoomAllocationPdf,
+  generateRelieverDutySlipsPdf,
+  generateMasterRoomAllocationsPdf,
+} from '@/lib/room-pdf-service';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -24,7 +36,9 @@ import {
   ArrowRight,
   ShieldAlert,
   Lock,
-  ChevronRight
+  Unlock,
+  ChevronRight,
+  Eye,
 } from 'lucide-react';
 import { formatAppDate } from '@/lib/date-utils';
 import { Examination } from '@/lib/types';
@@ -36,12 +50,14 @@ export default function RoomAllocationsPage() {
     activeAllotment,
     savedAllotments,
     setActiveAllotment,
+    updateSavedAllotment,
     masterRooms,
     signatory,
     pdfPaletteId,
   } = useAllotment();
 
   const [isMasterRoomsOpen, setIsMasterRoomsOpen] = useState(false);
+  const [isMasterAllocationsOpen, setIsMasterAllocationsOpen] = useState(false);
   const [selectedExamId, setSelectedExamId] = useState<string | null>(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
@@ -51,6 +67,19 @@ export default function RoomAllocationsPage() {
       : null) ||
     (user?.user_metadata?.institution_name as string) ||
     'Institution Name';
+
+  // Check if all sessions with allocations are currently locked
+  const isAllLocked = useMemo(() => {
+    if (!activeAllotment?.examinations?.length) return false;
+    const allocs = activeAllotment.roomAllocations || {};
+    const allocatedSessions = activeAllotment.examinations.filter(
+      (e) => allocs[e.id]?.status === 'Generated' || allocs[e.id]?.status === 'Locked'
+    );
+    return (
+      allocatedSessions.length > 0 &&
+      allocatedSessions.every((e) => allocs[e.id]?.status === 'Locked')
+    );
+  }, [activeAllotment]);
 
   // Sorted examinations from active Master Allotment
   const sortedExaminations = useMemo(() => {
@@ -145,6 +174,78 @@ export default function RoomAllocationsPage() {
     }
   };
 
+  const handleDownloadMasterRoomAllocationsPdf = async () => {
+    if (!activeAllotment || !sortedExaminations.length) {
+      toast({
+        variant: "destructive",
+        title: "No Allotment Selected",
+        description: "Please select a Master Allotment first.",
+      });
+      return;
+    }
+    setIsGeneratingPdf(true);
+    try {
+      await generateMasterRoomAllocationsPdf({
+        examinations: sortedExaminations,
+        allotment: activeAllotment,
+        institutionName,
+        signatory,
+        paletteId: pdfPaletteId,
+      });
+      toast({
+        title: "Master PDF Downloaded",
+        description: `Successfully downloaded master room allocations for ${sortedExaminations.length} session(s).`,
+      });
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Export Failed",
+        description: err.message || "Failed to generate Master Room Allocations PDF.",
+      });
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
+  const handleToggleLockAll = () => {
+    if (!activeAllotment) return;
+    const currentAllocations = activeAllotment.roomAllocations || {};
+    const updatedAllocations = { ...currentAllocations };
+
+    const targetStatus = isAllLocked ? 'Generated' : 'Locked';
+    let count = 0;
+
+    activeAllotment.examinations.forEach((exam) => {
+      const existing = updatedAllocations[exam.id];
+      if (existing) {
+        updatedAllocations[exam.id] = {
+          ...existing,
+          status: targetStatus,
+          lockedAt: targetStatus === 'Locked' ? new Date().toISOString() : undefined,
+        };
+        count++;
+      }
+    });
+
+    if (count === 0) {
+      toast({
+        variant: "destructive",
+        title: "No Allocations to Lock",
+        description: "Please generate room allocations for at least one examination session first.",
+      });
+      return;
+    }
+
+    updateSavedAllotment(activeAllotment.id, {
+      roomAllocations: updatedAllocations,
+    });
+
+    toast({
+      title: targetStatus === 'Locked' ? "All Allocations Locked" : "All Allocations Unlocked",
+      description: `${targetStatus === 'Locked' ? 'Locked' : 'Unlocked'} room allocations across ${count} session(s).`,
+    });
+  };
+
   return (
     <div className="space-y-6 pb-12">
       {/* Top Banner & Action Header */}
@@ -158,9 +259,6 @@ export default function RoomAllocationsPage() {
               <h1 className="font-headline text-2xl font-black tracking-tight text-slate-800">
                 Room Allocations
               </h1>
-              <p className="text-xs text-slate-500 font-medium">
-                Stage 1 &bull; Room configuration, session selection, role division & duty slip exports
-              </p>
             </div>
           </div>
         </div>
@@ -240,23 +338,86 @@ export default function RoomAllocationsPage() {
       ) : (
         /* Main Active Allotment Workspace */
         <div className="space-y-5">
-          {/* Active Allotment Sub-bar */}
-          <div className="bg-indigo-50/70 border border-indigo-100 rounded-lg px-4 py-2.5 flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs">
-              <span className="font-bold text-[#1E2A5E]">Active Master Allotment:</span>
-              <span className="font-semibold text-slate-800">{activeAllotment.name}</span>
-              <Badge variant="outline" className="bg-white text-[10px] text-slate-600 border-indigo-200">
+          {/* Active Master Allotment Selector Sub-bar & Global Actions */}
+          <div className="bg-indigo-50/80 border border-indigo-100 rounded-xl p-3 sm:p-4 flex flex-col xl:flex-row xl:items-center justify-between gap-4 shadow-xs">
+            {/* 1. Select Master Allotment Dropdown */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+              <label htmlFor="master-allotment-select" className="font-bold text-xs text-[#1E2A5E] shrink-0">
+                Select Master Allotment:
+              </label>
+              <Select
+                value={activeAllotment?.id || ""}
+                onValueChange={(allotmentId) => {
+                  const found = savedAllotments.find((a) => a.id === allotmentId);
+                  if (found) {
+                    setActiveAllotment(found);
+                    if (found.examinations?.[0]) {
+                      setSelectedExamId(found.examinations[0].id);
+                    }
+                  }
+                }}
+              >
+                <SelectTrigger
+                  id="master-allotment-select"
+                  className="h-9 text-xs font-semibold w-full sm:w-[280px] bg-white border-indigo-200 text-slate-800 shadow-2xs"
+                >
+                  <SelectValue placeholder="Select Master Allotment" />
+                </SelectTrigger>
+                <SelectContent>
+                  {savedAllotments.map((sa) => (
+                    <SelectItem key={sa.id} value={sa.id} className="text-xs">
+                      <span className="font-semibold">{sa.name}</span>
+                      <span className="text-slate-400 text-[10px] ml-1.5">
+                        ({sa.examinations?.length || 0} Sessions)
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Badge
+                variant="outline"
+                className="bg-white text-[10px] text-indigo-700 border-indigo-200 font-semibold shrink-0 py-0.5 px-2"
+              >
                 {sortedExaminations.length} Sessions
               </Badge>
             </div>
 
-            <div className="flex items-center gap-3">
-              <Link
-                href="/dashboard/allotment"
-                className="text-xs text-[#1E2A5E] hover:underline font-semibold flex items-center gap-1"
+            {/* 2. Global Actions: View Master, Lock All */}
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsMasterAllocationsOpen(true)}
+                className="h-8 text-xs font-bold px-3 gap-1.5 bg-white text-[#1E2A5E] border-indigo-200 hover:bg-indigo-50 shadow-2xs"
               >
-                View Master Allotment Sheet &rarr;
-              </Link>
+                <Eye className="w-3.5 h-3.5 text-indigo-600" />
+                View Master Room Allocations
+              </Button>
+
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleToggleLockAll}
+                className={`h-8 text-xs font-bold px-3 gap-1.5 shadow-2xs ${
+                  isAllLocked
+                    ? "bg-amber-600 hover:bg-amber-700 text-white"
+                    : "bg-[#1E2A5E] hover:bg-[#151D42] text-white"
+                }`}
+              >
+                {isAllLocked ? (
+                  <>
+                    <Unlock className="w-3.5 h-3.5" />
+                    Unlock All Allocations
+                  </>
+                ) : (
+                  <>
+                    <Lock className="w-3.5 h-3.5" />
+                    Lock All Allocations
+                  </>
+                )}
+              </Button>
             </div>
           </div>
 
@@ -368,6 +529,17 @@ export default function RoomAllocationsPage() {
         open={isMasterRoomsOpen}
         onOpenChange={setIsMasterRoomsOpen}
       />
+
+      {/* Master Allocations Overview Modal */}
+      {activeAllotment && (
+        <MasterAllocationsDialog
+          open={isMasterAllocationsOpen}
+          onOpenChange={setIsMasterAllocationsOpen}
+          allotment={activeAllotment}
+          onDownloadPdf={handleDownloadMasterRoomAllocationsPdf}
+          isDownloadingPdf={isGeneratingPdf}
+        />
+      )}
     </div>
   );
 }

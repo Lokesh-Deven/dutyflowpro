@@ -1,9 +1,17 @@
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { format } from 'date-fns';
-import { Examination, SessionRoomAllocation, SignatoryInfo } from './types';
+import { Examination, SessionRoomAllocation, SignatoryInfo, SavedAllotment } from './types';
 import { getPdfPalette, DEFAULT_PALETTE_ID, PaletteId } from './pdf-palette';
 import { formatAppDateWithDay } from './date-utils';
+
+export interface GenerateMasterRoomPdfOptions {
+  examinations: Examination[];
+  allotment: SavedAllotment;
+  institutionName?: string;
+  signatory?: SignatoryInfo;
+  paletteId?: PaletteId;
+}
 
 interface GenerateRoomPdfOptions {
   examination: Examination;
@@ -237,7 +245,263 @@ export async function generateRoomAllocationPdf({
 }
 
 /**
- * 2. Generate Reliever's Duty Slips PDF
+ * 2. Generate Master Room Allocations PDF
+ * One single consolidated PDF containing all room allocations across all examination sessions.
+ */
+export async function generateMasterRoomAllocationsPdf({
+  examinations,
+  allotment,
+  institutionName = 'Institution Name',
+  signatory,
+  paletteId = DEFAULT_PALETTE_ID,
+}: GenerateMasterRoomPdfOptions): Promise<void> {
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const palette = getPdfPalette(paletteId);
+
+  const pageWidth = doc.internal.pageSize.getWidth(); // 210 mm
+  const pageHeight = doc.internal.pageSize.getHeight(); // 297 mm
+  const leftMargin = 14;
+  const rightMargin = 14;
+  const contentWidth = pageWidth - leftMargin - rightMargin; // 182 mm
+
+  const sortedExams = [...examinations].sort((a, b) => {
+    const dateA = new Date(a.date).getTime();
+    const dateB = new Date(b.date).getTime();
+    if (dateA !== dateB) return dateA - dateB;
+    return a.startTime.localeCompare(b.startTime);
+  });
+
+  const roomAllocations = allotment.roomAllocations || {};
+
+  sortedExams.forEach((exam, sessionIdx) => {
+    if (sessionIdx > 0) {
+      doc.addPage();
+    }
+
+    const allocation = roomAllocations[exam.id];
+    const examTitle = exam.examName || allotment.name || 'Examination';
+
+    // Header Banner
+    const bannerY = 12;
+    const bannerHeight = 25;
+    const stripeHeight = 1.4;
+
+    doc.setFillColor(palette.rgb.primary[0], palette.rgb.primary[1], palette.rgb.primary[2]);
+    doc.rect(leftMargin, bannerY, contentWidth, bannerHeight, 'F');
+
+    doc.setFillColor(palette.rgb.stripe[0], palette.rgb.stripe[1], palette.rgb.stripe[2]);
+    doc.rect(leftMargin, bannerY + bannerHeight - stripeHeight, contentWidth, stripeHeight, 'F');
+
+    let textY = bannerY + 7;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.setTextColor(255, 255, 255);
+    doc.text(institutionName.toUpperCase(), pageWidth / 2, textY, { align: 'center' });
+
+    textY += 5.5;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9.5);
+    doc.setTextColor(230, 235, 245);
+    doc.text(examTitle, pageWidth / 2, textY, { align: 'center' });
+
+    textY += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(255, 255, 255);
+    doc.text("MASTER ROOM ALLOCATION", pageWidth / 2, textY, { align: 'center' });
+
+    // Metadata Box
+    const metaY = bannerY + bannerHeight + 4;
+    const metaHeight = 16;
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(leftMargin, metaY, contentWidth, metaHeight, 1.5, 1.5, 'FD');
+
+    const formattedDate = formatAppDateWithDay(exam.date, 'Examination Date');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(51, 65, 85);
+
+    doc.text("Date:", leftMargin + 4, metaY + 6);
+    doc.setFont('helvetica', 'normal');
+    doc.text(formattedDate, leftMargin + 14, metaY + 6);
+
+    doc.setFont('helvetica', 'bold');
+    doc.text("Timings:", leftMargin + 100, metaY + 6);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${exam.startTime} to ${exam.endTime}`, leftMargin + 115, metaY + 6);
+
+    doc.setFont('helvetica', 'bold');
+    doc.text("Subject:", leftMargin + 4, metaY + 12);
+    doc.setFont('helvetica', 'normal');
+    doc.text(exam.subject, leftMargin + 18, metaY + 12);
+
+    doc.setFont('helvetica', 'bold');
+    doc.text("Status:", leftMargin + 100, metaY + 12);
+    doc.setFont('helvetica', 'normal');
+    const statusText = allocation?.status === 'Locked'
+      ? 'Locked'
+      : allocation?.status === 'Generated'
+      ? 'Generated'
+      : 'Pending Allocation';
+    doc.text(statusText, leftMargin + 113, metaY + 12);
+
+    let currentY = metaY + metaHeight + 6;
+
+    if (!allocation || allocation.status === 'Pending' || allocation.invigilatorDuties.length === 0) {
+      // Pending notice
+      doc.setFillColor(254, 242, 242);
+      doc.setDrawColor(254, 202, 202);
+      doc.roundedRect(leftMargin, currentY, contentWidth, 24, 2, 2, 'FD');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9.5);
+      doc.setTextColor(185, 28, 28);
+      doc.text("Room Allocation Pending for this Session", leftMargin + 8, currentY + 10);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(127, 29, 29);
+      doc.text(`Required Invigilators: ${exam.rooms || 0}  |  Required Relievers: ${exam.relievers || 0}`, leftMargin + 8, currentY + 16);
+      currentY += 32;
+    } else {
+      // 1. Invigilators Table
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10.5);
+      doc.setTextColor(30, 41, 59);
+      doc.text(`1. INVIGILATORS' DUTY (${allocation.invigilatorDuties.length} Rooms)`, leftMargin, currentY);
+
+      currentY += 2;
+
+      const invigilatorRows = allocation.invigilatorDuties.map((duty, idx) => [
+        (idx + 1).toString(),
+        duty.room,
+        duty.invigilatorName,
+        duty.designation || '',
+        '',
+      ]);
+
+      (doc as any).autoTable({
+        startY: currentY,
+        head: [['Sl No', 'Room No', 'Invigilator Name', 'Designation', 'Signature']],
+        body: invigilatorRows,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [palette.rgb.primary[0], palette.rgb.primary[1], palette.rgb.primary[2]],
+          textColor: [255, 255, 255],
+          fontSize: 8.5,
+          fontStyle: 'bold',
+          halign: 'center',
+          valign: 'middle',
+        },
+        bodyStyles: {
+          fontSize: 8.5,
+          textColor: [30, 41, 59],
+          valign: 'middle',
+          minCellHeight: 8.5,
+        },
+        columnStyles: {
+          0: { cellWidth: 16, halign: 'center' },
+          1: { cellWidth: 26, halign: 'center', fontStyle: 'bold' },
+          2: { cellWidth: 62, halign: 'left' },
+          3: { cellWidth: 42, halign: 'left' },
+          4: { cellWidth: 36, halign: 'center' },
+        },
+        margin: { left: leftMargin, right: rightMargin },
+      });
+
+      currentY = (doc as any).lastAutoTable.finalY + 8;
+
+      if (currentY + 45 > pageHeight) {
+        doc.addPage();
+        currentY = 16;
+      }
+
+      // 2. Relievers Table
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10.5);
+      doc.setTextColor(30, 41, 59);
+      doc.text(`2. RELIEVERS' DUTY (${allocation.relieverDuties.length} Relievers)`, leftMargin, currentY);
+
+      currentY += 2;
+
+      const relieverRows = allocation.relieverDuties.map((duty, idx) => [
+        (idx + 1).toString(),
+        duty.relieverName,
+        duty.designation || '',
+        duty.rooms.join(', '),
+        '',
+      ]);
+
+      (doc as any).autoTable({
+        startY: currentY,
+        head: [['Sl No', 'Reliever Name', 'Designation', 'Assigned Room Nos', 'Signature']],
+        body: relieverRows,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [79, 70, 229],
+          textColor: [255, 255, 255],
+          fontSize: 8.5,
+          fontStyle: 'bold',
+          halign: 'center',
+          valign: 'middle',
+        },
+        bodyStyles: {
+          fontSize: 8.5,
+          textColor: [30, 41, 59],
+          valign: 'middle',
+          minCellHeight: 8.5,
+        },
+        columnStyles: {
+          0: { cellWidth: 16, halign: 'center' },
+          1: { cellWidth: 50, halign: 'left', fontStyle: 'bold' },
+          2: { cellWidth: 40, halign: 'left' },
+          3: { cellWidth: 46, halign: 'left' },
+          4: { cellWidth: 30, halign: 'center' },
+        },
+        margin: { left: leftMargin, right: rightMargin },
+      });
+
+      currentY = (doc as any).lastAutoTable.finalY + 12;
+    }
+
+    // Signatory
+    if (currentY + 22 > pageHeight) {
+      doc.addPage();
+      currentY = 20;
+    }
+
+    const sigName = signatory?.name || 'Chief Superintendent';
+    const sigDesig = signatory?.designation || 'Principal / Examination In-Charge';
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(51, 65, 85);
+    doc.text(sigName, pageWidth - rightMargin - 4, currentY + 10, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.text(sigDesig, pageWidth - rightMargin - 4, currentY + 14, { align: 'right' });
+  });
+
+  // Page Numbers
+  const totalPages = (doc.internal as any).getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(148, 163, 184);
+    doc.text(
+      `DutyFlow Master Room Allocation • ${allotment.name} • Page ${i} of ${totalPages}`,
+      leftMargin,
+      pageHeight - 6
+    );
+  }
+
+  const safeName = allotment.name.replace(/[^a-zA-Z0-9_-]/g, '_');
+  doc.save(`Master_Room_Allocations_${safeName}.pdf`);
+}
+
+/**
+ * 3. Generate Reliever's Duty Slips PDF
  * Exactly 2 Slips Per Page designed specifically for printing and cutting.
  */
 export async function generateRelieverDutySlipsPdf({
