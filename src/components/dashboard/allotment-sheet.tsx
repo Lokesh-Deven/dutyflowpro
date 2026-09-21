@@ -933,8 +933,13 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                                   </div>
                                 </TooltipTrigger>
                                 <TooltipContent className="rounded-xl shadow-md border-slate-200 dark:border-slate-800 text-xs py-2 px-3">
-                                  <div className="space-y-1">
-                                    <div className="font-bold text-slate-900 dark:text-white">{exam.subject}</div>
+                                  <div className="space-y-1.5">
+                                    <div className={cn(
+                                      "font-bold text-xs px-2 py-0.5 rounded-md inline-block shadow-2xs",
+                                      dateColorMap[examDate] || 'bg-purple-100 text-[#6342e8] border border-purple-200 dark:bg-purple-950/70 dark:text-purple-300'
+                                    )}>
+                                      {exam.subject}
+                                    </div>
                                     <div className="text-slate-500 dark:text-slate-400">{formatAppDateWithDay(exam.date)}</div>
                                     <div className="text-[11px] text-slate-500 dark:text-slate-400">{formatTimeTo12Hour(exam.startTime)} – {formatTimeTo12Hour(exam.endTime)}</div>
                                     <div className={cn(
