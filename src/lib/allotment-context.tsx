@@ -105,6 +105,9 @@ interface AllotmentContextType {
   updateInstruction: (id: string, text: string) => void;
   toggleInstruction: (id: string) => void;
   deleteInstruction: (id: string) => void;
+  moveInstruction: (fromIndex: number, toIndex: number) => void;
+  reorderInstructions: (newInstructions: InstructionItem[]) => void;
+  saveInstructions: (customInstructions?: InstructionItem[]) => Promise<boolean>;
   resetInstructionsToDefault: () => void;
   signatory: SignatoryInfo;
   setSignatory: React.Dispatch<React.SetStateAction<SignatoryInfo>>;
@@ -266,6 +269,14 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
             }
           }
         }
+
+        if (userScope !== 'guest' && user?.id && isUUID(user.id)) {
+          const metaRooms = (user as any)?.user_metadata?.invigilation_master_rooms;
+          if (Array.isArray(metaRooms) && metaRooms.length > 0 && isMounted) {
+            setMasterRooms(metaRooms);
+            localStorage.setItem(`dutyflow_${userScope}_master_rooms`, JSON.stringify(metaRooms));
+          }
+        }
       } catch (_) { }
 
       // Load user-scoped signatory from localStorage
@@ -319,9 +330,28 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       const storedVersion = localStorage.getItem(versionKey);
 
       if (storedVersion !== 'v2') {
-        setInstructions(DEFAULT_INSTRUCTIONS);
-        localStorage.setItem(`dutyflow_${userScope}_instructions`, JSON.stringify(DEFAULT_INSTRUCTIONS));
-        localStorage.setItem(versionKey, 'v2');
+        const storedInstructions = localStorage.getItem(`dutyflow_${userScope}_instructions`);
+        if (storedInstructions) {
+          try {
+            const parsed = JSON.parse(storedInstructions);
+            if (Array.isArray(parsed) && isMounted && parsed.length > 0) {
+              setInstructions(parsed);
+              localStorage.setItem(versionKey, 'v2');
+            } else {
+              setInstructions(DEFAULT_INSTRUCTIONS);
+              localStorage.setItem(`dutyflow_${userScope}_instructions`, JSON.stringify(DEFAULT_INSTRUCTIONS));
+              localStorage.setItem(versionKey, 'v2');
+            }
+          } catch {
+            setInstructions(DEFAULT_INSTRUCTIONS);
+            localStorage.setItem(`dutyflow_${userScope}_instructions`, JSON.stringify(DEFAULT_INSTRUCTIONS));
+            localStorage.setItem(versionKey, 'v2');
+          }
+        } else {
+          setInstructions(DEFAULT_INSTRUCTIONS);
+          localStorage.setItem(`dutyflow_${userScope}_instructions`, JSON.stringify(DEFAULT_INSTRUCTIONS));
+          localStorage.setItem(versionKey, 'v2');
+        }
       } else {
         const storedInstructions = localStorage.getItem(`dutyflow_${userScope}_instructions`);
         if (storedInstructions) {
@@ -595,6 +625,52 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
     setInstructions(prev => prev.filter(item => item.id !== id));
   };
 
+  const moveInstruction = (fromIndex: number, toIndex: number) => {
+    setInstructions(prev => {
+      if (fromIndex < 0 || fromIndex >= prev.length || toIndex < 0 || toIndex >= prev.length || fromIndex === toIndex) {
+        return prev;
+      }
+      const updated = [...prev];
+      const [movedItem] = updated.splice(fromIndex, 1);
+      updated.splice(toIndex, 0, movedItem);
+      return updated;
+    });
+  };
+
+  const reorderInstructions = (newInstructions: InstructionItem[]) => {
+    setInstructions(newInstructions);
+  };
+
+  const saveInstructions = async (customInstructions?: InstructionItem[]): Promise<boolean> => {
+    const dataToSave = customInstructions || instructions;
+    const userScope = user?.id ? user.id : 'guest';
+    try {
+      localStorage.setItem(`dutyflow_${userScope}_instructions`, JSON.stringify(dataToSave));
+      localStorage.setItem(`dutyflow_${userScope}_inst_version`, 'v2');
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('dutyflow_session_instructions', JSON.stringify(dataToSave));
+      }
+      if (userScope === 'guest') {
+        localStorage.setItem('dutyflow_guest_instructions', JSON.stringify(dataToSave));
+      }
+    } catch (err) {
+      console.error("Failed to save instructions to localStorage/sessionStorage:", err);
+      return false;
+    }
+
+    if (user?.id && isUUID(user.id)) {
+      try {
+        await supabase.from('profiles').update({
+          custom_instructions: dataToSave,
+          updated_at: new Date().toISOString(),
+        }).eq('id', user.id);
+      } catch (err: any) {
+        console.warn("Cloud sync for instructions skipped or profile table doesn't have custom_instructions column:", err?.message || err);
+      }
+    }
+    return true;
+  };
+
   const resetInstructionsToDefault = () => {
     setInstructions(DEFAULT_INSTRUCTIONS);
   };
@@ -749,10 +825,13 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       const updated = [...prev, newRoom];
       try {
         localStorage.setItem(getStorageKey('master_rooms'), JSON.stringify(updated));
+        if (user?.id && isUUID(user.id)) {
+          supabase.auth.updateUser({ data: { invigilation_master_rooms: updated } }).catch(() => {});
+        }
       } catch (_) { }
       return updated;
     });
-  }, [getStorageKey]);
+  }, [getStorageKey, user?.id]);
 
   const updateMasterRoom = useCallback((id: string, name: string) => {
     const trimmed = name.trim();
@@ -761,20 +840,26 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       const updated = prev.map(r => r.id === id ? { ...r, name: trimmed } : r);
       try {
         localStorage.setItem(getStorageKey('master_rooms'), JSON.stringify(updated));
+        if (user?.id && isUUID(user.id)) {
+          supabase.auth.updateUser({ data: { invigilation_master_rooms: updated } }).catch(() => {});
+        }
       } catch (_) { }
       return updated;
     });
-  }, [getStorageKey]);
+  }, [getStorageKey, user?.id]);
 
   const deleteMasterRoom = useCallback((id: string) => {
     setMasterRooms(prev => {
       const updated = prev.filter(r => r.id !== id);
       try {
         localStorage.setItem(getStorageKey('master_rooms'), JSON.stringify(updated));
+        if (user?.id && isUUID(user.id)) {
+          supabase.auth.updateUser({ data: { invigilation_master_rooms: updated } }).catch(() => {});
+        }
       } catch (_) { }
       return updated;
     });
-  }, [getStorageKey]);
+  }, [getStorageKey, user?.id]);
 
   const saveSessionRooms = useCallback((examId: string, rooms: string[]) => {
     if (!activeAllotment) return;
@@ -823,6 +908,9 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       updateInstruction,
       toggleInstruction,
       deleteInstruction,
+      moveInstruction,
+      reorderInstructions,
+      saveInstructions,
       resetInstructionsToDefault,
       signatory, setSignatory,
       updateSignatory,

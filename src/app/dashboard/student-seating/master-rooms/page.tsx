@@ -17,22 +17,59 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { DoorOpen, Plus, Pencil, Trash2, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { DoorOpen, Plus, Pencil, Trash2, ShieldAlert, CheckCircle2, Save, CheckCheck, Cloud, ShieldCheck } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export default function MasterRoomsPage() {
-  const { rooms, addRoom, updateRoom, deleteRoom, isRoomInUse } = useStudentSeating();
+  const { rooms, addRoom, updateRoom, deleteRoom, isRoomInUse, saveRoomsToStorage, isRoomsCloudSynced } = useStudentSeating();
   const { toast } = useToast();
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState<SeatingMasterRoom | null>(null);
   const [roomToDelete, setRoomToDelete] = useState<SeatingMasterRoom | null>(null);
 
+  // Persistence and dirty state
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+
+  const handleSaveAllRooms = async () => {
+    setIsSaving(true);
+    try {
+      const ok = await saveRoomsToStorage();
+      if (ok) {
+        setHasUnsavedChanges(false);
+        const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        setLastSavedAt(timeStr);
+        toast({
+          title: "Added Rooms Saved Successfully",
+          description: `All ${rooms.length} master rooms have been saved and locked in. They are now retained for your next login and upcoming allocations.`,
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Save Failed",
+          description: "Could not save master rooms. Please try again.",
+        });
+      }
+    } catch {
+      toast({
+        variant: "destructive",
+        title: "Save Error",
+        description: "An unexpected error occurred while saving master rooms.",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleSaveRoom = (roomNo: string, leftBenches: number, rightBenches: number) => {
     if (editingRoom) {
       updateRoom(editingRoom.id, roomNo, leftBenches, rightBenches);
+      setHasUnsavedChanges(true);
       toast({
         title: "Room Updated",
-        description: `Room ${roomNo} has been updated successfully.`,
+        description: `Room ${roomNo} has been updated. Click "Save Added Rooms" to retain for next login.`,
       });
       setEditingRoom(null);
     } else {
@@ -48,9 +85,10 @@ export default function MasterRoomsPage() {
       }
 
       addRoom(roomNo, leftBenches, rightBenches);
+      setHasUnsavedChanges(true);
       toast({
         title: "Room Added",
-        description: `Room ${roomNo} with ${leftBenches + rightBenches} benches added.`,
+        description: `Room ${roomNo} with ${leftBenches + rightBenches} benches added. Click "Save Added Rooms" to preserve across logins.`,
       });
     }
   };
@@ -58,6 +96,7 @@ export default function MasterRoomsPage() {
   const confirmDelete = () => {
     if (!roomToDelete) return;
     deleteRoom(roomToDelete.id);
+    setHasUnsavedChanges(true);
     toast({
       title: "Room Deleted",
       description: `Room ${roomToDelete.roomNo} has been deleted.`,
@@ -75,11 +114,30 @@ export default function MasterRoomsPage() {
               <DoorOpen className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="font-headline text-2xl font-black tracking-tight text-slate-800">
-                Master Rooms
-              </h1>
+              <div className="flex items-center gap-2">
+                <h1 className="font-headline text-2xl font-black tracking-tight text-slate-800">
+                  Master Rooms
+                </h1>
+                {hasUnsavedChanges ? (
+                  <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-300/40 text-[10px] px-2 py-0.5 font-semibold rounded-full animate-pulse">
+                    Unsaved Room Additions
+                  </Badge>
+                ) : lastSavedAt ? (
+                  <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-300/40 text-[10px] px-2 py-0.5 font-semibold rounded-full hidden sm:inline-flex">
+                    <CheckCheck className="w-3 h-3 mr-1 text-emerald-600" /> Saved at {lastSavedAt}
+                  </Badge>
+                ) : isRoomsCloudSynced ? (
+                  <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-300/40 text-[10px] px-2 py-0.5 font-semibold rounded-full hidden sm:inline-flex">
+                    <Cloud className="w-3 h-3 mr-1 text-emerald-600" /> Cloud Retained
+                  </Badge>
+                ) : (
+                  <Badge className="bg-slate-100 text-slate-600 border border-slate-200 text-[10px] px-2 py-0.5 font-medium rounded-full hidden sm:inline-flex">
+                    <ShieldCheck className="w-3 h-3 mr-1 text-indigo-600" /> Login Persistent
+                  </Badge>
+                )}
+              </div>
               <p className="text-xs text-slate-500 font-medium">
-                Create and manage examination rooms and their seating capacity.
+                Create and manage examination rooms. Click &ldquo;Save Added Rooms&rdquo; to retain them permanently for all sessions and next logins.
               </p>
             </div>
           </div>
@@ -208,6 +266,31 @@ export default function MasterRoomsPage() {
             </table>
           </div>
         )}
+
+        {/* Table Footer Bar */}
+        <div className="p-3.5 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+          <div className="text-slate-500 font-medium">
+            Total Examination Rooms: <span className="font-bold text-slate-800">{rooms.length}</span>
+            {isRoomsCloudSynced && <span className="text-emerald-600 font-semibold ml-2">&bull; Synced with Cloud</span>}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              onClick={handleSaveAllRooms}
+              disabled={isSaving}
+              className={cn(
+                "h-8 px-3.5 text-xs font-bold rounded-lg transition-all gap-1.5 shadow-xs",
+                hasUnsavedChanges
+                  ? "bg-[#6342e8] hover:bg-[#5232d6] text-white"
+                  : "bg-emerald-600 hover:bg-emerald-700 text-white"
+              )}
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span>{hasUnsavedChanges ? "Save Added Rooms" : "Rooms Saved"}</span>
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* Add / Edit Room Modal */}

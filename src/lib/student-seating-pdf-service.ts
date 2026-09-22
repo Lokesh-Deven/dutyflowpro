@@ -123,11 +123,79 @@ export async function generateRoomSeatingPlanPdf({
     doc.setFont('helvetica', 'normal');
     doc.text(`${plan.vacantCount}`, leftMargin + 152, metaY + 10.5);
 
+    // ----------------------------------------------------------------
+    // Representational Classroom Blackboard Graphic (Front of Room)
+    // ----------------------------------------------------------------
+    const boardY = metaY + metaHeight + 3;
+    const boardHeight = 13.5;
+
+    // Wooden Outer Frame
+    doc.setFillColor(66, 37, 19); // #422513
+    doc.roundedRect(leftMargin, boardY, contentWidth, boardHeight, 1.6, 1.6, 'F');
+
+    // Chalkboard Surface (Classic dark chalkboard green)
+    const surfInset = 1.1;
+    const surfX = leftMargin + surfInset;
+    const surfY = boardY + surfInset;
+    const surfW = contentWidth - surfInset * 2;
+    const surfH = boardHeight - 2.8;
+    doc.setFillColor(20, 45, 35); // #142d23
+    doc.roundedRect(surfX, surfY, surfW, surfH, 1, 1, 'F');
+
+    // Inner subtle chalk border
+    doc.setDrawColor(42, 78, 62);
+    doc.setLineWidth(0.25);
+    doc.roundedRect(surfX + 0.8, surfY + 0.8, surfW - 1.6, surfH - 1.6, 0.6, 0.6, 'D');
+
+    // Bottom Wooden Chalk Tray / Ledge
+    const trayY = boardY + boardHeight - 1.6;
+    doc.setFillColor(49, 27, 13);
+    doc.rect(leftMargin + 8, trayY, contentWidth - 16, 1.2, 'F');
+
+    // Felt Chalk Duster on Tray
+    doc.setFillColor(146, 64, 14);
+    doc.rect(leftMargin + contentWidth - 36, trayY - 0.4, 6.5, 1.2, 'F');
+
+    // White & Yellow Chalk Sticks on Tray
+    doc.setFillColor(255, 255, 255);
+    doc.rect(leftMargin + contentWidth - 27, trayY - 0.2, 3.5, 0.8, 'F');
+    doc.setFillColor(253, 224, 71);
+    doc.rect(leftMargin + contentWidth - 22, trayY - 0.2, 3.2, 0.8, 'F');
+
+    // Chalkboard Title (Center)
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(255, 255, 255);
+    doc.text("[ BLACKBOARD  •  FRONT OF CLASSROOM / STAGE ]", pageWidth / 2, surfY + 3.8, { align: 'center' });
+
     // Graphical Two-Column Bench Layout (Left Side vs Right Side)
-    const gridTop = metaY + metaHeight + 4;
+    const gridTop = boardY + boardHeight + 3.2;
     const colWidth = (contentWidth - 6) / 2; // ~90 mm per column
     const leftColX = leftMargin;
     const rightColX = leftMargin + colWidth + 6;
+
+    // Directional orientation on chalkboard aligned with columns below
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(187, 247, 208); // Mint chalk
+    doc.text("◀ LEFT SIDE BENCHES", leftColX + colWidth / 2, surfY + 7.4, { align: 'center' });
+    doc.text("RIGHT SIDE BENCHES ▶", rightColX + colWidth / 2, surfY + 7.4, { align: 'center' });
+
+    // Center Facing Guidance
+    doc.setFontSize(6.5);
+    doc.setTextColor(253, 224, 71); // Yellow chalk
+    doc.text("▲ FACING THE BLACKBOARD ▲", pageWidth / 2, surfY + 7.4, { align: 'center' });
+
+    // Subtitle Clarification Note
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(5.6);
+    doc.setTextColor(226, 232, 240);
+    doc.text(
+      "(Facing the board: benches on your left and right correspond directly to the two columns below)",
+      pageWidth / 2,
+      surfY + 10.4,
+      { align: 'center' }
+    );
 
     // Column Headers
     doc.setFillColor(palette.rgb.primary[0], palette.rgb.primary[1], palette.rgb.primary[2]);
@@ -142,8 +210,8 @@ export async function generateRoomSeatingPlanPdf({
 
     const maxBenches = Math.max(plan.leftBenches, plan.rightBenches, 1);
     // Dynamic bench row height based on number of benches to comfortably fit A4
-    const availableHeight = pageHeight - gridTop - 28; // Leave room for signatory
-    const rowHeight = Math.min(18, Math.max(10, (availableHeight - 10) / maxBenches));
+    const availableHeight = pageHeight - gridTop - 24; // Leave room for signatory
+    const rowHeight = Math.min(16.5, Math.max(8.5, (availableHeight - 8) / maxBenches));
 
     const leftBenches = plan.benches.filter((b) => b.side === 'LEFT');
     const rightBenches = plan.benches.filter((b) => b.side === 'RIGHT');
@@ -191,34 +259,35 @@ export async function generateRoomSeatingPlanPdf({
           doc.setTextColor(148, 163, 184);
           doc.text("VACANT", midX, sy + (h - 1.2) / 2 + 1, { align: 'center' });
         } else {
+          const isCompact = h < 13.5;
           // Position tag (Side A / Center / Side B)
           const posLabel = seat.position === 'SIDE_A' ? 'A' : seat.position === 'SIDE_B' ? 'B' : 'C';
           doc.setFont('helvetica', 'bold');
-          doc.setFontSize(5.5);
+          doc.setFontSize(isCompact ? 5 : 5.5);
           doc.setTextColor(100, 116, 139);
-          doc.text(posLabel, sx + 2, sy + 3.2);
+          doc.text(posLabel, sx + 2, sy + (isCompact ? 2.8 : 3.2));
 
           // Roll Number (Prominent)
           doc.setFont('helvetica', 'bold');
-          doc.setFontSize(8);
+          doc.setFontSize(isCompact ? 7.5 : 8);
           doc.setTextColor(15, 23, 42);
-          doc.text(seat.student!.rollNo, midX, sy + (h > 14 ? 6.2 : 5.5), { align: 'center' });
+          doc.text(seat.student!.rollNo, midX, sy + (isCompact ? 4.8 : 5.8), { align: 'center' });
 
           // Student Name
           doc.setFont('helvetica', 'normal');
-          doc.setFontSize(6.5);
+          doc.setFontSize(isCompact ? 6 : 6.5);
           doc.setTextColor(51, 65, 85);
           const rawName = seat.student!.name;
           const truncName = rawName.length > 14 ? rawName.substring(0, 13) + '..' : rawName;
-          doc.text(truncName, midX, sy + (h > 14 ? 10.2 : 8.5), { align: 'center' });
+          doc.text(truncName, midX, sy + (isCompact ? 8.2 : 9.6), { align: 'center' });
 
           // Subject Name
-          if (h > 14 && seat.subjectName) {
+          if (!isCompact && seat.subjectName) {
             doc.setFont('helvetica', 'normal');
-            doc.setFontSize(5.5);
+            doc.setFontSize(5.2);
             doc.setTextColor(100, 116, 139);
-            const truncSub = seat.subjectName.length > 15 ? seat.subjectName.substring(0, 14) + '.' : seat.subjectName;
-            doc.text(truncSub, midX, sy + 13.5, { align: 'center' });
+            const truncSub = seat.subjectName.length > 16 ? seat.subjectName.substring(0, 15) + '.' : seat.subjectName;
+            doc.text(truncSub, midX, sy + 13.2, { align: 'center' });
           }
         }
       });

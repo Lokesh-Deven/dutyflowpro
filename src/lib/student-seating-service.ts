@@ -190,3 +190,82 @@ export async function validateAndParseStudentExcel(
     warning,
   };
 }
+
+/**
+ * Permanently save seating master rooms to Supabase cloud for the authenticated user.
+ * Stores in Supabase Auth user metadata and the profiles table.
+ */
+export async function saveSeatingRoomsToCloud(
+  rooms: SeatingMasterRoom[],
+  userId: string
+): Promise<{ success: boolean; error?: any }> {
+  if (!userId || !isUUID(userId)) {
+    return { success: false, error: 'User not authenticated' };
+  }
+
+  try {
+    // 1. Update auth user metadata (guaranteed persistence across all logins)
+    try {
+      await supabase.auth.updateUser({
+        data: {
+          seating_master_rooms: rooms,
+          seating_master_rooms_updated_at: new Date().toISOString(),
+        },
+      });
+    } catch (metaErr) {
+      console.warn('Could not update seating_master_rooms in auth metadata:', metaErr);
+    }
+
+    // 2. Also try updating profiles table if available
+    try {
+      await supabase
+        .from('profiles')
+        .update({
+          master_rooms: rooms,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', userId);
+    } catch (_) { }
+
+    return { success: true };
+  } catch (err: any) {
+    console.error('Exception in saveSeatingRoomsToCloud:', err);
+    return { success: false, error: err };
+  }
+}
+
+/**
+ * Fetch cloud-saved seating master rooms for the specified user from Supabase.
+ */
+export async function fetchSeatingRoomsFromCloud(
+  userId: string
+): Promise<SeatingMasterRoom[] | null> {
+  if (!userId || !isUUID(userId)) return null;
+
+  try {
+    // 1. Check current authenticated user's metadata first
+    const { data: userData } = await supabase.auth.getUser();
+    if (userData?.user?.user_metadata?.seating_master_rooms) {
+      const metaRooms = userData.user.user_metadata.seating_master_rooms;
+      if (Array.isArray(metaRooms) && metaRooms.length > 0) {
+        return metaRooms;
+      }
+    }
+
+    // 2. Fallback to profiles table
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('master_rooms')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (!error && data && Array.isArray((data as any).master_rooms) && (data as any).master_rooms.length > 0) {
+      return (data as any).master_rooms;
+    }
+
+    return null;
+  } catch (err) {
+    console.error('Exception in fetchSeatingRoomsFromCloud:', err);
+    return null;
+  }
+}

@@ -1,7 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { useAuth } from './auth-context';
+import { isUUID } from './storage-service';
 import {
   SeatingMasterRoom,
   StudentSubject,
@@ -11,6 +12,8 @@ import {
 import {
   DEFAULT_STUDENT_ROOMS,
   DEFAULT_STUDENT_SUBJECTS,
+  saveSeatingRoomsToCloud,
+  fetchSeatingRoomsFromCloud,
 } from './student-seating-service';
 
 interface StudentSeatingContextType {
@@ -20,12 +23,14 @@ interface StudentSeatingContextType {
   allocations: SeatingAllocationRecord[];
   activeAllocation: SeatingAllocationRecord | null;
   setActiveAllocation: (alloc: SeatingAllocationRecord | null) => void;
+  isRoomsCloudSynced: boolean;
 
   // Room Management
   addRoom: (roomNo: string, leftBenches: number, rightBenches: number) => SeatingMasterRoom;
   updateRoom: (id: string, roomNo: string, leftBenches: number, rightBenches: number) => void;
   deleteRoom: (id: string) => { success: boolean; wasInUse?: boolean };
   isRoomInUse: (roomId: string) => boolean;
+  saveRoomsToStorage: (roomsToSave?: SeatingMasterRoom[]) => Promise<boolean>;
 
   // Subject Management
   addSubject: (name: string, code?: string, expectedStudents?: number) => StudentSubject;
@@ -52,6 +57,7 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
   const [studentsBySubject, setStudentsBySubject] = useState<Record<string, StudentRecord[]>>({});
   const [allocations, setAllocations] = useState<SeatingAllocationRecord[]>([]);
   const [activeAllocation, setActiveAllocation] = useState<SeatingAllocationRecord | null>(null);
+  const [isRoomsCloudSynced, setIsRoomsCloudSynced] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
   const getStorageKey = useCallback((key: string) => {
@@ -59,13 +65,41 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
     return `dutyflow_${scope}_seating_${key}`;
   }, [user?.id]);
 
-  // Load user data from localStorage
+  // Load user data from localStorage and restore from cloud on login
   useEffect(() => {
+    let isMounted = true;
+    const currentUserId = user?.id;
+    const scope = currentUserId ? currentUserId : 'guest';
+
     try {
-      const storedRooms = localStorage.getItem(getStorageKey('rooms'));
+      let loadedRooms: SeatingMasterRoom[] | null = null;
+      const storedRooms = localStorage.getItem(`dutyflow_${scope}_seating_rooms`);
       if (storedRooms) {
-        setRooms(JSON.parse(storedRooms));
-      } else {
+        try {
+          const parsed = JSON.parse(storedRooms);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            loadedRooms = parsed;
+          }
+        } catch (_) {}
+      }
+
+      // If user is logged in and no user-specific rooms exist yet, check guest rooms for migration!
+      if (!loadedRooms && scope !== 'guest') {
+        const guestRooms = localStorage.getItem('dutyflow_guest_seating_rooms');
+        if (guestRooms) {
+          try {
+            const parsed = JSON.parse(guestRooms);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              loadedRooms = parsed;
+              localStorage.setItem(`dutyflow_${scope}_seating_rooms`, guestRooms);
+            }
+          } catch (_) {}
+        }
+      }
+
+      if (loadedRooms && isMounted) {
+        setRooms(loadedRooms);
+      } else if (!loadedRooms && isMounted) {
         setRooms(DEFAULT_STUDENT_ROOMS);
       }
 
@@ -92,9 +126,27 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       console.error('Error loading student seating data:', err);
     } finally {
-      setIsLoaded(true);
+      if (isMounted) setIsLoaded(true);
     }
-  }, [getStorageKey]);
+
+    // Next login cloud check: If user is logged in with valid UUID, fetch cloud-saved master rooms
+    if (currentUserId && isUUID(currentUserId)) {
+      fetchSeatingRoomsFromCloud(currentUserId).then((cloudRooms) => {
+        if (!isMounted) return;
+        if (cloudRooms && Array.isArray(cloudRooms) && cloudRooms.length > 0) {
+          setRooms(cloudRooms);
+          setIsRoomsCloudSynced(true);
+          try {
+            localStorage.setItem(`dutyflow_${currentUserId}_seating_rooms`, JSON.stringify(cloudRooms));
+          } catch (_) {}
+        }
+      });
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [getStorageKey, user?.id]);
 
   // Save changes to localStorage
   useEffect(() => {
@@ -108,6 +160,36 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
       console.error('Error saving student seating data to storage:', err);
     }
   }, [rooms, subjects, studentsBySubject, allocations, isLoaded, getStorageKey]);
+
+  // Save added rooms explicitly to storage and cloud
+  const saveRoomsToStorage = useCallback(async (roomsToSave?: SeatingMasterRoom[]): Promise<boolean> => {
+    const dataToSave = roomsToSave || rooms;
+    const scope = user?.id ? user.id : 'guest';
+
+    try {
+      localStorage.setItem(`dutyflow_${scope}_seating_rooms`, JSON.stringify(dataToSave));
+      if (scope !== 'guest') {
+        localStorage.setItem('dutyflow_guest_seating_rooms', JSON.stringify(dataToSave));
+      }
+    } catch (e) {
+      console.error('Error saving rooms to localStorage:', e);
+      return false;
+    }
+
+    if (user?.id && isUUID(user.id)) {
+      try {
+        const res = await saveSeatingRoomsToCloud(dataToSave, user.id);
+        if (res.success) {
+          setIsRoomsCloudSynced(true);
+          return true;
+        }
+      } catch (cloudErr) {
+        console.warn('Cloud sync error for master rooms:', cloudErr);
+      }
+    }
+
+    return true;
+  }, [rooms, user?.id]);
 
   // Room Management
   const addRoom = useCallback((roomNo: string, leftBenches: number, rightBenches: number): SeatingMasterRoom => {
@@ -278,6 +360,8 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
         updateRoom,
         deleteRoom,
         isRoomInUse,
+        saveRoomsToStorage,
+        isRoomsCloudSynced,
         addSubject,
         updateSubject,
         deleteSubject,
