@@ -56,6 +56,57 @@ export const DEFAULT_STUDENT_ROOMS: SeatingMasterRoom[] = [
   },
 ];
 
+/**
+ * Standard examination subjects sorted in alphabetical order
+ */
+export const STANDARD_STUDENT_SUBJECTS = [
+  'Biology',
+  'Business Studies',
+  'Chemistry',
+  'Computer Science',
+  'Economics',
+  'Education',
+  'Electronics',
+  'English',
+  'Geography',
+  'Geology',
+  'Hindi',
+  'History',
+  'Kannada',
+  'Logic',
+  'Mathematics',
+  'Physics',
+  'Political Science',
+  'Psychology',
+  'Sanskrit',
+  'Sociology',
+  'Statistics',
+] as const;
+
+export const STANDARD_SUBJECT_CODES: Record<string, string> = {
+  'Biology': 'BIO',
+  'Business Studies': 'BST',
+  'Chemistry': 'CHM',
+  'Computer Science': 'CSC',
+  'Economics': 'ECO',
+  'Education': 'EDU',
+  'Electronics': 'ELE',
+  'English': 'ENG',
+  'Geography': 'GEO',
+  'Geology': 'GEL',
+  'Hindi': 'HIN',
+  'History': 'HIS',
+  'Kannada': 'KAN',
+  'Logic': 'LOG',
+  'Mathematics': 'MAT',
+  'Physics': 'PHY',
+  'Political Science': 'POL',
+  'Psychology': 'PSY',
+  'Sanskrit': 'SAN',
+  'Sociology': 'SOC',
+  'Statistics': 'STA',
+};
+
 export const DEFAULT_STUDENT_SUBJECTS: StudentSubject[] = [
   { id: 'subj-phy', name: 'Physics', code: 'PHY101', expectedStudents: 200, uploadedStudentsCount: 0 },
   { id: 'subj-chem', name: 'Chemistry', code: 'CHM101', expectedStudents: 200, uploadedStudentsCount: 0 },

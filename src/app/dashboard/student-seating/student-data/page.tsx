@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useStudentSeating } from '@/lib/student-seating-context';
 import { StudentSubject, StudentRecord } from '@/lib/student-seating-types';
+import { STANDARD_STUDENT_SUBJECTS, STANDARD_SUBJECT_CODES } from '@/lib/student-seating-service';
 import { StudentUploadDialog } from '@/components/dashboard/student-seating/student-upload-dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -26,7 +27,10 @@ import {
   CheckCircle2,
   FileSpreadsheet,
   AlertCircle,
+  ChevronDown,
+  Check,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export default function StudentDataPage() {
   const {
@@ -46,9 +50,49 @@ export default function StudentDataPage() {
   const [newSubjCode, setNewSubjCode] = useState('');
   const [newSubjExpected, setNewSubjExpected] = useState<number>(100);
 
+  // Combobox state for Subject Name
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click or Escape
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  // Filter standard subjects matching user input
+  const filteredSubjects = useMemo(() => {
+    const query = newSubjName.trim().toLowerCase();
+    if (!query) return STANDARD_STUDENT_SUBJECTS;
+    return STANDARD_STUDENT_SUBJECTS.filter((s) => s.toLowerCase().includes(query));
+  }, [newSubjName]);
+
+  const handleSelectSubject = (subject: string) => {
+    setNewSubjName(subject);
+    if (!newSubjCode.trim() && STANDARD_SUBJECT_CODES[subject]) {
+      setNewSubjCode(STANDARD_SUBJECT_CODES[subject]);
+    }
+    setIsDropdownOpen(false);
+  };
+
   const handleCreateSubject = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newSubjName.trim()) return;
+    setIsDropdownOpen(false);
 
     addSubject(newSubjName.trim(), newSubjCode.trim() || undefined, newSubjExpected || 0);
     toast({
@@ -92,7 +136,10 @@ export default function StudentDataPage() {
 
         <div>
           <Button
-            onClick={() => setIsAddSubjectOpen(true)}
+            onClick={() => {
+              setIsDropdownOpen(false);
+              setIsAddSubjectOpen(true);
+            }}
             className="bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs h-9 px-4 gap-1.5 shadow-xs"
           >
             <Plus className="w-4 h-4" />
@@ -201,7 +248,13 @@ export default function StudentDataPage() {
       </div>
 
       {/* Add Subject Modal */}
-      <Dialog open={isAddSubjectOpen} onOpenChange={setIsAddSubjectOpen}>
+      <Dialog
+        open={isAddSubjectOpen}
+        onOpenChange={(open) => {
+          setIsAddSubjectOpen(open);
+          if (!open) setIsDropdownOpen(false);
+        }}
+      >
         <DialogContent className="sm:max-w-md bg-white border border-slate-200">
           <DialogHeader>
             <div className="flex items-center gap-2.5 mb-1">
@@ -218,19 +271,90 @@ export default function StudentDataPage() {
           </DialogHeader>
 
           <form onSubmit={handleCreateSubject} className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="subj-name" className="text-xs font-bold text-slate-700">
-                Subject Name <span className="text-rose-500">*</span>
-              </Label>
-              <Input
-                id="subj-name"
-                placeholder="e.g. Physics, Accountancy, Mathematics"
-                value={newSubjName}
-                onChange={(e) => setNewSubjName(e.target.value)}
-                className="text-xs font-semibold"
-                autoFocus
-                required
-              />
+            <div className="space-y-1.5 relative" ref={dropdownRef}>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="subj-name" className="text-xs font-bold text-slate-700">
+                  Subject Name <span className="text-rose-500">*</span>
+                </Label>
+                <span className="text-[10px] text-slate-400 font-medium">
+                  Select or type
+                </span>
+              </div>
+
+              <div className="relative">
+                <Input
+                  id="subj-name"
+                  placeholder="Select from dropdown or type custom subject..."
+                  value={newSubjName}
+                  onChange={(e) => {
+                    setNewSubjName(e.target.value);
+                    setIsDropdownOpen(true);
+                  }}
+                  onClick={() => setIsDropdownOpen(true)}
+                  className="text-xs font-semibold pr-9 bg-slate-50/50 focus:bg-white transition-colors"
+                  required
+                  autoComplete="off"
+                />
+                <button
+                  type="button"
+                  onClick={() => setIsDropdownOpen((prev) => !prev)}
+                  tabIndex={-1}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-indigo-600 transition-colors rounded-sm"
+                  title="Toggle standard subjects list"
+                >
+                  <ChevronDown
+                    className={cn(
+                      "w-4 h-4 transition-transform duration-200",
+                      isDropdownOpen && "rotate-180 text-indigo-600"
+                    )}
+                  />
+                </button>
+              </div>
+
+              {/* Enhanced Visual Dropdown Menu */}
+              {isDropdownOpen && (
+                <div className="absolute left-0 right-0 z-50 mt-1 max-h-56 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-xl py-1 text-xs divide-y divide-slate-100 animate-in fade-in-50 zoom-in-95 duration-100">
+                  <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/95 sticky top-0 flex items-center justify-between z-10 backdrop-blur-xs">
+                    <span>Standard Subjects ({STANDARD_STUDENT_SUBJECTS.length})</span>
+                    <span className="text-[9px] font-semibold text-indigo-600">A – Z</span>
+                  </div>
+
+                  <div className="py-0.5">
+                    {filteredSubjects.length > 0 ? (
+                      filteredSubjects.map((subj) => {
+                        const isSelected = newSubjName.trim().toLowerCase() === subj.toLowerCase();
+                        return (
+                          <button
+                            key={subj}
+                            type="button"
+                            onClick={() => handleSelectSubject(subj)}
+                            className={cn(
+                              "w-full text-left px-3 py-2 flex items-center justify-between transition-colors hover:bg-indigo-50/80 hover:text-indigo-900 group",
+                              isSelected ? "bg-indigo-50 font-bold text-indigo-700" : "text-slate-700 font-medium"
+                            )}
+                          >
+                            <span>{subj}</span>
+                            {isSelected ? (
+                              <Check className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                            ) : (
+                              <span className="text-[10px] text-slate-400 font-mono">
+                                {STANDARD_SUBJECT_CODES[subj] || ''}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <div className="p-3 text-center space-y-1">
+                        <p className="text-slate-600 font-semibold text-xs">Custom Subject</p>
+                        <p className="text-[11px] text-slate-500">
+                          Click &ldquo;Create Subject&rdquo; to use <span className="font-bold text-slate-800">&ldquo;{newSubjName}&rdquo;</span>
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -249,7 +373,7 @@ export default function StudentDataPage() {
 
               <div className="space-y-1.5">
                 <Label htmlFor="subj-expected" className="text-xs font-bold text-slate-700">
-                  Expected Students
+                  Student Strength
                 </Label>
                 <Input
                   id="subj-expected"
