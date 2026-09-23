@@ -86,23 +86,85 @@ export function runDeterministicSeatingAllocation(input: RunAllocationInput): Ru
     const benches: PhysicalBench[] = [];
     let roomAllocatedCount = 0;
 
-    // Left Side Benches (01 to leftBenches)
-    for (let b = 1; b <= room.leftBenches; b++) {
+    const allocateSingleBench = (benchNumber: number, side: 'LEFT' | 'RIGHT'): PhysicalBench => {
       const seats: BenchPositionSeat[] = [];
 
-      for (const pos of activePositions) {
-        const targetSubjectId = positionMapping[pos];
-        let assignedStudent: StudentRecord | undefined = undefined;
-        let assignedSubjectName: string | undefined = undefined;
+      // Check which subjects still have students in queue
+      const remainingSubjectIds = subjects
+        .map((s) => s.id)
+        .filter((sId) => (subjectPointers[sId] || 0) < (queues[sId]?.length || 0));
 
-        if (targetSubjectId && queues[targetSubjectId]) {
-          const ptr = subjectPointers[targetSubjectId];
-          const studentList = queues[targetSubjectId];
+      if (remainingSubjectIds.length === 0) {
+        // All subjects exhausted - all seats on this bench are vacant
+        for (const pos of activePositions) {
+          seats.push({
+            position: pos,
+            student: undefined,
+            subjectId: undefined,
+            subjectName: undefined,
+          });
+        }
+      } else if (remainingSubjectIds.length === 1 && pattern === '3_PER_BENCH') {
+        // Special Single-Subject Logic (User Rule):
+        // When only one subject remains, allocate 2 students per bench on SIDE_A and SIDE_B,
+        // leaving the CENTER seat vacant to separate students of the same subject.
+        const soleSubjId = remainingSubjectIds[0];
+        const soleSubjName = subjects.find((s) => s.id === soleSubjId)?.name;
+        const studentList = queues[soleSubjId];
 
+        for (const pos of activePositions) {
+          let assignedStudent: StudentRecord | undefined = undefined;
+          let assignedSubjectName: string | undefined = undefined;
+          let assignedSubjectId: string | undefined = undefined;
+
+          if (pos === 'CENTER') {
+            // Center is intentionally left vacant when single subject is on a 3-seat bench
+            assignedStudent = undefined;
+          } else {
+            // SIDE_A or SIDE_B gets student if available in queue
+            const ptr = subjectPointers[soleSubjId];
+            if (ptr < studentList.length) {
+              assignedStudent = studentList[ptr];
+              subjectPointers[soleSubjId] = ptr + 1;
+              assignedSubjectId = soleSubjId;
+              assignedSubjectName = soleSubjName;
+
+              if (studentSeatMap.has(assignedStudent.id)) {
+                duplicateStudentDetected = true;
+              } else {
+                studentSeatMap.add(assignedStudent.id);
+              }
+
+              roomAllocatedCount++;
+              totalAllocated++;
+            }
+          }
+
+          seats.push({
+            position: pos,
+            student: assignedStudent,
+            subjectId: assignedSubjectId,
+            subjectName: assignedSubjectName,
+          });
+        }
+      } else if (remainingSubjectIds.length === 1 && pattern === '2_PER_BENCH') {
+        // When only one subject remains on 2_PER_BENCH:
+        // Allocate students to both SIDE_A and SIDE_B (up to 2 students per bench)
+        const soleSubjId = remainingSubjectIds[0];
+        const soleSubjName = subjects.find((s) => s.id === soleSubjId)?.name;
+        const studentList = queues[soleSubjId];
+
+        for (const pos of activePositions) {
+          let assignedStudent: StudentRecord | undefined = undefined;
+          let assignedSubjectName: string | undefined = undefined;
+          let assignedSubjectId: string | undefined = undefined;
+
+          const ptr = subjectPointers[soleSubjId];
           if (ptr < studentList.length) {
             assignedStudent = studentList[ptr];
-            subjectPointers[targetSubjectId] = ptr + 1;
-            assignedSubjectName = subjects.find((s) => s.id === targetSubjectId)?.name;
+            subjectPointers[soleSubjId] = ptr + 1;
+            assignedSubjectId = soleSubjId;
+            assignedSubjectName = soleSubjName;
 
             if (studentSeatMap.has(assignedStudent.id)) {
               duplicateStudentDetected = true;
@@ -113,65 +175,67 @@ export function runDeterministicSeatingAllocation(input: RunAllocationInput): Ru
             roomAllocatedCount++;
             totalAllocated++;
           }
-        }
 
-        seats.push({
-          position: pos,
-          student: assignedStudent,
-          subjectId: assignedStudent ? targetSubjectId : undefined,
-          subjectName: assignedSubjectName,
-        });
+          seats.push({
+            position: pos,
+            student: assignedStudent,
+            subjectId: assignedSubjectId,
+            subjectName: assignedSubjectName,
+          });
+        }
+      } else {
+        // Standard multi-subject allocation following positionMapping
+        for (const pos of activePositions) {
+          const targetSubjectId = positionMapping[pos];
+          let assignedStudent: StudentRecord | undefined = undefined;
+          let assignedSubjectName: string | undefined = undefined;
+          let assignedSubjectId: string | undefined = undefined;
+
+          if (targetSubjectId && queues[targetSubjectId]) {
+            const ptr = subjectPointers[targetSubjectId];
+            const studentList = queues[targetSubjectId];
+
+            if (ptr < studentList.length) {
+              assignedStudent = studentList[ptr];
+              subjectPointers[targetSubjectId] = ptr + 1;
+              assignedSubjectId = targetSubjectId;
+              assignedSubjectName = subjects.find((s) => s.id === targetSubjectId)?.name;
+
+              if (studentSeatMap.has(assignedStudent.id)) {
+                duplicateStudentDetected = true;
+              } else {
+                studentSeatMap.add(assignedStudent.id);
+              }
+
+              roomAllocatedCount++;
+              totalAllocated++;
+            }
+          }
+
+          seats.push({
+            position: pos,
+            student: assignedStudent,
+            subjectId: assignedSubjectId,
+            subjectName: assignedSubjectName,
+          });
+        }
       }
 
-      benches.push({
-        benchNumber: b,
-        side: 'LEFT',
+      return {
+        benchNumber,
+        side,
         seats,
-      });
+      };
+    };
+
+    // Left Side Benches (01 to leftBenches)
+    for (let b = 1; b <= room.leftBenches; b++) {
+      benches.push(allocateSingleBench(b, 'LEFT'));
     }
 
     // Right Side Benches (01 to rightBenches)
     for (let b = 1; b <= room.rightBenches; b++) {
-      const seats: BenchPositionSeat[] = [];
-
-      for (const pos of activePositions) {
-        const targetSubjectId = positionMapping[pos];
-        let assignedStudent: StudentRecord | undefined = undefined;
-        let assignedSubjectName: string | undefined = undefined;
-
-        if (targetSubjectId && queues[targetSubjectId]) {
-          const ptr = subjectPointers[targetSubjectId];
-          const studentList = queues[targetSubjectId];
-
-          if (ptr < studentList.length) {
-            assignedStudent = studentList[ptr];
-            subjectPointers[targetSubjectId] = ptr + 1;
-            assignedSubjectName = subjects.find((s) => s.id === targetSubjectId)?.name;
-
-            if (studentSeatMap.has(assignedStudent.id)) {
-              duplicateStudentDetected = true;
-            } else {
-              studentSeatMap.add(assignedStudent.id);
-            }
-
-            roomAllocatedCount++;
-            totalAllocated++;
-          }
-        }
-
-        seats.push({
-          position: pos,
-          student: assignedStudent,
-          subjectId: assignedStudent ? targetSubjectId : undefined,
-          subjectName: assignedSubjectName,
-        });
-      }
-
-      benches.push({
-        benchNumber: b,
-        side: 'RIGHT',
-        seats,
-      });
+      benches.push(allocateSingleBench(b, 'RIGHT'));
     }
 
     const vacantCount = roomCapacity - roomAllocatedCount;
