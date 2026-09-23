@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Examination } from '@/lib/types';
 import { useAllotment } from '@/lib/allotment-context';
+import { generateSessionRoomAllocation } from '@/lib/room-allocation-engine';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -17,7 +18,8 @@ import {
   CheckCircle2,
   AlertTriangle,
   Save,
-  PlusCircle
+  PlusCircle,
+  Sparkles,
 } from 'lucide-react';
 import { formatAppDate } from '@/lib/date-utils';
 
@@ -32,7 +34,7 @@ export function SessionRoomSelector({
   onOpenMasterRooms,
   onProceedToAllocation,
 }: SessionRoomSelectorProps) {
-  const { masterRooms, activeAllotment, saveSessionRooms } = useAllotment();
+  const { masterRooms, activeAllotment, saveSessionRooms, saveSessionAllocation, clearSessionAllocation } = useAllotment();
   const { toast } = useToast();
 
   const currentAllocation = activeAllotment?.roomAllocations?.[examination.id];
@@ -90,12 +92,74 @@ export function SessionRoomSelector({
   const handleClear = () => {
     if (isLocked) return;
     setSelectedRooms([]);
-    setIsDirty(true);
+    setIsDirty(false);
+    clearSessionAllocation(examination.id);
+    toast({
+      title: "Room Selection Cleared",
+      description: `Cleared rooms and duty allocations for ${examination.subject}.`,
+    });
+  };
+
+  const handleAllocateDuties = () => {
+    if (isLocked || !activeAllotment) return;
+    if (selectedRooms.length !== requiredInvigilators) {
+      toast({
+        variant: "destructive",
+        title: "Room Count Mismatch",
+        description: `Please select exactly ${requiredInvigilators} rooms before allocating duty roles.`,
+      });
+      return;
+    }
+
+    saveSessionRooms(examination.id, selectedRooms);
+    setIsDirty(false);
+
+    const res = generateSessionRoomAllocation(examination, activeAllotment, selectedRooms);
+    if (res.success && res.allocation) {
+      saveSessionAllocation(examination.id, res.allocation);
+      toast({
+        title: "Room & Duty Allocation Generated",
+        description: `Successfully allocated ${res.allocation.invigilatorDuties.length} room(s) and ${res.allocation.relieverDuties.length} reliever(s).`,
+      });
+      if (res.warnings && res.warnings.length > 0) {
+        toast({
+          title: "Allocation Notice",
+          description: res.warnings[0],
+        });
+      }
+      onProceedToAllocation?.();
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Allocation Notice",
+        description: res.errors?.[0] || "Could not generate allocation.",
+      });
+    }
   };
 
   const handleSave = () => {
     saveSessionRooms(examination.id, selectedRooms);
     setIsDirty(false);
+
+    // If room count matches requirement, automatically allocate so Duty Role & Room Allocation is not empty
+    if (isExactMatch && activeAllotment) {
+      const res = generateSessionRoomAllocation(examination, activeAllotment, selectedRooms);
+      if (res.success && res.allocation) {
+        saveSessionAllocation(examination.id, res.allocation);
+        toast({
+          title: "Rooms Saved & Duties Allocated",
+          description: `Saved ${selectedRooms.length} room(s) and generated duty role assignments.`,
+        });
+        if (res.warnings && res.warnings.length > 0) {
+          toast({
+            title: "Allocation Notice",
+            description: res.warnings[0],
+          });
+        }
+        return;
+      }
+    }
+
     toast({
       title: "Room Selection Saved",
       description: `Saved ${selectedRooms.length} rooms for ${examination.subject}.`,
@@ -153,14 +217,27 @@ export function SessionRoomSelector({
       {/* Real-time Room Count Validation Banner */}
       <div>
         {isExactMatch ? (
-          <div className="flex items-center gap-3 p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg text-xs">
-            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-            <div>
-              <span className="font-bold">✓ {selectedCount} rooms selected for {requiredInvigilators} invigilators.</span>
-              <p className="text-emerald-700 text-[11px] mt-0.5">
-                Room count matches requirement. You can save selection and proceed with role and room allocation.
-              </p>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg text-xs">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+              <div>
+                <span className="font-bold">✓ {selectedCount} rooms selected for {requiredInvigilators} invigilators.</span>
+                <p className="text-emerald-700 text-[11px] mt-0.5">
+                  Room count matches requirement. Click &ldquo;Allocate Roles &amp; Rooms&rdquo; below to assign duties.
+                </p>
+              </div>
             </div>
+            {!isLocked && (
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleAllocateDuties}
+                className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs h-8 px-3.5 shrink-0 gap-1.5 shadow-2xs cursor-pointer"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Allocate Duties Now
+              </Button>
+            )}
           </div>
         ) : isShortage ? (
           <div className="flex items-center gap-3 p-3.5 bg-red-50 border border-red-200 text-red-800 rounded-lg text-xs">
@@ -291,12 +368,28 @@ export function SessionRoomSelector({
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {isExactMatch && !isLocked && (
+            <Button
+              type="button"
+              onClick={handleAllocateDuties}
+              className="bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs h-9 px-4 gap-1.5 shadow-xs"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              {currentAllocation?.status === 'Generated' ? 'Re-allocate Roles & Rooms' : 'Allocate Roles & Rooms'}
+            </Button>
+          )}
+
           <Button
             type="button"
+            variant={isExactMatch ? "outline" : "default"}
             onClick={handleSave}
             disabled={isLocked || (!isDirty && selectedRooms.length === 0)}
-            className="bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs h-9 px-4 gap-1.5 shadow-xs"
+            className={`text-xs font-bold h-9 px-4 gap-1.5 shadow-xs ${
+              isExactMatch
+                ? "border-slate-300 text-slate-700 hover:bg-slate-50"
+                : "bg-[#1E2A5E] hover:bg-[#151D42] text-white"
+            }`}
           >
             <Save className="w-3.5 h-3.5" />
             Save Room Selection

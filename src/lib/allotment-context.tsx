@@ -131,6 +131,8 @@ interface AllotmentContextType {
   deleteMasterRoom: (id: string) => void;
   saveSessionRooms: (examId: string, rooms: string[]) => void;
   saveSessionAllocation: (examId: string, allocation: SessionRoomAllocation) => void;
+  clearAllSessionAllocations: (allotmentId?: string) => void;
+  clearSessionAllocation: (examId: string) => void;
 }
 
 const AllotmentContext = createContext<AllotmentContextType | undefined>(undefined);
@@ -894,6 +896,23 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
     });
   }, [activeAllotment, updateSavedAllotment]);
 
+  const clearAllSessionAllocations = useCallback((allotmentId?: string) => {
+    const targetId = allotmentId || activeAllotment?.id;
+    if (!targetId) return;
+    updateSavedAllotment(targetId, {
+      roomAllocations: {},
+    });
+  }, [activeAllotment?.id, updateSavedAllotment]);
+
+  const clearSessionAllocation = useCallback((examId: string) => {
+    if (!activeAllotment) return;
+    const updatedRoomAllocations = { ...(activeAllotment.roomAllocations || {}) };
+    delete updatedRoomAllocations[examId];
+    updateSavedAllotment(activeAllotment.id, {
+      roomAllocations: updatedRoomAllocations,
+    });
+  }, [activeAllotment, updateSavedAllotment]);
+
   return (
     <AllotmentContext.Provider value={{
       invigilators, setInvigilators,
@@ -932,6 +951,8 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       deleteMasterRoom,
       saveSessionRooms,
       saveSessionAllocation,
+      clearAllSessionAllocations,
+      clearSessionAllocation,
     }}>
       {children}
     </AllotmentContext.Provider>

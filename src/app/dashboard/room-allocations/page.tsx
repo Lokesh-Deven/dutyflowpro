@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
 import { useAllotment } from '@/lib/allotment-context';
@@ -24,6 +24,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   DoorOpen,
   Calendar,
   Clock,
@@ -39,6 +49,7 @@ import {
   Unlock,
   ChevronRight,
   Eye,
+  RotateCcw,
 } from 'lucide-react';
 import { formatAppDate } from '@/lib/date-utils';
 import { Examination } from '@/lib/types';
@@ -54,12 +65,15 @@ export default function RoomAllocationsPage() {
     masterRooms,
     signatory,
     pdfPaletteId,
+    clearAllSessionAllocations,
   } = useAllotment();
 
   const [isMasterRoomsOpen, setIsMasterRoomsOpen] = useState(false);
   const [isMasterAllocationsOpen, setIsMasterAllocationsOpen] = useState(false);
+  const [isClearAllConfirmOpen, setIsClearAllConfirmOpen] = useState(false);
   const [selectedExamId, setSelectedExamId] = useState<string | null>(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const allocationSectionRef = useRef<HTMLDivElement>(null);
 
   const institutionName =
     (profile?.institution_name && profile.institution_name !== 'Guest Profile'
@@ -246,6 +260,28 @@ export default function RoomAllocationsPage() {
     });
   };
 
+  const hasAnyRoomAllocations = useMemo(() => {
+    if (!activeAllotment?.roomAllocations) return false;
+    const allocs = activeAllotment.roomAllocations;
+    return Object.values(allocs).some(
+      (a) =>
+        (a?.selectedRooms && a.selectedRooms.length > 0) ||
+        (a?.invigilatorDuties && a.invigilatorDuties.length > 0) ||
+        a?.status === 'Generated' ||
+        a?.status === 'Locked'
+    );
+  }, [activeAllotment?.roomAllocations]);
+
+  const handleClearAllAllocations = () => {
+    if (!activeAllotment) return;
+    clearAllSessionAllocations(activeAllotment.id);
+    setIsClearAllConfirmOpen(false);
+    toast({
+      title: "All Room Allocations Cleared",
+      description: `All room selections and duty allocations have been reset for "${activeAllotment.name}". You can start fresh.`,
+    });
+  };
+
   return (
     <div className="space-y-6 pb-12">
       {/* Top Banner & Action Header */}
@@ -418,6 +454,18 @@ export default function RoomAllocationsPage() {
                   </>
                 )}
               </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsClearAllConfirmOpen(true)}
+                disabled={!hasAnyRoomAllocations}
+                className="h-8 text-xs font-bold px-3 gap-1.5 text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300 shadow-2xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Clear All Allocations
+              </Button>
             </div>
           </div>
 
@@ -511,14 +559,19 @@ export default function RoomAllocationsPage() {
               <SessionRoomSelector
                 examination={activeExam}
                 onOpenMasterRooms={() => setIsMasterRoomsOpen(true)}
+                onProceedToAllocation={() => {
+                  allocationSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }}
               />
 
-              <RoomAllocationView
-                examination={activeExam}
-                onGenerateRoomAllocationPdf={handleGenerateRoomAllocationPdf}
-                onGenerateRelieverSlipsPdf={handleGenerateRelieverSlipsPdf}
-                isGeneratingPdf={isGeneratingPdf}
-              />
+              <div ref={allocationSectionRef}>
+                <RoomAllocationView
+                  examination={activeExam}
+                  onGenerateRoomAllocationPdf={handleGenerateRoomAllocationPdf}
+                  onGenerateRelieverSlipsPdf={handleGenerateRelieverSlipsPdf}
+                  isGeneratingPdf={isGeneratingPdf}
+                />
+              </div>
             </div>
           )}
         </div>
@@ -540,6 +593,37 @@ export default function RoomAllocationsPage() {
           isDownloadingPdf={isGeneratingPdf}
         />
       )}
+
+      {/* Confirmation Dialog for Clear All Allocations */}
+      <AlertDialog open={isClearAllConfirmOpen} onOpenChange={setIsClearAllConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-base font-bold text-slate-800 flex items-center gap-2">
+              <RotateCcw className="w-4 h-4 text-rose-600" />
+              Clear All Room Allocations?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-xs text-slate-500 leading-relaxed space-y-2">
+              <span>
+                This will reset all selected rooms and invigilator/reliever duties across all {sortedExaminations.length} session(s) in &ldquo;{activeAllotment?.name}&rdquo;.
+              </span>
+              <span className="block text-rose-600 font-semibold pt-1">
+                Your master rooms, examinations, and invigilator pool will remain completely safe. You can restart the whole allocation process fresh.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="text-xs font-semibold h-8">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleClearAllAllocations}
+              className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold h-8"
+            >
+              Clear All Allocations
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

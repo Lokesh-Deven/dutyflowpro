@@ -46,7 +46,7 @@ export function RoomAllocationView({
   onGenerateRelieverSlipsPdf,
   isGeneratingPdf = false,
 }: RoomAllocationViewProps) {
-  const { activeAllotment, saveSessionAllocation, saveSessionRooms } = useAllotment();
+  const { activeAllotment, saveSessionAllocation, saveSessionRooms, masterRooms } = useAllotment();
   const { toast } = useToast();
 
   const [isRegenerateConfirmOpen, setIsRegenerateConfirmOpen] = useState(false);
@@ -65,23 +65,34 @@ export function RoomAllocationView({
   const totalStaffRequired = requiredInvigilators + requiredRelievers;
 
   const handleGenerate = () => {
-    if (selectedRooms.length !== requiredInvigilators) {
-      toast({
-        variant: "destructive",
-        title: "Room Count Mismatch",
-        description: `Please select exactly ${requiredInvigilators} rooms above before generating allocation.`,
-      });
-      return;
+    let roomsToUse = selectedRooms;
+
+    if (roomsToUse.length !== requiredInvigilators) {
+      if (masterRooms.length >= requiredInvigilators) {
+        roomsToUse = masterRooms.slice(0, requiredInvigilators).map((r) => r.name);
+        saveSessionRooms(examination.id, roomsToUse);
+        toast({
+          title: "Auto-Selected Master Rooms",
+          description: `Automatically selected ${roomsToUse.length} rooms from Master Rooms list.`,
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Room Count Mismatch",
+          description: `Please select exactly ${requiredInvigilators} rooms above before generating allocation.`,
+        });
+        return;
+      }
     }
 
     setIsGenerating(true);
     try {
-      const res = generateSessionRoomAllocation(examination, activeAllotment, selectedRooms);
+      const res = generateSessionRoomAllocation(examination, activeAllotment, roomsToUse);
 
       if (!res.success || !res.allocation) {
         toast({
           variant: "destructive",
-          title: "Allocation Failed",
+          title: "Allocation Notice",
           description: res.errors?.[0] || "Could not generate room allocation.",
         });
         return;
@@ -91,7 +102,7 @@ export function RoomAllocationView({
 
       toast({
         title: "Allocation Generated Successfully",
-        description: `Assigned ${res.allocation.invigilatorDuties.length} rooms and ${res.allocation.relieverDuties.length} relievers.`,
+        description: `Assigned ${res.allocation.invigilatorDuties.length} room(s) and ${res.allocation.relieverDuties.length} reliever(s).`,
       });
 
       if (res.warnings && res.warnings.length > 0) {
@@ -167,11 +178,11 @@ export function RoomAllocationView({
             <Button
               type="button"
               onClick={handleGenerate}
-              disabled={isGenerating || selectedRooms.length !== requiredInvigilators}
+              disabled={isGenerating || (selectedRooms.length !== requiredInvigilators && masterRooms.length < requiredInvigilators)}
               className="bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs h-9 px-4 gap-1.5 shadow-xs"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              Generate Allocation
+              {selectedRooms.length === requiredInvigilators ? "Generate Allocation" : "Auto-Select & Generate"}
             </Button>
           ) : (
             <>
@@ -361,16 +372,18 @@ export function RoomAllocationView({
           <DoorOpen className="w-10 h-10 text-slate-300 mx-auto mb-2.5" />
           <h4 className="font-bold text-slate-700 text-sm">Allocation Not Yet Generated</h4>
           <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto leading-relaxed">
-            Ensure you have selected exactly {requiredInvigilators} rooms above, then click &ldquo;Generate Allocation&rdquo; to automatically assign rooms and distribute reliever duties.
+            {selectedRooms.length === requiredInvigilators
+              ? `You have selected ${selectedRooms.length} rooms. Click below to automatically assign invigilator rooms and distribute reliever duties.`
+              : `Select ${requiredInvigilators} rooms above, or click below to auto-select from your Master Rooms list and generate duties.`}
           </p>
           <Button
             type="button"
             onClick={handleGenerate}
-            disabled={isGenerating || selectedRooms.length !== requiredInvigilators}
+            disabled={isGenerating || (selectedRooms.length !== requiredInvigilators && masterRooms.length < requiredInvigilators)}
             className="mt-4 bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs h-9 px-5 gap-1.5 shadow-xs"
           >
             <Sparkles className="w-3.5 h-3.5" />
-            Generate Allocation Now
+            {selectedRooms.length === requiredInvigilators ? "Generate Allocation Now" : "Auto-Select & Generate Allocation"}
           </Button>
         </div>
       )}

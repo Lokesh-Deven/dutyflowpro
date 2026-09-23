@@ -3,6 +3,7 @@ import 'jspdf-autotable';
 import { SeatingAllocationRecord, RoomSeatingPlan } from './student-seating-types';
 import { getPdfPalette, DEFAULT_PALETTE_ID, PaletteId } from './pdf-palette';
 import { SignatoryInfo } from './types';
+import { formatAppDateWithDay } from './date-utils';
 
 export interface GenerateRoomSeatingPdfOptions {
   allocation: SeatingAllocationRecord;
@@ -79,55 +80,79 @@ export async function generateRoomSeatingPlanPdf({
     doc.setTextColor(255, 255, 255);
     doc.text(`EXAMINATION ROOM NO. ${plan.roomNo}`, pageWidth / 2, textY, { align: 'center' });
 
-    // Metadata Card
-    const metaY = bannerY + bannerHeight + 3.5;
-    const metaHeight = 14;
+    // Metadata Card (Left: Date, Subject, Timings | Right: Total Capacity, Allocated, Vacant)
+    const metaY = bannerY + bannerHeight + 3.2;
+    const metaHeight = 17.5;
     doc.setFillColor(248, 250, 252);
     doc.setDrawColor(226, 232, 240);
     doc.roundedRect(leftMargin, metaY, contentWidth, metaHeight, 1.5, 1.5, 'FD');
 
+    const formattedDate = formatAppDateWithDay(allocation.examination.date, allocation.examination.date || '—');
+    
+    // Find unique subjects seated in this room, or fallback to allocation subjects
+    const roomSubjectNames = Array.from(
+      new Set(
+        plan.benches
+          .flatMap((b) => b.seats.map((s) => s.subjectName))
+          .filter((name): name is string => Boolean(name && name.trim()))
+      )
+    );
+    const rawSubjects = roomSubjectNames.length > 0 
+      ? roomSubjectNames.join(', ') 
+      : (allocation.subjectStats.map((s) => s.subjectName).join(', ') || 'All Subjects');
+    const truncSubjects = rawSubjects.length > 50 ? rawSubjects.substring(0, 47) + '...' : rawSubjects;
+
+    const timingsStr = allocation.examination.startTime && allocation.examination.endTime
+      ? `${allocation.examination.startTime} – ${allocation.examination.endTime}`
+      : '—';
+
+    const row1Y = metaY + 4.8;
+    const row2Y = metaY + 9.5;
+    const row3Y = metaY + 14.2;
+
+    const leftValX = leftMargin + 20;
+    const rightLabelX = leftMargin + 118;
+    const rightValX = rightLabelX + 25;
+
+    // Left Side: Date, Subject, Timings
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
     doc.setTextColor(51, 65, 85);
-
-    // Row 1
-    doc.text("Date:", leftMargin + 4, metaY + 5);
+    doc.text("Date:", leftMargin + 4, row1Y);
     doc.setFont('helvetica', 'normal');
-    doc.text(allocation.examination.date || '—', leftMargin + 14, metaY + 5);
+    doc.text(formattedDate, leftValX, row1Y);
 
     doc.setFont('helvetica', 'bold');
-    doc.text("Timings:", leftMargin + 65, metaY + 5);
+    doc.text("Subject:", leftMargin + 4, row2Y);
     doc.setFont('helvetica', 'normal');
-    doc.text(`${allocation.examination.startTime} – ${allocation.examination.endTime}`, leftMargin + 79, metaY + 5);
+    doc.text(truncSubjects, leftValX, row2Y);
 
     doc.setFont('helvetica', 'bold');
-    doc.text("Total Capacity:", leftMargin + 130, metaY + 5);
+    doc.text("Timings:", leftMargin + 4, row3Y);
     doc.setFont('helvetica', 'normal');
-    doc.text(`${plan.capacity} Students`, leftMargin + 152, metaY + 5);
+    doc.text(timingsStr, leftValX, row3Y);
 
-    // Row 2
-    const subjectsStr = allocation.subjectStats.map((s) => s.subjectName).join(', ') || 'All Subjects';
+    // Right Side: Total Capacity, Allocated, Vacant
     doc.setFont('helvetica', 'bold');
-    doc.text("Subjects:", leftMargin + 4, metaY + 10.5);
+    doc.text("Total Capacity:", rightLabelX, row1Y);
     doc.setFont('helvetica', 'normal');
-    const truncSubjects = subjectsStr.length > 45 ? subjectsStr.substring(0, 42) + '...' : subjectsStr;
-    doc.text(truncSubjects, leftMargin + 18, metaY + 10.5);
+    doc.text(`${plan.capacity} Students`, rightValX, row1Y);
 
     doc.setFont('helvetica', 'bold');
-    doc.text("Allocated:", leftMargin + 100, metaY + 10.5);
+    doc.text("Allocated:", rightLabelX, row2Y);
     doc.setFont('helvetica', 'normal');
-    doc.text(`${plan.allocatedCount}`, leftMargin + 115, metaY + 10.5);
+    doc.text(`${plan.allocatedCount} Students`, rightValX, row2Y);
 
     doc.setFont('helvetica', 'bold');
-    doc.text("Vacant:", leftMargin + 140, metaY + 10.5);
+    doc.text("Vacant:", rightLabelX, row3Y);
     doc.setFont('helvetica', 'normal');
-    doc.text(`${plan.vacantCount}`, leftMargin + 152, metaY + 10.5);
+    doc.text(`${plan.vacantCount} Seats`, rightValX, row3Y);
 
     // ----------------------------------------------------------------
     // Representational Classroom Blackboard Graphic (Front of Room)
     // ----------------------------------------------------------------
-    const boardY = metaY + metaHeight + 3;
-    const boardHeight = 13.5;
+    const boardY = metaY + metaHeight + 2.8;
+    const boardHeight = 16.5;
 
     // Wooden Outer Frame
     doc.setFillColor(66, 37, 19); // #422513
@@ -162,40 +187,52 @@ export async function generateRoomSeatingPlanPdf({
     doc.setFillColor(253, 224, 71);
     doc.rect(leftMargin + contentWidth - 22, trayY - 0.2, 3.2, 0.8, 'F');
 
-    // Chalkboard Title (Center)
+    // Chalkboard Title (Center Top)
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8.5);
     doc.setTextColor(255, 255, 255);
-    doc.text("[ BLACKBOARD  •  FRONT OF CLASSROOM / STAGE ]", pageWidth / 2, surfY + 3.8, { align: 'center' });
+    doc.text("Blackboard • Front of Room (Teacher's Stage)", pageWidth / 2, surfY + 3.8, { align: 'center' });
 
     // Graphical Two-Column Bench Layout (Left Side vs Right Side)
-    const gridTop = boardY + boardHeight + 3.2;
+    const gridTop = boardY + boardHeight + 3;
     const colWidth = (contentWidth - 6) / 2; // ~90 mm per column
     const leftColX = leftMargin;
     const rightColX = leftMargin + colWidth + 6;
+    const leftCenterX = leftColX + colWidth / 2;
+    const rightCenterX = rightColX + colWidth / 2;
+    const centerPageX = pageWidth / 2;
 
-    // Directional orientation on chalkboard aligned with columns below
+    // Subheaders
+    // Left: "Left Side Benches"
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7.5);
     doc.setTextColor(187, 247, 208); // Mint chalk
-    doc.text("◀ LEFT SIDE BENCHES", leftColX + colWidth / 2, surfY + 7.4, { align: 'center' });
-    doc.text("RIGHT SIDE BENCHES ▶", rightColX + colWidth / 2, surfY + 7.4, { align: 'center' });
+    doc.text("Left Side Benches", leftCenterX, surfY + 7.6, { align: 'center' });
 
-    // Center Facing Guidance
-    doc.setFontSize(6.5);
-    doc.setTextColor(253, 224, 71); // Yellow chalk
-    doc.text("▲ FACING THE BLACKBOARD ▲", pageWidth / 2, surfY + 7.4, { align: 'center' });
+    // Right: "Right Side Benches"
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(187, 247, 208); // Mint chalk
+    doc.text("Right Side Benches", rightCenterX, surfY + 7.6, { align: 'center' });
 
-    // Subtitle Clarification Note
+    // Bench counts
+    // Left: "(${plan.leftBenches} Benches)"
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.setTextColor(255, 255, 255); // Crisp white chalk
+    doc.text(`(${plan.leftBenches} Benches)`, leftCenterX, surfY + 11.4, { align: 'center' });
+
+    // Right: "(${plan.rightBenches} Benches)"
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.setTextColor(255, 255, 255); // Crisp white chalk
+    doc.text(`(${plan.rightBenches} Benches)`, rightCenterX, surfY + 11.4, { align: 'center' });
+
+    // Center Guidance Note: "Facing the board, benches on your left and right match below"
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(5.6);
-    doc.setTextColor(226, 232, 240);
-    doc.text(
-      "(Facing the board: benches on your left and right correspond directly to the two columns below)",
-      pageWidth / 2,
-      surfY + 10.4,
-      { align: 'center' }
-    );
+    doc.setFontSize(6);
+    doc.setTextColor(226, 232, 240); // Soft white chalk
+    doc.text("Facing the board, benches on your left and right match below", centerPageX, surfY + 9.5, { align: 'center' });
 
     // Column Headers
     doc.setFillColor(palette.rgb.primary[0], palette.rgb.primary[1], palette.rgb.primary[2]);
@@ -325,7 +362,7 @@ export async function generateRoomSeatingPlanPdf({
     doc.setFontSize(7);
     doc.setTextColor(148, 163, 184);
     doc.text(
-      `DutyFlow Student Seating Plan • Room ${plan.roomNo} • Page ${pageIndex + 1} of ${roomsToPrint.length}`,
+      `Student Seating Plan • Room ${plan.roomNo} • Page ${pageIndex + 1} of ${roomsToPrint.length}`,
       leftMargin,
       pageHeight - 6
     );
@@ -487,7 +524,7 @@ export async function generateStudentSeatingIndexPdf({
     doc.setFontSize(7.5);
     doc.setTextColor(148, 163, 184);
     doc.text(
-      `DutyFlow Student Seating Index • Page ${i} of ${totalPages}`,
+      `Student Seating Index • Page ${i} of ${totalPages}`,
       leftMargin,
       pageHeight - 6
     );

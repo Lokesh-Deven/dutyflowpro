@@ -113,9 +113,9 @@ export async function generateRoomAllocationPdf({
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10.5);
   doc.setTextColor(30, 41, 59);
-  doc.text("1. INVIGILATORS' DUTY", leftMargin, currentY);
+  doc.text("INVIGILATORS' DUTY", pageWidth / 2, currentY, { align: 'center' });
 
-  currentY += 2;
+  currentY += 2.5;
 
   const invigilatorRows = allocation.invigilatorDuties.map((duty, idx) => [
     (idx + 1).toString(),
@@ -166,9 +166,9 @@ export async function generateRoomAllocationPdf({
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10.5);
   doc.setTextColor(30, 41, 59);
-  doc.text("2. RELIEVERS' DUTY", leftMargin, currentY);
+  doc.text("RELIEVERS' DUTY", pageWidth / 2, currentY, { align: 'center' });
 
-  currentY += 2;
+  currentY += 2.5;
 
   const relieverRows = allocation.relieverDuties.map((duty, idx) => [
     (idx + 1).toString(),
@@ -234,7 +234,7 @@ export async function generateRoomAllocationPdf({
     doc.setFontSize(7.5);
     doc.setTextColor(148, 163, 184);
     doc.text(
-      `DutyFlow Room Allocation • Page ${i} of ${totalPages}`,
+      `Page ${i} of ${totalPages}`,
       leftMargin,
       pageHeight - 6
     );
@@ -368,9 +368,9 @@ export async function generateMasterRoomAllocationsPdf({
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10.5);
       doc.setTextColor(30, 41, 59);
-      doc.text(`1. INVIGILATORS' DUTY (${allocation.invigilatorDuties.length} Rooms)`, leftMargin, currentY);
+      doc.text(`INVIGILATORS' DUTY (${allocation.invigilatorDuties.length} Rooms)`, pageWidth / 2, currentY, { align: 'center' });
 
-      currentY += 2;
+      currentY += 2.5;
 
       const invigilatorRows = allocation.invigilatorDuties.map((duty, idx) => [
         (idx + 1).toString(),
@@ -420,9 +420,9 @@ export async function generateMasterRoomAllocationsPdf({
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10.5);
       doc.setTextColor(30, 41, 59);
-      doc.text(`2. RELIEVERS' DUTY (${allocation.relieverDuties.length} Relievers)`, leftMargin, currentY);
+      doc.text(`RELIEVERS' DUTY (${allocation.relieverDuties.length} Relievers)`, pageWidth / 2, currentY, { align: 'center' });
 
-      currentY += 2;
+      currentY += 2.5;
 
       const relieverRows = allocation.relieverDuties.map((duty, idx) => [
         (idx + 1).toString(),
@@ -490,7 +490,7 @@ export async function generateMasterRoomAllocationsPdf({
     doc.setFontSize(7.5);
     doc.setTextColor(148, 163, 184);
     doc.text(
-      `DutyFlow Master Room Allocation • ${allotment.name} • Page ${i} of ${totalPages}`,
+      `${allotment.name ? `${allotment.name} • ` : ''}Page ${i} of ${totalPages}`,
       leftMargin,
       pageHeight - 6
     );

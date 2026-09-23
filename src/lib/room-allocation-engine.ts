@@ -6,6 +6,7 @@ import {
   InvigilatorRoomDuty,
   RelieverRoomDuty,
 } from './types';
+import { hasTimeConflict } from './allotment';
 
 export interface RoleAllocationStats {
   invigilatorId: string;
@@ -154,6 +155,7 @@ export function assignRoomsToInvigilators(
   });
 
   for (const item of invigilatorHistory) {
+    if (availableRooms.length === 0) break;
     const { inv, pastRooms, pastRoomsSet } = item;
 
     // 1. Try to find a room that the invigilator has NEVER had
@@ -161,12 +163,14 @@ export function assignRoomsToInvigilators(
 
     if (unvisitedRoomIndex !== -1) {
       const chosenRoom = availableRooms.splice(unvisitedRoomIndex, 1)[0];
-      duties.push({
-        invigilatorId: inv.id,
-        invigilatorName: inv.name,
-        designation: inv.designation,
-        room: chosenRoom,
-      });
+      if (chosenRoom) {
+        duties.push({
+          invigilatorId: inv.id,
+          invigilatorName: inv.name,
+          designation: inv.designation,
+          room: chosenRoom,
+        });
+      }
     } else {
       // 2. Room repetition is unavoidable for this invigilator
       // Choose the least recently assigned room among available rooms
@@ -182,19 +186,33 @@ export function assignRoomsToInvigilators(
       });
 
       const chosenRoom = availableRooms.splice(bestIndex, 1)[0];
-      warnings.push(`⚠ Room repetition unavoidable for ${inv.name} because all eligible rooms have previously been assigned.`);
-
-      duties.push({
-        invigilatorId: inv.id,
-        invigilatorName: inv.name,
-        designation: inv.designation,
-        room: chosenRoom,
-      });
+      if (chosenRoom) {
+        warnings.push(`⚠ Room repetition unavoidable for ${inv.name} because all eligible rooms have previously been assigned.`);
+        duties.push({
+          invigilatorId: inv.id,
+          invigilatorName: inv.name,
+          designation: inv.designation,
+          room: chosenRoom,
+        });
+      }
     }
   }
 
+  // If there are remaining rooms not covered by invigilators (shortage case)
+  if (availableRooms.length > 0) {
+    availableRooms.forEach((room, idx) => {
+      duties.push({
+        invigilatorId: `unassigned-${idx + 1}`,
+        invigilatorName: '⚠️ Staff Not Assigned',
+        designation: 'Unassigned',
+        room,
+      });
+      warnings.push(`⚠ Room "${room}" has no invigilator assigned due to staff shortage.`);
+    });
+  }
+
   // Sort duties naturally by Room number/name (alphanumeric sort)
-  duties.sort((a, b) => a.room.localeCompare(b.room, undefined, { numeric: true, sensitivity: 'base' }));
+  duties.sort((a, b) => (a.room || '').localeCompare(b.room || '', undefined, { numeric: true, sensitivity: 'base' }));
 
   return { duties, warnings };
 }
@@ -231,18 +249,48 @@ export function generateSessionRoomAllocation(
   }
 
   // 2. Identify assigned staff for this session from Master Allotment
-  const assignedStaff = allotment.invigilators.filter((inv) =>
-    allotment.assignments[inv.id]?.includes(examination.id)
+  let assignedStaff = (allotment.invigilators || []).filter((inv) =>
+    allotment.assignments?.[inv.id]?.includes(examination.id)
   );
 
-  // 3. Staff Shortage Validation (Rule 12)
-  if (assignedStaff.length < totalRequired) {
-    errors.push(
-      `⚠ Insufficient staff available. Required: ${totalRequired} (${requiredInvigilators} Invigilators + ${requiredRelievers} Relievers), Available: ${assignedStaff.length}, Shortage: ${
-        totalRequired - assignedStaff.length
-      }. Please assign sufficient staff in Master Allotment.`
+  // 3. Fallback / Recovery for Staff Shortages:
+  // If assigned staff count is less than totalRequired, check if any unassigned staff in allotment
+  // are available for this session without time conflicts.
+  if (assignedStaff.length < totalRequired && Array.isArray(allotment.invigilators)) {
+    const assignedIds = new Set(assignedStaff.map(s => s.id));
+    const eligibleStaff = allotment.invigilators.filter(inv => {
+      if (assignedIds.has(inv.id)) return false;
+      if (!inv.isAvailableAllDays && !inv.availableExamIds?.includes(examination.id)) {
+        return false;
+      }
+      const currentDuties = allotment.assignments?.[inv.id] || [];
+      if (hasTimeConflict(examination, currentDuties, allotment.examinations || [])) {
+        return false;
+      }
+      return true;
+    });
+
+    const needed = totalRequired - assignedStaff.length;
+    const additional = eligibleStaff.slice(0, needed);
+    if (additional.length > 0) {
+      assignedStaff = [...assignedStaff, ...additional];
+      warnings.push(
+        `Auto-assigned ${additional.length} available invigilator(s) from Master Staff list (${additional.map(a => a.name).join(', ')}) to fulfill session requirements.`
+      );
+    }
+  }
+
+  const availableCount = assignedStaff.length;
+
+  if (availableCount < requiredInvigilators) {
+    warnings.push(
+      `⚠ Staff shortage: Required ${requiredInvigilators} invigilators for rooms, but only ${availableCount} staff available. Unassigned rooms have been marked.`
     );
-    return { success: false, errors };
+  } else if (availableCount < totalRequired) {
+    const unfulfilledRelievers = totalRequired - availableCount;
+    warnings.push(
+      `Notice: ${unfulfilledRelievers} reliever duty(ies) could not be assigned due to staff count (${availableCount} available for ${totalRequired} required duties).`
+    );
   }
 
   // 4. Compute historical staff statistics
@@ -277,11 +325,20 @@ export function generateSessionRoomAllocation(
     return a.seniorityIndex - b.seniorityIndex;
   });
 
-  // Pick top N_rel as Relievers
-  const selectedRelievers = staffCandidates.slice(0, requiredRelievers).map((c) => c.inv);
+  // Calculate actual relievers we can pick:
+  // Ensure we prioritize filling the regular room invigilators first!
+  const actualRelieverCount = Math.max(
+    0,
+    Math.min(requiredRelievers, Math.max(0, availableCount - requiredInvigilators))
+  );
 
-  // The remaining candidates are regular Invigilators
-  const selectedInvigilators = staffCandidates.slice(requiredRelievers, totalRequired).map((c) => c.inv);
+  // Pick relievers
+  const selectedRelievers = staffCandidates.slice(0, actualRelieverCount).map((c) => c.inv);
+
+  // The remaining candidates are regular Invigilators for rooms
+  const selectedInvigilators = staffCandidates
+    .slice(actualRelieverCount, actualRelieverCount + requiredInvigilators)
+    .map((c) => c.inv);
 
   // 6. Invigilator Room Allocation with Non-Repetition Rule (Rule 13, 14, 15)
   const { duties: invigilatorDuties, warnings: roomWarnings } = assignRoomsToInvigilators(

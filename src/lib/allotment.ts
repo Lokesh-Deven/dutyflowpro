@@ -4,7 +4,7 @@ export interface AllotmentResult {
   assignments: Record<string, string[]>; // invigilatorId -> examId[]
 }
 
-function hasTimeConflict(examToCheck: Examination, assignedExamIds: string[], allExaminations: Examination[]): boolean {
+export function hasTimeConflict(examToCheck: Examination, assignedExamIds: string[], allExaminations: Examination[]): boolean {
   const assignedExams = assignedExamIds.map(id => allExaminations.find(e => e.id === id)).filter(Boolean) as Examination[];
   for (const assignedExam of assignedExams) {
     if (new Date(assignedExam.date).toDateString() === new Date(examToCheck.date).toDateString()) {

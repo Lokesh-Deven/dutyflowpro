@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useStudentSeating } from '@/lib/student-seating-context';
 import { SeatingMasterRoom } from '@/lib/student-seating-types';
 import { AddRoomDialog } from '@/components/dashboard/student-seating/add-room-dialog';
@@ -17,7 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { DoorOpen, Plus, Pencil, Trash2, ShieldAlert, CheckCircle2, Save, CheckCheck, Cloud, ShieldCheck } from 'lucide-react';
+import { DoorOpen, Plus, Pencil, Trash2, ShieldAlert, CheckCircle2, Save, CheckCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function MasterRoomsPage() {
@@ -33,6 +33,28 @@ export default function MasterRoomsPage() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
 
+  // Compute aggregate totals across all configured rooms
+  const totals = useMemo(() => {
+    return rooms.reduce(
+      (acc, r) => ({
+        leftBenches: acc.leftBenches + (Number(r.leftBenches) || 0),
+        rightBenches: acc.rightBenches + (Number(r.rightBenches) || 0),
+        totalBenches: acc.totalBenches + (Number(r.totalBenches) || 0),
+        capacityOne: acc.capacityOne + (Number(r.capacityOne) || 0),
+        capacityTwo: acc.capacityTwo + (Number(r.capacityTwo) || 0),
+        capacityThree: acc.capacityThree + (Number(r.capacityThree) || 0),
+      }),
+      {
+        leftBenches: 0,
+        rightBenches: 0,
+        totalBenches: 0,
+        capacityOne: 0,
+        capacityTwo: 0,
+        capacityThree: 0,
+      }
+    );
+  }, [rooms]);
+
   const handleSaveAllRooms = async () => {
     setIsSaving(true);
     try {
@@ -43,7 +65,7 @@ export default function MasterRoomsPage() {
         setLastSavedAt(timeStr);
         toast({
           title: "Added Rooms Saved Successfully",
-          description: `All ${rooms.length} master rooms have been saved and locked in. They are now retained for your next login and upcoming allocations.`,
+          description: `All ${rooms.length} master rooms have been saved.`,
         });
       } else {
         toast({
@@ -69,7 +91,7 @@ export default function MasterRoomsPage() {
       setHasUnsavedChanges(true);
       toast({
         title: "Room Updated",
-        description: `Room ${roomNo} has been updated. Click "Save Added Rooms" to retain for next login.`,
+        description: `Room ${roomNo} has been updated.`,
       });
       setEditingRoom(null);
     } else {
@@ -88,7 +110,7 @@ export default function MasterRoomsPage() {
       setHasUnsavedChanges(true);
       toast({
         title: "Room Added",
-        description: `Room ${roomNo} with ${leftBenches + rightBenches} benches added. Click "Save Added Rooms" to preserve across logins.`,
+        description: `Room ${roomNo} with ${leftBenches + rightBenches} benches added.`,
       });
     }
   };
@@ -126,18 +148,10 @@ export default function MasterRoomsPage() {
                   <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-300/40 text-[10px] px-2 py-0.5 font-semibold rounded-full hidden sm:inline-flex">
                     <CheckCheck className="w-3 h-3 mr-1 text-emerald-600" /> Saved at {lastSavedAt}
                   </Badge>
-                ) : isRoomsCloudSynced ? (
-                  <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-300/40 text-[10px] px-2 py-0.5 font-semibold rounded-full hidden sm:inline-flex">
-                    <Cloud className="w-3 h-3 mr-1 text-emerald-600" /> Cloud Retained
-                  </Badge>
-                ) : (
-                  <Badge className="bg-slate-100 text-slate-600 border border-slate-200 text-[10px] px-2 py-0.5 font-medium rounded-full hidden sm:inline-flex">
-                    <ShieldCheck className="w-3 h-3 mr-1 text-indigo-600" /> Login Persistent
-                  </Badge>
-                )}
+                ) : null}
               </div>
               <p className="text-xs text-slate-500 font-medium">
-                Create and manage examination rooms. Click &ldquo;Save Added Rooms&rdquo; to retain them permanently for all sessions and next logins.
+                Create and manage examination rooms.
               </p>
             </div>
           </div>
@@ -263,34 +277,138 @@ export default function MasterRoomsPage() {
                   );
                 })}
               </tbody>
+              {rooms.length > 0 && (
+                <tfoot className="border-t-2 border-slate-300 bg-slate-100/90 font-bold text-slate-800">
+                  <tr>
+                    <td colSpan={2} className="py-3 px-4 font-headline font-black text-xs text-slate-900 tracking-wide uppercase">
+                      Total ({rooms.length} Rooms)
+                    </td>
+                    <td className="py-3 px-3 text-center font-bold text-slate-800">
+                      {totals.leftBenches}
+                    </td>
+                    <td className="py-3 px-3 text-center font-bold text-slate-800">
+                      {totals.rightBenches}
+                    </td>
+                    <td className="py-3 px-3 text-center font-black text-slate-950 bg-slate-200/70 text-xs">
+                      {totals.totalBenches}
+                    </td>
+                    <td className="py-3 px-3 text-center font-black text-indigo-900 bg-indigo-100/70 text-xs">
+                      {totals.capacityOne}
+                    </td>
+                    <td className="py-3 px-3 text-center font-black text-purple-900 bg-purple-100/70 text-xs">
+                      {totals.capacityTwo}
+                    </td>
+                    <td className="py-3 px-3 text-center font-black text-blue-900 bg-blue-100/70 text-xs">
+                      {totals.capacityThree}
+                    </td>
+                    <td className="py-3 px-3 text-center text-slate-400 font-normal">—</td>
+                    <td className="py-3 px-4 text-center text-slate-400 font-normal">—</td>
+                  </tr>
+                </tfoot>
+              )}
             </table>
           </div>
         )}
 
-        {/* Table Footer Bar */}
-        <div className="p-3.5 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-          <div className="text-slate-500 font-medium">
-            Total Examination Rooms: <span className="font-bold text-slate-800">{rooms.length}</span>
-            {isRoomsCloudSynced && <span className="text-emerald-600 font-semibold ml-2">&bull; Synced with Cloud</span>}
-          </div>
+        {/* Table Footer Bar & Totals Summary */}
+        {rooms.length > 0 ? (
+          <div className="border-t border-slate-200 bg-slate-50/70 p-4">
+            {/* Total Metric Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3.5">
+              {/* Total Benches Card */}
+              <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-2xs">
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  Total Benches
+                </div>
+                <div className="text-2xl font-black text-slate-900 mt-0.5">
+                  {totals.totalBenches}
+                </div>
+                <div className="text-[11px] text-slate-500 font-medium mt-0.5">
+                  {totals.leftBenches} Left + {totals.rightBenches} Right
+                </div>
+              </div>
 
-          <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              onClick={handleSaveAllRooms}
-              disabled={isSaving}
-              className={cn(
-                "h-8 px-3.5 text-xs font-bold rounded-lg transition-all gap-1.5 shadow-xs",
-                hasUnsavedChanges
-                  ? "bg-[#6342e8] hover:bg-[#5232d6] text-white"
-                  : "bg-emerald-600 hover:bg-emerald-700 text-white"
-              )}
-            >
-              <Save className="w-3.5 h-3.5" />
-              <span>{hasUnsavedChanges ? "Save Added Rooms" : "Rooms Saved"}</span>
-            </Button>
+              {/* 1/Bench Capacity Card */}
+              <div className="bg-white border border-indigo-200 rounded-lg p-3 shadow-2xs relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-12 h-12 bg-indigo-50 rounded-bl-full pointer-events-none -mr-2 -mt-2" />
+                <div className="text-[10px] font-bold text-indigo-700 uppercase tracking-wider flex items-center justify-between">
+                  <span>Capacity (1/Bench)</span>
+                  <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200 text-[9px] px-1 py-0 h-4">
+                    1&times;
+                  </Badge>
+                </div>
+                <div className="text-2xl font-black text-indigo-900 mt-0.5">
+                  {totals.capacityOne}
+                </div>
+                <div className="text-[11px] text-indigo-600 font-medium mt-0.5">
+                  Max students at 1 per bench
+                </div>
+              </div>
+
+              {/* 2/Bench Capacity Card */}
+              <div className="bg-white border border-purple-200 rounded-lg p-3 shadow-2xs relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-12 h-12 bg-purple-50 rounded-bl-full pointer-events-none -mr-2 -mt-2" />
+                <div className="text-[10px] font-bold text-purple-700 uppercase tracking-wider flex items-center justify-between">
+                  <span>Capacity (2/Bench)</span>
+                  <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 text-[9px] px-1 py-0 h-4">
+                    2&times;
+                  </Badge>
+                </div>
+                <div className="text-2xl font-black text-purple-900 mt-0.5">
+                  {totals.capacityTwo}
+                </div>
+                <div className="text-[11px] text-purple-600 font-medium mt-0.5">
+                  Max students at 2 per bench
+                </div>
+              </div>
+
+              {/* 3/Bench Capacity Card */}
+              <div className="bg-white border border-blue-200 rounded-lg p-3 shadow-2xs relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-12 h-12 bg-blue-50 rounded-bl-full pointer-events-none -mr-2 -mt-2" />
+                <div className="text-[10px] font-bold text-blue-700 uppercase tracking-wider flex items-center justify-between">
+                  <span>Capacity (3/Bench)</span>
+                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-[9px] px-1 py-0 h-4">
+                    3&times;
+                  </Badge>
+                </div>
+                <div className="text-2xl font-black text-blue-900 mt-0.5">
+                  {totals.capacityThree}
+                </div>
+                <div className="text-[11px] text-blue-600 font-medium mt-0.5">
+                  Max students at 3 per bench
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Actions Row */}
+            <div className="pt-2 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+              <div className="text-slate-500 font-medium flex items-center gap-1.5">
+                <span>Total Configured Rooms: <strong className="text-slate-800">{rooms.length}</strong></span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  onClick={handleSaveAllRooms}
+                  disabled={isSaving}
+                  className={cn(
+                    "h-8 px-4 text-xs font-bold rounded-lg transition-all gap-1.5 shadow-xs",
+                    hasUnsavedChanges
+                      ? "bg-[#6342e8] hover:bg-[#5232d6] text-white"
+                      : "bg-emerald-600 hover:bg-emerald-700 text-white"
+                  )}
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>{hasUnsavedChanges ? "Save Added Rooms" : "Rooms Saved"}</span>
+                </Button>
+              </div>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="p-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+            <span>No rooms configured yet.</span>
+          </div>
+        )}
       </div>
 
       {/* Add / Edit Room Modal */}
