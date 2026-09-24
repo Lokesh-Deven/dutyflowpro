@@ -112,3 +112,47 @@ export function isValidAppDate(str: string): boolean {
   if (!str) return false;
   return parseAppDate(str) !== null;
 }
+
+/**
+ * Converts a 24-hour or raw time string (e.g. "13:00", "14:30", "09:00", "9:30")
+ * into 12-hour format with AM/PM (e.g. "01:00 PM", "02:30 PM", "09:00 AM").
+ */
+export function formatAppTime12Hour(timeStr: string | null | undefined): string {
+  if (!timeStr) return '';
+  const trimmed = timeStr.trim();
+  // Match HH:MM or HH.MM with optional seconds and optional AM/PM
+  const match = trimmed.match(/^(\d{1,2})[:.](\d{2})(?::\d{2})?\s*(AM|PM|am|pm)?$/i);
+  if (!match) {
+    return trimmed;
+  }
+
+  let h = parseInt(match[1], 10);
+  const minutes = match[2];
+  let period = match[3]?.toUpperCase();
+
+  if (period) {
+    if (h === 0) h = 12;
+    else if (h > 12) h = h % 12 || 12;
+  } else {
+    period = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+  }
+
+  return `${h.toString().padStart(2, '0')}:${minutes} ${period}`;
+}
+
+/**
+ * Format a start and end time range in 12-hour format (e.g. "01:00 PM to 02:30 PM")
+ */
+export function formatTimingRange12Hour(
+  start: string | null | undefined,
+  end: string | null | undefined,
+  separator: string = 'to'
+): string {
+  const formattedStart = formatAppTime12Hour(start);
+  const formattedEnd = formatAppTime12Hour(end);
+  if (formattedStart && formattedEnd) {
+    return `${formattedStart} ${separator} ${formattedEnd}`;
+  }
+  return formattedStart || formattedEnd || '';
+}

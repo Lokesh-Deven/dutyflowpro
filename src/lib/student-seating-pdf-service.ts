@@ -3,7 +3,7 @@ import 'jspdf-autotable';
 import { SeatingAllocationRecord, RoomSeatingPlan } from './student-seating-types';
 import { getPdfPalette, DEFAULT_PALETTE_ID, PaletteId } from './pdf-palette';
 import { SignatoryInfo } from './types';
-import { formatAppDateWithDay } from './date-utils';
+import { formatAppDateWithDay, formatTimingRange12Hour } from './date-utils';
 
 export interface GenerateRoomSeatingPdfOptions {
   allocation: SeatingAllocationRecord;
@@ -102,9 +102,7 @@ export async function generateRoomSeatingPlanPdf({
       : (allocation.subjectStats.map((s) => s.subjectName).join(', ') || 'All Subjects');
     const truncSubjects = rawSubjects.length > 50 ? rawSubjects.substring(0, 47) + '...' : rawSubjects;
 
-    const timingsStr = allocation.examination.startTime && allocation.examination.endTime
-      ? `${allocation.examination.startTime} – ${allocation.examination.endTime}`
-      : '—';
+    const timingsStr = formatTimingRange12Hour(allocation.examination.startTime, allocation.examination.endTime, '–') || '—';
 
     const row1Y = metaY + 4.8;
     const row2Y = metaY + 9.5;
@@ -465,8 +463,9 @@ export async function generateStudentSeatingIndexPdf({
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
   doc.setTextColor(255, 255, 255);
+  const formattedIndexTime = formatTimingRange12Hour(allocation.examination.startTime, allocation.examination.endTime, '–');
   doc.text(
-    `Date: ${allocation.examination.date || '—'}  |  Time: ${allocation.examination.startTime} – ${allocation.examination.endTime}`,
+    `Date: ${allocation.examination.date || '—'}${formattedIndexTime ? `  |  Time: ${formattedIndexTime}` : ''}`,
     pageWidth / 2,
     textY,
     { align: 'center' }

@@ -3,7 +3,7 @@ import 'jspdf-autotable';
 import { format } from 'date-fns';
 import { Examination, SessionRoomAllocation, SignatoryInfo, SavedAllotment } from './types';
 import { getPdfPalette, DEFAULT_PALETTE_ID, PaletteId } from './pdf-palette';
-import { formatAppDateWithDay } from './date-utils';
+import { formatAppDateWithDay, formatTimingRange12Hour } from './date-utils';
 
 export interface GenerateMasterRoomPdfOptions {
   examinations: Examination[];
@@ -94,7 +94,7 @@ export async function generateRoomAllocationPdf({
   doc.setFont('helvetica', 'bold');
   doc.text("Timings:", leftMargin + 100, metaY + 6);
   doc.setFont('helvetica', 'normal');
-  doc.text(`${examination.startTime} to ${examination.endTime}`, leftMargin + 115, metaY + 6);
+  doc.text(formatTimingRange12Hour(examination.startTime, examination.endTime), leftMargin + 115, metaY + 6);
 
   // Row 2: Subject & Requirements
   doc.setFont('helvetica', 'bold');
@@ -330,7 +330,7 @@ export async function generateMasterRoomAllocationsPdf({
     doc.setFont('helvetica', 'bold');
     doc.text("Timings:", leftMargin + 100, metaY + 6);
     doc.setFont('helvetica', 'normal');
-    doc.text(`${exam.startTime} to ${exam.endTime}`, leftMargin + 115, metaY + 6);
+    doc.text(formatTimingRange12Hour(exam.startTime, exam.endTime), leftMargin + 115, metaY + 6);
 
     doc.setFont('helvetica', 'bold');
     doc.text("Subject:", leftMargin + 4, metaY + 12);
@@ -602,9 +602,9 @@ export async function generateRelieverDutySlipsPdf({
     doc.text(formattedDate, leftMargin + 14, infoY + 8.5);
 
     doc.setFont('helvetica', 'bold');
-    doc.text("Timings:", leftMargin + 70, infoY + 8.5);
+    doc.text("Timings:", leftMargin + 66, infoY + 8.5);
     doc.setFont('helvetica', 'normal');
-    doc.text(`${examination.startTime} to ${examination.endTime}`, leftMargin + 83, infoY + 8.5);
+    doc.text(formatTimingRange12Hour(examination.startTime, examination.endTime), leftMargin + 79, infoY + 8.5);
 
     doc.setFont('helvetica', 'bold');
     doc.text("Subject:", leftMargin + 130, infoY + 8.5);

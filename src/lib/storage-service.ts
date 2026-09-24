@@ -1,5 +1,25 @@
 import { supabase } from './supabase';
-import type { SavedAllotment, DirectoryInvigilator } from './types';
+import type { SavedAllotment, DirectoryInvigilator, InstructionItem, MasterRoom, SignatoryInfo } from './types';
+import type {
+  SeatingMasterRoom,
+  StudentSubject,
+  StudentRecord,
+  SeatingAllocationRecord,
+} from './student-seating-types';
+
+export interface UserWorkspaceState {
+  instructions?: InstructionItem[];
+  masterRooms?: MasterRoom[];
+  seatingRooms?: SeatingMasterRoom[];
+  subjects?: StudentSubject[];
+  studentsBySubject?: Record<string, StudentRecord[]>;
+  activeAllotmentId?: string | null;
+  activeSeatingAllocationId?: string | null;
+  pdfPaletteId?: string;
+  signatory?: SignatoryInfo;
+  multiSubjectPatterns?: any;
+  updatedAt?: string;
+}
 
 export interface UserFileRecord {
   id: string;
@@ -278,7 +298,16 @@ export async function fetchUserAllotmentsFromDatabase(userId: string): Promise<S
 
     if (!data || !Array.isArray(data)) return [];
 
-    return data.map((row: any) => {
+    return data
+      .filter((row: any) => {
+        if (row.id && String(row.id).startsWith('dutyflow_workspace_')) return false;
+        if (row.assignments?._record_type === 'WorkspaceSync') return false;
+        if (row.assignments?._record_type === 'SeatingAllocation') return false;
+        if (row.assignments?.seatingAllocation) return false;
+        if (row.id && String(row.id).startsWith('alloc-')) return false;
+        return true;
+      })
+      .map((row: any) => {
       const rawAssignments = row.assignments || {};
       const roomAllocations = row.room_allocations || rawAssignments._room_allocations || undefined;
       // Clean up assignments so helper keys aren't treated as invigilators
@@ -402,4 +431,181 @@ export async function fetchUserDirectoryFromCloud(
     return null;
   }
 }
+
+/**
+ * Sync an individual student seating allocation record to Supabase database.
+ */
+export async function syncSeatingAllocationToDatabase(
+  allocation: SeatingAllocationRecord,
+  userId: string
+): Promise<boolean> {
+  if (!userId || !allocation || !isUUID(userId)) return false;
+
+  try {
+    const { error } = await supabase.from('saved_allotments').upsert({
+      id: allocation.id,
+      user_id: userId,
+      name: allocation.name,
+      status: 'Draft',
+      invigilators: [],
+      examinations: [allocation.examination],
+      assignments: {
+        _record_type: 'SeatingAllocation',
+        seatingAllocation: allocation,
+      },
+      created_at: allocation.createdAt || new Date().toISOString(),
+      updated_at: allocation.updatedAt || new Date().toISOString(),
+    });
+
+    if (error) {
+      console.error('Error syncing seating allocation to database:', error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('Exception in syncSeatingAllocationToDatabase:', err);
+    return false;
+  }
+}
+
+/**
+ * Fetch all student seating allocations strictly for the specified userId.
+ */
+export async function fetchUserSeatingAllocationsFromDatabase(
+  userId: string
+): Promise<SeatingAllocationRecord[]> {
+  if (!userId || !isUUID(userId)) return [];
+
+  try {
+    const { data, error } = await supabase
+      .from('saved_allotments')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error || !data || !Array.isArray(data)) return [];
+
+    return data
+      .filter((row: any) => {
+        return (
+          row.assignments?._record_type === 'SeatingAllocation' ||
+          Boolean(row.assignments?.seatingAllocation) ||
+          (row.id && String(row.id).startsWith('alloc-'))
+        );
+      })
+      .map((row: any) => row.assignments?.seatingAllocation)
+      .filter((alloc): alloc is SeatingAllocationRecord => Boolean(alloc && alloc.id));
+  } catch (err) {
+    console.error('Exception in fetchUserSeatingAllocationsFromDatabase:', err);
+    return [];
+  }
+}
+
+/**
+ * Delete a student seating allocation record from the database.
+ */
+export async function deleteSeatingAllocationFromDatabase(
+  allocationId: string,
+  userId: string
+): Promise<boolean> {
+  if (!userId || !allocationId || !isUUID(userId)) return false;
+
+  try {
+    const { error } = await supabase
+      .from('saved_allotments')
+      .delete()
+      .eq('id', allocationId)
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error('Error deleting seating allocation from database:', error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('Exception in deleteSeatingAllocationFromDatabase:', err);
+    return false;
+  }
+}
+
+// In-memory cache for user workspace state to merge partial updates safely
+const workspaceMemoryCache: Record<string, UserWorkspaceState> = {};
+
+/**
+ * Sync user central workspace state (instructions, master rooms, seating rooms, subjects, students, active selections)
+ * to Supabase PostgreSQL database.
+ */
+export async function syncUserWorkspaceToDatabase(
+  userId: string,
+  partialWorkspace: Partial<UserWorkspaceState>
+): Promise<boolean> {
+  if (!userId || !isUUID(userId)) return false;
+
+  try {
+    const current = workspaceMemoryCache[userId] || {};
+    const merged: UserWorkspaceState = {
+      ...current,
+      ...partialWorkspace,
+      updatedAt: new Date().toISOString(),
+    };
+    workspaceMemoryCache[userId] = merged;
+
+    const { error } = await supabase.from('saved_allotments').upsert({
+      id: `dutyflow_workspace_${userId}`,
+      user_id: userId,
+      name: 'DutyFlow Central Workspace',
+      status: 'Draft',
+      invigilators: [],
+      examinations: [],
+      assignments: {
+        _record_type: 'WorkspaceSync',
+        workspace: merged,
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+
+    if (error) {
+      console.error('Error syncing user workspace to database:', error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('Exception in syncUserWorkspaceToDatabase:', err);
+    return false;
+  }
+}
+
+/**
+ * Fetch user central workspace state strictly for the specified userId.
+ */
+export async function fetchUserWorkspaceFromDatabase(
+  userId: string
+): Promise<UserWorkspaceState | null> {
+  if (!userId || !isUUID(userId)) return null;
+
+  try {
+    const { data, error } = await supabase
+      .from('saved_allotments')
+      .select('assignments')
+      .eq('id', `dutyflow_workspace_${userId}`)
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error fetching user workspace from database:', error);
+      return null;
+    }
+
+    if (!data?.assignments?.workspace) return null;
+
+    const ws = data.assignments.workspace as UserWorkspaceState;
+    workspaceMemoryCache[userId] = ws;
+    return ws;
+  } catch (err) {
+    console.error('Exception in fetchUserWorkspaceFromDatabase:', err);
+    return null;
+  }
+}
+
 

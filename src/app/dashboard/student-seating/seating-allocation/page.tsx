@@ -18,6 +18,11 @@ import {
   generateRoomSeatingPlanPdf,
   generateStudentSeatingIndexPdf,
 } from '@/lib/student-seating-pdf-service';
+import {
+  syncUserWorkspaceToDatabase,
+  fetchUserWorkspaceFromDatabase,
+  isUUID,
+} from '@/lib/storage-service';
 import { RoomSeatingDiagram } from '@/components/dashboard/student-seating/room-seating-diagram';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -201,6 +206,10 @@ export default function SeatingAllocationWizardPage() {
       localStorage.setItem(storageKey, JSON.stringify(multiSubjectRows));
       localStorage.setItem('dutyflow_multi_subject_pattern_last', JSON.stringify(multiSubjectRows));
 
+      if (user?.id && isUUID(user.id)) {
+        syncUserWorkspaceToDatabase(user.id, { multiSubjectPatterns: multiSubjectRows }).catch(() => {});
+      }
+
       toast({
         title: "Allocation Pattern Saved",
         description: "Your 4-row multi-subject allocation pattern has been saved successfully.",
@@ -233,13 +242,22 @@ export default function SeatingAllocationWizardPage() {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {
             setMultiSubjectRows(parsed);
+            return;
           }
         }
       } catch (e) {
         // ignore
       }
+
+      if (user?.id && isUUID(user.id)) {
+        fetchUserWorkspaceFromDatabase(user.id).then((ws) => {
+          if (ws?.multiSubjectPatterns && Array.isArray(ws.multiSubjectPatterns) && ws.multiSubjectPatterns.length > 0) {
+            setMultiSubjectRows(ws.multiSubjectPatterns);
+          }
+        }).catch(() => {});
+      }
     }
-  }, [activeAllocation, selectedDutyExamId, selectedSubjectIds]);
+  }, [activeAllocation, selectedDutyExamId, selectedSubjectIds, user?.id]);
 
   // Step 5: Selected Rooms
   const [selectedRoomIds, setSelectedRoomIds] = useState<string[]>([]);

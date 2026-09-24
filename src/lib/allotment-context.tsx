@@ -9,6 +9,8 @@ import {
   deleteUserAllotmentFromDatabase,
   saveUserDirectoryToCloud,
   fetchUserDirectoryFromCloud,
+  syncUserWorkspaceToDatabase,
+  fetchUserWorkspaceFromDatabase,
   isUUID,
 } from './storage-service';
 import { supabase } from './supabase';
@@ -369,22 +371,81 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       console.error("Error loading user-scoped allotment data from localStorage:", err);
     }
 
-    // If logged in with a valid user UUID, fetch cloud allotments and cloud signatory strictly for this specific user.id
+    // CENTRAL CLOUD RESTORATION:
+    // If logged in with a valid user UUID, fetch cloud allotments, workspace, signatory, and directory strictly for this specific user.id
     if (currentUserId && isUUID(currentUserId)) {
-      fetchUserAllotmentsFromDatabase(currentUserId).then((cloudAllotments) => {
+      Promise.all([
+        fetchUserAllotmentsFromDatabase(currentUserId),
+        fetchUserWorkspaceFromDatabase(currentUserId),
+        fetchUserDirectoryFromCloud(currentUserId),
+      ]).then(([cloudAllotments, ws, cloudDir]) => {
         if (!isMounted) return;
-        if (cloudAllotments) {
-          // Replace state with strictly this user's cloud saved allotments
+
+        // 1. Restore Instructions from central database
+        if (ws?.instructions && Array.isArray(ws.instructions) && ws.instructions.length > 0) {
+          setInstructions(ws.instructions);
+          try {
+            localStorage.setItem(`dutyflow_${userScope}_instructions`, JSON.stringify(ws.instructions));
+            localStorage.setItem(`dutyflow_${userScope}_inst_version`, 'v2');
+          } catch (_) { }
+        }
+
+        // 2. Restore Master Rooms from central database
+        if (ws?.masterRooms && Array.isArray(ws.masterRooms) && ws.masterRooms.length > 0) {
+          setMasterRooms(ws.masterRooms);
+          try {
+            localStorage.setItem(`dutyflow_${userScope}_master_rooms`, JSON.stringify(ws.masterRooms));
+          } catch (_) { }
+        }
+
+        // 3. Restore PDF palette
+        if (ws?.pdfPaletteId && ws.pdfPaletteId in PDF_PALETTES) {
+          setPdfPaletteIdState(ws.pdfPaletteId as PaletteId);
+        }
+
+        // 4. Restore signatory (prefer workspace, fallback to profiles)
+        if (ws?.signatory && (ws.signatory.name || ws.signatory.designation)) {
+          setSignatory(ws.signatory);
+        }
+
+        // 5. Restore Directory
+        if (cloudDir && Array.isArray(cloudDir) && cloudDir.length > 0) {
+          setDirectoryInvigilators(cloudDir);
+          setIsDirectoryCloudSynced(true);
+          try {
+            localStorage.setItem(`dutyflow_${userScope}_invigilator_directory`, JSON.stringify(cloudDir));
+          } catch (_) { }
+        }
+
+        // 6. Restore Saved Allotments & Active Allotment Progress
+        if (cloudAllotments && Array.isArray(cloudAllotments)) {
           setSavedAllotments(cloudAllotments);
+          try {
+            localStorage.setItem(`dutyflow_${userScope}_saved_allotments`, JSON.stringify(cloudAllotments));
+          } catch (_) { }
+
+          // Cross-device Active Allotment synchronization:
+          // User continues seamlessly where they left off on their other device!
+          if (ws?.activeAllotmentId) {
+            const match = cloudAllotments.find((a) => a.id === ws.activeAllotmentId);
+            if (match) {
+              setActiveAllotment(match);
+            } else if (cloudAllotments.length > 0) {
+              setActiveAllotment(cloudAllotments[0]);
+            }
+          } else if (cloudAllotments.length > 0) {
+            setActiveAllotment(cloudAllotments[0]);
+          }
+
           setIsCloudSynced(true);
         }
-      }).catch(err => {
-        console.error("Cloud allotment fetch error:", err?.message || err);
+      }).catch((err) => {
+        console.error("Cloud allotment & workspace fetch error:", err?.message || err);
       }).finally(() => {
         if (isMounted) setIsLoaded(true);
       });
 
-      // Also fetch cloud-saved signatory details from Supabase profiles
+      // Also fetch cloud-saved signatory details from Supabase profiles as backup
       (async () => {
         try {
           const { data, error } = await supabase
@@ -416,23 +477,6 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
           console.error("Cloud signatory fetch error:", err?.message || err);
         }
       })();
-
-      // Also fetch cloud-saved invigilator directory from Supabase profiles
-      (async () => {
-        try {
-          const cloudDir = await fetchUserDirectoryFromCloud(currentUserId);
-          if (!isMounted) return;
-          if (cloudDir && Array.isArray(cloudDir) && cloudDir.length > 0) {
-            setDirectoryInvigilators(cloudDir);
-            setIsDirectoryCloudSynced(true);
-            try {
-              localStorage.setItem(`dutyflow_${userScope}_invigilator_directory`, JSON.stringify(cloudDir));
-            } catch (_) { }
-          }
-        } catch (err: any) {
-          console.error("Cloud directory fetch error:", err?.message || err);
-        }
-      })();
     } else {
       setIsLoaded(true);
     }
@@ -440,6 +484,31 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
     return () => {
       isMounted = false;
     };
+  }, [user?.id]);
+
+  // Window Focus Cross-Device Auto-Refresh
+  useEffect(() => {
+    if (!user?.id || !isUUID(user.id)) return;
+
+    const handleWindowFocus = () => {
+      Promise.all([
+        fetchUserAllotmentsFromDatabase(user.id),
+        fetchUserWorkspaceFromDatabase(user.id),
+      ]).then(([cloudAllotments, ws]) => {
+        if (ws?.instructions?.length) setInstructions(ws.instructions);
+        if (ws?.masterRooms?.length) setMasterRooms(ws.masterRooms);
+        if (cloudAllotments && Array.isArray(cloudAllotments)) {
+          setSavedAllotments(cloudAllotments);
+          if (ws?.activeAllotmentId) {
+            const match = cloudAllotments.find((a) => a.id === ws.activeAllotmentId);
+            if (match) setActiveAllotment(match);
+          }
+        }
+      }).catch(() => {});
+    };
+
+    window.addEventListener('focus', handleWindowFocus);
+    return () => window.removeEventListener('focus', handleWindowFocus);
   }, [user?.id]);
 
   // 2. Save state changes strictly to user-scoped localStorage
@@ -487,6 +556,12 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       setExaminations((activeAllotment.examinations || []).map(e => ({ ...e, date: new Date(e.date) })));
     }
   }, [activeAllotment]);
+
+  // Synchronize Active Allotment selection to central cloud workspace across all user devices
+  useEffect(() => {
+    if (!isLoaded || !user?.id || !isUUID(user.id)) return;
+    syncUserWorkspaceToDatabase(user.id, { activeAllotmentId: activeAllotment?.id || null }).catch(() => {});
+  }, [activeAllotment?.id, isLoaded, user?.id]);
 
   const saveCurrentAllotment = useCallback((
     name: string,
@@ -610,21 +685,45 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       text: trimmed,
       enabled: true,
     };
-    setInstructions(prev => [...prev, newItem]);
+    setInstructions(prev => {
+      const updated = [...prev, newItem];
+      if (user?.id && isUUID(user.id)) {
+        syncUserWorkspaceToDatabase(user.id, { instructions: updated }).catch(() => {});
+      }
+      return updated;
+    });
   };
 
   const updateInstruction = (id: string, text: string) => {
     const trimmed = text.trim();
     if (!trimmed) return;
-    setInstructions(prev => prev.map(item => item.id === id ? { ...item, text: trimmed } : item));
+    setInstructions(prev => {
+      const updated = prev.map(item => item.id === id ? { ...item, text: trimmed } : item);
+      if (user?.id && isUUID(user.id)) {
+        syncUserWorkspaceToDatabase(user.id, { instructions: updated }).catch(() => {});
+      }
+      return updated;
+    });
   };
 
   const toggleInstruction = (id: string) => {
-    setInstructions(prev => prev.map(item => item.id === id ? { ...item, enabled: !item.enabled } : item));
+    setInstructions(prev => {
+      const updated = prev.map(item => item.id === id ? { ...item, enabled: !item.enabled } : item);
+      if (user?.id && isUUID(user.id)) {
+        syncUserWorkspaceToDatabase(user.id, { instructions: updated }).catch(() => {});
+      }
+      return updated;
+    });
   };
 
   const deleteInstruction = (id: string) => {
-    setInstructions(prev => prev.filter(item => item.id !== id));
+    setInstructions(prev => {
+      const updated = prev.filter(item => item.id !== id);
+      if (user?.id && isUUID(user.id)) {
+        syncUserWorkspaceToDatabase(user.id, { instructions: updated }).catch(() => {});
+      }
+      return updated;
+    });
   };
 
   const moveInstruction = (fromIndex: number, toIndex: number) => {
@@ -635,12 +734,18 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       const updated = [...prev];
       const [movedItem] = updated.splice(fromIndex, 1);
       updated.splice(toIndex, 0, movedItem);
+      if (user?.id && isUUID(user.id)) {
+        syncUserWorkspaceToDatabase(user.id, { instructions: updated }).catch(() => {});
+      }
       return updated;
     });
   };
 
   const reorderInstructions = (newInstructions: InstructionItem[]) => {
     setInstructions(newInstructions);
+    if (user?.id && isUUID(user.id)) {
+      syncUserWorkspaceToDatabase(user.id, { instructions: newInstructions }).catch(() => {});
+    }
   };
 
   const saveInstructions = async (customInstructions?: InstructionItem[]): Promise<boolean> => {
@@ -662,12 +767,9 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
 
     if (user?.id && isUUID(user.id)) {
       try {
-        await supabase.from('profiles').update({
-          custom_instructions: dataToSave,
-          updated_at: new Date().toISOString(),
-        }).eq('id', user.id);
+        await syncUserWorkspaceToDatabase(user.id, { instructions: dataToSave });
       } catch (err: any) {
-        console.warn("Cloud sync for instructions skipped or profile table doesn't have custom_instructions column:", err?.message || err);
+        console.warn("Cloud sync for instructions error:", err?.message || err);
       }
     }
     return true;
@@ -675,6 +777,9 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
 
   const resetInstructionsToDefault = () => {
     setInstructions(DEFAULT_INSTRUCTIONS);
+    if (user?.id && isUUID(user.id)) {
+      syncUserWorkspaceToDatabase(user.id, { instructions: DEFAULT_INSTRUCTIONS }).catch(() => {});
+    }
   };
 
   const updateSignatory = async (data: Partial<SignatoryInfo>) => {
@@ -710,6 +815,7 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
             signatory_designation: updated.designation,
           },
         });
+        await syncUserWorkspaceToDatabase(user.id, { signatory: updated });
       } catch (err: any) {
         console.error("Failed to sync signatory to cloud profile:", err?.message || err);
       }
@@ -742,6 +848,7 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
             signatory_designation: '',
           },
         });
+        await syncUserWorkspaceToDatabase(user.id, { signatory: DEFAULT_SIGNATORY });
       } catch (err: any) {
         console.error("Failed to reset signatory in Supabase:", err?.message || err);
       }
@@ -792,6 +899,9 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
     } catch (e) {
       console.error("Failed to save PDF palette to localStorage:", e);
     }
+    if (user?.id && isUUID(user.id)) {
+      syncUserWorkspaceToDatabase(user.id, { pdfPaletteId: id }).catch(() => {});
+    }
   }, [user?.id]);
 
   const saveDirectoryToCloud = useCallback(async (): Promise<{ success: boolean; error?: any }> => {
@@ -829,6 +939,7 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(getStorageKey('master_rooms'), JSON.stringify(updated));
         if (user?.id && isUUID(user.id)) {
           supabase.auth.updateUser({ data: { invigilation_master_rooms: updated } }).catch(() => {});
+          syncUserWorkspaceToDatabase(user.id, { masterRooms: updated }).catch(() => {});
         }
       } catch (_) { }
       return updated;
@@ -844,6 +955,7 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(getStorageKey('master_rooms'), JSON.stringify(updated));
         if (user?.id && isUUID(user.id)) {
           supabase.auth.updateUser({ data: { invigilation_master_rooms: updated } }).catch(() => {});
+          syncUserWorkspaceToDatabase(user.id, { masterRooms: updated }).catch(() => {});
         }
       } catch (_) { }
       return updated;
@@ -857,6 +969,7 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(getStorageKey('master_rooms'), JSON.stringify(updated));
         if (user?.id && isUUID(user.id)) {
           supabase.auth.updateUser({ data: { invigilation_master_rooms: updated } }).catch(() => {});
+          syncUserWorkspaceToDatabase(user.id, { masterRooms: updated }).catch(() => {});
         }
       } catch (_) { }
       return updated;

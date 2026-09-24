@@ -2,7 +2,14 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { useAuth } from './auth-context';
-import { isUUID } from './storage-service';
+import {
+  isUUID,
+  syncSeatingAllocationToDatabase,
+  fetchUserSeatingAllocationsFromDatabase,
+  deleteSeatingAllocationFromDatabase,
+  syncUserWorkspaceToDatabase,
+  fetchUserWorkspaceFromDatabase,
+} from './storage-service';
 import {
   SeatingMasterRoom,
   StudentSubject,
@@ -24,11 +31,12 @@ interface StudentSeatingContextType {
   activeAllocation: SeatingAllocationRecord | null;
   setActiveAllocation: (alloc: SeatingAllocationRecord | null) => void;
   isRoomsCloudSynced: boolean;
+  isCloudSynced: boolean;
 
   // Room Management
   addRoom: (roomNo: string, leftBenches: number, rightBenches: number) => SeatingMasterRoom;
   updateRoom: (id: string, roomNo: string, leftBenches: number, rightBenches: number) => void;
-  deleteRoom: (id: string) => { success: boolean; wasInUse?: boolean };
+  deleteRoom: (id: string) => { success: boolean; wasInUse: boolean };
   isRoomInUse: (roomId: string) => boolean;
   saveRoomsToStorage: (roomsToSave?: SeatingMasterRoom[]) => Promise<boolean>;
 
@@ -58,6 +66,7 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
   const [allocations, setAllocations] = useState<SeatingAllocationRecord[]>([]);
   const [activeAllocation, setActiveAllocation] = useState<SeatingAllocationRecord | null>(null);
   const [isRoomsCloudSynced, setIsRoomsCloudSynced] = useState(false);
+  const [isCloudSynced, setIsCloudSynced] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
   const getStorageKey = useCallback((key: string) => {
@@ -129,17 +138,66 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
       if (isMounted) setIsLoaded(true);
     }
 
-    // Next login cloud check: If user is logged in with valid UUID, fetch cloud-saved master rooms
+    // CENTRAL CLOUD RESTORATION:
+    // If user is logged in with valid UUID, restore workspace and seating allocations from Supabase central database
     if (currentUserId && isUUID(currentUserId)) {
-      fetchSeatingRoomsFromCloud(currentUserId).then((cloudRooms) => {
+      Promise.all([
+        fetchUserWorkspaceFromDatabase(currentUserId),
+        fetchUserSeatingAllocationsFromDatabase(currentUserId),
+        fetchSeatingRoomsFromCloud(currentUserId),
+      ]).then(([ws, cloudAllocs, cloudRooms]) => {
         if (!isMounted) return;
-        if (cloudRooms && Array.isArray(cloudRooms) && cloudRooms.length > 0) {
+
+        // 1. Restore Rooms (prefer central workspace, fallback to cloudRooms)
+        if (ws?.seatingRooms && Array.isArray(ws.seatingRooms) && ws.seatingRooms.length > 0) {
+          setRooms(ws.seatingRooms);
+          setIsRoomsCloudSynced(true);
+          try {
+            localStorage.setItem(`dutyflow_${currentUserId}_seating_rooms`, JSON.stringify(ws.seatingRooms));
+          } catch (_) { }
+        } else if (cloudRooms && Array.isArray(cloudRooms) && cloudRooms.length > 0) {
           setRooms(cloudRooms);
           setIsRoomsCloudSynced(true);
           try {
             localStorage.setItem(`dutyflow_${currentUserId}_seating_rooms`, JSON.stringify(cloudRooms));
           } catch (_) { }
         }
+
+        // 2. Restore Subjects from central database
+        if (ws?.subjects && Array.isArray(ws.subjects) && ws.subjects.length > 0) {
+          setSubjects(ws.subjects);
+          try {
+            localStorage.setItem(`dutyflow_${currentUserId}_seating_subjects`, JSON.stringify(ws.subjects));
+          } catch (_) { }
+        }
+
+        // 3. Restore Student Records from central database
+        if (ws?.studentsBySubject && typeof ws.studentsBySubject === 'object' && Object.keys(ws.studentsBySubject).length > 0) {
+          setStudentsBySubject(ws.studentsBySubject);
+          try {
+            localStorage.setItem(`dutyflow_${currentUserId}_seating_students`, JSON.stringify(ws.studentsBySubject));
+          } catch (_) { }
+        }
+
+        // 4. Restore Seating Allocations from central database
+        if (cloudAllocs && Array.isArray(cloudAllocs) && cloudAllocs.length > 0) {
+          setAllocations(cloudAllocs);
+          try {
+            localStorage.setItem(`dutyflow_${currentUserId}_seating_allocations`, JSON.stringify(cloudAllocs));
+          } catch (_) { }
+
+          // Restore active allocation
+          if (ws?.activeSeatingAllocationId) {
+            const match = cloudAllocs.find((a) => a.id === ws.activeSeatingAllocationId);
+            setActiveAllocation(match || cloudAllocs[0] || null);
+          } else {
+            setActiveAllocation(cloudAllocs[0]);
+          }
+        }
+
+        setIsCloudSynced(true);
+      }).catch((cloudErr) => {
+        console.error('Error restoring student seating from central database:', cloudErr);
       });
     }
 
@@ -147,6 +205,34 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
       isMounted = false;
     };
   }, [getStorageKey, user?.id]);
+
+  // Window Focus Cross-Device Auto-Refresh
+  useEffect(() => {
+    if (!user?.id || !isUUID(user.id)) return;
+
+    const handleWindowFocus = () => {
+      Promise.all([
+        fetchUserWorkspaceFromDatabase(user.id),
+        fetchUserSeatingAllocationsFromDatabase(user.id),
+      ]).then(([ws, cloudAllocs]) => {
+        if (ws?.seatingRooms?.length) setRooms(ws.seatingRooms);
+        if (ws?.subjects?.length) setSubjects(ws.subjects);
+        if (ws?.studentsBySubject && Object.keys(ws.studentsBySubject).length) {
+          setStudentsBySubject(ws.studentsBySubject);
+        }
+        if (cloudAllocs && Array.isArray(cloudAllocs)) {
+          setAllocations(cloudAllocs);
+          if (ws?.activeSeatingAllocationId) {
+            const active = cloudAllocs.find((a) => a.id === ws.activeSeatingAllocationId);
+            if (active) setActiveAllocation(active);
+          }
+        }
+      }).catch(() => {});
+    };
+
+    window.addEventListener('focus', handleWindowFocus);
+    return () => window.removeEventListener('focus', handleWindowFocus);
+  }, [user?.id]);
 
   // Save changes to localStorage
   useEffect(() => {
@@ -178,11 +264,10 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
 
     if (user?.id && isUUID(user.id)) {
       try {
-        const res = await saveSeatingRoomsToCloud(dataToSave, user.id);
-        if (res.success) {
-          setIsRoomsCloudSynced(true);
-          return true;
-        }
+        await saveSeatingRoomsToCloud(dataToSave, user.id);
+        await syncUserWorkspaceToDatabase(user.id, { seatingRooms: dataToSave });
+        setIsRoomsCloudSynced(true);
+        return true;
       } catch (cloudErr) {
         console.warn('Cloud sync error for master rooms:', cloudErr);
       }
@@ -208,14 +293,21 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
       updatedAt: new Date().toISOString(),
     };
 
-    setRooms((prev) => [...prev, newRoom]);
+    setRooms((prev) => {
+      const updated = [...prev, newRoom];
+      if (user?.id && isUUID(user.id)) {
+        syncUserWorkspaceToDatabase(user.id, { seatingRooms: updated }).catch(() => {});
+        saveSeatingRoomsToCloud(updated, user.id).catch(() => {});
+      }
+      return updated;
+    });
     return newRoom;
-  }, []);
+  }, [user?.id]);
 
   const updateRoom = useCallback((id: string, roomNo: string, leftBenches: number, rightBenches: number) => {
     const total = leftBenches + rightBenches;
-    setRooms((prev) =>
-      prev.map((r) =>
+    setRooms((prev) => {
+      const updated = prev.map((r) =>
         r.id === id
           ? {
             ...r,
@@ -229,9 +321,14 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
             updatedAt: new Date().toISOString(),
           }
           : r
-      )
-    );
-  }, []);
+      );
+      if (user?.id && isUUID(user.id)) {
+        syncUserWorkspaceToDatabase(user.id, { seatingRooms: updated }).catch(() => {});
+        saveSeatingRoomsToCloud(updated, user.id).catch(() => {});
+      }
+      return updated;
+    });
+  }, [user?.id]);
 
   const isRoomInUse = useCallback((roomId: string): boolean => {
     return allocations.some((alloc) => alloc.roomIds.includes(roomId));
@@ -239,9 +336,16 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
 
   const deleteRoom = useCallback((id: string) => {
     const inUse = isRoomInUse(id);
-    setRooms((prev) => prev.filter((r) => r.id !== id));
+    setRooms((prev) => {
+      const updated = prev.filter((r) => r.id !== id);
+      if (user?.id && isUUID(user.id)) {
+        syncUserWorkspaceToDatabase(user.id, { seatingRooms: updated }).catch(() => {});
+        saveSeatingRoomsToCloud(updated, user.id).catch(() => {});
+      }
+      return updated;
+    });
     return { success: true, wasInUse: inUse };
-  }, [isRoomInUse]);
+  }, [isRoomInUse, user?.id]);
 
   // Subject Management
   const addSubject = useCallback((name: string, code?: string, expectedStudents: number = 0): StudentSubject => {
@@ -254,81 +358,147 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
       createdAt: new Date().toISOString(),
     };
 
-    setSubjects((prev) => [...prev, newSubj]);
+    setSubjects((prev) => {
+      const updated = [...prev, newSubj];
+      if (user?.id && isUUID(user.id)) {
+        syncUserWorkspaceToDatabase(user.id, { subjects: updated }).catch(() => {});
+      }
+      return updated;
+    });
     return newSubj;
-  }, []);
+  }, [user?.id]);
 
   const updateSubject = useCallback((id: string, data: Partial<StudentSubject>) => {
-    setSubjects((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, ...data } : s))
-    );
-  }, []);
+    setSubjects((prev) => {
+      const updated = prev.map((s) => (s.id === id ? { ...s, ...data } : s));
+      if (user?.id && isUUID(user.id)) {
+        syncUserWorkspaceToDatabase(user.id, { subjects: updated }).catch(() => {});
+      }
+      return updated;
+    });
+  }, [user?.id]);
 
   const deleteSubject = useCallback((id: string) => {
-    setSubjects((prev) => prev.filter((s) => s.id !== id));
-    setStudentsBySubject((prev) => {
-      const next = { ...prev };
-      delete next[id];
-      return next;
+    setSubjects((prev) => {
+      const updatedSubjs = prev.filter((s) => s.id !== id);
+      setStudentsBySubject((prevStudents) => {
+        const nextStudents = { ...prevStudents };
+        delete nextStudents[id];
+        if (user?.id && isUUID(user.id)) {
+          syncUserWorkspaceToDatabase(user.id, {
+            subjects: updatedSubjs,
+            studentsBySubject: nextStudents,
+          }).catch(() => {});
+        }
+        return nextStudents;
+      });
+      return updatedSubjs;
     });
-  }, []);
+  }, [user?.id]);
 
   // Student Data Management
   const saveSubjectStudents = useCallback((subjectId: string, students: StudentRecord[]) => {
-    setStudentsBySubject((prev) => ({
-      ...prev,
-      [subjectId]: students,
-    }));
+    setStudentsBySubject((prevStudents) => {
+      const nextStudents = {
+        ...prevStudents,
+        [subjectId]: students,
+      };
 
-    setSubjects((prev) =>
-      prev.map((s) =>
-        s.id === subjectId
-          ? { ...s, uploadedStudentsCount: students.length }
-          : s
-      )
-    );
-  }, []);
+      setSubjects((prevSubjs) => {
+        const nextSubjs = prevSubjs.map((s) =>
+          s.id === subjectId
+            ? { ...s, uploadedStudentsCount: students.length }
+            : s
+        );
+
+        if (user?.id && isUUID(user.id)) {
+          syncUserWorkspaceToDatabase(user.id, {
+            studentsBySubject: nextStudents,
+            subjects: nextSubjs,
+          }).catch(() => {});
+        }
+
+        return nextSubjs;
+      });
+
+      return nextStudents;
+    });
+  }, [user?.id]);
 
   const getSubjectStudents = useCallback((subjectId: string): StudentRecord[] => {
     return studentsBySubject[subjectId] || [];
   }, [studentsBySubject]);
 
   const clearSubjectStudents = useCallback((subjectId: string) => {
-    setStudentsBySubject((prev) => {
-      const next = { ...prev };
-      delete next[subjectId];
-      return next;
-    });
+    setStudentsBySubject((prevStudents) => {
+      const nextStudents = { ...prevStudents };
+      delete nextStudents[subjectId];
 
-    setSubjects((prev) =>
-      prev.map((s) =>
-        s.id === subjectId
-          ? { ...s, uploadedStudentsCount: 0 }
-          : s
-      )
-    );
-  }, []);
+      setSubjects((prevSubjs) => {
+        const nextSubjs = prevSubjs.map((s) =>
+          s.id === subjectId
+            ? { ...s, uploadedStudentsCount: 0 }
+            : s
+        );
+
+        if (user?.id && isUUID(user.id)) {
+          syncUserWorkspaceToDatabase(user.id, {
+            studentsBySubject: nextStudents,
+            subjects: nextSubjs,
+          }).catch(() => {});
+        }
+
+        return nextSubjs;
+      });
+
+      return nextStudents;
+    });
+  }, [user?.id]);
 
   // Allocation Management
+  const handleSetActiveAllocation = useCallback((alloc: SeatingAllocationRecord | null) => {
+    setActiveAllocation(alloc);
+    if (user?.id && isUUID(user.id)) {
+      syncUserWorkspaceToDatabase(user.id, { activeSeatingAllocationId: alloc?.id || null }).catch(() => {});
+    }
+  }, [user?.id]);
+
   const saveAllocation = useCallback((allocation: SeatingAllocationRecord) => {
     setAllocations((prev) => {
       const idx = prev.findIndex((a) => a.id === allocation.id);
+      let next: SeatingAllocationRecord[];
       if (idx >= 0) {
-        const next = [...prev];
+        next = [...prev];
         next[idx] = { ...allocation, updatedAt: new Date().toISOString() };
-        return next;
+      } else {
+        next = [allocation, ...prev];
       }
-      return [allocation, ...prev];
+
+      if (user?.id && isUUID(user.id)) {
+        syncSeatingAllocationToDatabase(allocation, user.id).catch(() => {});
+        syncUserWorkspaceToDatabase(user.id, { activeSeatingAllocationId: allocation.id }).catch(() => {});
+      }
+
+      return next;
     });
     setActiveAllocation(allocation);
-  }, []);
+  }, [user?.id]);
 
   const deleteAllocation = useCallback((id: string) => {
-    setAllocations((prev) => prev.filter((a) => a.id !== id));
+    setAllocations((prev) => {
+      const next = prev.filter((a) => a.id !== id);
+      if (user?.id && isUUID(user.id)) {
+        deleteSeatingAllocationFromDatabase(id, user.id).catch(() => {});
+      }
+      return next;
+    });
     if (activeAllocation?.id === id) {
       setActiveAllocation(null);
+      if (user?.id && isUUID(user.id)) {
+        syncUserWorkspaceToDatabase(user.id, { activeSeatingAllocationId: null }).catch(() => {});
+      }
     }
-  }, [activeAllocation]);
+  }, [activeAllocation?.id, user?.id]);
 
   const duplicateAllocation = useCallback((id: string): SeatingAllocationRecord | null => {
     const existing = allocations.find((a) => a.id === id);
@@ -343,9 +513,17 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
       updatedAt: new Date().toISOString(),
     };
 
-    setAllocations((prev) => [duplicated, ...prev]);
+    setAllocations((prev) => {
+      const next = [duplicated, ...prev];
+      if (user?.id && isUUID(user.id)) {
+        syncSeatingAllocationToDatabase(duplicated, user.id).catch(() => {});
+        syncUserWorkspaceToDatabase(user.id, { activeSeatingAllocationId: duplicated.id }).catch(() => {});
+      }
+      return next;
+    });
+    setActiveAllocation(duplicated);
     return duplicated;
-  }, [allocations]);
+  }, [allocations, user?.id]);
 
   return (
     <StudentSeatingContext.Provider
@@ -355,13 +533,14 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
         studentsBySubject,
         allocations,
         activeAllocation,
-        setActiveAllocation,
+        setActiveAllocation: handleSetActiveAllocation,
         addRoom,
         updateRoom,
         deleteRoom,
         isRoomInUse,
         saveRoomsToStorage,
         isRoomsCloudSynced,
+        isCloudSynced,
         addSubject,
         updateSubject,
         deleteSubject,
