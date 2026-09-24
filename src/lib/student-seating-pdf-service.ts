@@ -88,7 +88,7 @@ export async function generateRoomSeatingPlanPdf({
     doc.roundedRect(leftMargin, metaY, contentWidth, metaHeight, 1.5, 1.5, 'FD');
 
     const formattedDate = formatAppDateWithDay(allocation.examination.date, allocation.examination.date || '—');
-    
+
     // Find unique subjects seated in this room, or fallback to allocation subjects
     const roomSubjectNames = Array.from(
       new Set(
@@ -97,8 +97,8 @@ export async function generateRoomSeatingPlanPdf({
           .filter((name): name is string => Boolean(name && name.trim()))
       )
     );
-    const rawSubjects = roomSubjectNames.length > 0 
-      ? roomSubjectNames.join(', ') 
+    const rawSubjects = roomSubjectNames.length > 0
+      ? roomSubjectNames.join(', ')
       : (allocation.subjectStats.map((s) => s.subjectName).join(', ') || 'All Subjects');
     const truncSubjects = rawSubjects.length > 50 ? rawSubjects.substring(0, 47) + '...' : rawSubjects;
 
@@ -414,8 +414,8 @@ export async function generateStudentSeatingIndexPdf({
             seat.position === 'SIDE_A'
               ? 'Side A'
               : seat.position === 'SIDE_B'
-              ? 'Side B'
-              : 'Center';
+                ? 'Side B'
+                : 'Center';
           flatList.push({
             rollNo: seat.student.rollNo,
             studentName: seat.student.name,

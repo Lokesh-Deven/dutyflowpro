@@ -188,9 +188,14 @@ export function RoomSeatingDiagram({
                 className="flex items-stretch gap-2 bg-white p-2 rounded-lg border border-slate-200/80 shadow-2xs"
               >
                 {/* Bench Number Indicator */}
-                <div className="w-9 shrink-0 bg-slate-100/80 rounded-md flex flex-col items-center justify-center font-headline font-bold text-xs text-slate-600 border border-slate-200/50">
+                <div className="w-12 shrink-0 bg-slate-100/80 rounded-md flex flex-col items-center justify-center font-headline font-bold text-xs text-slate-600 border border-slate-200/50 py-1">
                   <span className="text-[9px] uppercase text-slate-400 font-medium">B</span>
-                  {String(bench.benchNumber).padStart(2, '0')}
+                  <span>{String(bench.benchNumber).padStart(2, '0')}</span>
+                  {bench.rowLabel && (
+                    <span className="mt-1 text-[8px] font-extrabold text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-1 py-0.2 rounded-xs whitespace-nowrap">
+                      {bench.rowLabel}
+                    </span>
+                  )}
                 </div>
 
                 {/* Bench Physical Seat Slots */}
@@ -219,9 +224,14 @@ export function RoomSeatingDiagram({
                 className="flex items-stretch gap-2 bg-white p-2 rounded-lg border border-slate-200/80 shadow-2xs"
               >
                 {/* Bench Number Indicator */}
-                <div className="w-9 shrink-0 bg-slate-100/80 rounded-md flex flex-col items-center justify-center font-headline font-bold text-xs text-slate-600 border border-slate-200/50">
+                <div className="w-12 shrink-0 bg-slate-100/80 rounded-md flex flex-col items-center justify-center font-headline font-bold text-xs text-slate-600 border border-slate-200/50 py-1">
                   <span className="text-[9px] uppercase text-slate-400 font-medium">B</span>
-                  {String(bench.benchNumber).padStart(2, '0')}
+                  <span>{String(bench.benchNumber).padStart(2, '0')}</span>
+                  {bench.rowLabel && (
+                    <span className="mt-1 text-[8px] font-extrabold text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-1 py-0.2 rounded-xs whitespace-nowrap">
+                      {bench.rowLabel}
+                    </span>
+                  )}
                 </div>
 
                 {/* Bench Physical Seat Slots */}

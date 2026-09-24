@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useStudentSeating } from '@/lib/student-seating-context';
 import { useAllotment } from '@/lib/allotment-context';
 import { useAuth } from '@/lib/auth-context';
@@ -10,6 +10,8 @@ import {
   SeatingMasterRoom,
   SeatingAllocationRecord,
   RoomSeatingPlan,
+  MultiSubjectRow,
+  MultiSubjectConfig,
 } from '@/lib/student-seating-types';
 import { runDeterministicSeatingAllocation } from '@/lib/student-seating-engine';
 import {
@@ -54,6 +56,11 @@ import {
   AlertCircle,
   Check,
   Printer,
+  ListOrdered,
+  Plus,
+  Save,
+  ArrowDown,
+  Info,
 } from 'lucide-react';
 
 export default function SeatingAllocationWizardPage() {
@@ -100,6 +107,140 @@ export default function SeatingAllocationWizardPage() {
     SIDE_B: '',
   });
 
+  // Step 4: Multi-Subject 4-Row Sequential System (3 or 4 Subjects)
+  const [isMultiSubjectMode, setIsMultiSubjectMode] = useState<boolean>(false);
+  const [multiSubjectRows, setMultiSubjectRows] = useState<MultiSubjectRow[]>([
+    { rowNumber: 1, sideA: '', center: '', sideB: '', enabled: true },
+    { rowNumber: 2, sideA: '', center: '', sideB: '', enabled: true },
+    { rowNumber: 3, sideA: '', center: '', sideB: '', enabled: true },
+    { rowNumber: 4, sideA: '', center: 'NIL', sideB: '', enabled: false },
+  ]);
+  const [isSavingPattern, setIsSavingPattern] = useState<boolean>(false);
+
+  // Helper to generate recommended alternating sequence for 3 or 4 subjects
+  const generateDefaultRows = useCallback((subIds: string[]): MultiSubjectRow[] => {
+    const s1 = subIds[0] || '';
+    const s2 = subIds[1] || subIds[0] || '';
+    const s3 = subIds[2] || subIds[1] || subIds[0] || '';
+    const s4 = subIds[3] || '';
+
+    if (subIds.length >= 4) {
+      return [
+        { rowNumber: 1, sideA: s1, center: s2, sideB: s1, enabled: true },
+        { rowNumber: 2, sideA: s2, center: s3, sideB: s2, enabled: true },
+        { rowNumber: 3, sideA: s3, center: s4, sideB: s3, enabled: true },
+        { rowNumber: 4, sideA: s4, center: 'NIL', sideB: s4, enabled: false }, // Optional / unused
+      ];
+    } else {
+      return [
+        { rowNumber: 1, sideA: s1, center: s2, sideB: s1, enabled: true },
+        { rowNumber: 2, sideA: s2, center: s3, sideB: s2, enabled: true },
+        { rowNumber: 3, sideA: s3, center: 'NIL', sideB: s3, enabled: true },
+        { rowNumber: 4, sideA: '', center: 'NIL', sideB: '', enabled: false },
+      ];
+    }
+  }, []);
+
+  // Validation function for multi-subject configuration
+  const getPatternValidationError = useCallback((): string | null => {
+    if (selectedSubjectIds.length < 3) {
+      return 'At least 3 examination subjects must be selected in Step 2 to use the Multi-Subject Allocation feature.';
+    }
+    const activeRows = multiSubjectRows.filter(
+      (r) =>
+        r.enabled !== false &&
+        ((r.sideA && r.sideA !== 'UNUSED') || (r.sideB && r.sideB !== 'UNUSED'))
+    );
+    if (activeRows.length < 2) {
+      return 'Please configure at least 2 active rows (e.g. Row 1 and Row 2) for multi-subject allocation.';
+    }
+    for (const r of activeRows) {
+      if (!r.sideA || r.sideA === 'UNUSED') {
+        return `Row ${r.rowNumber}: Side A must have a valid examination subject selected.`;
+      }
+      if (!r.sideB || r.sideB === 'UNUSED') {
+        return `Row ${r.rowNumber}: Side B must have a valid examination subject selected.`;
+      }
+      if (!selectedSubjectIds.includes(r.sideA)) {
+        return `Row ${r.rowNumber}: Side A subject is not part of this session's selected subjects.`;
+      }
+      if (
+        r.center &&
+        r.center !== 'NIL' &&
+        r.center !== 'VACANT' &&
+        r.center !== 'UNUSED' &&
+        !selectedSubjectIds.includes(r.center)
+      ) {
+        return `Row ${r.rowNumber}: Centre subject is not part of this session's selected subjects.`;
+      }
+      if (!selectedSubjectIds.includes(r.sideB)) {
+        return `Row ${r.rowNumber}: Side B subject is not part of this session's selected subjects.`;
+      }
+    }
+    return null;
+  }, [selectedSubjectIds, multiSubjectRows]);
+
+  // Save Allocation Pattern Handler
+  const handleSavePattern = () => {
+    const valErr = getPatternValidationError();
+    if (valErr) {
+      toast({
+        variant: "destructive",
+        title: "Configuration Incomplete",
+        description: valErr,
+      });
+      return;
+    }
+
+    setIsSavingPattern(true);
+    try {
+      const storageKey = selectedDutyExamId
+        ? `dutyflow_pattern_exam_${selectedDutyExamId}`
+        : `dutyflow_pattern_${selectedSubjectIds.slice().sort().join('_')}`;
+
+      localStorage.setItem(storageKey, JSON.stringify(multiSubjectRows));
+      localStorage.setItem('dutyflow_multi_subject_pattern_last', JSON.stringify(multiSubjectRows));
+
+      toast({
+        title: "Allocation Pattern Saved",
+        description: "Your 4-row multi-subject allocation pattern has been saved successfully.",
+      });
+    } catch (e: any) {
+      toast({
+        variant: "destructive",
+        title: "Save Failed",
+        description: e.message || "Failed to save allocation pattern.",
+      });
+    } finally {
+      setIsSavingPattern(false);
+    }
+  };
+
+  // Restore saved pattern on mount or exam switch
+  useEffect(() => {
+    if (activeAllocation?.multiSubjectConfig?.enabled) {
+      setIsMultiSubjectMode(true);
+      if (activeAllocation.multiSubjectConfig.rows?.length) {
+        setMultiSubjectRows(activeAllocation.multiSubjectConfig.rows);
+      }
+    } else if (selectedSubjectIds.length >= 3) {
+      try {
+        const storageKey = selectedDutyExamId
+          ? `dutyflow_pattern_exam_${selectedDutyExamId}`
+          : `dutyflow_pattern_${selectedSubjectIds.slice().sort().join('_')}`;
+        const saved = localStorage.getItem(storageKey) || localStorage.getItem('dutyflow_multi_subject_pattern_last');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setMultiSubjectRows(parsed);
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+  }, [activeAllocation, selectedDutyExamId, selectedSubjectIds]);
+
   // Step 5: Selected Rooms
   const [selectedRoomIds, setSelectedRoomIds] = useState<string[]>([]);
 
@@ -115,22 +256,58 @@ export default function SeatingAllocationWizardPage() {
     }, 0);
   }, [selectedSubjectIds, studentsBySubject]);
 
-  // Selected rooms capacity
+  // Selected rooms capacity (Multi-Subject uses 3 seats per bench capacity)
   const selectedRoomsCapacity = useMemo(() => {
     return selectedRoomIds.reduce((sum, rId) => {
       const r = masterRooms.find((rm) => rm.id === rId);
       if (!r) return sum;
-      const cap =
-        pattern === '1_PER_BENCH'
+      const cap = isMultiSubjectMode
+        ? r.capacityThree
+        : pattern === '1_PER_BENCH'
           ? r.capacityOne
           : pattern === '2_PER_BENCH'
-          ? r.capacityTwo
-          : r.capacityThree;
+            ? r.capacityTwo
+            : r.capacityThree;
       return sum + cap;
     }, 0);
-  }, [selectedRoomIds, masterRooms, pattern]);
+  }, [selectedRoomIds, masterRooms, pattern, isMultiSubjectMode]);
 
   const isCapacitySufficient = selectedRoomsCapacity >= totalStudentsSelected && totalStudentsSelected > 0;
+
+  // Simulated benches preview for Multi-Subject 4-Row System
+  const simulatedMultiSubjectBenches = useMemo(() => {
+    if (!isMultiSubjectMode || selectedSubjectIds.length < 2) return [];
+
+    const dummyRoom: SeatingMasterRoom = {
+      id: 'sim-dummy-room',
+      roomNo: 'PREVIEW',
+      leftBenches: 15,
+      rightBenches: 15,
+      totalBenches: 30,
+      capacityOne: 30,
+      capacityTwo: 60,
+      capacityThree: 90,
+      status: 'Available',
+    };
+
+    const activeSubjs = subjects.filter((s) => selectedSubjectIds.includes(s.id));
+    if (activeSubjs.length === 0) return [];
+
+    const simResult = runDeterministicSeatingAllocation({
+      rooms: [dummyRoom],
+      subjects: activeSubjs,
+      studentsBySubject,
+      pattern: '3_PER_BENCH',
+      positionMapping,
+      multiSubjectConfig: {
+        enabled: true,
+        rows: multiSubjectRows,
+      },
+    });
+
+    const benches = simResult.roomPlans[0]?.benches || [];
+    return benches.filter((b) => b.seats.some((s) => !!s.student)).slice(0, 16);
+  }, [isMultiSubjectMode, subjects, selectedSubjectIds, studentsBySubject, positionMapping, multiSubjectRows]);
 
   // Handle Examination select from DutyFlow
   const handleSelectDutyExam = (examId: string) => {
@@ -156,15 +333,35 @@ export default function SeatingAllocationWizardPage() {
       return;
     }
 
+    if (isMultiSubjectMode) {
+      const valErr = getPatternValidationError();
+      if (valErr) {
+        toast({
+          variant: "destructive",
+          title: "Configuration Error",
+          description: valErr,
+        });
+        return;
+      }
+    }
+
     const selectedRooms = masterRooms.filter((r) => selectedRoomIds.includes(r.id));
     const selectedSubjs = subjects.filter((s) => selectedSubjectIds.includes(s.id));
+
+    const multiSubjectConfig: MultiSubjectConfig | undefined = isMultiSubjectMode
+      ? {
+          enabled: true,
+          rows: multiSubjectRows,
+        }
+      : undefined;
 
     const result = runDeterministicSeatingAllocation({
       rooms: selectedRooms,
       subjects: selectedSubjs,
       studentsBySubject,
-      pattern,
+      pattern: isMultiSubjectMode ? '3_PER_BENCH' : pattern,
       positionMapping,
+      multiSubjectConfig,
     });
 
     const newRecord: SeatingAllocationRecord = {
@@ -178,8 +375,9 @@ export default function SeatingAllocationWizardPage() {
         endTime,
       },
       subjectIds: selectedSubjectIds,
-      pattern,
+      pattern: isMultiSubjectMode ? '3_PER_BENCH' : pattern,
       positionMapping,
+      multiSubjectConfig,
       roomIds: selectedRoomIds,
       roomPlans: result.roomPlans,
       subjectStats: result.subjectStats,
@@ -195,7 +393,7 @@ export default function SeatingAllocationWizardPage() {
 
     toast({
       title: "Allocation Generated",
-      description: `Successfully allocated ${result.summary.allocatedStudents} students across ${result.summary.totalRooms} rooms.`,
+      description: `Successfully allocated ${result.summary.allocatedStudents} students across ${result.summary.totalRooms} rooms${isMultiSubjectMode ? ` using sequential 4-row trigger system` : ''}.`,
     });
   };
 
@@ -337,22 +535,20 @@ export default function SeatingAllocationWizardPage() {
                       setCurrentStep(s.num);
                     }
                   }}
-                  className={`flex items-center gap-2 cursor-pointer transition-all ${
-                    isCurrent
+                  className={`flex items-center gap-2 cursor-pointer transition-all ${isCurrent
                       ? "text-[#1E2A5E] font-black"
                       : isCompleted
-                      ? "text-emerald-700 font-bold"
-                      : "text-slate-400 font-medium"
-                  }`}
+                        ? "text-emerald-700 font-bold"
+                        : "text-slate-400 font-medium"
+                    }`}
                 >
                   <div
-                    className={`w-7 h-7 rounded-full flex items-center justify-center text-xs transition-all ${
-                      isCurrent
+                    className={`w-7 h-7 rounded-full flex items-center justify-center text-xs transition-all ${isCurrent
                         ? "bg-[#1E2A5E] text-white shadow-xs"
                         : isCompleted
-                        ? "bg-emerald-100 text-emerald-800 font-bold"
-                        : "bg-slate-100 text-slate-400"
-                    }`}
+                          ? "bg-emerald-100 text-emerald-800 font-bold"
+                          : "bg-slate-100 text-slate-400"
+                      }`}
                   >
                     {isCompleted ? <Check className="w-3.5 h-3.5" /> : s.num}
                   </div>
@@ -360,9 +556,8 @@ export default function SeatingAllocationWizardPage() {
                 </div>
                 {idx < steps.length - 1 && (
                   <div
-                    className={`flex-1 h-0.5 mx-3 ${
-                      isCompleted ? "bg-emerald-300" : "bg-slate-200"
-                    }`}
+                    className={`flex-1 h-0.5 mx-3 ${isCompleted ? "bg-emerald-300" : "bg-slate-200"
+                      }`}
                   />
                 )}
               </React.Fragment>
@@ -504,16 +699,15 @@ export default function SeatingAllocationWizardPage() {
                       setSelectedSubjectIds((prev) => [...prev, subj.id]);
                     }
                   }}
-                  className={`flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer ${
-                    isChecked
+                  className={`flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer ${isChecked
                       ? "border-indigo-500 bg-indigo-50/50 shadow-2xs"
                       : "border-slate-200 hover:border-slate-300 bg-white"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-3">
                     <Checkbox
                       checked={isChecked}
-                      onCheckedChange={() => {}}
+                      onCheckedChange={() => { }}
                       className="data-[state=checked]:bg-[#1E2A5E]"
                     />
                     <div>
@@ -530,11 +724,10 @@ export default function SeatingAllocationWizardPage() {
 
                   <Badge
                     variant="outline"
-                    className={`font-semibold text-xs px-2.5 py-0.5 ${
-                      students.length > 0
+                    className={`font-semibold text-xs px-2.5 py-0.5 ${students.length > 0
                         ? "bg-white text-indigo-700 border-indigo-200"
                         : "bg-slate-100 text-slate-400 border-slate-200"
-                    }`}
+                      }`}
                   >
                     {students.length} Students
                   </Badge>
@@ -598,11 +791,10 @@ export default function SeatingAllocationWizardPage() {
             {/* Option 1: 1 / Bench */}
             <div
               onClick={() => setPattern('1_PER_BENCH')}
-              className={`p-4 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between space-y-3 ${
-                pattern === '1_PER_BENCH'
+              className={`p-4 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between space-y-3 ${pattern === '1_PER_BENCH'
                   ? "border-[#1E2A5E] bg-indigo-50/40 shadow-xs"
                   : "border-slate-200 hover:border-slate-300 bg-white"
-              }`}
+                }`}
             >
               <div>
                 <Badge variant="outline" className="text-[10px] font-bold bg-white text-slate-700 mb-2">
@@ -628,11 +820,10 @@ export default function SeatingAllocationWizardPage() {
             {/* Option 2: 2 / Bench */}
             <div
               onClick={() => setPattern('2_PER_BENCH')}
-              className={`p-4 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between space-y-3 ${
-                pattern === '2_PER_BENCH'
+              className={`p-4 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between space-y-3 ${pattern === '2_PER_BENCH'
                   ? "border-[#1E2A5E] bg-indigo-50/40 shadow-xs"
                   : "border-slate-200 hover:border-slate-300 bg-white"
-              }`}
+                }`}
             >
               <div>
                 <Badge variant="outline" className="text-[10px] font-bold bg-white text-slate-700 mb-2">
@@ -658,11 +849,10 @@ export default function SeatingAllocationWizardPage() {
             {/* Option 3: 3 / Bench */}
             <div
               onClick={() => setPattern('3_PER_BENCH')}
-              className={`p-4 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between space-y-3 ${
-                pattern === '3_PER_BENCH'
+              className={`p-4 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between space-y-3 ${pattern === '3_PER_BENCH'
                   ? "border-[#1E2A5E] bg-indigo-50/40 shadow-xs"
                   : "border-slate-200 hover:border-slate-300 bg-white"
-              }`}
+                }`}
             >
               <div>
                 <Badge variant="outline" className="text-[10px] font-bold bg-white text-slate-700 mb-2">
@@ -710,184 +900,673 @@ export default function SeatingAllocationWizardPage() {
 
       {/* STEP 4 — ASSIGN SUBJECTS TO POSITIONS */}
       {currentStep === 4 && (
-        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs max-w-2xl mx-auto space-y-5">
-          <div className="border-b border-slate-100 pb-3">
-            <h2 className="font-headline font-bold text-lg text-slate-800">
-              Step 4: Assign Subjects to Bench Positions
-            </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Specify which subject occupies each physical seat slot on the bench.
-            </p>
+        <div className={`bg-white border border-slate-200 rounded-xl p-6 shadow-xs mx-auto space-y-6 transition-all ${isMultiSubjectMode ? "max-w-4xl" : "max-w-2xl"}`}>
+          {/* Header & Mode Switcher */}
+          <div className="border-b border-slate-100 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="font-headline font-bold text-lg text-slate-800">
+                  Step 4: Assign Subjects to Bench Positions
+                </h2>
+                {isMultiSubjectMode && (
+                  <Badge className="bg-indigo-600 text-white text-[10px] font-bold tracking-wider uppercase px-2 py-0.5">
+                    Sequential 4-Row System
+                  </Badge>
+                )}
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {isMultiSubjectMode
+                  ? "Configure 4 sequential rows for Side A, Centre, and Side B. The system advances immediately when either subject finishes."
+                  : "Specify which subject occupies each physical seat slot on the bench."}
+              </p>
+            </div>
+
+            {/* Mode Switcher / "+ More Than 2 Subjects" Button */}
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant={!isMultiSubjectMode ? "default" : "outline"}
+                onClick={() => setIsMultiSubjectMode(false)}
+                className={`text-xs h-8 font-bold ${
+                  !isMultiSubjectMode
+                    ? "bg-[#1E2A5E] text-white hover:bg-[#151D42]"
+                    : "text-slate-600 border-slate-200"
+                }`}
+              >
+                Standard (1 or 2 Subjects)
+              </Button>
+
+              <Button
+                type="button"
+                size="sm"
+                variant={isMultiSubjectMode ? "default" : "outline"}
+                onClick={() => {
+                  setIsMultiSubjectMode(true);
+                  if (!multiSubjectRows[0]?.sideA) {
+                    setMultiSubjectRows(generateDefaultRows(selectedSubjectIds));
+                  }
+                }}
+                className={`text-xs h-8 font-bold gap-1.5 ${
+                  isMultiSubjectMode
+                    ? "bg-[#1E2A5E] text-white hover:bg-[#151D42] shadow-xs"
+                    : "text-indigo-700 border-indigo-300 bg-indigo-50/60 hover:bg-indigo-100/80"
+                }`}
+              >
+                <Plus className="w-3.5 h-3.5" />
+                + More Than 2 Subjects
+              </Button>
+            </div>
           </div>
 
-          <div className="space-y-4">
-            {pattern === '1_PER_BENCH' && (
-              <div className="p-4 bg-slate-50/80 rounded-xl border border-slate-200 space-y-2">
-                <Label className="text-xs font-bold text-slate-800">
-                  CENTER &rarr; Select Subject
-                </Label>
-                <Select
-                  value={positionMapping.CENTER || selectedSubjectIds[0] || ""}
-                  onValueChange={(val) =>
-                    setPositionMapping((prev) => ({ ...prev, CENTER: val }))
-                  }
-                >
-                  <SelectTrigger className="bg-white text-xs font-semibold h-9">
-                    <SelectValue placeholder="Select Subject for Center Position" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {selectedSubjectIds.map((id) => {
-                      const s = subjects.find((sb) => sb.id === id);
-                      return (
-                        <SelectItem key={id} value={id} className="text-xs">
-                          {s?.name} ({studentsBySubject[id]?.length || 0} students)
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {pattern === '2_PER_BENCH' && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          {/* MODE A: STANDARD ALLOCATION (1 OR 2 SUBJECTS) */}
+          {!isMultiSubjectMode && (
+            <div className="space-y-4">
+              {pattern === '1_PER_BENCH' && (
                 <div className="p-4 bg-slate-50/80 rounded-xl border border-slate-200 space-y-2">
                   <Label className="text-xs font-bold text-slate-800">
-                    SIDE A &rarr; Select Subject
+                    CENTER &rarr; Select Subject
                   </Label>
                   <Select
-                    value={positionMapping.SIDE_A || selectedSubjectIds[0] || ""}
-                    onValueChange={(val) =>
-                      setPositionMapping((prev) => ({ ...prev, SIDE_A: val }))
-                    }
-                  >
-                    <SelectTrigger className="bg-white text-xs font-semibold h-9">
-                      <SelectValue placeholder="Select Subject for Side A" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {selectedSubjectIds.map((id) => {
-                        const s = subjects.find((sb) => sb.id === id);
-                        return (
-                          <SelectItem key={id} value={id} className="text-xs">
-                            {s?.name} ({studentsBySubject[id]?.length || 0} students)
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="p-4 bg-slate-50/80 rounded-xl border border-slate-200 space-y-2">
-                  <Label className="text-xs font-bold text-slate-800">
-                    SIDE B &rarr; Select Subject
-                  </Label>
-                  <Select
-                    value={positionMapping.SIDE_B || selectedSubjectIds[1] || selectedSubjectIds[0] || ""}
-                    onValueChange={(val) =>
-                      setPositionMapping((prev) => ({ ...prev, SIDE_B: val }))
-                    }
-                  >
-                    <SelectTrigger className="bg-white text-xs font-semibold h-9">
-                      <SelectValue placeholder="Select Subject for Side B" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {selectedSubjectIds.map((id) => {
-                        const s = subjects.find((sb) => sb.id === id);
-                        return (
-                          <SelectItem key={id} value={id} className="text-xs">
-                            {s?.name} ({studentsBySubject[id]?.length || 0} students)
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            )}
-
-            {pattern === '3_PER_BENCH' && (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="p-3.5 bg-slate-50/80 rounded-xl border border-slate-200 space-y-2">
-                  <Label className="text-xs font-bold text-slate-800">
-                    SIDE A &rarr; Subject
-                  </Label>
-                  <Select
-                    value={positionMapping.SIDE_A || selectedSubjectIds[0] || ""}
-                    onValueChange={(val) =>
-                      setPositionMapping((prev) => ({ ...prev, SIDE_A: val }))
-                    }
-                  >
-                    <SelectTrigger className="bg-white text-xs font-semibold h-9">
-                      <SelectValue placeholder="Side A" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {selectedSubjectIds.map((id) => {
-                        const s = subjects.find((sb) => sb.id === id);
-                        return (
-                          <SelectItem key={id} value={id} className="text-xs">
-                            {s?.name} ({studentsBySubject[id]?.length || 0})
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="p-3.5 bg-slate-50/80 rounded-xl border border-slate-200 space-y-2">
-                  <Label className="text-xs font-bold text-slate-800">
-                    CENTER &rarr; Subject
-                  </Label>
-                  <Select
-                    value={positionMapping.CENTER || selectedSubjectIds[1] || selectedSubjectIds[0] || ""}
+                    value={positionMapping.CENTER || selectedSubjectIds[0] || ""}
                     onValueChange={(val) =>
                       setPositionMapping((prev) => ({ ...prev, CENTER: val }))
                     }
                   >
                     <SelectTrigger className="bg-white text-xs font-semibold h-9">
-                      <SelectValue placeholder="Center" />
+                      <SelectValue placeholder="Select Subject for Center Position" />
                     </SelectTrigger>
                     <SelectContent>
                       {selectedSubjectIds.map((id) => {
                         const s = subjects.find((sb) => sb.id === id);
                         return (
                           <SelectItem key={id} value={id} className="text-xs">
-                            {s?.name} ({studentsBySubject[id]?.length || 0})
+                            {s?.name} ({studentsBySubject[id]?.length || 0} students)
                           </SelectItem>
                         );
                       })}
                     </SelectContent>
                   </Select>
                 </div>
+              )}
 
-                <div className="p-3.5 bg-slate-50/80 rounded-xl border border-slate-200 space-y-2">
-                  <Label className="text-xs font-bold text-slate-800">
-                    SIDE B &rarr; Subject
+              {pattern === '2_PER_BENCH' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div className="p-4 bg-slate-50/80 rounded-xl border border-slate-200 space-y-2">
+                    <Label className="text-xs font-bold text-slate-800">
+                      SIDE A &rarr; Select Subject
+                    </Label>
+                    <Select
+                      value={positionMapping.SIDE_A || selectedSubjectIds[0] || ""}
+                      onValueChange={(val) =>
+                        setPositionMapping((prev) => ({ ...prev, SIDE_A: val }))
+                      }
+                    >
+                      <SelectTrigger className="bg-white text-xs font-semibold h-9">
+                        <SelectValue placeholder="Select Subject for Side A" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {selectedSubjectIds.map((id) => {
+                          const s = subjects.find((sb) => sb.id === id);
+                          return (
+                            <SelectItem key={id} value={id} className="text-xs">
+                              {s?.name} ({studentsBySubject[id]?.length || 0} students)
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="p-4 bg-slate-50/80 rounded-xl border border-slate-200 space-y-2">
+                    <Label className="text-xs font-bold text-slate-800">
+                      SIDE B &rarr; Select Subject
+                    </Label>
+                    <Select
+                      value={positionMapping.SIDE_B || selectedSubjectIds[1] || selectedSubjectIds[0] || ""}
+                      onValueChange={(val) =>
+                        setPositionMapping((prev) => ({ ...prev, SIDE_B: val }))
+                      }
+                    >
+                      <SelectTrigger className="bg-white text-xs font-semibold h-9">
+                        <SelectValue placeholder="Select Subject for Side B" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {selectedSubjectIds.map((id) => {
+                          const s = subjects.find((sb) => sb.id === id);
+                          return (
+                            <SelectItem key={id} value={id} className="text-xs">
+                              {s?.name} ({studentsBySubject[id]?.length || 0} students)
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+
+              {pattern === '3_PER_BENCH' && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="p-3.5 bg-slate-50/80 rounded-xl border border-slate-200 space-y-2">
+                    <Label className="text-xs font-bold text-slate-800">
+                      SIDE A &rarr; Subject
+                    </Label>
+                    <Select
+                      value={positionMapping.SIDE_A || selectedSubjectIds[0] || ""}
+                      onValueChange={(val) =>
+                        setPositionMapping((prev) => ({ ...prev, SIDE_A: val }))
+                      }
+                    >
+                      <SelectTrigger className="bg-white text-xs font-semibold h-9">
+                        <SelectValue placeholder="Side A" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {selectedSubjectIds.map((id) => {
+                          const s = subjects.find((sb) => sb.id === id);
+                          return (
+                            <SelectItem key={id} value={id} className="text-xs">
+                              {s?.name} ({studentsBySubject[id]?.length || 0})
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="p-3.5 bg-slate-50/80 rounded-xl border border-slate-200 space-y-2">
+                    <Label className="text-xs font-bold text-slate-800">
+                      CENTER &rarr; Subject
+                    </Label>
+                    <Select
+                      value={positionMapping.CENTER || selectedSubjectIds[1] || selectedSubjectIds[0] || ""}
+                      onValueChange={(val) =>
+                        setPositionMapping((prev) => ({ ...prev, CENTER: val }))
+                      }
+                    >
+                      <SelectTrigger className="bg-white text-xs font-semibold h-9">
+                        <SelectValue placeholder="Center" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {selectedSubjectIds.map((id) => {
+                          const s = subjects.find((sb) => sb.id === id);
+                          return (
+                            <SelectItem key={id} value={id} className="text-xs">
+                              {s?.name} ({studentsBySubject[id]?.length || 0})
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="p-3.5 bg-slate-50/80 rounded-xl border border-slate-200 space-y-2">
+                    <Label className="text-xs font-bold text-slate-800">
+                      SIDE B &rarr; Subject
+                    </Label>
+                    <Select
+                      value={positionMapping.SIDE_B || selectedSubjectIds[0] || ""}
+                      onValueChange={(val) =>
+                        setPositionMapping((prev) => ({ ...prev, SIDE_B: val }))
+                      }
+                    >
+                      <SelectTrigger className="bg-white text-xs font-semibold h-9">
+                        <SelectValue placeholder="Side B" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {selectedSubjectIds.map((id) => {
+                          const s = subjects.find((sb) => sb.id === id);
+                          return (
+                            <SelectItem key={id} value={id} className="text-xs">
+                              {s?.name} ({studentsBySubject[id]?.length || 0})
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+
+              {/* Callout to Multi-Subject System */}
+              <div className="p-4 bg-indigo-50/80 border border-indigo-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
+                <div className="space-y-0.5">
+                  <div className="font-headline font-bold text-xs text-[#1E2A5E] flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                    Allocating 3 or 4 subjects in this examination?
+                  </div>
+                  <p className="text-[11px] text-slate-600">
+                    Switch to the Sequential 4-Row System to distribute 3 or 4 subjects across Side A, Centre, and Side B with immediate auto-row switching.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => {
+                    setIsMultiSubjectMode(true);
+                    setMultiSubjectRows(generateDefaultRows(selectedSubjectIds));
+                  }}
+                  className="bg-[#1E2A5E] hover:bg-[#151D42] text-white text-xs font-bold shrink-0 gap-1.5 h-8 px-3.5 shadow-2xs"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  + More Than 2 Subjects
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* MODE B: SEQUENTIAL 4-ROW ALLOCATION SYSTEM (3 OR 4 SUBJECTS) */}
+          {isMultiSubjectMode && (
+            <div className="space-y-6">
+              {/* Section 1: Subjects Available for this Session */}
+              <div className="p-4 bg-indigo-50/50 border border-indigo-100 rounded-xl space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <BookOpen className="w-3.5 h-3.5 text-indigo-600" />
+                    Subjects Available for this Session ({selectedSubjectIds.length})
                   </Label>
-                  <Select
-                    value={positionMapping.SIDE_B || selectedSubjectIds[0] || ""}
-                    onValueChange={(val) =>
-                      setPositionMapping((prev) => ({ ...prev, SIDE_B: val }))
-                    }
+                  <span className="text-[11px] font-semibold text-slate-500">
+                    Total: {totalStudentsSelected} students
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {selectedSubjectIds.map((id) => {
+                    const s = subjects.find((sb) => sb.id === id);
+                    const count = studentsBySubject[id]?.length || 0;
+                    return (
+                      <div
+                        key={id}
+                        className="flex items-center gap-2 bg-white border border-indigo-200/80 px-3 py-1.5 rounded-lg shadow-3xs"
+                      >
+                        <span className="font-headline font-bold text-xs text-slate-900">
+                          {s?.name || 'Subject'}
+                        </span>
+                        {s?.code && (
+                          <span className="text-[10px] text-indigo-600 font-mono font-medium">
+                            ({s.code})
+                          </span>
+                        )}
+                        <Badge
+                          variant="secondary"
+                          className="bg-indigo-50 text-indigo-700 text-[10px] font-bold py-0 px-1.5"
+                        >
+                          {count}
+                        </Badge>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {selectedSubjectIds.length < 3 && (
+                  <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between gap-3 text-amber-900">
+                    <div className="flex items-center gap-2 text-xs">
+                      <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                      <span>
+                        Multi-Subject feature requires at least 3 subjects. Currently you have selected <strong>{selectedSubjectIds.length}</strong> subject(s).
+                      </span>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentStep(2)}
+                      className="text-xs h-7 font-bold text-amber-900 border-amber-300 bg-white hover:bg-amber-100 shrink-0"
+                    >
+                      ← Back to Step 2
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {/* Section 2: Quick Action Auto-Fill & Save Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 border-t border-slate-100">
+                <div>
+                  <h3 className="font-headline font-bold text-sm text-slate-900 flex items-center gap-2">
+                    <ListOrdered className="w-4 h-4 text-indigo-600" />
+                    Sequential Allocation Rows (4 Rows)
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Assign subjects for Side A, Centre, and Side B across each row.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setMultiSubjectRows(generateDefaultRows(selectedSubjectIds))}
+                    className="text-[11px] font-bold h-7 gap-1 text-indigo-700 border-indigo-200 hover:bg-indigo-50"
                   >
-                    <SelectTrigger className="bg-white text-xs font-semibold h-9">
-                      <SelectValue placeholder="Side B" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {selectedSubjectIds.map((id) => {
-                        const s = subjects.find((sb) => sb.id === id);
-                        return (
-                          <SelectItem key={id} value={id} className="text-xs">
-                            {s?.name} ({studentsBySubject[id]?.length || 0})
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
+                    <RotateCcw className="w-3 h-3" />
+                    Auto-Fill Recommended Rows
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSavePattern}
+                    disabled={isSavingPattern || selectedSubjectIds.length < 3}
+                    className="text-[11px] font-bold h-7 gap-1 text-[#1E2A5E] border-indigo-200 hover:bg-indigo-50"
+                  >
+                    <Save className="w-3 h-3 text-indigo-600" />
+                    {isSavingPattern ? "Saving..." : "Save Pattern"}
+                  </Button>
                 </div>
               </div>
-            )}
-          </div>
 
+              {/* Section 3: The 4 Selectable Rows */}
+              <div className="space-y-3.5">
+                {multiSubjectRows.map((row, idx) => {
+                  const sA = subjects.find((s) => s.id === row.sideA);
+                  const isCenterNil = row.center === 'NIL' || row.center === 'VACANT';
+                  const sC = isCenterNil ? null : subjects.find((s) => s.id === row.center);
+                  const sB = subjects.find((s) => s.id === row.sideB);
+
+                  const subtitle =
+                    row.rowNumber === 1
+                      ? 'Row 1 (Initial Row: Allocation begins here)'
+                      : row.rowNumber === 2
+                      ? 'Row 2 (Activates immediately when either subject in Row 1 finishes)'
+                      : row.rowNumber === 3
+                      ? 'Row 3 (Activates immediately when either subject in Row 2 finishes)'
+                      : 'Row 4 (Optional / Unused: Activates if subjects in Row 3 finish)';
+
+                  return (
+                    <div
+                      key={row.rowNumber}
+                      className={`bg-white border-2 rounded-xl p-4 space-y-3 transition-colors ${
+                        row.enabled !== false
+                          ? 'border-slate-200/90 hover:border-indigo-300 shadow-2xs'
+                          : 'border-slate-200/60 bg-slate-50/40 opacity-70'
+                      }`}
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-slate-100 gap-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-md bg-[#1E2A5E] text-white flex items-center justify-center font-bold text-xs shadow-3xs">
+                            {row.rowNumber}
+                          </div>
+                          <div>
+                            <span className="font-headline font-black text-xs text-slate-800 tracking-tight mr-2">
+                              Row {row.rowNumber}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-medium hidden sm:inline">
+                              {subtitle}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {row.rowNumber === 4 && (
+                            <label className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 cursor-pointer mr-2">
+                              <Checkbox
+                                checked={row.enabled !== false}
+                                onCheckedChange={(chk) => {
+                                  const next = [...multiSubjectRows];
+                                  next[idx] = { ...next[idx], enabled: Boolean(chk) };
+                                  setMultiSubjectRows(next);
+                                }}
+                                className="data-[state=checked]:bg-[#1E2A5E]"
+                              />
+                              <span>Enable Row 4</span>
+                            </label>
+                          )}
+
+                          <div className="text-[11px] font-semibold text-slate-500 bg-slate-50 px-2.5 py-0.5 rounded-full border border-slate-200">
+                            {sA?.name || '—'} &bull;{' '}
+                            <span className={isCenterNil ? 'text-amber-600 font-bold' : ''}>
+                              {isCenterNil ? 'NIL' : sC?.name || '—'}
+                            </span>{' '}
+                            &bull; {sB?.name || '—'}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 3 Positions Grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {/* Side A */}
+                        <div className="space-y-1.5">
+                          <Label className="text-[11px] font-bold text-slate-700 flex items-center justify-between">
+                            <span>Side A</span>
+                            <span className="text-[10px] text-slate-400 font-normal">Subject</span>
+                          </Label>
+                          <Select
+                            value={row.sideA || (row.rowNumber >= 3 ? 'UNUSED' : undefined)}
+                            onValueChange={(val) => {
+                              const next = [...multiSubjectRows];
+                              next[idx] = { ...next[idx], sideA: val === 'UNUSED' ? '' : val };
+                              setMultiSubjectRows(next);
+                            }}
+                          >
+                            <SelectTrigger className="bg-slate-50/60 text-xs font-semibold h-9 border-slate-200">
+                              <SelectValue placeholder="Select Subject" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {selectedSubjectIds.map((id) => {
+                                const s = subjects.find((sb) => sb.id === id);
+                                return (
+                                  <SelectItem key={id} value={id} className="text-xs font-medium">
+                                    {s?.name} ({studentsBySubject[id]?.length || 0})
+                                  </SelectItem>
+                                );
+                              })}
+                              {row.rowNumber >= 3 && (
+                                <SelectItem value="UNUSED" className="text-xs text-slate-400 italic">
+                                  -- Optional / Unused --
+                                </SelectItem>
+                              )}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Centre Position */}
+                        <div className="space-y-1.5">
+                          <Label className="text-[11px] font-bold text-slate-700 flex items-center justify-between">
+                            <span>Centre</span>
+                            <span className="text-[10px] text-slate-400 font-normal">Subject / NIL</span>
+                          </Label>
+                          <Select
+                            value={row.center || (row.rowNumber >= 3 ? 'UNUSED' : 'NIL')}
+                            onValueChange={(val) => {
+                              const next = [...multiSubjectRows];
+                              next[idx] = { ...next[idx], center: val === 'UNUSED' ? '' : val };
+                              setMultiSubjectRows(next);
+                            }}
+                          >
+                            <SelectTrigger className="bg-slate-50/60 text-xs font-semibold h-9 border-slate-200">
+                              <SelectValue placeholder="Select Subject or NIL" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {selectedSubjectIds.map((id) => {
+                                const s = subjects.find((sb) => sb.id === id);
+                                return (
+                                  <SelectItem key={id} value={id} className="text-xs font-medium">
+                                    {s?.name} ({studentsBySubject[id]?.length || 0})
+                                  </SelectItem>
+                                );
+                              })}
+                              <SelectItem
+                                value="NIL"
+                                className="text-xs font-bold text-amber-700 bg-amber-50/80 border-t border-amber-100"
+                              >
+                                ∅ NIL / Vacant (Leave Empty)
+                              </SelectItem>
+                              {row.rowNumber >= 3 && (
+                                <SelectItem value="UNUSED" className="text-xs text-slate-400 italic">
+                                  -- Optional / Unused --
+                                </SelectItem>
+                              )}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Side B */}
+                        <div className="space-y-1.5">
+                          <Label className="text-[11px] font-bold text-slate-700 flex items-center justify-between">
+                            <span>Side B</span>
+                            <span className="text-[10px] text-slate-400 font-normal">Subject</span>
+                          </Label>
+                          <Select
+                            value={row.sideB || (row.rowNumber >= 3 ? 'UNUSED' : undefined)}
+                            onValueChange={(val) => {
+                              const next = [...multiSubjectRows];
+                              next[idx] = { ...next[idx], sideB: val === 'UNUSED' ? '' : val };
+                              setMultiSubjectRows(next);
+                            }}
+                          >
+                            <SelectTrigger className="bg-slate-50/60 text-xs font-semibold h-9 border-slate-200">
+                              <SelectValue placeholder="Select Subject" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {selectedSubjectIds.map((id) => {
+                                const s = subjects.find((sb) => sb.id === id);
+                                return (
+                                  <SelectItem key={id} value={id} className="text-xs font-medium">
+                                    {s?.name} ({studentsBySubject[id]?.length || 0})
+                                  </SelectItem>
+                                );
+                              })}
+                              {row.rowNumber >= 3 && (
+                                <SelectItem value="UNUSED" className="text-xs text-slate-400 italic">
+                                  -- Optional / Unused --
+                                </SelectItem>
+                              )}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Section 4: Trigger Condition Explainer & Flowchart */}
+              <div className="bg-gradient-to-br from-slate-900 to-[#1E2A5E] text-white rounded-xl p-5 shadow-sm space-y-4">
+                <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+                  <div className="flex items-center gap-2">
+                    <ListOrdered className="w-4 h-4 text-amber-400" />
+                    <span className="font-headline font-bold text-xs uppercase tracking-wider text-slate-200">
+                      Sequential Trigger Rule & Flowchart
+                    </span>
+                  </div>
+                  <Badge variant="outline" className="text-[10px] font-bold text-amber-300 border-amber-400/40 bg-white/5">
+                    Immediate Auto-Row Switch
+                  </Badge>
+                </div>
+
+                {/* Explanation Banner */}
+                <div className="bg-white/10 border border-white/15 rounded-lg p-3 text-xs space-y-1.5">
+                  <div className="text-amber-300 font-bold flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
+                    <Info className="w-3.5 h-3.5" />
+                    Core Trigger Condition
+                  </div>
+                  <p className="text-slate-200 text-xs leading-relaxed">
+                    <strong>IF either subject in the current row is fully allocated &rarr; IMMEDIATELY activate the next row</strong> and continue allocation carrying forward any unfinished students.
+                  </p>
+                  <p className="text-slate-300 text-[11px] leading-relaxed">
+                    <strong>Single Remaining Subject Rule:</strong> When only one subject remains unallocated, it is placed <strong>strictly on Side A and Side B with Centre set to NIL</strong>.
+                  </p>
+                </div>
+
+                {/* Visual Flowchart */}
+                <div className="space-y-1.5 pt-1">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-300">
+                    Execution Flow Sequence
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                    {multiSubjectRows
+                      .filter(
+                        (r) =>
+                          r.enabled !== false &&
+                          ((r.sideA && r.sideA !== 'UNUSED') || (r.sideB && r.sideB !== 'UNUSED'))
+                      )
+                      .map((r, idx, arr) => {
+                        const sA = subjects.find((s) => s.id === r.sideA)?.name || 'Side A';
+                        const sC = r.center === 'NIL' || r.center === 'VACANT' ? 'NIL' : subjects.find((s) => s.id === r.center)?.name || 'Centre';
+                        const sB = subjects.find((s) => s.id === r.sideB)?.name || 'Side B';
+
+                        return (
+                          <React.Fragment key={r.rowNumber}>
+                            <div className="bg-white/10 border border-white/15 px-3 py-1.5 rounded-lg flex items-center gap-2">
+                              <span className="font-mono text-amber-300 font-bold text-[10px]">
+                                ROW {r.rowNumber}:
+                              </span>
+                              <span className="font-semibold text-white text-xs">
+                                {sA} | {sC} | {sB}
+                              </span>
+                            </div>
+                            <span className="text-amber-400 font-bold">&rarr;</span>
+                          </React.Fragment>
+                        );
+                      })}
+                    <div className="bg-amber-400/20 border border-amber-400/40 text-amber-200 px-3 py-1.5 rounded-lg font-semibold text-xs">
+                      Single Remaining Subject (Side A & B only &bull; Centre NIL)
+                    </div>
+                  </div>
+                </div>
+
+                {/* Simulated Bench Assignments Table */}
+                {simulatedMultiSubjectBenches.length > 0 && (
+                  <div className="bg-black/30 rounded-lg p-3 border border-white/10 mt-3">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-300 mb-2 flex items-center justify-between">
+                      <span>Live Simulation (First {simulatedMultiSubjectBenches.length} Benches)</span>
+                      <span className="text-[9px] text-amber-300 font-normal">Deterministic dry-run with actual students</span>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-[11px] border-collapse">
+                        <thead>
+                          <tr className="text-slate-400 border-b border-white/10 font-bold uppercase text-[9px]">
+                            <th className="py-1 px-2">Bench</th>
+                            <th className="py-1 px-2">Side A</th>
+                            <th className="py-1 px-2">Centre</th>
+                            <th className="py-1 px-2">Side B</th>
+                            <th className="py-1 px-2 text-right">Active Pattern</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5 font-medium">
+                          {simulatedMultiSubjectBenches.map((b, idx) => {
+                            const seatA = b.seats.find((s) => s.position === 'SIDE_A');
+                            const seatC = b.seats.find((s) => s.position === 'CENTER');
+                            const seatB = b.seats.find((s) => s.position === 'SIDE_B');
+
+                            const formatSeat = (st: typeof seatA) => {
+                              if (!st?.student) return <span className="text-amber-400/70 italic">NIL</span>;
+                              return (
+                                <span>
+                                  <span className="font-bold text-white">{st.student.rollNo}</span>{' '}
+                                  <span className="text-[9px] text-slate-300">({st.subjectName})</span>
+                                </span>
+                              );
+                            };
+
+                            return (
+                              <tr key={`sim-bench-${b.side}-${b.benchNumber}-${idx}`} className="hover:bg-white/5">
+                                <td className="py-1 px-2 font-mono text-amber-300 font-bold">
+                                  {b.side === 'LEFT' ? 'L' : 'R'}-{String(b.benchNumber).padStart(2, '0')}
+                                </td>
+                                <td className="py-1 px-2">{formatSeat(seatA)}</td>
+                                <td className="py-1 px-2">{formatSeat(seatC)}</td>
+                                <td className="py-1 px-2">{formatSeat(seatB)}</td>
+                                <td className="py-1 px-2 text-right">
+                                  <span className="text-indigo-300 font-mono text-[10px] bg-white/10 px-1.5 py-0.5 rounded-xs">
+                                    {b.rowLabel || 'Allocated'}
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Bottom Navigation */}
           <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
             <Button
               variant="outline"
@@ -901,21 +1580,33 @@ export default function SeatingAllocationWizardPage() {
 
             <Button
               onClick={() => {
-                // Ensure default position fallback if untouched
-                const updated = { ...positionMapping };
-                if (pattern === '1_PER_BENCH' && !updated.CENTER) {
-                  updated.CENTER = selectedSubjectIds[0];
+                if (isMultiSubjectMode) {
+                  const valErr = getPatternValidationError();
+                  if (valErr) {
+                    toast({
+                      variant: "destructive",
+                      title: "Pattern Configuration Incomplete",
+                      description: valErr,
+                    });
+                    return;
+                  }
+                } else {
+                  // Ensure default position fallback if untouched
+                  const updated = { ...positionMapping };
+                  if (pattern === '1_PER_BENCH' && !updated.CENTER) {
+                    updated.CENTER = selectedSubjectIds[0];
+                  }
+                  if (pattern === '2_PER_BENCH') {
+                    if (!updated.SIDE_A) updated.SIDE_A = selectedSubjectIds[0];
+                    if (!updated.SIDE_B) updated.SIDE_B = selectedSubjectIds[1] || selectedSubjectIds[0];
+                  }
+                  if (pattern === '3_PER_BENCH') {
+                    if (!updated.SIDE_A) updated.SIDE_A = selectedSubjectIds[0];
+                    if (!updated.CENTER) updated.CENTER = selectedSubjectIds[1] || selectedSubjectIds[0];
+                    if (!updated.SIDE_B) updated.SIDE_B = selectedSubjectIds[0];
+                  }
+                  setPositionMapping(updated);
                 }
-                if (pattern === '2_PER_BENCH') {
-                  if (!updated.SIDE_A) updated.SIDE_A = selectedSubjectIds[0];
-                  if (!updated.SIDE_B) updated.SIDE_B = selectedSubjectIds[1] || selectedSubjectIds[0];
-                }
-                if (pattern === '3_PER_BENCH') {
-                  if (!updated.SIDE_A) updated.SIDE_A = selectedSubjectIds[0];
-                  if (!updated.CENTER) updated.CENTER = selectedSubjectIds[1] || selectedSubjectIds[0];
-                  if (!updated.SIDE_B) updated.SIDE_B = selectedSubjectIds[0];
-                }
-                setPositionMapping(updated);
                 setCurrentStep(5);
               }}
               className="bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs h-9 px-5 gap-1.5 shadow-xs"
@@ -949,7 +1640,13 @@ export default function SeatingAllocationWizardPage() {
                 const picked: string[] = [];
                 for (const r of masterRooms) {
                   if (needed <= 0) break;
-                  const cap = pattern === '1_PER_BENCH' ? r.capacityOne : pattern === '2_PER_BENCH' ? r.capacityTwo : r.capacityThree;
+                  const cap = isMultiSubjectMode
+                    ? r.capacityThree
+                    : pattern === '1_PER_BENCH'
+                      ? r.capacityOne
+                      : pattern === '2_PER_BENCH'
+                        ? r.capacityTwo
+                        : r.capacityThree;
                   picked.push(r.id);
                   needed -= cap;
                 }
@@ -970,7 +1667,7 @@ export default function SeatingAllocationWizardPage() {
                   <th className="py-3 px-4">Room No.</th>
                   <th className="py-3 px-3 text-center">Benches</th>
                   <th className="py-3 px-3 text-center font-bold text-[#1E2A5E]">
-                    Current Capacity ({pattern === '1_PER_BENCH' ? '1/Bench' : pattern === '2_PER_BENCH' ? '2/Bench' : '3/Bench'})
+                    Current Capacity ({isMultiSubjectMode ? '3/Bench (Multi-Subject)' : pattern === '1_PER_BENCH' ? '1/Bench' : pattern === '2_PER_BENCH' ? '2/Bench' : '3/Bench'})
                   </th>
                   <th className="py-3 px-3 text-center">Status</th>
                 </tr>
@@ -978,12 +1675,13 @@ export default function SeatingAllocationWizardPage() {
               <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
                 {masterRooms.map((room) => {
                   const isChecked = selectedRoomIds.includes(room.id);
-                  const effectiveCap =
-                    pattern === '1_PER_BENCH'
+                  const effectiveCap = isMultiSubjectMode
+                    ? room.capacityThree
+                    : pattern === '1_PER_BENCH'
                       ? room.capacityOne
                       : pattern === '2_PER_BENCH'
-                      ? room.capacityTwo
-                      : room.capacityThree;
+                        ? room.capacityTwo
+                        : room.capacityThree;
 
                   return (
                     <tr
@@ -995,14 +1693,13 @@ export default function SeatingAllocationWizardPage() {
                           setSelectedRoomIds((prev) => [...prev, room.id]);
                         }
                       }}
-                      className={`cursor-pointer transition-colors ${
-                        isChecked ? "bg-indigo-50/50" : "hover:bg-slate-50"
-                      }`}
+                      className={`cursor-pointer transition-colors ${isChecked ? "bg-indigo-50/50" : "hover:bg-slate-50"
+                        }`}
                     >
                       <td className="py-3 px-3 text-center">
                         <Checkbox
                           checked={isChecked}
-                          onCheckedChange={() => {}}
+                          onCheckedChange={() => { }}
                           className="data-[state=checked]:bg-[#1E2A5E]"
                         />
                       </td>
@@ -1029,11 +1726,10 @@ export default function SeatingAllocationWizardPage() {
 
           {/* Dynamic Real-Time Capacity Audit Banner */}
           <div
-            className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-              isCapacitySufficient
+            className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${isCapacitySufficient
                 ? "bg-emerald-50/80 border-emerald-200 text-emerald-900"
                 : "bg-rose-50/80 border-rose-200 text-rose-900"
-            }`}
+              }`}
           >
             <div className="flex items-center gap-3">
               {isCapacitySufficient ? (
@@ -1057,11 +1753,10 @@ export default function SeatingAllocationWizardPage() {
 
             <Badge
               variant="outline"
-              className={`text-xs py-1 px-3 font-bold ${
-                isCapacitySufficient
+              className={`text-xs py-1 px-3 font-bold ${isCapacitySufficient
                   ? "bg-white text-emerald-700 border-emerald-300"
                   : "bg-white text-rose-700 border-rose-300"
-              }`}
+                }`}
             >
               {isCapacitySufficient ? "✓ Ready" : "⚠ Shortage"}
             </Badge>
@@ -1140,6 +1835,70 @@ export default function SeatingAllocationWizardPage() {
               </div>
             </div>
           </div>
+
+          {/* Multi-Subject Pattern Banner if applicable */}
+          {activeAllocation.multiSubjectConfig?.enabled && (
+            <div className="bg-indigo-50/70 border border-indigo-200 rounded-xl p-4 shadow-2xs space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-indigo-100 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-[#1E2A5E] text-white rounded-md">
+                    <ListOrdered className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="font-headline font-bold text-xs text-[#1E2A5E] uppercase tracking-wider">
+                      Sequential Multi-Subject 4-Row System Applied
+                    </span>
+                    <p className="text-[11px] text-slate-600">
+                      Sequential row switching triggered immediately when either active subject reached full allocation.
+                    </p>
+                  </div>
+                </div>
+                <Badge variant="outline" className="bg-white text-indigo-700 border-indigo-200 text-[10px] font-bold self-start sm:self-auto">
+                  {
+                    activeAllocation.multiSubjectConfig.rows.filter(
+                      (r) =>
+                        r.enabled !== false &&
+                        ((r.sideA && r.sideA !== 'UNUSED') || (r.sideB && r.sideB !== 'UNUSED'))
+                    ).length
+                  } Configured Rows
+                </Badge>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                {activeAllocation.multiSubjectConfig.rows
+                  .filter(
+                    (r) =>
+                      r.enabled !== false &&
+                      ((r.sideA && r.sideA !== 'UNUSED') || (r.sideB && r.sideB !== 'UNUSED'))
+                  )
+                  .map((row) => {
+                    const sA = subjects.find((s) => s.id === row.sideA)?.name || '—';
+                    const isNil = row.center === 'NIL' || row.center === 'VACANT' || !row.center;
+                    const sC = isNil ? 'NIL' : subjects.find((s) => s.id === row.center)?.name || '—';
+                    const sB = subjects.find((s) => s.id === row.sideB)?.name || '—';
+
+                    return (
+                      <div key={row.rowNumber} className="bg-white p-2.5 rounded-lg border border-indigo-100 shadow-3xs text-xs">
+                        <div className="text-[10px] font-bold text-indigo-700 uppercase tracking-wider mb-1 flex items-center justify-between">
+                          <span>Row {row.rowNumber}</span>
+                          <span className="font-mono text-[9px] text-slate-400">Position Pattern</span>
+                        </div>
+                        <div className="font-bold text-slate-800 text-[11px] truncate">
+                          {sA} &bull;{' '}
+                          <span className={isNil ? 'text-amber-600 italic font-bold' : ''}>
+                            {sC}
+                          </span>{' '}
+                          &bull; {sB}
+                        </div>
+                        <div className="text-[9px] text-slate-400 mt-0.5">
+                          Side A &bull; Centre &bull; Side B
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          )}
 
           {/* Global Action Bar for PDFs */}
           <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">

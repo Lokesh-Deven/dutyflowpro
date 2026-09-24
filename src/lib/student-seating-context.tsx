@@ -80,7 +80,7 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
           if (Array.isArray(parsed) && parsed.length > 0) {
             loadedRooms = parsed;
           }
-        } catch (_) {}
+        } catch (_) { }
       }
 
       // If user is logged in and no user-specific rooms exist yet, check guest rooms for migration!
@@ -93,7 +93,7 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
               loadedRooms = parsed;
               localStorage.setItem(`dutyflow_${scope}_seating_rooms`, guestRooms);
             }
-          } catch (_) {}
+          } catch (_) { }
         }
       }
 
@@ -138,7 +138,7 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
           setIsRoomsCloudSynced(true);
           try {
             localStorage.setItem(`dutyflow_${currentUserId}_seating_rooms`, JSON.stringify(cloudRooms));
-          } catch (_) {}
+          } catch (_) { }
         }
       });
     }
@@ -218,16 +218,16 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
       prev.map((r) =>
         r.id === id
           ? {
-              ...r,
-              roomNo: roomNo.trim(),
-              leftBenches,
-              rightBenches,
-              totalBenches: total,
-              capacityOne: total * 1,
-              capacityTwo: total * 2,
-              capacityThree: total * 3,
-              updatedAt: new Date().toISOString(),
-            }
+            ...r,
+            roomNo: roomNo.trim(),
+            leftBenches,
+            rightBenches,
+            totalBenches: total,
+            capacityOne: total * 1,
+            capacityTwo: total * 2,
+            capacityThree: total * 3,
+            updatedAt: new Date().toISOString(),
+          }
           : r
       )
     );

@@ -45,6 +45,25 @@ export interface PhysicalBench {
   benchNumber: number;
   side: 'LEFT' | 'RIGHT';
   seats: BenchPositionSeat[];
+  rowNumber?: number;
+  rowLabel?: string;
+  orderNumber?: number;
+  orderLabel?: string;
+}
+
+export interface MultiSubjectRow {
+  rowNumber: number; // 1, 2, 3, 4
+  sideA: string;     // subjectId
+  center: string;    // subjectId or 'NIL' / 'VACANT'
+  sideB: string;     // subjectId
+  enabled?: boolean;
+}
+
+export type MultiSubjectOrder = MultiSubjectRow;
+
+export interface MultiSubjectConfig {
+  enabled: boolean;
+  rows: MultiSubjectRow[];
 }
 
 export interface RoomSeatingPlan {
@@ -96,6 +115,7 @@ export interface SeatingAllocationRecord {
   roomPlans: RoomSeatingPlan[];
   subjectStats: SubjectAllocationStat[];
   summary: SeatingAllocationSummary;
+  multiSubjectConfig?: MultiSubjectConfig;
   status: 'Draft' | 'Finalized';
   createdAt: string;
   updatedAt: string;
