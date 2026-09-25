@@ -4,7 +4,8 @@ import React from 'react';
 import { RoomSeatingPlan, BenchPositionSeat } from '@/lib/student-seating-types';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { DoorOpen, Users, CheckCircle2, AlertCircle, Presentation, ArrowLeft, ArrowRight, ArrowDown } from 'lucide-react';
+import { DoorOpen, Users, CheckCircle2, AlertCircle, Presentation, ArrowLeft, ArrowRight, ArrowDown, BookOpen } from 'lucide-react';
+import { getSubjectColor } from '@/lib/student-seating-colors';
 
 interface RoomSeatingDiagramProps {
   plan: RoomSeatingPlan;
@@ -24,10 +25,31 @@ export function RoomSeatingDiagram({
   const leftBenches = plan.benches.filter((b) => b.side === 'LEFT');
   const rightBenches = plan.benches.filter((b) => b.side === 'RIGHT');
 
+  // Compute unique subjects and their seat counts in this room
+  const roomSubjects = React.useMemo(() => {
+    const map = new Map<string, number>();
+    plan.benches.forEach((bench) => {
+      bench.seats.forEach((seat) => {
+        if (seat.subjectName) {
+          map.set(seat.subjectName, (map.get(seat.subjectName) || 0) + 1);
+        }
+      });
+    });
+    return Array.from(map.entries()).map(([name, count]) => ({ name, count }));
+  }, [plan]);
+
+  const uniqueSubjectNames = React.useMemo(
+    () => roomSubjects.map((s) => s.name),
+    [roomSubjects]
+  );
+
   const renderSeat = (seat: BenchPositionSeat, index: number, totalSeats: number) => {
     const isVacant = !seat.student;
     const posLabel =
       seat.position === 'SIDE_A' ? 'Side A' : seat.position === 'SIDE_B' ? 'Side B' : 'Center';
+    const subjStyle = seat.subjectName
+      ? getSubjectColor(seat.subjectName, uniqueSubjectNames)
+      : null;
 
     return (
       <div
@@ -36,14 +58,25 @@ export function RoomSeatingDiagram({
           "flex-1 p-2 rounded-lg border text-center transition-all flex flex-col justify-between min-w-[70px]",
           isVacant
             ? "bg-slate-50/70 border-dashed border-slate-200 text-slate-400"
-            : "bg-white border-slate-200 shadow-2xs hover:border-indigo-300"
+            : "bg-white border-slate-200 shadow-2xs hover:border-slate-300"
         )}
+        style={
+          !isVacant && subjStyle
+            ? {
+                backgroundColor: subjStyle.seatBgCss,
+                borderTopColor: subjStyle.accentBorderCss,
+                borderTopWidth: '3px',
+              }
+            : undefined
+        }
       >
-        <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold mb-1">
-          <span className="uppercase tracking-wider text-[9px] text-slate-500 font-semibold">{posLabel}</span>
-          {seat.subjectName && (
-            <span className="truncate max-w-[65px] text-[9px] text-indigo-600 bg-indigo-50 px-1 py-0.2 rounded font-medium">
-              {seat.subjectName}
+        <div className="flex items-center justify-between text-[10px] font-bold mb-1 gap-1">
+          <span className="uppercase tracking-wider text-[9px] text-slate-500 font-bold shrink-0">
+            {posLabel}
+          </span>
+          {seat.student?.section && (
+            <span className="text-[9px] text-slate-400 font-medium truncate max-w-[45px]">
+              Sec {seat.student.section}
             </span>
           )}
         </div>
@@ -51,6 +84,19 @@ export function RoomSeatingDiagram({
         {isVacant ? (
           <div className="py-2.5 text-center">
             <span className="text-[10px] italic text-slate-400 font-medium">VACANT</span>
+            {seat.subjectName && subjStyle && (
+              <div
+                className="mt-1.5 px-1.5 py-0.5 rounded-md text-[9.5px] font-bold text-center truncate border shadow-3xs opacity-80"
+                style={{
+                  backgroundColor: subjStyle.bgCss,
+                  color: subjStyle.textCss,
+                  borderColor: subjStyle.borderCss,
+                }}
+                title={`Planned Subject: ${seat.subjectName}`}
+              >
+                {seat.subjectName}
+              </div>
+            )}
           </div>
         ) : (
           <div className="space-y-0.5 my-0.5">
@@ -60,9 +106,17 @@ export function RoomSeatingDiagram({
             <div className="text-[11px] font-medium text-slate-700 truncate" title={seat.student!.name}>
               {seat.student!.name}
             </div>
-            {seat.student!.section && (
-              <div className="text-[9px] text-slate-400 font-medium">
-                Sec: {seat.student!.section}
+            {seat.subjectName && subjStyle && (
+              <div
+                className="mt-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold text-center truncate border shadow-3xs"
+                style={{
+                  backgroundColor: subjStyle.bgCss,
+                  color: subjStyle.textCss,
+                  borderColor: subjStyle.borderCss,
+                }}
+                title={`Subject: ${seat.subjectName}`}
+              >
+                {seat.subjectName}
               </div>
             )}
           </div>
@@ -72,9 +126,9 @@ export function RoomSeatingDiagram({
   };
 
   return (
-    <div className={cn("bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-5", className)}>
+    <div className={cn("bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-4", className)}>
       {/* Room Diagram Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
         <div>
           <div className="flex items-center gap-2">
             <div className="p-1.5 bg-[#1E2A5E]/10 text-[#1E2A5E] rounded-lg">
@@ -104,6 +158,45 @@ export function RoomSeatingDiagram({
           </Badge>
         </div>
       </div>
+
+      {/* Subject Highlight Legend Bar */}
+      {roomSubjects.length > 0 && (
+        <div className="bg-slate-50/90 border border-slate-200/80 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-2.5 shadow-2xs">
+          <div className="flex items-center gap-2">
+            <BookOpen className="w-3.5 h-3.5 text-indigo-700" />
+            <span className="font-headline font-bold text-xs uppercase tracking-wider text-slate-700">
+              Allocated Subjects ({roomSubjects.length}):
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {roomSubjects.map((sub) => {
+              const style = getSubjectColor(sub.name, uniqueSubjectNames);
+              return (
+                <span
+                  key={sub.name}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold border shadow-3xs transition-transform hover:scale-[1.02]"
+                  style={{
+                    backgroundColor: style.bgCss,
+                    color: style.textCss,
+                    borderColor: style.borderCss,
+                  }}
+                  title={`${sub.count} seats allocated in this room`}
+                >
+                  <span
+                    className="w-2 h-2 rounded-full border border-black/10 shrink-0"
+                    style={{ backgroundColor: style.dotColor }}
+                  />
+                  <span>{sub.name}</span>
+                  <span className="text-[10px] font-semibold opacity-75">
+                    &bull; {sub.count} {sub.count === 1 ? 'seat' : 'seats'}
+                  </span>
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Representational Blackboard / Front of Classroom */}
       <div className="relative overflow-hidden rounded-xl border-[3px] border-[#5c3a21] bg-[#422513] shadow-md">

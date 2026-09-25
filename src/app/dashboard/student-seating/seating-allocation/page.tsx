@@ -24,6 +24,7 @@ import {
   isUUID,
 } from '@/lib/storage-service';
 import { RoomSeatingDiagram } from '@/components/dashboard/student-seating/room-seating-diagram';
+import { getSubjectColor } from '@/lib/student-seating-colors';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -1901,12 +1902,39 @@ export default function SeatingAllocationWizardPage() {
                           <span>Row {row.rowNumber}</span>
                           <span className="font-mono text-[9px] text-slate-400">Position Pattern</span>
                         </div>
-                        <div className="font-bold text-slate-800 text-[11px] truncate">
-                          {sA} &bull;{' '}
-                          <span className={isNil ? 'text-amber-600 italic font-bold' : ''}>
-                            {sC}
-                          </span>{' '}
-                          &bull; {sB}
+                        <div className="font-bold text-slate-800 text-[11px] flex items-center gap-1.5 flex-wrap">
+                          {(() => {
+                            const cA = getSubjectColor(sA);
+                            const cC = getSubjectColor(sC);
+                            const cB = getSubjectColor(sB);
+                            return (
+                              <>
+                                <span
+                                  className="px-1.5 py-0.5 rounded text-[10px] font-bold border truncate max-w-[80px]"
+                                  style={{ backgroundColor: cA.bgCss, color: cA.textCss, borderColor: cA.borderCss }}
+                                  title={sA}
+                                >
+                                  {sA}
+                                </span>
+                                <span className="text-slate-400">&bull;</span>
+                                <span
+                                  className={isNil ? 'text-amber-700 italic font-bold text-[10px] px-1.5 py-0.5 bg-amber-50 rounded border border-amber-200' : 'px-1.5 py-0.5 rounded text-[10px] font-bold border truncate max-w-[80px]'}
+                                  style={!isNil ? { backgroundColor: cC.bgCss, color: cC.textCss, borderColor: cC.borderCss } : undefined}
+                                  title={sC}
+                                >
+                                  {sC}
+                                </span>
+                                <span className="text-slate-400">&bull;</span>
+                                <span
+                                  className="px-1.5 py-0.5 rounded text-[10px] font-bold border truncate max-w-[80px]"
+                                  style={{ backgroundColor: cB.bgCss, color: cB.textCss, borderColor: cB.borderCss }}
+                                  title={sB}
+                                >
+                                  {sB}
+                                </span>
+                              </>
+                            );
+                          })()}
                         </div>
                         <div className="text-[9px] text-slate-400 mt-0.5">
                           Side A &bull; Centre &bull; Side B
@@ -1970,7 +1998,19 @@ export default function SeatingAllocationWizardPage() {
               <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
                 {activeAllocation.subjectStats.map((stat) => (
                   <tr key={stat.subjectId} className="hover:bg-slate-50">
-                    <td className="py-2.5 px-4 font-bold text-slate-900">{stat.subjectName}</td>
+                    <td className="py-2.5 px-4 font-bold text-slate-900">
+                      {(() => {
+                        const sc = getSubjectColor(stat.subjectName);
+                        return (
+                          <span
+                            className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold border shadow-3xs"
+                            style={{ backgroundColor: sc.bgCss, color: sc.textCss, borderColor: sc.borderCss }}
+                          >
+                            {stat.subjectName}
+                          </span>
+                        );
+                      })()}
+                    </td>
                     <td className="py-2.5 px-3 text-center">{stat.totalStudents}</td>
                     <td className="py-2.5 px-3 text-center font-bold text-indigo-700">{stat.allocatedCount}</td>
                     <td className="py-2.5 px-3 text-center">

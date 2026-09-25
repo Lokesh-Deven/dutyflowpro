@@ -4,6 +4,7 @@ import { SeatingAllocationRecord, RoomSeatingPlan } from './student-seating-type
 import { getPdfPalette, DEFAULT_PALETTE_ID, PaletteId } from './pdf-palette';
 import { SignatoryInfo } from './types';
 import { formatAppDateWithDay, formatTimingRange12Hour } from './date-utils';
+import { getSubjectColor } from './student-seating-colors';
 
 export interface GenerateRoomSeatingPdfOptions {
   allocation: SeatingAllocationRecord;
@@ -121,9 +122,36 @@ export async function generateRoomSeatingPlanPdf({
     doc.text(formattedDate, leftValX, row1Y);
 
     doc.setFont('helvetica', 'bold');
-    doc.text("Subject:", leftMargin + 4, row2Y);
-    doc.setFont('helvetica', 'normal');
-    doc.text(truncSubjects, leftValX, row2Y);
+    doc.text("Subjects:", leftMargin + 4, row2Y);
+
+    if (roomSubjectNames.length > 0 && roomSubjectNames.length <= 4) {
+      let curX = leftValX;
+      roomSubjectNames.forEach((sName) => {
+        const sc = getSubjectColor(sName, roomSubjectNames);
+        const truncS = sName.length > 20 ? sName.substring(0, 19) + '.' : sName;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(6.5);
+        const tw = doc.getTextWidth(truncS);
+        const pw = tw + 4;
+        const ph = 3.6;
+        const py = row2Y - 2.6;
+
+        if (curX + pw < rightLabelX - 2) {
+          doc.setFillColor(sc.pdfBg[0], sc.pdfBg[1], sc.pdfBg[2]);
+          doc.setDrawColor(sc.pdfBorder[0], sc.pdfBorder[1], sc.pdfBorder[2]);
+          doc.roundedRect(curX, py, pw, ph, 0.6, 0.6, 'FD');
+
+          doc.setTextColor(sc.pdfText[0], sc.pdfText[1], sc.pdfText[2]);
+          doc.text(truncS, curX + pw / 2, py + ph / 2 + 0.8, { align: 'center' });
+
+          curX += pw + 2;
+        }
+      });
+    } else {
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(51, 65, 85);
+      doc.text(truncSubjects, leftValX, row2Y);
+    }
 
     doc.setFont('helvetica', 'bold');
     doc.text("Timings:", leftMargin + 4, row3Y);
@@ -292,7 +320,27 @@ export async function generateRoomSeatingPlanPdf({
           doc.setFont('helvetica', 'italic');
           doc.setFontSize(6.5);
           doc.setTextColor(148, 163, 184);
-          doc.text("VACANT", midX, sy + (h - 1.2) / 2 + 1, { align: 'center' });
+          doc.text("VACANT", midX, sy + (h - 1.2) / 2 + (seat.subjectName && h >= 11 ? -1 : 1), { align: 'center' });
+
+          // If vacant but had a planned subject, highlight it with light background badge
+          if (seat.subjectName && h >= 11) {
+            const subjColor = getSubjectColor(seat.subjectName, roomSubjectNames);
+            const truncSub = seat.subjectName.length > 17 ? seat.subjectName.substring(0, 16) + '.' : seat.subjectName;
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(4.8);
+            const textWidth = doc.getTextWidth(truncSub);
+            const pillW = Math.min(seatSlotWidth - 2.5, textWidth + 3.2);
+            const pillH = 2.8;
+            const pillX = midX - pillW / 2;
+            const pillY = sy + (h - 1.2) - pillH - 1.2;
+
+            doc.setFillColor(subjColor.pdfBg[0], subjColor.pdfBg[1], subjColor.pdfBg[2]);
+            doc.setDrawColor(subjColor.pdfBorder[0], subjColor.pdfBorder[1], subjColor.pdfBorder[2]);
+            doc.roundedRect(pillX, pillY, pillW, pillH, 0.6, 0.6, 'FD');
+
+            doc.setTextColor(subjColor.pdfText[0], subjColor.pdfText[1], subjColor.pdfText[2]);
+            doc.text(truncSub, midX, pillY + pillH / 2 + 0.75, { align: 'center' });
+          }
         } else {
           const isCompact = h < 13.5;
           // Position tag (Side A / Center / Side B)
@@ -314,15 +362,29 @@ export async function generateRoomSeatingPlanPdf({
           doc.setTextColor(51, 65, 85);
           const rawName = seat.student!.name;
           const truncName = rawName.length > 14 ? rawName.substring(0, 13) + '..' : rawName;
-          doc.text(truncName, midX, sy + (isCompact ? 8.2 : 9.6), { align: 'center' });
+          doc.text(truncName, midX, sy + (isCompact ? 7.8 : 9.3), { align: 'center' });
 
-          // Subject Name
-          if (!isCompact && seat.subjectName) {
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(5.2);
-            doc.setTextColor(100, 116, 139);
-            const truncSub = seat.subjectName.length > 16 ? seat.subjectName.substring(0, 15) + '.' : seat.subjectName;
-            doc.text(truncSub, midX, sy + 13.2, { align: 'center' });
+          // Highlighted Subject Name with light background color pill
+          if (seat.subjectName && h >= 10.5) {
+            const subjColor = getSubjectColor(seat.subjectName, roomSubjectNames);
+            const truncSub = seat.subjectName.length > 17 ? seat.subjectName.substring(0, 16) + '.' : seat.subjectName;
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(isCompact ? 4.6 : 5.2);
+            const textWidth = doc.getTextWidth(truncSub);
+            const pillW = Math.min(seatSlotWidth - 2.5, textWidth + 3.2);
+            const pillH = isCompact ? 2.9 : 3.4;
+            const pillX = midX - pillW / 2;
+            const pillY = sy + (isCompact ? 9.5 : 11.2);
+
+            // Draw light background rounded rect
+            doc.setFillColor(subjColor.pdfBg[0], subjColor.pdfBg[1], subjColor.pdfBg[2]);
+            doc.setDrawColor(subjColor.pdfBorder[0], subjColor.pdfBorder[1], subjColor.pdfBorder[2]);
+            doc.roundedRect(pillX, pillY, pillW, pillH, 0.6, 0.6, 'FD');
+
+            // Draw subject name text
+            doc.setTextColor(subjColor.pdfText[0], subjColor.pdfText[1], subjColor.pdfText[2]);
+            doc.text(truncSub, midX, pillY + pillH / 2 + (isCompact ? 0.75 : 0.85), { align: 'center' });
           }
         }
       });
