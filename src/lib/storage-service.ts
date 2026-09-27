@@ -6,6 +6,7 @@ import type {
   StudentRecord,
   SeatingAllocationRecord,
 } from './student-seating-types';
+import type { ExaminationTimetable } from './examination-timetable-types';
 
 export interface UserWorkspaceState {
   instructions?: InstructionItem[];
@@ -15,6 +16,8 @@ export interface UserWorkspaceState {
   studentsBySubject?: Record<string, StudentRecord[]>;
   activeAllotmentId?: string | null;
   activeSeatingAllocationId?: string | null;
+  timetables?: ExaminationTimetable[];
+  activeTimetableId?: string | null;
   pdfPaletteId?: string;
   signatory?: SignatoryInfo;
   multiSubjectPatterns?: any;
@@ -303,8 +306,11 @@ export async function fetchUserAllotmentsFromDatabase(userId: string): Promise<S
         if (row.id && String(row.id).startsWith('dutyflow_workspace_')) return false;
         if (row.assignments?._record_type === 'WorkspaceSync') return false;
         if (row.assignments?._record_type === 'SeatingAllocation') return false;
+        if (row.assignments?._record_type === 'ExaminationTimetable') return false;
         if (row.assignments?.seatingAllocation) return false;
+        if (row.assignments?.examinationTimetable) return false;
         if (row.id && String(row.id).startsWith('alloc-')) return false;
+        if (row.id && String(row.id).startsWith('tt-')) return false;
         return true;
       })
       .map((row: any) => {
@@ -524,6 +530,102 @@ export async function deleteSeatingAllocationFromDatabase(
     return true;
   } catch (err) {
     console.error('Exception in deleteSeatingAllocationFromDatabase:', err);
+    return false;
+  }
+}
+
+/**
+ * Sync an individual examination timetable record to Supabase database.
+ */
+export async function syncExaminationTimetableToDatabase(
+  timetable: ExaminationTimetable,
+  userId: string
+): Promise<boolean> {
+  if (!userId || !timetable || !isUUID(userId)) return false;
+
+  try {
+    const { error } = await supabase.from('saved_allotments').upsert({
+      id: timetable.id,
+      user_id: userId,
+      name: timetable.examinationName || 'Examination Timetable',
+      status: timetable.isLocked ? 'Locked' : 'Draft',
+      invigilators: [],
+      examinations: [],
+      assignments: {
+        _record_type: 'ExaminationTimetable',
+        examinationTimetable: timetable,
+      },
+      created_at: timetable.createdAt || new Date().toISOString(),
+      updated_at: timetable.updatedAt || new Date().toISOString(),
+    });
+
+    if (error) {
+      console.error('Error syncing examination timetable to database:', error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('Exception in syncExaminationTimetableToDatabase:', err);
+    return false;
+  }
+}
+
+/**
+ * Fetch all examination timetables strictly for the specified userId.
+ */
+export async function fetchUserTimetablesFromDatabase(
+  userId: string
+): Promise<ExaminationTimetable[]> {
+  if (!userId || !isUUID(userId)) return [];
+
+  try {
+    const { data, error } = await supabase
+      .from('saved_allotments')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error || !data || !Array.isArray(data)) return [];
+
+    return data
+      .filter((row: any) => {
+        return (
+          row.assignments?._record_type === 'ExaminationTimetable' ||
+          Boolean(row.assignments?.examinationTimetable) ||
+          (row.id && String(row.id).startsWith('tt-'))
+        );
+      })
+      .map((row: any) => row.assignments?.examinationTimetable)
+      .filter((tt): tt is ExaminationTimetable => Boolean(tt && tt.id));
+  } catch (err) {
+    console.error('Exception in fetchUserTimetablesFromDatabase:', err);
+    return [];
+  }
+}
+
+/**
+ * Delete an examination timetable record from the database.
+ */
+export async function deleteExaminationTimetableFromDatabase(
+  timetableId: string,
+  userId: string
+): Promise<boolean> {
+  if (!userId || !timetableId || !isUUID(userId)) return false;
+
+  try {
+    const { error } = await supabase
+      .from('saved_allotments')
+      .delete()
+      .eq('id', timetableId)
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error('Error deleting examination timetable from database:', error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('Exception in deleteExaminationTimetableFromDatabase:', err);
     return false;
   }
 }

@@ -206,22 +206,38 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
     };
   }, [getStorageKey, user?.id]);
 
-  // Window Focus Cross-Device Auto-Refresh
+  // Window Focus & Visibility Change Cross-Device Auto-Refresh
   useEffect(() => {
     if (!user?.id || !isUUID(user.id)) return;
 
-    const handleWindowFocus = () => {
+    const handleRefresh = () => {
       Promise.all([
         fetchUserWorkspaceFromDatabase(user.id),
         fetchUserSeatingAllocationsFromDatabase(user.id),
       ]).then(([ws, cloudAllocs]) => {
-        if (ws?.seatingRooms?.length) setRooms(ws.seatingRooms);
-        if (ws?.subjects?.length) setSubjects(ws.subjects);
+        if (ws?.seatingRooms?.length) {
+          setRooms(ws.seatingRooms);
+          try {
+            localStorage.setItem(`dutyflow_${user.id}_seating_rooms`, JSON.stringify(ws.seatingRooms));
+          } catch (_) { }
+        }
+        if (ws?.subjects?.length) {
+          setSubjects(ws.subjects);
+          try {
+            localStorage.setItem(getStorageKey('subjects'), JSON.stringify(ws.subjects));
+          } catch (_) { }
+        }
         if (ws?.studentsBySubject && Object.keys(ws.studentsBySubject).length) {
           setStudentsBySubject(ws.studentsBySubject);
+          try {
+            localStorage.setItem(getStorageKey('students'), JSON.stringify(ws.studentsBySubject));
+          } catch (_) { }
         }
         if (cloudAllocs && Array.isArray(cloudAllocs)) {
           setAllocations(cloudAllocs);
+          try {
+            localStorage.setItem(getStorageKey('allocations'), JSON.stringify(cloudAllocs));
+          } catch (_) { }
           if (ws?.activeSeatingAllocationId) {
             const active = cloudAllocs.find((a) => a.id === ws.activeSeatingAllocationId);
             if (active) setActiveAllocation(active);
@@ -230,9 +246,19 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
       }).catch(() => {});
     };
 
-    window.addEventListener('focus', handleWindowFocus);
-    return () => window.removeEventListener('focus', handleWindowFocus);
-  }, [user?.id]);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        handleRefresh();
+      }
+    };
+
+    window.addEventListener('focus', handleRefresh);
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      window.removeEventListener('focus', handleRefresh);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [user?.id, getStorageKey]);
 
   // Save changes to localStorage
   useEffect(() => {

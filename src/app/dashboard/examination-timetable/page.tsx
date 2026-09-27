@@ -11,6 +11,7 @@ import {
 import {
   createNewTimetable,
   getSavedTimetables,
+  fetchTimetablesFromCloud,
   saveTimetable,
   deleteTimetable,
   toggleLockTimetable,
@@ -92,16 +93,67 @@ export default function ExaminationTimetablePage() {
   // Custom subjects pool added by user
   const [customSubjects, setCustomSubjects] = useState<string[]>([]);
 
-  // Initial Load from localStorage
+  // Initial Load from localStorage cache & Supabase central database
   useEffect(() => {
-    const list = getSavedTimetables(userId);
-    setSavedTimetables(list);
-    if (list.length > 0) {
-      setTimetable(list[0]);
+    let isMounted = true;
+    const initialList = getSavedTimetables(userId);
+    setSavedTimetables(initialList);
+    if (initialList.length > 0) {
+      setTimetable(initialList[0]);
     } else {
       setTimetable(createNewTimetable(defaultInstitutionName));
     }
+
+    if (userId) {
+      fetchTimetablesFromCloud(userId).then((cloudList) => {
+        if (!isMounted) return;
+        setSavedTimetables(cloudList);
+        if (cloudList.length > 0) {
+          setTimetable((prev) => {
+            const match = cloudList.find((t) => t.id === prev.id);
+            return match || cloudList[0];
+          });
+        }
+      }).catch((err) => {
+        console.error('Failed to load timetables from cloud:', err);
+      });
+    }
+
+    return () => {
+      isMounted = false;
+    };
   }, [userId, defaultInstitutionName]);
+
+  // Cross-device auto-refresh on window focus or visibility change
+  useEffect(() => {
+    if (!userId) return;
+
+    const handleRefresh = () => {
+      fetchTimetablesFromCloud(userId).then((cloudList) => {
+        setSavedTimetables(cloudList);
+        if (cloudList.length > 0) {
+          setTimetable((prev) => {
+            if (hasUnsavedChanges) return prev;
+            const match = cloudList.find((t) => t.id === prev.id);
+            return match || prev;
+          });
+        }
+      }).catch(() => {});
+    };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        handleRefresh();
+      }
+    };
+
+    window.addEventListener('focus', handleRefresh);
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      window.removeEventListener('focus', handleRefresh);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [userId, hasUnsavedChanges]);
 
   // Combined available subjects
   const allAvailableSubjects = useMemo(() => {

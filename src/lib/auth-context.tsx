@@ -129,26 +129,14 @@ export const createProfileFromUser = (currentUser: User, dbData?: any): UserProf
 export const clearActiveAllotmentStorage = (userId?: string) => {
   if (typeof window === 'undefined') return;
   try {
-    const keysToRemove: string[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (!key) continue;
-      // Do NOT touch permanent user data: directory, signatory, instructions, saved allotments
-      if (
-        key.includes('directory') ||
-        key.includes('saved_allotments') ||
-        key.includes('instructions') ||
-        key.includes('signatory') ||
-        key.includes('inst_version')
-      ) {
-        continue;
-      }
-      if (key.includes('examinations') || key.includes('invigilators') || key.includes('active_allotment') || (userId && key === 'dutyflow_guest_profile')) {
-        keysToRemove.push(key);
-      }
-    }
-    keysToRemove.forEach(k => localStorage.removeItem(k));
-    sessionStorage.clear();
+    // Strictly clear transient guest data so it never leaks into user workspace
+    const guestKeys = [
+      'dutyflow_guest_examinations',
+      'dutyflow_guest_invigilators',
+      'dutyflow_guest_active_allotment',
+      'dutyflow_guest_profile',
+    ];
+    guestKeys.forEach((k) => localStorage.removeItem(k));
   } catch (_) { }
 };
 

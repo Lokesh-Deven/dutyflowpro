@@ -5,6 +5,14 @@ import {
   TimetableClassTiming,
 } from './examination-timetable-types';
 import { STANDARD_STUDENT_SUBJECTS } from './student-seating-service';
+import {
+  isUUID,
+  syncExaminationTimetableToDatabase,
+  fetchUserTimetablesFromDatabase,
+  deleteExaminationTimetableFromDatabase,
+  syncUserWorkspaceToDatabase,
+  fetchUserWorkspaceFromDatabase,
+} from './storage-service';
 
 const STORAGE_PREFIX = 'dutyflow_examination_timetables_';
 
@@ -129,7 +137,7 @@ export function getSavedTimetables(userId?: string): ExaminationTimetable[] {
 }
 
 /**
- * Save or update a timetable in localStorage
+ * Save or update a timetable in localStorage and securely sync to Supabase database
  */
 export function saveTimetable(timetable: ExaminationTimetable, userId?: string): void {
   if (typeof window === 'undefined') return;
@@ -152,13 +160,24 @@ export function saveTimetable(timetable: ExaminationTimetable, userId?: string):
     }
 
     localStorage.setItem(key, JSON.stringify(nextList));
+
+    // Cloud persistence strictly tied to authenticated user
+    if (userId && isUUID(userId)) {
+      syncExaminationTimetableToDatabase(updated, userId).catch((err) => {
+        console.error('Failed to sync examination timetable to Supabase:', err);
+      });
+      syncUserWorkspaceToDatabase(userId, {
+        timetables: nextList,
+        activeTimetableId: updated.id,
+      }).catch(() => {});
+    }
   } catch (err) {
     console.error('Failed to save timetable:', err);
   }
 }
 
 /**
- * Delete a timetable from localStorage
+ * Delete a timetable from localStorage and Supabase database
  */
 export function deleteTimetable(id: string, userId?: string): void {
   if (typeof window === 'undefined') return;
@@ -167,13 +186,23 @@ export function deleteTimetable(id: string, userId?: string): void {
     const existing = getSavedTimetables(userId);
     const nextList = existing.filter((t) => t.id !== id);
     localStorage.setItem(key, JSON.stringify(nextList));
+
+    // Delete from Supabase database
+    if (userId && isUUID(userId)) {
+      deleteExaminationTimetableFromDatabase(id, userId).catch((err) => {
+        console.error('Failed to delete examination timetable from Supabase:', err);
+      });
+      syncUserWorkspaceToDatabase(userId, {
+        timetables: nextList,
+      }).catch(() => {});
+    }
   } catch (err) {
     console.error('Failed to delete timetable:', err);
   }
 }
 
 /**
- * Toggle lock state for a timetable
+ * Toggle lock state for a timetable in localStorage and Supabase database
  */
 export function toggleLockTimetable(id: string, isLocked: boolean, userId?: string): ExaminationTimetable | null {
   if (typeof window === 'undefined') return null;
@@ -190,10 +219,76 @@ export function toggleLockTimetable(id: string, isLocked: boolean, userId?: stri
     };
     existing[index] = updated;
     localStorage.setItem(key, JSON.stringify(existing));
+
+    // Cloud persistence for lock state
+    if (userId && isUUID(userId)) {
+      syncExaminationTimetableToDatabase(updated, userId).catch((err) => {
+        console.error('Failed to sync timetable lock state to Supabase:', err);
+      });
+      syncUserWorkspaceToDatabase(userId, {
+        timetables: existing,
+      }).catch(() => {});
+    }
+
     return updated;
   } catch (err) {
     console.error('Failed to update lock state:', err);
     return null;
+  }
+}
+
+/**
+ * Fetch timetables from Supabase database and merge with local cache.
+ * Guarantees cross-device availability when switching devices or browsers.
+ */
+export async function fetchTimetablesFromCloud(userId?: string): Promise<ExaminationTimetable[]> {
+  if (!userId || !isUUID(userId)) {
+    return getSavedTimetables(userId);
+  }
+
+  try {
+    const [dbTimetables, ws] = await Promise.all([
+      fetchUserTimetablesFromDatabase(userId),
+      fetchUserWorkspaceFromDatabase(userId),
+    ]);
+
+    const map = new Map<string, ExaminationTimetable>();
+    if (Array.isArray(ws?.timetables)) {
+      ws.timetables.forEach((t) => {
+        if (t && t.id) map.set(t.id, t);
+      });
+    }
+    if (Array.isArray(dbTimetables)) {
+      dbTimetables.forEach((t) => {
+        if (t && t.id) map.set(t.id, t);
+      });
+    }
+
+    // Also include any local entries not yet synced to cloud and opportunistically sync them
+    const local = getSavedTimetables(userId);
+    local.forEach((t) => {
+      if (t && t.id && !map.has(t.id)) {
+        map.set(t.id, t);
+        syncExaminationTimetableToDatabase(t, userId).catch(() => {});
+      }
+    });
+
+    const merged = Array.from(map.values()).sort((a, b) => {
+      const dateA = a.updatedAt || a.createdAt || '';
+      const dateB = b.updatedAt || b.createdAt || '';
+      return dateB.localeCompare(dateA);
+    });
+
+    // Update local cache
+    if (typeof window !== 'undefined') {
+      const key = getStorageKey(userId);
+      localStorage.setItem(key, JSON.stringify(merged));
+    }
+
+    return merged;
+  } catch (err) {
+    console.error('Failed to fetch timetables from cloud:', err);
+    return getSavedTimetables(userId);
   }
 }
 

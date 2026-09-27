@@ -209,21 +209,25 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // Examination and invigilator details pages MUST start clear of all details on login
-      setExaminations([]);
-      setInvigilators([]);
-      setActiveAllotment(null);
+      // Restore cached active allotment if present
+      const storedActive = localStorage.getItem(`dutyflow_${userScope}_active_allotment`);
+      if (storedActive && isMounted) {
+        try {
+          const parsedActive = JSON.parse(storedActive);
+          if (parsedActive && parsedActive.id) {
+            setActiveAllotment({
+              ...parsedActive,
+              createdAt: new Date(parsedActive.createdAt),
+              examinations: (parsedActive.examinations || []).map((e: any) => ({ ...e, date: new Date(e.date) })),
+            });
+          }
+        } catch (_) { }
+      }
 
-      // Purge any lingering draft keys from storage
-      localStorage.removeItem(`dutyflow_${userScope}_examinations`);
-      localStorage.removeItem(`dutyflow_${userScope}_invigilators`);
-      localStorage.removeItem(`dutyflow_${userScope}_active_allotment`);
+      // Purge only guest temporary draft keys from storage
       localStorage.removeItem('dutyflow_guest_examinations');
       localStorage.removeItem('dutyflow_guest_invigilators');
       localStorage.removeItem('dutyflow_guest_active_allotment');
-      sessionStorage.removeItem(`dutyflow_${userScope}_examinations`);
-      sessionStorage.removeItem(`dutyflow_${userScope}_invigilators`);
-      sessionStorage.removeItem(`dutyflow_${userScope}_active_allotment`);
 
       // Load user-scoped directory invigilators from localStorage
       const storedDir = localStorage.getItem(`dutyflow_${userScope}_invigilator_directory`);
@@ -486,7 +490,7 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
     };
   }, [user?.id]);
 
-  // Window Focus Cross-Device Auto-Refresh
+  // Window Focus & Visibility Change Cross-Device Auto-Refresh
   useEffect(() => {
     if (!user?.id || !isUUID(user.id)) return;
 
@@ -494,9 +498,14 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       Promise.all([
         fetchUserAllotmentsFromDatabase(user.id),
         fetchUserWorkspaceFromDatabase(user.id),
-      ]).then(([cloudAllotments, ws]) => {
+        fetchUserDirectoryFromCloud(user.id),
+      ]).then(([cloudAllotments, ws, cloudDir]) => {
         if (ws?.instructions?.length) setInstructions(ws.instructions);
         if (ws?.masterRooms?.length) setMasterRooms(ws.masterRooms);
+        if (cloudDir && Array.isArray(cloudDir) && cloudDir.length > 0) {
+          setDirectoryInvigilators(cloudDir);
+          setIsDirectoryCloudSynced(true);
+        }
         if (cloudAllotments && Array.isArray(cloudAllotments)) {
           setSavedAllotments(cloudAllotments);
           if (ws?.activeAllotmentId) {
@@ -507,8 +516,18 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       }).catch(() => {});
     };
 
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        handleWindowFocus();
+      }
+    };
+
     window.addEventListener('focus', handleWindowFocus);
-    return () => window.removeEventListener('focus', handleWindowFocus);
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      window.removeEventListener('focus', handleWindowFocus);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, [user?.id]);
 
   // 2. Save state changes strictly to user-scoped localStorage
@@ -557,11 +576,24 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
     }
   }, [activeAllotment]);
 
+  // Cache active allotment locally for instant resumption
+  useEffect(() => {
+    if (!isLoaded) return;
+    const scope = user?.id ? user.id : 'guest';
+    try {
+      if (activeAllotment) {
+        localStorage.setItem(`dutyflow_${scope}_active_allotment`, JSON.stringify(activeAllotment));
+      } else {
+        localStorage.removeItem(`dutyflow_${scope}_active_allotment`);
+      }
+    } catch (_) { }
+  }, [activeAllotment, isLoaded, user?.id]);
+
   // Synchronize Active Allotment selection to central cloud workspace across all user devices
   useEffect(() => {
-    if (!isLoaded || !user?.id || !isUUID(user.id)) return;
+    if (!isLoaded || !isCloudSynced || !user?.id || !isUUID(user.id)) return;
     syncUserWorkspaceToDatabase(user.id, { activeAllotmentId: activeAllotment?.id || null }).catch(() => {});
-  }, [activeAllotment?.id, isLoaded, user?.id]);
+  }, [activeAllotment?.id, isLoaded, isCloudSynced, user?.id]);
 
   const saveCurrentAllotment = useCallback((
     name: string,
@@ -861,9 +893,20 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       ...item,
       createdAt: new Date().toISOString(),
     };
-    setDirectoryInvigilators(prev => [newItem, ...prev]);
-    setIsDirectoryCloudSynced(false);
-  }, []);
+    setDirectoryInvigilators(prev => {
+      const updated = [newItem, ...prev];
+      const scope = user?.id ? user.id : 'guest';
+      try {
+        localStorage.setItem(`dutyflow_${scope}_invigilator_directory`, JSON.stringify(updated));
+      } catch (_) { }
+      if (user?.id && isUUID(user.id)) {
+        saveUserDirectoryToCloud(updated, user.id).then((res) => {
+          if (res.success) setIsDirectoryCloudSynced(true);
+        }).catch(() => {});
+      }
+      return updated;
+    });
+  }, [user?.id]);
 
   const addDirectoryInvigilatorsBulk = useCallback((items: Omit<DirectoryInvigilator, 'id'>[]) => {
     const newItems: DirectoryInvigilator[] = items.map((item, index) => ({
@@ -871,24 +914,65 @@ export function AllotmentProvider({ children }: { children: ReactNode }) {
       ...item,
       createdAt: new Date().toISOString(),
     }));
-    setDirectoryInvigilators(prev => [...newItems, ...prev]);
-    setIsDirectoryCloudSynced(false);
-  }, []);
+    setDirectoryInvigilators(prev => {
+      const updated = [...newItems, ...prev];
+      const scope = user?.id ? user.id : 'guest';
+      try {
+        localStorage.setItem(`dutyflow_${scope}_invigilator_directory`, JSON.stringify(updated));
+      } catch (_) { }
+      if (user?.id && isUUID(user.id)) {
+        saveUserDirectoryToCloud(updated, user.id).then((res) => {
+          if (res.success) setIsDirectoryCloudSynced(true);
+        }).catch(() => {});
+      }
+      return updated;
+    });
+  }, [user?.id]);
 
   const updateDirectoryInvigilator = useCallback((id: string, updated: Partial<DirectoryInvigilator>) => {
-    setDirectoryInvigilators(prev => prev.map(inv => inv.id === id ? { ...inv, ...updated } : inv));
-    setIsDirectoryCloudSynced(false);
-  }, []);
+    setDirectoryInvigilators(prev => {
+      const next = prev.map(inv => inv.id === id ? { ...inv, ...updated } : inv);
+      const scope = user?.id ? user.id : 'guest';
+      try {
+        localStorage.setItem(`dutyflow_${scope}_invigilator_directory`, JSON.stringify(next));
+      } catch (_) { }
+      if (user?.id && isUUID(user.id)) {
+        saveUserDirectoryToCloud(next, user.id).then((res) => {
+          if (res.success) setIsDirectoryCloudSynced(true);
+        }).catch(() => {});
+      }
+      return next;
+    });
+  }, [user?.id]);
 
   const deleteDirectoryInvigilator = useCallback((id: string) => {
-    setDirectoryInvigilators(prev => prev.filter(inv => inv.id !== id));
-    setIsDirectoryCloudSynced(false);
-  }, []);
+    setDirectoryInvigilators(prev => {
+      const next = prev.filter(inv => inv.id !== id);
+      const scope = user?.id ? user.id : 'guest';
+      try {
+        localStorage.setItem(`dutyflow_${scope}_invigilator_directory`, JSON.stringify(next));
+      } catch (_) { }
+      if (user?.id && isUUID(user.id)) {
+        saveUserDirectoryToCloud(next, user.id).then((res) => {
+          if (res.success) setIsDirectoryCloudSynced(true);
+        }).catch(() => {});
+      }
+      return next;
+    });
+  }, [user?.id]);
 
   const clearDirectoryInvigilators = useCallback(() => {
     setDirectoryInvigilators([]);
-    setIsDirectoryCloudSynced(false);
-  }, []);
+    const scope = user?.id ? user.id : 'guest';
+    try {
+      localStorage.setItem(`dutyflow_${scope}_invigilator_directory`, JSON.stringify([]));
+    } catch (_) { }
+    if (user?.id && isUUID(user.id)) {
+      saveUserDirectoryToCloud([], user.id).then((res) => {
+        if (res.success) setIsDirectoryCloudSynced(true);
+      }).catch(() => {});
+    }
+  }, [user?.id]);
 
   const setPdfPaletteId = useCallback((id: PaletteId) => {
     setPdfPaletteIdState(id);

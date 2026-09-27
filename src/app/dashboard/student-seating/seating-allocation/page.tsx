@@ -27,7 +27,7 @@ import {
 import { RoomSeatingDiagram } from '@/components/dashboard/student-seating/room-seating-diagram';
 import { getSubjectColor } from '@/lib/student-seating-colors';
 import { ExaminationTimetable, TimetableRow } from '@/lib/examination-timetable-types';
-import { getSavedTimetables, sortTimetableRows } from '@/lib/examination-timetable-service';
+import { getSavedTimetables, fetchTimetablesFromCloud, sortTimetableRows } from '@/lib/examination-timetable-service';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -110,16 +110,41 @@ export default function SeatingAllocationWizardPage() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    let isMounted = true;
+
     const loadTimetables = () => {
-      const list = getSavedTimetables(user?.id);
-      setSavedTimetables(list);
-      if (list.length > 0) {
-        setSelectedTimetableId((prev) => (prev && list.some((t) => t.id === prev) ? prev : list[0].id));
+      const initial = getSavedTimetables(user?.id);
+      setSavedTimetables(initial);
+      if (initial.length > 0) {
+        setSelectedTimetableId((prev) => (prev && initial.some((t) => t.id === prev) ? prev : initial[0].id));
+      }
+
+      if (user?.id) {
+        fetchTimetablesFromCloud(user.id).then((cloudList) => {
+          if (!isMounted) return;
+          setSavedTimetables(cloudList);
+          if (cloudList.length > 0) {
+            setSelectedTimetableId((prev) => (prev && cloudList.some((t) => t.id === prev) ? prev : cloudList[0].id));
+          }
+        }).catch(() => {});
       }
     };
+
     loadTimetables();
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        loadTimetables();
+      }
+    };
+
     window.addEventListener('focus', loadTimetables);
-    return () => window.removeEventListener('focus', loadTimetables);
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      isMounted = false;
+      window.removeEventListener('focus', loadTimetables);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, [user?.id]);
 
   const currentSelectedTimetable = useMemo(() => {
