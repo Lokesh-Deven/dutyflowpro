@@ -60,6 +60,8 @@ export const DEFAULT_STUDENT_ROOMS: SeatingMasterRoom[] = [
  * Standard examination subjects sorted in alphabetical order
  */
 export const STANDARD_STUDENT_SUBJECTS = [
+  'Accountancy',
+  'Basic Mathematics',
   'Biology',
   'Business Studies',
   'Chemistry',
@@ -84,6 +86,8 @@ export const STANDARD_STUDENT_SUBJECTS = [
 ] as const;
 
 export const STANDARD_SUBJECT_CODES: Record<string, string> = {
+  'Accountancy': 'ACC',
+  'Basic Mathematics': 'BMT',
   'Biology': 'BIO',
   'Business Studies': 'BST',
   'Chemistry': 'CHM',

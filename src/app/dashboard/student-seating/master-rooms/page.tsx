@@ -65,20 +65,20 @@ export default function MasterRoomsPage() {
         setLastSavedAt(timeStr);
         toast({
           title: "Added Rooms Saved Successfully",
-          description: `All ${rooms.length} master rooms have been saved.`,
+          description: `All ${rooms.length} examination rooms have been saved.`,
         });
       } else {
         toast({
           variant: "destructive",
           title: "Save Failed",
-          description: "Could not save master rooms. Please try again.",
+          description: "Could not save examination rooms. Please try again.",
         });
       }
     } catch {
       toast({
         variant: "destructive",
         title: "Save Error",
-        description: "An unexpected error occurred while saving master rooms.",
+        description: "An unexpected error occurred while saving examination rooms.",
       });
     } finally {
       setIsSaving(false);
@@ -101,7 +101,7 @@ export default function MasterRoomsPage() {
         toast({
           variant: "destructive",
           title: "Duplicate Room",
-          description: `Room ${roomNo} already exists in Master Rooms.`,
+          description: `Room ${roomNo} already exists in Examination Rooms.`,
         });
         return;
       }
@@ -138,7 +138,7 @@ export default function MasterRoomsPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="font-headline text-2xl font-black tracking-tight text-slate-800">
-                  Master Rooms
+                  Examination Rooms
                 </h1>
                 {hasUnsavedChanges ? (
                   <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-300/40 text-[10px] px-2 py-0.5 font-semibold rounded-full animate-pulse">
@@ -445,7 +445,7 @@ export default function MasterRoomsPage() {
                   &bull; Warning: This room is currently assigned in one or more saved seating allocations. Deleting it may impact existing records.
                 </span>
               ) : (
-                "Are you sure you want to delete this room from the Master Rooms list? This action cannot be undone."
+                "Are you sure you want to delete this room from the Examination Rooms list? This action cannot be undone."
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>

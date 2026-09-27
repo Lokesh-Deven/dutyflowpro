@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import Link from 'next/link';
 import { useStudentSeating } from '@/lib/student-seating-context';
 import { useAllotment } from '@/lib/allotment-context';
 import { useAuth } from '@/lib/auth-context';
@@ -25,6 +26,8 @@ import {
 } from '@/lib/storage-service';
 import { RoomSeatingDiagram } from '@/components/dashboard/student-seating/room-seating-diagram';
 import { getSubjectColor } from '@/lib/student-seating-colors';
+import { ExaminationTimetable, TimetableRow } from '@/lib/examination-timetable-types';
+import { getSavedTimetables, sortTimetableRows } from '@/lib/examination-timetable-service';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -99,6 +102,35 @@ export default function SeatingAllocationWizardPage() {
   const [examDate, setExamDate] = useState<string>('2026-09-25');
   const [startTime, setStartTime] = useState<string>('09:00 AM');
   const [endTime, setEndTime] = useState<string>('12:00 PM');
+
+  // Step 1: Examination Timetable Auto-fill State
+  const [savedTimetables, setSavedTimetables] = useState<ExaminationTimetable[]>([]);
+  const [selectedTimetableId, setSelectedTimetableId] = useState<string>('');
+  const [selectedTimetableRowId, setSelectedTimetableRowId] = useState<string>('');
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const loadTimetables = () => {
+      const list = getSavedTimetables(user?.id);
+      setSavedTimetables(list);
+      if (list.length > 0) {
+        setSelectedTimetableId((prev) => (prev && list.some((t) => t.id === prev) ? prev : list[0].id));
+      }
+    };
+    loadTimetables();
+    window.addEventListener('focus', loadTimetables);
+    return () => window.removeEventListener('focus', loadTimetables);
+  }, [user?.id]);
+
+  const currentSelectedTimetable = useMemo(() => {
+    if (!savedTimetables || savedTimetables.length === 0) return null;
+    return savedTimetables.find((t) => t.id === selectedTimetableId) || savedTimetables[0];
+  }, [savedTimetables, selectedTimetableId]);
+
+  const currentTimetableRows = useMemo(() => {
+    if (!currentSelectedTimetable?.rows) return [];
+    return sortTimetableRows([...currentSelectedTimetable.rows]);
+  }, [currentSelectedTimetable]);
 
   // Step 2: Selected Subjects
   const [selectedSubjectIds, setSelectedSubjectIds] = useState<string[]>([]);
@@ -267,6 +299,13 @@ export default function SeatingAllocationWizardPage() {
   const [viewingRoomPlan, setViewingRoomPlan] = useState<RoomSeatingPlan | null>(null);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
+  // Step 2: Alphabetical presentation of all examination subjects
+  const alphabeticalSubjects = useMemo(() => {
+    return [...subjects].sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+    );
+  }, [subjects]);
+
   // Calculate total students selected
   const totalStudentsSelected = useMemo(() => {
     return selectedSubjectIds.reduce((sum, sId) => {
@@ -328,17 +367,65 @@ export default function SeatingAllocationWizardPage() {
     return benches.filter((b) => b.seats.some((s) => !!s.student)).slice(0, 16);
   }, [isMultiSubjectMode, subjects, selectedSubjectIds, studentsBySubject, positionMapping, multiSubjectRows]);
 
-  // Handle Examination select from DutyFlow
-  const handleSelectDutyExam = (examId: string) => {
-    setSelectedDutyExamId(examId);
-    const exam = activeAllotment?.examinations?.find((e) => e.id === examId);
-    if (exam) {
-      setExamName(exam.examName || activeAllotment?.name || 'Examination');
-      const d = new Date(exam.date);
-      setExamDate(d.toISOString().split('T')[0]);
-      setStartTime(exam.startTime || '09:00 AM');
-      setEndTime(exam.endTime || '12:00 PM');
+  // Handle Examination session select from Examination Timetable
+  const handleSelectTimetableRow = (rowId: string) => {
+    setSelectedTimetableRowId(rowId);
+    setSelectedDutyExamId(rowId);
+
+    const targetTimetable = currentSelectedTimetable;
+    if (!targetTimetable) return;
+
+    const row = targetTimetable.rows?.find((r) => r.id === rowId);
+    if (!row) return;
+
+    // 1. Examination Title from Timetable
+    if (targetTimetable.examinationName) {
+      setExamName(targetTimetable.examinationName);
     }
+
+    // 2. Date from Row (YYYY-MM-DD)
+    if (row.date) {
+      setExamDate(row.date);
+    }
+
+    // 3. Timings from Row
+    let rowStart = '';
+    let rowEnd = '';
+    if (row.timings) {
+      for (const t of Object.values(row.timings)) {
+        if (t?.startTime && t.startTime !== '-' && !rowStart) {
+          rowStart = t.startTime;
+        }
+        if (t?.endTime && t.endTime !== '-' && !rowEnd) {
+          rowEnd = t.endTime;
+        }
+        if (rowStart && rowEnd) break;
+      }
+    }
+    if (rowStart) setStartTime(rowStart);
+    if (rowEnd) setEndTime(rowEnd);
+
+    // 4. Auto-match and pre-select subjects in Step 2 from row.subjects
+    if (row.subjects && row.subjects.length > 0) {
+      const matchedIds = subjects
+        .filter((subj) =>
+          row.subjects.some(
+            (subName) =>
+              subName.trim().toLowerCase() === subj.name.trim().toLowerCase() ||
+              (subj.code && subName.trim().toLowerCase() === subj.code.trim().toLowerCase())
+          )
+        )
+        .map((subj) => subj.id);
+
+      if (matchedIds.length > 0) {
+        setSelectedSubjectIds(matchedIds);
+      }
+    }
+
+    toast({
+      title: 'Auto-filled from Examination Timetable',
+      description: `Loaded session for ${row.displayDate || row.date} (${row.subjects?.length ? row.subjects.join(', ') : 'Exam Session'}).`,
+    });
   };
 
   // Run Allocation
@@ -593,30 +680,160 @@ export default function SeatingAllocationWizardPage() {
               Step 1: Examination Details
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Select an existing examination session from your DutyFlow schedule or enter examination info.
+              Auto-fill from your Examination Timetable or enter examination details manually.
             </p>
           </div>
 
-          {/* Quick select from active Master Allotment if available */}
-          {activeAllotment?.examinations && activeAllotment.examinations.length > 0 && (
-            <div className="bg-indigo-50/60 border border-indigo-100 rounded-xl p-4 space-y-2">
-              <Label className="text-xs font-bold text-[#1E2A5E]">
-                Auto-fill from Master Allotment Sessions:
+          {/* Auto-fill from Examination Timetable */}
+          <div className="bg-indigo-50/60 border border-indigo-100 rounded-xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-bold text-[#1E2A5E] flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-indigo-600" />
+                Auto-fill from Examination Timetable:
               </Label>
-              <Select value={selectedDutyExamId} onValueChange={handleSelectDutyExam}>
-                <SelectTrigger className="bg-white text-xs font-semibold h-9">
-                  <SelectValue placeholder="Select examination from active Master Allotment" />
-                </SelectTrigger>
-                <SelectContent>
-                  {activeAllotment.examinations.map((ex) => (
-                    <SelectItem key={ex.id} value={ex.id} className="text-xs">
-                      {ex.subject} &bull; {new Date(ex.date).toLocaleDateString()} ({ex.startTime} - {ex.endTime})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Link
+                href="/dashboard/examination-timetable"
+                className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 hover:underline flex items-center gap-1"
+              >
+                <span>Examination Timetable</span>
+                <ArrowRight className="w-3 h-3" />
+              </Link>
             </div>
-          )}
+
+            {savedTimetables.length === 0 ? (
+              <p className="text-xs text-slate-500 bg-white/70 border border-slate-200/60 rounded-lg p-2.5">
+                No examination timetables found. You can create one in{' '}
+                <Link href="/dashboard/examination-timetable" className="text-indigo-600 font-semibold underline">
+                  Examination Timetable
+                </Link>{' '}
+                or fill in the examination details manually below.
+              </p>
+            ) : savedTimetables.length === 1 ? (
+              /* Single Timetable: direct session selector */
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-[11px] text-slate-600 px-0.5">
+                  <span className="font-semibold text-indigo-900 truncate max-w-[320px]">
+                    Timetable: {currentSelectedTimetable?.examinationName || 'Official Timetable'}
+                  </span>
+                  <Badge variant="outline" className="text-[10px] bg-white border-indigo-200 text-indigo-700">
+                    {currentTimetableRows.length} {currentTimetableRows.length === 1 ? 'Date' : 'Dates'}
+                  </Badge>
+                </div>
+                <Select value={selectedTimetableRowId} onValueChange={handleSelectTimetableRow}>
+                  <SelectTrigger className="bg-white text-xs font-semibold h-9 border-indigo-200 shadow-xs cursor-pointer">
+                    <SelectValue placeholder="Select examination date / session to auto-fill" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {currentTimetableRows.map((row) => {
+                      const dateLabel = row.displayDate || row.date;
+                      const dayLabel = row.day ? `(${row.day})` : '';
+                      const subjectsLabel = row.subjects && row.subjects.length > 0 ? row.subjects.join(', ') : 'No exam scheduled';
+                      let timingLabel = '';
+                      if (row.timings) {
+                        for (const t of Object.values(row.timings)) {
+                          if (t?.startTime && t.startTime !== '-' && t?.endTime && t.endTime !== '-') {
+                            timingLabel = `${t.startTime} – ${t.endTime}`;
+                            break;
+                          }
+                        }
+                      }
+                      return (
+                        <SelectItem key={row.id} value={row.id} className="text-xs py-2 cursor-pointer">
+                          <div className="flex flex-col gap-0.5 text-left">
+                            <div className="font-semibold text-slate-800">
+                              {dateLabel} {dayLabel} • {subjectsLabel}
+                            </div>
+                            {timingLabel && (
+                              <div className="text-[10px] text-slate-500 font-medium">
+                                Timings: {timingLabel}
+                              </div>
+                            )}
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              /* More than one timetable: Timetable selector + Session selector */
+              <div className="space-y-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-semibold text-slate-600">
+                      Select Timetable:
+                    </Label>
+                    <Select
+                      value={selectedTimetableId}
+                      onValueChange={(val) => {
+                        setSelectedTimetableId(val);
+                        setSelectedTimetableRowId('');
+                      }}
+                    >
+                      <SelectTrigger className="bg-white text-xs font-semibold h-9 border-indigo-200 shadow-xs cursor-pointer">
+                        <SelectValue placeholder="Choose Timetable" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-60">
+                        {savedTimetables.map((tt) => (
+                          <SelectItem key={tt.id} value={tt.id} className="text-xs py-2 cursor-pointer">
+                            <div className="flex flex-col text-left">
+                              <span className="font-semibold text-slate-800 truncate max-w-[240px]">
+                                {tt.examinationName || 'Untitled Timetable'}
+                              </span>
+                              <span className="text-[10px] text-slate-500">
+                                {tt.rows?.length || 0} dates scheduled
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-semibold text-slate-600">
+                      Select Examination Session / Date:
+                    </Label>
+                    <Select value={selectedTimetableRowId} onValueChange={handleSelectTimetableRow}>
+                      <SelectTrigger className="bg-white text-xs font-semibold h-9 border-indigo-200 shadow-xs cursor-pointer">
+                        <SelectValue placeholder="Choose Session / Date" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-72">
+                        {currentTimetableRows.map((row) => {
+                          const dateLabel = row.displayDate || row.date;
+                          const dayLabel = row.day ? `(${row.day})` : '';
+                          const subjectsLabel = row.subjects && row.subjects.length > 0 ? row.subjects.join(', ') : 'No exam scheduled';
+                          let timingLabel = '';
+                          if (row.timings) {
+                            for (const t of Object.values(row.timings)) {
+                              if (t?.startTime && t.startTime !== '-' && t?.endTime && t.endTime !== '-') {
+                                timingLabel = `${t.startTime} – ${t.endTime}`;
+                                break;
+                              }
+                            }
+                          }
+                          return (
+                            <SelectItem key={row.id} value={row.id} className="text-xs py-2 cursor-pointer">
+                              <div className="flex flex-col gap-0.5 text-left">
+                                <div className="font-semibold text-slate-800">
+                                  {dateLabel} {dayLabel} • {subjectsLabel}
+                                </div>
+                                {timingLabel && (
+                                  <div className="text-[10px] text-slate-500 font-medium">
+                                    Timings: {timingLabel}
+                                  </div>
+                                )}
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
 
           <div className="space-y-4">
             <div className="space-y-1.5">
@@ -704,7 +921,7 @@ export default function SeatingAllocationWizardPage() {
           </div>
 
           <div className="space-y-2.5">
-            {subjects.map((subj) => {
+            {alphabeticalSubjects.map((subj) => {
               const students = studentsBySubject[subj.id] || [];
               const isChecked = selectedSubjectIds.includes(subj.id);
 
@@ -734,8 +951,8 @@ export default function SeatingAllocationWizardPage() {
                         {subj.name}
                       </div>
                       {subj.code && (
-                        <div className="text-[10px] text-slate-400 font-mono">
-                          Code: {subj.code}
+                        <div className="text-[10px] text-slate-500 font-medium">
+                          Class: {subj.code}
                         </div>
                       )}
                     </div>
@@ -1642,39 +1859,60 @@ export default function SeatingAllocationWizardPage() {
         <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs max-w-4xl mx-auto space-y-5">
           <div className="border-b border-slate-100 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h2 className="font-headline font-bold text-lg text-slate-800">
-                Step 5: Select Examination Rooms
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className="font-headline font-bold text-lg text-slate-800">
+                  Step 5: Select Examination Rooms
+                </h2>
+                <Badge className="bg-indigo-50 text-indigo-700 border-indigo-200 font-bold text-xs px-2.5 py-0.5">
+                  {selectedRoomIds.length} of {masterRooms.length} Rooms Selected
+                </Badge>
+              </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                Select Master Rooms to accommodate {totalStudentsSelected} students ({pattern.replace('_', ' ')}).
+                Select Examination Rooms to accommodate {totalStudentsSelected} students ({pattern.replace('_', ' ')}).
               </p>
             </div>
 
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                // Quick auto select enough rooms
-                let needed = totalStudentsSelected;
-                const picked: string[] = [];
-                for (const r of masterRooms) {
-                  if (needed <= 0) break;
-                  const cap = isMultiSubjectMode
-                    ? r.capacityThree
-                    : pattern === '1_PER_BENCH'
-                      ? r.capacityOne
-                      : pattern === '2_PER_BENCH'
-                        ? r.capacityTwo
-                        : r.capacityThree;
-                  picked.push(r.id);
-                  needed -= cap;
-                }
-                setSelectedRoomIds(picked);
-              }}
-              className="text-xs h-8 text-[#1E2A5E] font-bold"
-            >
-              Auto-Select Needed Rooms
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  if (selectedRoomIds.length === masterRooms.length) {
+                    setSelectedRoomIds([]);
+                  } else {
+                    setSelectedRoomIds(masterRooms.map((r) => r.id));
+                  }
+                }}
+                className="text-xs h-8 text-slate-700 font-semibold"
+              >
+                {selectedRoomIds.length === masterRooms.length ? "Deselect All" : "Select All Rooms"}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  // Quick auto select enough rooms
+                  let needed = totalStudentsSelected;
+                  const picked: string[] = [];
+                  for (const r of masterRooms) {
+                    if (needed <= 0) break;
+                    const cap = isMultiSubjectMode
+                      ? r.capacityThree
+                      : pattern === '1_PER_BENCH'
+                        ? r.capacityOne
+                        : pattern === '2_PER_BENCH'
+                          ? r.capacityTwo
+                          : r.capacityThree;
+                    picked.push(r.id);
+                    needed -= cap;
+                  }
+                  setSelectedRoomIds(picked);
+                }}
+                className="text-xs h-8 text-[#1E2A5E] font-bold"
+              >
+                Auto-Select Needed Rooms
+              </Button>
+            </div>
           </div>
 
           {/* Rooms Table / Cards */}
@@ -1682,7 +1920,24 @@ export default function SeatingAllocationWizardPage() {
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase text-[10px]">
                 <tr>
-                  <th className="py-3 px-3 text-center w-10">Select</th>
+                  <th className="py-3 px-3 text-center w-12">Sl No.</th>
+                  <th className="py-3 px-3 text-center w-12">
+                    <div className="flex items-center justify-center">
+                      <Checkbox
+                        checked={selectedRoomIds.length === masterRooms.length && masterRooms.length > 0}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedRoomIds(masterRooms.map((r) => r.id));
+                          } else {
+                            setSelectedRoomIds([]);
+                          }
+                        }}
+                        className="data-[state=checked]:bg-[#1E2A5E]"
+                        aria-label="Select all rooms"
+                        title="Select all rooms"
+                      />
+                    </div>
+                  </th>
                   <th className="py-3 px-4">Room No.</th>
                   <th className="py-3 px-3 text-center">Benches</th>
                   <th className="py-3 px-3 text-center font-bold text-[#1E2A5E]">
@@ -1692,7 +1947,7 @@ export default function SeatingAllocationWizardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-                {masterRooms.map((room) => {
+                {masterRooms.map((room, index) => {
                   const isChecked = selectedRoomIds.includes(room.id);
                   const effectiveCap = isMultiSubjectMode
                     ? room.capacityThree
@@ -1715,6 +1970,9 @@ export default function SeatingAllocationWizardPage() {
                       className={`cursor-pointer transition-colors ${isChecked ? "bg-indigo-50/50" : "hover:bg-slate-50"
                         }`}
                     >
+                      <td className="py-3 px-3 text-center text-slate-500 font-mono font-semibold text-[11px]">
+                        {index + 1}
+                      </td>
                       <td className="py-3 px-3 text-center">
                         <Checkbox
                           checked={isChecked}
@@ -1763,7 +2021,7 @@ export default function SeatingAllocationWizardPage() {
                     : "Insufficient Capacity Selected"}
                 </div>
                 <div className="text-xs mt-0.5 font-medium opacity-90">
-                  Required: <strong>{totalStudentsSelected}</strong> &bull; Selected Room Capacity:{" "}
+                  Rooms Selected: <strong>{selectedRoomIds.length} of {masterRooms.length}</strong> &bull; Required: <strong>{totalStudentsSelected}</strong> &bull; Selected Room Capacity:{" "}
                   <strong>{selectedRoomsCapacity}</strong> &bull; Vacant Buffer:{" "}
                   <strong>{Math.max(0, selectedRoomsCapacity - totalStudentsSelected)}</strong>
                 </div>

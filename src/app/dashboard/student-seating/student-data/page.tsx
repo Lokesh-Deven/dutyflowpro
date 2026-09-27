@@ -48,7 +48,7 @@ export default function StudentDataPage() {
   const [isAddSubjectOpen, setIsAddSubjectOpen] = useState(false);
   const [newSubjName, setNewSubjName] = useState('');
   const [newSubjCode, setNewSubjCode] = useState('');
-  const [newSubjExpected, setNewSubjExpected] = useState<number>(100);
+  const [newSubjExpected, setNewSubjExpected] = useState<string>('');
 
   // Combobox state for Subject Name
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -83,9 +83,6 @@ export default function StudentDataPage() {
 
   const handleSelectSubject = (subject: string) => {
     setNewSubjName(subject);
-    if (!newSubjCode.trim() && STANDARD_SUBJECT_CODES[subject]) {
-      setNewSubjCode(STANDARD_SUBJECT_CODES[subject]);
-    }
     setIsDropdownOpen(false);
   };
 
@@ -94,14 +91,15 @@ export default function StudentDataPage() {
     if (!newSubjName.trim()) return;
     setIsDropdownOpen(false);
 
-    addSubject(newSubjName.trim(), newSubjCode.trim() || undefined, newSubjExpected || 0);
+    const expectedCount = newSubjExpected.trim() ? parseInt(newSubjExpected.trim(), 10) : 0;
+    addSubject(newSubjName.trim(), newSubjCode.trim() || undefined, expectedCount);
     toast({
       title: "Subject Added",
       description: `Added ${newSubjName.trim()} to subjects list.`,
     });
     setNewSubjName('');
     setNewSubjCode('');
-    setNewSubjExpected(100);
+    setNewSubjExpected('');
     setIsAddSubjectOpen(false);
   };
 
@@ -138,6 +136,9 @@ export default function StudentDataPage() {
           <Button
             onClick={() => {
               setIsDropdownOpen(false);
+              setNewSubjName('');
+              setNewSubjCode('');
+              setNewSubjExpected('');
               setIsAddSubjectOpen(true);
             }}
             className="bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs h-9 px-4 gap-1.5 shadow-xs"
@@ -166,8 +167,8 @@ export default function StudentDataPage() {
                       {subj.name}
                     </h3>
                     {subj.code && (
-                      <span className="text-[11px] text-slate-400 font-mono font-medium">
-                        Code: {subj.code}
+                      <span className="text-[11px] text-slate-500 font-medium">
+                        Class: {subj.code}
                       </span>
                     )}
                   </div>
@@ -360,14 +361,14 @@ export default function StudentDataPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="subj-code" className="text-xs font-bold text-slate-700">
-                  Subject Code (Optional)
+                  Class
                 </Label>
                 <Input
                   id="subj-code"
-                  placeholder="e.g. PHY201"
+                  placeholder="e.g. 1 PUC, 2 PUC"
                   value={newSubjCode}
                   onChange={(e) => setNewSubjCode(e.target.value)}
-                  className="text-xs font-mono"
+                  className="text-xs font-medium"
                 />
               </div>
 
@@ -377,11 +378,17 @@ export default function StudentDataPage() {
                 </Label>
                 <Input
                   id="subj-expected"
-                  type="number"
-                  min="0"
+                  type="text"
+                  inputMode="numeric"
+                  placeholder=""
                   value={newSubjExpected}
-                  onChange={(e) => setNewSubjExpected(parseInt(e.target.value) || 0)}
-                  className="text-xs font-bold"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (/^\d*$/.test(val)) {
+                      setNewSubjExpected(val);
+                    }
+                  }}
+                  className="text-xs font-bold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               </div>
             </div>

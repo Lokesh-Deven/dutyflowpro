@@ -25,6 +25,8 @@ import {
   GraduationCap,
   LayoutGrid,
   History,
+  ClipboardCheck,
+  CalendarClock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth-context';
@@ -48,7 +50,7 @@ import {
 } from "@/components/ui/tooltip";
 
 export const studentSeatingSubmenu = [
-  { href: '/dashboard/student-seating/master-rooms', label: 'Master Rooms', icon: DoorOpen },
+  { href: '/dashboard/student-seating/master-rooms', label: 'Examination Rooms', icon: DoorOpen },
   { href: '/dashboard/student-seating/student-data', label: 'Student Data', icon: Users },
   { href: '/dashboard/student-seating/seating-allocation', label: 'Seating Allocation', icon: LayoutGrid },
   { href: '/dashboard/student-seating/allocation-history', label: 'Allocation History', icon: History },
@@ -58,11 +60,13 @@ export const navItems = [
   { href: '/dashboard/examinations', label: 'New Allotment', icon: PlusSquare },
   { href: '/dashboard/saved', label: 'Saved Allotments', icon: Bookmark },
   { href: '/dashboard/room-allocations', label: 'Room Allocations', icon: DoorOpen },
+  { href: '/dashboard/question-paper-distribution', label: 'Question Paper Distribution', icon: ClipboardCheck },
   { href: '/dashboard/schedule', label: 'Day-wise Schedule', icon: CalendarDays },
   { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart2 },
   { href: '/dashboard/instructions', label: 'Add Instructions', icon: ListChecks },
   { href: '/dashboard/signatory', label: 'Add Signatory', icon: Signature },
   { href: '/dashboard/directory', label: 'Invigilator Directory', icon: BookUser },
+  { href: '/dashboard/examination-timetable', label: 'Examination Timetable', icon: CalendarClock },
   { href: '/dashboard/templates', label: 'Download Templates', icon: FileSpreadsheet },
 ];
 
@@ -114,6 +118,92 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
     await signOut();
   };
 
+  const renderStudentSeating = () => {
+    if (isCollapsed) {
+      return (
+        <DropdownMenu key="student-seating-dropdown">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className={cn(
+                    "flex items-center justify-center w-11 h-11 mx-auto rounded-xl text-sm font-semibold transition-all duration-200 group relative cursor-pointer",
+                    pathname.startsWith('/dashboard/student-seating')
+                      ? "bg-[#6342e8] text-white shadow-lg shadow-purple-900/40"
+                      : "text-[#b4b1db] hover:text-white hover:bg-white/[0.07]"
+                  )}
+                >
+                  <GraduationCap className={cn("w-5 h-5 shrink-0 transition-transform group-hover:scale-110", pathname.startsWith('/dashboard/student-seating') ? "text-white" : "text-[#9d99ce]")} />
+                </button>
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="bg-[#1e1957] text-white border-[#31297e] font-semibold text-xs">
+              Student Seating
+            </TooltipContent>
+          </Tooltip>
+          <DropdownMenuContent side="right" align="start" className="bg-[#1e1957] text-white border-[#31297e] w-48 p-1.5 shadow-xl">
+            <DropdownMenuLabel className="text-xs text-indigo-300 font-bold px-2 py-1">Student Seating</DropdownMenuLabel>
+            <DropdownMenuSeparator className="bg-white/10" />
+            {studentSeatingSubmenu.map((sub) => (
+              <DropdownMenuItem key={sub.href} asChild className="focus:bg-[#6342e8] focus:text-white text-xs font-semibold py-2 cursor-pointer">
+                <Link href={sub.href} onClick={() => handleNavClick(sub.label)} className="flex items-center gap-2">
+                  <sub.icon className="w-3.5 h-3.5 text-indigo-300" />
+                  <span>{sub.label}</span>
+                </Link>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    }
+
+    return (
+      <div key="student-seating-collapsible" className="space-y-1">
+        <button
+          type="button"
+          onClick={() => setIsStudentSeatingOpen((prev) => !prev)}
+          className={cn(
+            "w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 group relative cursor-pointer",
+            pathname.startsWith('/dashboard/student-seating')
+              ? "bg-[#6342e8]/25 text-white border border-[#6342e8]/40"
+              : "text-[#b4b1db] hover:text-white hover:bg-white/[0.07]"
+          )}
+        >
+          <div className="flex items-center gap-3">
+            <GraduationCap className={cn("w-4 h-4 shrink-0 transition-transform group-hover:scale-110", pathname.startsWith('/dashboard/student-seating') ? "text-white" : "text-[#9d99ce]")} />
+            <span className="truncate">Student Seating</span>
+          </div>
+          <ChevronDown className={cn("w-3.5 h-3.5 transition-transform text-[#9d99ce]", isStudentSeatingOpen && "rotate-180")} />
+        </button>
+
+        {isStudentSeatingOpen && (
+          <div className="pl-4 pr-1 py-1 space-y-1 border-l-2 border-[#6342e8]/40 ml-5 animate-in fade-in-50 duration-150">
+            {studentSeatingSubmenu.map((sub) => {
+              const isSubActive = pathname === sub.href;
+              return (
+                <Link
+                  key={sub.href}
+                  href={sub.href}
+                  onClick={() => handleNavClick(sub.label)}
+                  className={cn(
+                    "flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-150",
+                    isSubActive
+                      ? "bg-[#6342e8] text-white shadow-xs"
+                      : "text-[#b4b1db] hover:text-white hover:bg-white/[0.06]"
+                  )}
+                >
+                  <sub.icon className={cn("w-3.5 h-3.5 shrink-0", isSubActive ? "text-white" : "text-[#9d99ce]")} />
+                  <span className="truncate">{sub.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <aside
       className={cn(
@@ -161,31 +251,27 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
             );
             const isActive = isNewAllotmentActive || pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href) && !pathname.startsWith('/dashboard/student-seating'));
 
-            if (isCollapsed) {
-              return (
-                <Tooltip key={item.href}>
-                  <TooltipTrigger asChild>
-                    <Link
-                      href={item.href}
-                      onClick={() => handleNavClick(item.label)}
-                      className={cn(
-                        "flex items-center justify-center w-11 h-11 mx-auto rounded-xl text-sm font-semibold transition-all duration-200 group relative",
-                        isActive
-                          ? "bg-[#6342e8] text-white shadow-lg shadow-purple-900/40"
-                          : "text-[#b4b1db] hover:text-white hover:bg-white/[0.07]"
-                      )}
-                    >
-                      <item.icon className={cn("w-5 h-5 shrink-0 transition-transform group-hover:scale-110", isActive ? "text-white" : "text-[#9d99ce]")} />
-                    </Link>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" className="bg-[#1e1957] text-white border-[#31297e] font-semibold text-xs">
-                    {item.label}
-                  </TooltipContent>
-                </Tooltip>
-              );
-            }
-
-            return (
+            const navLink = isCollapsed ? (
+              <Tooltip key={item.href}>
+                <TooltipTrigger asChild>
+                  <Link
+                    href={item.href}
+                    onClick={() => handleNavClick(item.label)}
+                    className={cn(
+                      "flex items-center justify-center w-11 h-11 mx-auto rounded-xl text-sm font-semibold transition-all duration-200 group relative",
+                      isActive
+                        ? "bg-[#6342e8] text-white shadow-lg shadow-purple-900/40"
+                        : "text-[#b4b1db] hover:text-white hover:bg-white/[0.07]"
+                    )}
+                  >
+                    <item.icon className={cn("w-5 h-5 shrink-0 transition-transform group-hover:scale-110", isActive ? "text-white" : "text-[#9d99ce]")} />
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="bg-[#1e1957] text-white border-[#31297e] font-semibold text-xs">
+                  {item.label}
+                </TooltipContent>
+              </Tooltip>
+            ) : (
               <Link
                 key={item.href}
                 href={item.href}
@@ -201,6 +287,18 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
                 <span className="truncate">{item.label}</span>
               </Link>
             );
+
+            if (item.href === '/dashboard/room-allocations') {
+              return (
+                <React.Fragment key={item.href}>
+                  {navLink}
+                  {/* Student Seating Module in between Room Allocations and Day-wise Schedule */}
+                  {renderStudentSeating()}
+                </React.Fragment>
+              );
+            }
+
+            return navLink;
           })}
 
           {/* Color Palettes Button below Templates/Invigilator Directory */}
@@ -247,87 +345,6 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
                 />
               </div>
             </button>
-          )}
-
-          {/* Student Seating Module below Color Palettes */}
-          {isCollapsed ? (
-            <DropdownMenu>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      type="button"
-                      className={cn(
-                        "flex items-center justify-center w-11 h-11 mx-auto rounded-xl text-sm font-semibold transition-all duration-200 group relative cursor-pointer",
-                        pathname.startsWith('/dashboard/student-seating')
-                          ? "bg-[#6342e8] text-white shadow-lg shadow-purple-900/40"
-                          : "text-[#b4b1db] hover:text-white hover:bg-white/[0.07]"
-                      )}
-                    >
-                      <GraduationCap className={cn("w-5 h-5 shrink-0 transition-transform group-hover:scale-110", pathname.startsWith('/dashboard/student-seating') ? "text-white" : "text-[#9d99ce]")} />
-                    </button>
-                  </DropdownMenuTrigger>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="bg-[#1e1957] text-white border-[#31297e] font-semibold text-xs">
-                  Student Seating
-                </TooltipContent>
-              </Tooltip>
-              <DropdownMenuContent side="right" align="start" className="bg-[#1e1957] text-white border-[#31297e] w-48 p-1.5 shadow-xl">
-                <DropdownMenuLabel className="text-xs text-indigo-300 font-bold px-2 py-1">Student Seating</DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-white/10" />
-                {studentSeatingSubmenu.map((sub) => (
-                  <DropdownMenuItem key={sub.href} asChild className="focus:bg-[#6342e8] focus:text-white text-xs font-semibold py-2 cursor-pointer">
-                    <Link href={sub.href} onClick={() => handleNavClick(sub.label)} className="flex items-center gap-2">
-                      <sub.icon className="w-3.5 h-3.5 text-indigo-300" />
-                      <span>{sub.label}</span>
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <div className="space-y-1">
-              <button
-                type="button"
-                onClick={() => setIsStudentSeatingOpen((prev) => !prev)}
-                className={cn(
-                  "w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 group relative cursor-pointer",
-                  pathname.startsWith('/dashboard/student-seating')
-                    ? "bg-[#6342e8]/25 text-white border border-[#6342e8]/40"
-                    : "text-[#b4b1db] hover:text-white hover:bg-white/[0.07]"
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  <GraduationCap className={cn("w-4 h-4 shrink-0 transition-transform group-hover:scale-110", pathname.startsWith('/dashboard/student-seating') ? "text-white" : "text-[#9d99ce]")} />
-                  <span className="truncate">Student Seating</span>
-                </div>
-                <ChevronDown className={cn("w-3.5 h-3.5 transition-transform text-[#9d99ce]", isStudentSeatingOpen && "rotate-180")} />
-              </button>
-
-              {isStudentSeatingOpen && (
-                <div className="pl-4 pr-1 py-1 space-y-1 border-l-2 border-[#6342e8]/40 ml-5 animate-in fade-in-50 duration-150">
-                  {studentSeatingSubmenu.map((sub) => {
-                    const isSubActive = pathname === sub.href;
-                    return (
-                      <Link
-                        key={sub.href}
-                        href={sub.href}
-                        onClick={() => handleNavClick(sub.label)}
-                        className={cn(
-                          "flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-150",
-                          isSubActive
-                            ? "bg-[#6342e8] text-white shadow-xs"
-                            : "text-[#b4b1db] hover:text-white hover:bg-white/[0.06]"
-                        )}
-                      >
-                        <sub.icon className={cn("w-3.5 h-3.5 shrink-0", isSubActive ? "text-white" : "text-[#9d99ce]")} />
-                        <span className="truncate">{sub.label}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
           )}
         </nav>
       </div>
