@@ -112,6 +112,17 @@ export default function StudentDataPage() {
     });
   };
 
+  const totalUploadedStudents = useMemo(() => {
+    return subjects.reduce((sum, subj) => {
+      const list = getSubjectStudents(subj.id);
+      return sum + list.length;
+    }, 0);
+  }, [subjects, getSubjectStudents]);
+
+  const uploadedSubjectsCount = useMemo(() => {
+    return subjects.filter((subj) => getSubjectStudents(subj.id).length > 0).length;
+  }, [subjects, getSubjectStudents]);
+
   return (
     <div className="space-y-6 pb-12">
       {/* Header Banner */}
@@ -146,6 +157,54 @@ export default function StudentDataPage() {
             <Plus className="w-4 h-4" />
             Add Subject
           </Button>
+        </div>
+      </div>
+
+      {/* Summary Metrics Bar */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs flex items-center justify-between">
+          <div>
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              Total Subjects
+            </div>
+            <div className="font-headline font-black text-2xl text-slate-800 mt-0.5">
+              {subjects.length}
+            </div>
+          </div>
+          <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-100 text-slate-600">
+            <BookOpen className="w-5 h-5" />
+          </div>
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs flex items-center justify-between">
+          <div>
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              Rosters Uploaded
+            </div>
+            <div className="font-headline font-black text-2xl text-slate-800 mt-0.5">
+              {uploadedSubjectsCount}{" "}
+              <span className="text-xs font-normal text-slate-400">
+                / {subjects.length}
+              </span>
+            </div>
+          </div>
+          <div className="p-2.5 bg-emerald-50 rounded-lg border border-emerald-100 text-emerald-600">
+            <CheckCircle2 className="w-5 h-5" />
+          </div>
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs flex items-center justify-between">
+          <div>
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              Total Students Enrolled
+            </div>
+            <div className="font-headline font-black text-2xl text-indigo-700 mt-0.5">
+              {totalUploadedStudents.toLocaleString()}
+            </div>
+          </div>
+          <div className="p-2.5 bg-indigo-50 rounded-lg border border-indigo-100 text-indigo-600">
+            <Users className="w-5 h-5" />
+          </div>
         </div>
       </div>
 

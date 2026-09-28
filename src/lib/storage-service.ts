@@ -644,9 +644,15 @@ export async function syncUserWorkspaceToDatabase(
   if (!userId || !isUUID(userId)) return false;
 
   try {
-    const current = workspaceMemoryCache[userId] || {};
+    let current = workspaceMemoryCache[userId];
+    if (!current || !current.subjects || !current.studentsBySubject) {
+      const existing = await fetchUserWorkspaceFromDatabase(userId);
+      if (existing) {
+        current = { ...existing, ...(current || {}) };
+      }
+    }
     const merged: UserWorkspaceState = {
-      ...current,
+      ...(current || {}),
       ...partialWorkspace,
       updatedAt: new Date().toISOString(),
     };

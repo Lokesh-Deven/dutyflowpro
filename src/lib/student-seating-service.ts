@@ -156,34 +156,87 @@ export async function validateAndParseStudentExcel(
     };
   }
 
-  // Detect header row
-  const rawHeaders = (jsonData[0] as any[]).map((h) => String(h || '').trim().toLowerCase());
+  // Intelligent Header Row Detection (scans rows 0-15 for real column headers)
+  const isNameHeader = (h: string) =>
+    (h.includes('name') || h.includes('student') || h.includes('candidate') || h.includes('pupil')) &&
+    !h.includes('college') && !h.includes('school') && !h.includes('exam') && !h.includes('inst');
 
-  const nameColIdx = rawHeaders.findIndex((h) => h.includes('name') || h.includes('student'));
-  const secColIdx = rawHeaders.findIndex((h) => h.includes('sec') || h.includes('class'));
-  const rollColIdx = rawHeaders.findIndex((h) => h.includes('roll') || h.includes('reg') || h.includes('usn') || h.includes('id'));
+  const isRollHeader = (h: string) =>
+    (h.includes('roll') || h.includes('reg') || h.includes('usn') || h.includes('hall') || h.includes('seat') ||
+     h.includes('prn') || h.includes('urn') || h.includes('adm') || h.includes('enroll') || h.includes('id')) &&
+    !h.includes('sl') && !h.includes('s.') && !h.includes('serial');
 
-  if (nameColIdx === -1 || rollColIdx === -1) {
-    return {
-      expectedCount,
-      totalRows: 0,
-      validRecords: [],
-      errors: [
-        {
-          row: 1,
-          reason: `Required columns missing. Expected 'Name', 'Section', 'Roll No'. Found headers: ${(jsonData[0] as any[]).join(', ')}`,
-        },
-      ],
-      duplicates: [],
-      isValid: false,
-    };
+  const isSecHeader = (h: string) =>
+    h.includes('sec') || h.includes('class') || h.includes('div') || h.includes('branch') || h.includes('group') || h.includes('stream');
+
+  let headerRowIdx = -1;
+  let nameColIdx = -1;
+  let secColIdx = -1;
+  let rollColIdx = -1;
+
+  for (let r = 0; r < Math.min(jsonData.length, 15); r++) {
+    const row = jsonData[r] as any[];
+    if (!Array.isArray(row) || row.length === 0) continue;
+    const rawHeaders = row.map((h) => String(h || '').trim().toLowerCase());
+
+    const nIdx = rawHeaders.findIndex(isNameHeader);
+    const rIdx = rawHeaders.findIndex(isRollHeader);
+    const sIdx = rawHeaders.findIndex(isSecHeader);
+
+    if (nIdx !== -1 && rIdx !== -1) {
+      headerRowIdx = r;
+      nameColIdx = nIdx;
+      rollColIdx = rIdx;
+      secColIdx = sIdx;
+      break;
+    }
+  }
+
+  // Fallback 1: Check row 0 with relaxed keyword matching
+  if (headerRowIdx === -1) {
+    const rawHeaders = (jsonData[0] as any[]).map((h) => String(h || '').trim().toLowerCase());
+    nameColIdx = rawHeaders.findIndex((h) => h.includes('name') || h.includes('student'));
+    rollColIdx = rawHeaders.findIndex((h) => (h.includes('roll') || h.includes('reg') || h.includes('usn') || h.includes('id') || h.includes('seat')) && !h.includes('sl'));
+    secColIdx = rawHeaders.findIndex((h) => h.includes('sec') || h.includes('class'));
+    if (nameColIdx !== -1 && rollColIdx !== -1) {
+      headerRowIdx = 0;
+    }
+  }
+
+  // Fallback 2: If standard column layout without recognized headers
+  if (headerRowIdx === -1) {
+    headerRowIdx = 0;
+    const firstRowLen = (jsonData[0] as any[]).length;
+    if (firstRowLen >= 4) {
+      nameColIdx = 1;
+      secColIdx = 2;
+      rollColIdx = 3;
+    } else if (firstRowLen >= 2) {
+      rollColIdx = 0;
+      nameColIdx = 1;
+      secColIdx = firstRowLen > 2 ? 2 : -1;
+    } else {
+      return {
+        expectedCount,
+        totalRows: 0,
+        validRecords: [],
+        errors: [
+          {
+            row: 1,
+            reason: `Required columns missing. Expected 'Name', 'Section', 'Roll No'. Found headers: ${(jsonData[0] as any[]).join(', ')}`,
+          },
+        ],
+        duplicates: [],
+        isValid: false,
+      };
+    }
   }
 
   const validRecords: StudentRecord[] = [];
   const errors: { row: number; reason: string }[] = [];
   const rollMap = new Map<string, number>();
 
-  for (let i = 1; i < jsonData.length; i++) {
+  for (let i = headerRowIdx + 1; i < jsonData.length; i++) {
     const row = jsonData[i] as any[];
     if (!row || row.length === 0 || row.every((c) => String(c || '').trim() === '')) {
       continue; // Skip empty rows
@@ -192,7 +245,9 @@ export async function validateAndParseStudentExcel(
     const rowNum = i + 1;
     const name = String(row[nameColIdx] || '').trim();
     const section = secColIdx !== -1 ? String(row[secColIdx] || '').trim() : 'A';
-    const rollNo = String(row[rollColIdx] || '').trim();
+    const rawRoll = String(row[rollColIdx] || '').trim();
+    // Sanitize numeric roll numbers from Excel (e.g. 101.0 -> 101)
+    const rollNo = rawRoll.replace(/\.0$/, '');
 
     if (!name) {
       errors.push({ row: rowNum, reason: `Row ${rowNum}: Student Name is blank.` });
