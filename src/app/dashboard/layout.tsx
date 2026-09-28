@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, createContext, useContext } from 'react';
-import { usePathname } from 'next/navigation';
+import React, { useState, createContext, useContext, useEffect } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import Header from '@/components/dashboard/header';
 import { SidebarNav } from '@/components/dashboard/sidebar-nav';
 import { AllotmentProvider } from '@/lib/allotment-context';
@@ -10,6 +10,8 @@ import { SubscriptionGuard } from '@/components/dashboard/subscription-guard';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { X } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
+import { getStudentSession } from '@/lib/student-portal-service';
 
 interface DashboardLayoutContextType {
   isDesktopSidebarCollapsed: boolean;
@@ -38,8 +40,20 @@ export default function AppLayout({
 }) {
   const pathname = usePathname();
   const isAllotmentPage = pathname?.startsWith('/dashboard/allotment');
+  const router = useRouter();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isDesktopSidebarCollapsed, setIsDesktopSidebarCollapsed] = useState(false);
+
+  // Requirement 3 & 6: Restrict student role from accessing administrative or invigilator dashboards
+  useEffect(() => {
+    if (typeof window === 'undefined' || isAuthLoading) return;
+    const studentSession = getStudentSession();
+    // If student session is active and no admin user is signed in, redirect student to My Examination
+    if (studentSession && studentSession.registerNumber && !user) {
+      router.replace('/student/my-examination');
+    }
+  }, [user, isAuthLoading, router]);
 
   const toggleSidebar = () => {
     if (typeof window !== 'undefined' && window.innerWidth >= 1024) {

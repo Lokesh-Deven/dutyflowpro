@@ -9,7 +9,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth, clearActiveAllotmentStorage } from '@/lib/auth-context';
-import { Loader2, Eye, EyeOff, Building2, Mail, Lock, Sparkles, CheckCircle2, ArrowLeft, KeyRound, HelpCircle } from 'lucide-react';
+import Link from 'next/link';
+import { Loader2, Eye, EyeOff, Building2, Mail, Lock, Sparkles, CheckCircle2, ArrowLeft, KeyRound, HelpCircle, GraduationCap, ArrowRight } from 'lucide-react';
 
 export function LandingPage() {
   const router = useRouter();
@@ -623,14 +624,40 @@ export function LandingPage() {
               </form>
             )}
 
+            {/* Student Examination Portal Access */}
+            <div className="mt-4 pt-3 border-t border-slate-200">
+              <Link
+                href="/student/login"
+                className="group flex items-center justify-between w-full p-3 rounded-xl bg-gradient-to-r from-blue-50 via-indigo-50/70 to-purple-50 border border-indigo-200/90 hover:border-indigo-400 hover:shadow-md transition-all text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-[#1E2A5E] text-white flex items-center justify-center font-bold shadow-xs group-hover:scale-105 transition-transform shrink-0">
+                    <GraduationCap className="w-5 h-5 text-indigo-200" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-[#1E2A5E] flex items-center gap-1.5">
+                      Student Access
+                      <span className="text-[9px] bg-indigo-600 text-white font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider">
+                        My Exam
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-slate-600 font-medium">
+                      Check room &amp; bench seating allotment
+                    </div>
+                  </div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-[#1E2A5E] group-hover:translate-x-1 transition-transform shrink-0" />
+              </Link>
+            </div>
+
             {/* Quick Demo Access (for frictionless testing) */}
-            <div className="mt-4 pt-3 border-t border-dashed border-slate-200 text-center">
+            <div className="mt-3 pt-2 text-center">
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
                 onClick={handleGuestDemo}
-                className="w-full text-xs text-[#1E2A5E] font-semibold hover:bg-slate-50 h-8"
+                className="w-full text-xs text-slate-600 font-semibold hover:bg-slate-100 h-8"
               >
                 <Sparkles className="mr-1.5 h-3.5 w-3.5 text-amber-500" />
                 Instant Guest Access (Direct Entry)

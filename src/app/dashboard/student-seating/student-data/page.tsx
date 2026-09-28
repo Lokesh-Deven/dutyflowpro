@@ -29,6 +29,8 @@ import {
   AlertCircle,
   ChevronDown,
   Check,
+  GraduationCap,
+  ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -143,7 +145,26 @@ export default function StudentDataPage() {
           </div>
         </div>
 
-        <div>
+        <div className="flex items-center gap-2.5">
+          <Button
+            variant="outline"
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                const url = `${window.location.origin}/student/login`;
+                navigator.clipboard.writeText(url);
+                toast({
+                  title: "Student Portal Link Copied!",
+                  description: "Share this URL with students: " + url,
+                });
+              }
+            }}
+            className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 font-bold text-xs h-9 px-3 gap-1.5 shadow-2xs"
+            title="Copy Student Login URL to share with students"
+          >
+            <GraduationCap className="w-4 h-4 text-indigo-600" />
+            <span className="hidden sm:inline">Student Portal</span> Link
+          </Button>
+
           <Button
             onClick={() => {
               setIsDropdownOpen(false);
