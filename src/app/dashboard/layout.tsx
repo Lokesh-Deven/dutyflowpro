@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { X } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { getStudentSession } from '@/lib/student-portal-service';
+import { getInvigilatorSession } from '@/lib/invigilator-portal-service';
 
 interface DashboardLayoutContextType {
   isDesktopSidebarCollapsed: boolean;
@@ -45,13 +46,22 @@ export default function AppLayout({
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isDesktopSidebarCollapsed, setIsDesktopSidebarCollapsed] = useState(false);
 
-  // Requirement 3 & 6: Restrict student role from accessing administrative or invigilator dashboards
+  // Restrict student and invigilator roles from accessing administrative dashboard
   useEffect(() => {
     if (typeof window === 'undefined' || isAuthLoading) return;
-    const studentSession = getStudentSession();
+    
     // If student session is active and no admin user is signed in, redirect student to My Examination
+    const studentSession = getStudentSession();
     if (studentSession && studentSession.registerNumber && !user) {
       router.replace('/student/my-examination');
+      return;
+    }
+
+    // If invigilator session is active and no admin user is signed in, redirect to Invigilator Dashboard
+    const invigilatorSession = getInvigilatorSession();
+    if (invigilatorSession && invigilatorSession.invigilatorId && !user) {
+      router.replace('/invigilator/dashboard');
+      return;
     }
   }, [user, isAuthLoading, router]);
 

@@ -27,6 +27,7 @@ import {
   History,
   ClipboardCheck,
   CalendarClock,
+  UserCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth-context';
@@ -60,6 +61,7 @@ export const navItems = [
   { href: '/dashboard/examinations', label: 'New Allotment', icon: PlusSquare },
   { href: '/dashboard/saved', label: 'Saved Allotments', icon: Bookmark },
   { href: '/dashboard/room-allocations', label: 'Room Allocations', icon: DoorOpen },
+  { href: '/dashboard/room-attendance', label: 'Room Attendance', icon: UserCheck },
   { href: '/dashboard/question-paper-distribution', label: 'Question Paper Distribution', icon: ClipboardCheck },
   { href: '/dashboard/schedule', label: 'Day-wise Schedule', icon: CalendarDays },
   { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart2 },

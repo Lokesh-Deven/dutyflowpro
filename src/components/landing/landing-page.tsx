@@ -8,9 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth, clearActiveAllotmentStorage } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
-import { Loader2, Eye, EyeOff, Building2, Mail, Lock, Sparkles, CheckCircle2, ArrowLeft, KeyRound, HelpCircle, GraduationCap, ArrowRight } from 'lucide-react';
+import { Loader2, Eye, EyeOff, Building2, Mail, Lock, CheckCircle2, ArrowLeft, KeyRound, HelpCircle, GraduationCap, ArrowRight, UserCheck } from 'lucide-react';
 
 export function LandingPage() {
   const router = useRouter();
@@ -180,15 +180,6 @@ export function LandingPage() {
     }
   };
 
-  // Instant Guest Access
-  const handleGuestDemo = () => {
-    clearActiveAllotmentStorage();
-    toast({
-      title: "Guest Session Started",
-      description: "Entering New Allotment workspace...",
-    });
-    router.push('/dashboard/examinations');
-  };
 
   return (
     <main className="min-h-screen w-full bg-white text-slate-900 flex items-center justify-center p-4 sm:p-8 selection:bg-[#1E2A5E] selection:text-white">
@@ -650,18 +641,30 @@ export function LandingPage() {
               </Link>
             </div>
 
-            {/* Quick Demo Access (for frictionless testing) */}
-            <div className="mt-3 pt-2 text-center">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={handleGuestDemo}
-                className="w-full text-xs text-slate-600 font-semibold hover:bg-slate-100 h-8"
+            {/* Invigilator Examination Portal Access */}
+            <div className="mt-2.5">
+              <Link
+                href="/invigilator/login"
+                className="group flex items-center justify-between w-full p-3 rounded-xl bg-gradient-to-r from-emerald-50 via-teal-50/70 to-slate-50 border border-emerald-200/90 hover:border-emerald-400 hover:shadow-md transition-all text-left"
               >
-                <Sparkles className="mr-1.5 h-3.5 w-3.5 text-amber-500" />
-                Instant Guest Access (Direct Entry)
-              </Button>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-[#1E2A5E] text-white flex items-center justify-center font-bold shadow-xs group-hover:scale-105 transition-transform shrink-0">
+                    <UserCheck className="w-5 h-5 text-emerald-300" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-[#1E2A5E] flex items-center gap-1.5">
+                      Invigilator Access
+                      <span className="text-[9px] bg-emerald-600 text-white font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider">
+                        Duties
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-slate-600 font-medium">
+                      Hall duties &amp; room attendance
+                    </div>
+                  </div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-[#1E2A5E] group-hover:translate-x-1 transition-transform shrink-0" />
+              </Link>
             </div>
 
           </div>
