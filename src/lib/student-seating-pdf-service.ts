@@ -90,14 +90,23 @@ export async function generateRoomSeatingPlanPdf({
 
     const formattedDate = formatAppDateWithDay(allocation.examination.date, allocation.examination.date || '—');
 
-    // Find unique subjects seated in this room, or fallback to allocation subjects
-    const roomSubjectNames = Array.from(
+    // Find unique subjects seated in this room with students, or fallback
+    let roomSubjectNames = Array.from(
       new Set(
         plan.benches
-          .flatMap((b) => b.seats.map((s) => s.subjectName))
+          .flatMap((b) => b.seats.filter((s) => Boolean(s.student && s.subjectName)).map((s) => s.subjectName))
           .filter((name): name is string => Boolean(name && name.trim()))
       )
     );
+    if (roomSubjectNames.length === 0) {
+      roomSubjectNames = Array.from(
+        new Set(
+          plan.benches
+            .flatMap((b) => b.seats.map((s) => s.subjectName))
+            .filter((name): name is string => Boolean(name && name.trim()))
+        )
+      );
+    }
     const rawSubjects = roomSubjectNames.length > 0
       ? roomSubjectNames.join(', ')
       : (allocation.subjectStats.map((s) => s.subjectName).join(', ') || 'All Subjects');
@@ -219,65 +228,12 @@ export async function generateRoomSeatingPlanPdf({
     doc.setTextColor(255, 255, 255);
     doc.text("Blackboard • Front of Room (Teacher's Stage)", pageWidth / 2, surfY + 3.8, { align: 'center' });
 
-    // Graphical Two-Column Bench Layout (Left Side vs Right Side)
-    const gridTop = boardY + boardHeight + 3;
-    const colWidth = (contentWidth - 6) / 2; // ~90 mm per column
-    const leftColX = leftMargin;
-    const rightColX = leftMargin + colWidth + 6;
-    const leftCenterX = leftColX + colWidth / 2;
-    const rightCenterX = rightColX + colWidth / 2;
-    const centerPageX = pageWidth / 2;
-
-    // Subheaders
-    // Left: "Left Side Benches"
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7.5);
-    doc.setTextColor(187, 247, 208); // Mint chalk
-    doc.text("Left Side Benches", leftCenterX, surfY + 7.6, { align: 'center' });
-
-    // Right: "Right Side Benches"
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7.5);
-    doc.setTextColor(187, 247, 208); // Mint chalk
-    doc.text("Right Side Benches", rightCenterX, surfY + 7.6, { align: 'center' });
-
-    // Bench counts
-    // Left: "(${plan.leftBenches} Benches)"
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7);
-    doc.setTextColor(255, 255, 255); // Crisp white chalk
-    doc.text(`(${plan.leftBenches} Benches)`, leftCenterX, surfY + 11.4, { align: 'center' });
-
-    // Right: "(${plan.rightBenches} Benches)"
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7);
-    doc.setTextColor(255, 255, 255); // Crisp white chalk
-    doc.text(`(${plan.rightBenches} Benches)`, rightCenterX, surfY + 11.4, { align: 'center' });
-
-    // Center Guidance Note: "Facing the board, benches on your left and right match below"
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(6);
-    doc.setTextColor(226, 232, 240); // Soft white chalk
-    doc.text("Facing the board, benches on your left and right match below", centerPageX, surfY + 9.5, { align: 'center' });
-
-    // Column Headers
-    doc.setFillColor(palette.rgb.primary[0], palette.rgb.primary[1], palette.rgb.primary[2]);
-    doc.rect(leftColX, gridTop, colWidth, 6, 'F');
-    doc.rect(rightColX, gridTop, colWidth, 6, 'F');
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8.5);
-    doc.setTextColor(255, 255, 255);
-    doc.text(`LEFT SIDE BENCHES (${plan.leftBenches})`, leftColX + colWidth / 2, gridTop + 4.2, { align: 'center' });
-    doc.text(`RIGHT SIDE BENCHES (${plan.rightBenches})`, rightColX + colWidth / 2, gridTop + 4.2, { align: 'center' });
-
-    const maxBenches = Math.max(plan.leftBenches, plan.rightBenches, 1);
-    // Dynamic bench row height based on number of benches to comfortably fit A4
-    const availableHeight = pageHeight - gridTop - 24; // Leave room for signatory
-    const rowHeight = Math.min(16.5, Math.max(8.5, (availableHeight - 8) / maxBenches));
-
     const leftBenches = plan.benches.filter((b) => b.side === 'LEFT');
+    const middleBenches = plan.benches.filter((b) => b.side === 'MIDDLE');
     const rightBenches = plan.benches.filter((b) => b.side === 'RIGHT');
+    const hasMiddleColumn = middleBenches.length > 0;
+
+    const gridTop = boardY + boardHeight + 3;
 
     // Helper to render a bench row
     const renderBench = (bench: typeof leftBenches[0], x: number, y: number, w: number, h: number) => {
@@ -320,27 +276,7 @@ export async function generateRoomSeatingPlanPdf({
           doc.setFont('helvetica', 'italic');
           doc.setFontSize(6.5);
           doc.setTextColor(148, 163, 184);
-          doc.text("VACANT", midX, sy + (h - 1.2) / 2 + (seat.subjectName && h >= 11 ? -1 : 1), { align: 'center' });
-
-          // If vacant but had a planned subject, highlight it with light background badge
-          if (seat.subjectName && h >= 11) {
-            const subjColor = getSubjectColor(seat.subjectName, roomSubjectNames);
-            const truncSub = seat.subjectName.length > 17 ? seat.subjectName.substring(0, 16) + '.' : seat.subjectName;
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(4.8);
-            const textWidth = doc.getTextWidth(truncSub);
-            const pillW = Math.min(seatSlotWidth - 2.5, textWidth + 3.2);
-            const pillH = 2.8;
-            const pillX = midX - pillW / 2;
-            const pillY = sy + (h - 1.2) - pillH - 1.2;
-
-            doc.setFillColor(subjColor.pdfBg[0], subjColor.pdfBg[1], subjColor.pdfBg[2]);
-            doc.setDrawColor(subjColor.pdfBorder[0], subjColor.pdfBorder[1], subjColor.pdfBorder[2]);
-            doc.roundedRect(pillX, pillY, pillW, pillH, 0.6, 0.6, 'FD');
-
-            doc.setTextColor(subjColor.pdfText[0], subjColor.pdfText[1], subjColor.pdfText[2]);
-            doc.text(truncSub, midX, pillY + pillH / 2 + 0.75, { align: 'center' });
-          }
+          doc.text("VACANT", midX, sy + (h - 1.2) / 2 + 1, { align: 'center' });
         } else {
           const isCompact = h < 13.5;
           // Position tag (Side A / Center / Side B)
@@ -390,19 +326,134 @@ export async function generateRoomSeatingPlanPdf({
       });
     };
 
-    // Draw Left Benches
-    let currentY = gridTop + 8;
-    leftBenches.forEach((bench) => {
-      renderBench(bench, leftColX, currentY, colWidth, rowHeight);
-      currentY += rowHeight;
-    });
+    if (hasMiddleColumn) {
+      // 3-Column Layout: Left | Middle | Right
+      const colGap = 3;
+      const colWidth = (contentWidth - 2 * colGap) / 3;
+      const leftColX = leftMargin;
+      const middleColX = leftMargin + colWidth + colGap;
+      const rightColX = leftMargin + 2 * (colWidth + colGap);
+      const leftCenterX = leftColX + colWidth / 2;
+      const middleCenterX = middleColX + colWidth / 2;
+      const rightCenterX = rightColX + colWidth / 2;
 
-    // Draw Right Benches
-    currentY = gridTop + 8;
-    rightBenches.forEach((bench) => {
-      renderBench(bench, rightColX, currentY, colWidth, rowHeight);
-      currentY += rowHeight;
-    });
+      // Blackboard Subheaders
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7);
+      doc.setTextColor(187, 247, 208);
+      doc.text("Left Side Benches", leftCenterX, surfY + 7.6, { align: 'center' });
+      doc.setTextColor(254, 240, 138);
+      doc.text("Middle Benches", middleCenterX, surfY + 7.6, { align: 'center' });
+      doc.setTextColor(187, 247, 208);
+      doc.text("Right Side Benches", rightCenterX, surfY + 7.6, { align: 'center' });
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(6.5);
+      doc.setTextColor(255, 255, 255);
+      doc.text(`(${plan.leftBenches} Benches)`, leftCenterX, surfY + 11.4, { align: 'center' });
+      doc.text(`(${middleBenches.length} Benches)`, middleCenterX, surfY + 11.4, { align: 'center' });
+      doc.text(`(${plan.rightBenches} Benches)`, rightCenterX, surfY + 11.4, { align: 'center' });
+
+      // Column Headers
+      doc.setFillColor(palette.rgb.primary[0], palette.rgb.primary[1], palette.rgb.primary[2]);
+      doc.rect(leftColX, gridTop, colWidth, 6, 'F');
+      doc.rect(middleColX, gridTop, colWidth, 6, 'F');
+      doc.rect(rightColX, gridTop, colWidth, 6, 'F');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.5);
+      doc.setTextColor(255, 255, 255);
+      doc.text(`LEFT SIDE BENCHES (${plan.leftBenches})`, leftColX + colWidth / 2, gridTop + 4.2, { align: 'center' });
+      doc.text(`MIDDLE BENCHES (${middleBenches.length})`, middleColX + colWidth / 2, gridTop + 4.2, { align: 'center' });
+      doc.text(`RIGHT SIDE BENCHES (${plan.rightBenches})`, rightColX + colWidth / 2, gridTop + 4.2, { align: 'center' });
+
+      const maxBenches = Math.max(plan.leftBenches, middleBenches.length, plan.rightBenches, 1);
+      const availableHeight = pageHeight - gridTop - 24;
+      const rowHeight = Math.min(16.5, Math.max(8.5, (availableHeight - 8) / maxBenches));
+
+      let curY = gridTop + 8;
+      leftBenches.forEach((bench) => {
+        renderBench(bench, leftColX, curY, colWidth, rowHeight);
+        curY += rowHeight;
+      });
+
+      curY = gridTop + 8;
+      middleBenches.forEach((bench) => {
+        renderBench(bench, middleColX, curY, colWidth, rowHeight);
+        curY += rowHeight;
+      });
+
+      curY = gridTop + 8;
+      rightBenches.forEach((bench) => {
+        renderBench(bench, rightColX, curY, colWidth, rowHeight);
+        curY += rowHeight;
+      });
+    } else {
+      // 2-Column Layout: Left | Right
+      const colWidth = (contentWidth - 6) / 2; // ~90 mm per column
+      const leftColX = leftMargin;
+      const rightColX = leftMargin + colWidth + 6;
+      const leftCenterX = leftColX + colWidth / 2;
+      const rightCenterX = rightColX + colWidth / 2;
+      const centerPageX = pageWidth / 2;
+
+      // Subheaders
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.5);
+      doc.setTextColor(187, 247, 208); // Mint chalk
+      doc.text("Left Side Benches", leftCenterX, surfY + 7.6, { align: 'center' });
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.5);
+      doc.setTextColor(187, 247, 208); // Mint chalk
+      doc.text("Right Side Benches", rightCenterX, surfY + 7.6, { align: 'center' });
+
+      // Bench counts
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7);
+      doc.setTextColor(255, 255, 255); // Crisp white chalk
+      doc.text(`(${plan.leftBenches} Benches)`, leftCenterX, surfY + 11.4, { align: 'center' });
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7);
+      doc.setTextColor(255, 255, 255); // Crisp white chalk
+      doc.text(`(${plan.rightBenches} Benches)`, rightCenterX, surfY + 11.4, { align: 'center' });
+
+      // Center Guidance Note
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(6);
+      doc.setTextColor(226, 232, 240); // Soft white chalk
+      doc.text("Facing the board, benches on your left and right match below", centerPageX, surfY + 9.5, { align: 'center' });
+
+      // Column Headers
+      doc.setFillColor(palette.rgb.primary[0], palette.rgb.primary[1], palette.rgb.primary[2]);
+      doc.rect(leftColX, gridTop, colWidth, 6, 'F');
+      doc.rect(rightColX, gridTop, colWidth, 6, 'F');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.setTextColor(255, 255, 255);
+      doc.text(`LEFT SIDE BENCHES (${plan.leftBenches})`, leftColX + colWidth / 2, gridTop + 4.2, { align: 'center' });
+      doc.text(`RIGHT SIDE BENCHES (${plan.rightBenches})`, rightColX + colWidth / 2, gridTop + 4.2, { align: 'center' });
+
+      const maxBenches = Math.max(plan.leftBenches, plan.rightBenches, 1);
+      const availableHeight = pageHeight - gridTop - 24;
+      const rowHeight = Math.min(16.5, Math.max(8.5, (availableHeight - 8) / maxBenches));
+
+      // Draw Left Benches
+      let currentY = gridTop + 8;
+      leftBenches.forEach((bench) => {
+        renderBench(bench, leftColX, currentY, colWidth, rowHeight);
+        currentY += rowHeight;
+      });
+
+      // Draw Right Benches
+      currentY = gridTop + 8;
+      rightBenches.forEach((bench) => {
+        renderBench(bench, rightColX, currentY, colWidth, rowHeight);
+        currentY += rowHeight;
+      });
+    }
 
     // Bottom Signatory
     const sigY = pageHeight - 16;
@@ -482,7 +533,7 @@ export async function generateStudentSeatingIndexPdf({
             section: seat.student.section,
             subjectName: seat.subjectName || '—',
             roomNo: plan.roomNo,
-            benchNumber: `${bench.side === 'LEFT' ? 'L' : 'R'}-${String(bench.benchNumber).padStart(2, '0')}`,
+            benchNumber: `${bench.side === 'LEFT' ? 'L' : bench.side === 'MIDDLE' ? 'M' : 'R'}-${String(bench.benchNumber).padStart(2, '0')}`,
             position: posLabel,
           });
         }

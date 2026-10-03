@@ -21,6 +21,7 @@ export interface UserWorkspaceState {
   pdfPaletteId?: string;
   signatory?: SignatoryInfo;
   multiSubjectPatterns?: any;
+  isRoomsLocked?: boolean;
   updatedAt?: string;
 }
 

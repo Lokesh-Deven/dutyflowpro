@@ -18,7 +18,7 @@ interface AddRoomDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   roomToEdit?: SeatingMasterRoom | null;
-  onSave: (roomNo: string, leftBenches: number, rightBenches: number) => void;
+  onSave: (roomNo: string, leftBenches: number, middleBenches: number | undefined, rightBenches: number) => void;
 }
 
 export function AddRoomDialog({
@@ -29,6 +29,7 @@ export function AddRoomDialog({
 }: AddRoomDialogProps) {
   const [roomNo, setRoomNo] = useState('');
   const [leftBenches, setLeftBenches] = useState(10);
+  const [middleBenchesStr, setMiddleBenchesStr] = useState('Nil');
   const [rightBenches, setRightBenches] = useState(10);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,18 +37,36 @@ export function AddRoomDialog({
     if (roomToEdit) {
       setRoomNo(roomToEdit.roomNo);
       setLeftBenches(roomToEdit.leftBenches);
+      setMiddleBenchesStr(
+        roomToEdit.middleBenches && roomToEdit.middleBenches > 0
+          ? String(roomToEdit.middleBenches)
+          : 'Nil'
+      );
       setRightBenches(roomToEdit.rightBenches);
     } else {
       setRoomNo('');
       setLeftBenches(10);
+      setMiddleBenchesStr('Nil');
       setRightBenches(10);
     }
     setError(null);
   }, [roomToEdit, open]);
 
+  // Helper to parse Middle Benches (Nil, 0, empty -> undefined)
+  const parseMiddleBenches = (val: string): number | undefined => {
+    const trimmed = val.trim();
+    if (!trimmed || trimmed.toLowerCase() === 'nil' || trimmed === '0' || trimmed.toLowerCase() === 'none') {
+      return undefined;
+    }
+    const num = parseInt(trimmed, 10);
+    return !isNaN(num) && num > 0 ? num : undefined;
+  };
+
+  const parsedMiddle = parseMiddleBenches(middleBenchesStr);
+  const middleCount = parsedMiddle || 0;
+
   // Automated Live Calculations
-  const totalBenches = Math.max(0, leftBenches) + Math.max(0, rightBenches);
-  const capacityOne = totalBenches * 1;
+  const totalBenches = Math.max(0, leftBenches) + middleCount + Math.max(0, rightBenches);
   const capacityTwo = totalBenches * 2;
   const capacityThree = totalBenches * 3;
 
@@ -62,13 +81,13 @@ export function AddRoomDialog({
       return;
     }
 
-    onSave(roomNo.trim(), Math.max(0, leftBenches), Math.max(0, rightBenches));
+    onSave(roomNo.trim(), Math.max(0, leftBenches), parsedMiddle, Math.max(0, rightBenches));
     onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-white border border-slate-200">
+      <DialogContent className="sm:max-w-lg bg-white border border-slate-200">
         <DialogHeader>
           <div className="flex items-center gap-2.5 mb-1">
             <div className="p-2 bg-indigo-50 text-indigo-700 rounded-lg">
@@ -79,7 +98,7 @@ export function AddRoomDialog({
             </DialogTitle>
           </div>
           <p className="text-xs text-slate-500">
-            Configure room identifier and bench counts. Capacities are calculated automatically.
+            Configure room identifier and bench counts across columns. Capacities are calculated automatically.
           </p>
         </DialogHeader>
 
@@ -108,10 +127,11 @@ export function AddRoomDialog({
             />
           </div>
 
-          {/* Left and Right Benches */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Bench Columns: 1. Left Side Benches, 2. Middle Benches, 3. Right Side Benches */}
+          <div className="grid grid-cols-3 gap-3">
+            {/* 1. Left Side Benches */}
             <div className="space-y-1.5">
-              <Label htmlFor="left-benches" className="text-xs font-bold text-slate-700">
+              <Label htmlFor="left-benches" className="text-xs font-bold text-slate-700 truncate block">
                 Left Side Benches
               </Label>
               <Input
@@ -125,8 +145,41 @@ export function AddRoomDialog({
               />
             </div>
 
+            {/* 2. Middle Benches (Defaults to Nil) */}
             <div className="space-y-1.5">
-              <Label htmlFor="right-benches" className="text-xs font-bold text-slate-700">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="middle-benches" className="text-xs font-bold text-slate-700 truncate block">
+                  Middle Benches
+                </Label>
+              </div>
+              <Input
+                id="middle-benches"
+                type="text"
+                placeholder="Nil"
+                value={middleBenchesStr}
+                onChange={(e) => setMiddleBenchesStr(e.target.value)}
+                onFocus={(e) => {
+                  if (e.target.value.trim().toLowerCase() === 'nil') {
+                    e.target.select();
+                  }
+                }}
+                onBlur={(e) => {
+                  const trimmed = e.target.value.trim();
+                  if (!trimmed || trimmed === '0' || trimmed.toLowerCase() === 'nil') {
+                    setMiddleBenchesStr('Nil');
+                  }
+                }}
+                className={`text-xs font-bold ${
+                  parsedMiddle
+                    ? 'text-indigo-700 bg-indigo-50/50 border-indigo-300 font-extrabold'
+                    : 'text-slate-500 bg-slate-50/60'
+                }`}
+              />
+            </div>
+
+            {/* 3. Right Side Benches */}
+            <div className="space-y-1.5">
+              <Label htmlFor="right-benches" className="text-xs font-bold text-slate-700 truncate block">
                 Right Side Benches
               </Label>
               <Input
@@ -141,6 +194,18 @@ export function AddRoomDialog({
             </div>
           </div>
 
+          <p className="text-[11px] text-slate-500 italic">
+            {parsedMiddle ? (
+              <span className="text-indigo-700 font-semibold">
+                &bull; Three-Column Room detected: Left ({leftBenches}) | Middle ({parsedMiddle}) | Right ({rightBenches})
+              </span>
+            ) : (
+              <span>
+                &bull; Two-Column Room detected: Left ({leftBenches}) | Right ({rightBenches}) &mdash; Middle is Nil.
+              </span>
+            )}
+          </p>
+
           {/* Automated Calculations Card */}
           <div className="bg-slate-50/80 border border-slate-200 rounded-xl p-3.5 space-y-2.5">
             <div className="flex items-center gap-1.5 text-xs font-bold text-[#1E2A5E]">
@@ -148,18 +213,11 @@ export function AddRoomDialog({
               <span>Calculated Room Capacity (Formula-Based)</span>
             </div>
 
-            <div className="grid grid-cols-4 gap-2 text-center">
+            <div className="grid grid-cols-3 gap-2 text-center">
               <div className="bg-white p-2 rounded-lg border border-slate-200 shadow-2xs">
                 <div className="text-[10px] text-slate-400 font-bold uppercase">Total Benches</div>
                 <div className="font-headline text-base font-black text-slate-800 mt-0.5">
                   {totalBenches}
-                </div>
-              </div>
-
-              <div className="bg-white p-2 rounded-lg border border-slate-200 shadow-2xs">
-                <div className="text-[10px] text-slate-400 font-bold uppercase">1 / Bench</div>
-                <div className="font-headline text-base font-black text-indigo-600 mt-0.5">
-                  {capacityOne}
                 </div>
               </div>
 
@@ -179,7 +237,7 @@ export function AddRoomDialog({
             </div>
 
             <p className="text-[11px] text-slate-400 text-center">
-              Capacity is strictly calculated: 1&times; ({capacityOne}), 2&times; ({capacityTwo}), 3&times; ({capacityThree}).
+              Capacity is strictly calculated: 2&times; ({capacityTwo}), 3&times; ({capacityThree}).
             </p>
           </div>
 

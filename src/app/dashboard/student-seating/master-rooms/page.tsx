@@ -17,38 +17,51 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { DoorOpen, Plus, Pencil, Trash2, ShieldAlert, CheckCircle2, Save, CheckCheck } from 'lucide-react';
+import { DoorOpen, Plus, Pencil, Trash2, ShieldAlert, CheckCircle2, Save, CheckCheck, Lock, Unlock, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function MasterRoomsPage() {
-  const { rooms, addRoom, updateRoom, deleteRoom, isRoomInUse, saveRoomsToStorage, isRoomsCloudSynced } = useStudentSeating();
+  const {
+    rooms,
+    addRoom,
+    updateRoom,
+    deleteRoom,
+    clearRooms,
+    isRoomsLocked,
+    toggleRoomsLock,
+    isRoomInUse,
+    saveRoomsToStorage,
+    isRoomsCloudSynced,
+  } = useStudentSeating();
   const { toast } = useToast();
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState<SeatingMasterRoom | null>(null);
   const [roomToDelete, setRoomToDelete] = useState<SeatingMasterRoom | null>(null);
+  const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false);
+  const [isUnlockConfirmOpen, setIsUnlockConfirmOpen] = useState(false);
 
   // Persistence and dirty state
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
 
-  // Compute aggregate totals across all configured rooms
+  // Compute aggregate totals across all configured rooms (excluding 1/Bench)
   const totals = useMemo(() => {
     return rooms.reduce(
       (acc, r) => ({
         leftBenches: acc.leftBenches + (Number(r.leftBenches) || 0),
+        middleBenches: acc.middleBenches + (Number(r.middleBenches) || 0),
         rightBenches: acc.rightBenches + (Number(r.rightBenches) || 0),
         totalBenches: acc.totalBenches + (Number(r.totalBenches) || 0),
-        capacityOne: acc.capacityOne + (Number(r.capacityOne) || 0),
         capacityTwo: acc.capacityTwo + (Number(r.capacityTwo) || 0),
         capacityThree: acc.capacityThree + (Number(r.capacityThree) || 0),
       }),
       {
         leftBenches: 0,
+        middleBenches: 0,
         rightBenches: 0,
         totalBenches: 0,
-        capacityOne: 0,
         capacityTwo: 0,
         capacityThree: 0,
       }
@@ -85,9 +98,64 @@ export default function MasterRoomsPage() {
     }
   };
 
-  const handleSaveRoom = (roomNo: string, leftBenches: number, rightBenches: number) => {
+  const handleToggleLock = async () => {
+    if (!isRoomsLocked) {
+      if (hasUnsavedChanges) {
+        await handleSaveAllRooms();
+      }
+      toggleRoomsLock();
+      toast({
+        title: "Saved Rooms Locked",
+        description: "Examination rooms are now locked against modifications. Add, edit, and delete are secured.",
+      });
+    } else {
+      setIsUnlockConfirmOpen(true);
+    }
+  };
+
+  const confirmUnlock = () => {
+    toggleRoomsLock();
+    setIsUnlockConfirmOpen(false);
+    toast({
+      title: "Rooms Unlocked",
+      description: "Examination rooms are now unlocked. You can add, edit, or delete rooms.",
+    });
+  };
+
+  const handleClearAllRooms = () => {
+    if (isRoomsLocked) {
+      toast({
+        variant: "destructive",
+        title: "Rooms Are Locked",
+        description: "Please unlock examination rooms before clearing all rooms.",
+      });
+      return;
+    }
+    clearRooms();
+    setHasUnsavedChanges(false);
+    setIsClearConfirmOpen(false);
+    toast({
+      title: "All Rooms Cleared",
+      description: "All examination rooms have been cleared successfully.",
+    });
+  };
+
+  const handleSaveRoom = (
+    roomNo: string,
+    leftBenches: number,
+    middleBenches: number | undefined,
+    rightBenches: number
+  ) => {
+    if (isRoomsLocked) {
+      toast({
+        variant: "destructive",
+        title: "Rooms Locked",
+        description: "Unlock saved rooms before modifying examination rooms.",
+      });
+      return;
+    }
     if (editingRoom) {
-      updateRoom(editingRoom.id, roomNo, leftBenches, rightBenches);
+      updateRoom(editingRoom.id, roomNo, leftBenches, middleBenches, rightBenches);
       setHasUnsavedChanges(true);
       toast({
         title: "Room Updated",
@@ -106,17 +174,27 @@ export default function MasterRoomsPage() {
         return;
       }
 
-      addRoom(roomNo, leftBenches, rightBenches);
+      addRoom(roomNo, leftBenches, middleBenches, rightBenches);
       setHasUnsavedChanges(true);
+      const total = leftBenches + (middleBenches || 0) + rightBenches;
       toast({
         title: "Room Added",
-        description: `Room ${roomNo} with ${leftBenches + rightBenches} benches added.`,
+        description: `Room ${roomNo} with ${total} benches added.`,
       });
     }
   };
 
   const confirmDelete = () => {
     if (!roomToDelete) return;
+    if (isRoomsLocked) {
+      toast({
+        variant: "destructive",
+        title: "Rooms Locked",
+        description: "Unlock saved rooms before deleting rooms.",
+      });
+      setRoomToDelete(null);
+      return;
+    }
     deleteRoom(roomToDelete.id);
     setHasUnsavedChanges(true);
     toast({
@@ -140,7 +218,11 @@ export default function MasterRoomsPage() {
                 <h1 className="font-headline text-2xl font-black tracking-tight text-slate-800">
                   Examination Rooms
                 </h1>
-                {hasUnsavedChanges ? (
+                {isRoomsLocked ? (
+                  <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-300/40 text-[10px] px-2 py-0.5 font-semibold rounded-full gap-1">
+                    <Lock className="w-3 h-3 text-amber-600" /> Saved Rooms Locked
+                  </Badge>
+                ) : hasUnsavedChanges ? (
                   <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-300/40 text-[10px] px-2 py-0.5 font-semibold rounded-full animate-pulse">
                     Unsaved Room Additions
                   </Badge>
@@ -160,12 +242,26 @@ export default function MasterRoomsPage() {
         <div>
           <Button
             onClick={() => {
+              if (isRoomsLocked) {
+                toast({
+                  title: "Rooms Locked",
+                  description: "Unlock saved rooms first to add new examination rooms.",
+                });
+                return;
+              }
               setEditingRoom(null);
               setIsAddOpen(true);
             }}
-            className="bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs h-9 px-4 gap-1.5 shadow-xs"
+            disabled={isRoomsLocked}
+            className={cn(
+              "text-white font-bold text-xs h-9 px-4 gap-1.5 shadow-xs transition-colors",
+              isRoomsLocked
+                ? "bg-slate-400 cursor-not-allowed opacity-75"
+                : "bg-[#1E2A5E] hover:bg-[#151D42]"
+            )}
+            title={isRoomsLocked ? "Unlock rooms to add new ones" : "Add Room"}
           >
-            <Plus className="w-4 h-4" />
+            {isRoomsLocked ? <Lock className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
             Add Room
           </Button>
         </div>
@@ -178,7 +274,7 @@ export default function MasterRoomsPage() {
             All Configured Rooms ({rooms.length})
           </div>
           <span className="text-xs text-slate-400">
-            Capacities calculated as: 1&times; (Total), 2&times; (Total&times;2), 3&times; (Total&times;3)
+            Capacities calculated as: 2&times; (Total&times;2), 3&times; (Total&times;3)
           </span>
         </div>
 
@@ -191,7 +287,17 @@ export default function MasterRoomsPage() {
             </p>
             <Button
               size="sm"
-              onClick={() => setIsAddOpen(true)}
+              onClick={() => {
+                if (isRoomsLocked) {
+                  toast({
+                    title: "Rooms Locked",
+                    description: "Unlock saved rooms to add examination rooms.",
+                  });
+                  return;
+                }
+                setIsAddOpen(true);
+              }}
+              disabled={isRoomsLocked}
               className="bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs"
             >
               + Add First Room
@@ -205,9 +311,9 @@ export default function MasterRoomsPage() {
                   <th className="py-3 px-3 text-center w-12">Sl No</th>
                   <th className="py-3 px-4">Room No.</th>
                   <th className="py-3 px-3 text-center">Left Benches</th>
+                  <th className="py-3 px-3 text-center">Middle Benches</th>
                   <th className="py-3 px-3 text-center">Right Benches</th>
                   <th className="py-3 px-3 text-center font-black text-slate-800">Total Benches</th>
-                  <th className="py-3 px-3 text-center text-indigo-700 bg-indigo-50/50">Capacity — 1/Bench</th>
                   <th className="py-3 px-3 text-center text-purple-700 bg-purple-50/50">Capacity — 2/Bench</th>
                   <th className="py-3 px-3 text-center text-blue-700 bg-blue-50/50">Capacity — 3/Bench</th>
                   <th className="py-3 px-3 text-center">Status</th>
@@ -226,12 +332,18 @@ export default function MasterRoomsPage() {
                         {room.roomNo}
                       </td>
                       <td className="py-3 px-3 text-center">{room.leftBenches}</td>
+                      <td className="py-3 px-3 text-center">
+                        {room.middleBenches && room.middleBenches > 0 ? (
+                          <span className="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200/60">
+                            {room.middleBenches}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 italic">Nil</span>
+                        )}
+                      </td>
                       <td className="py-3 px-3 text-center">{room.rightBenches}</td>
                       <td className="py-3 px-3 text-center font-bold text-slate-900 bg-slate-50/30">
                         {room.totalBenches}
-                      </td>
-                      <td className="py-3 px-3 text-center font-bold text-indigo-700 bg-indigo-50/30">
-                        {room.capacityOne}
                       </td>
                       <td className="py-3 px-3 text-center font-bold text-purple-700 bg-purple-50/30">
                         {room.capacityTwo}
@@ -252,12 +364,19 @@ export default function MasterRoomsPage() {
                           <Button
                             size="icon"
                             variant="ghost"
+                            disabled={isRoomsLocked}
                             onClick={() => {
+                              if (isRoomsLocked) return;
                               setEditingRoom(room);
                               setIsAddOpen(true);
                             }}
-                            className="h-7 w-7 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50"
-                            title="Edit Room"
+                            className={cn(
+                              "h-7 w-7",
+                              isRoomsLocked
+                                ? "text-slate-300 cursor-not-allowed"
+                                : "text-slate-500 hover:text-indigo-600 hover:bg-indigo-50"
+                            )}
+                            title={isRoomsLocked ? "Saved rooms are locked" : "Edit Room"}
                           >
                             <Pencil className="w-3.5 h-3.5" />
                           </Button>
@@ -265,9 +384,18 @@ export default function MasterRoomsPage() {
                           <Button
                             size="icon"
                             variant="ghost"
-                            onClick={() => setRoomToDelete(room)}
-                            className="h-7 w-7 text-slate-400 hover:text-rose-600 hover:bg-rose-50"
-                            title="Delete Room"
+                            disabled={isRoomsLocked}
+                            onClick={() => {
+                              if (isRoomsLocked) return;
+                              setRoomToDelete(room);
+                            }}
+                            className={cn(
+                              "h-7 w-7",
+                              isRoomsLocked
+                                ? "text-slate-300 cursor-not-allowed"
+                                : "text-slate-400 hover:text-rose-600 hover:bg-rose-50"
+                            )}
+                            title={isRoomsLocked ? "Saved rooms are locked" : "Delete Room"}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </Button>
@@ -287,13 +415,13 @@ export default function MasterRoomsPage() {
                       {totals.leftBenches}
                     </td>
                     <td className="py-3 px-3 text-center font-bold text-slate-800">
+                      {totals.middleBenches > 0 ? totals.middleBenches : '—'}
+                    </td>
+                    <td className="py-3 px-3 text-center font-bold text-slate-800">
                       {totals.rightBenches}
                     </td>
                     <td className="py-3 px-3 text-center font-black text-slate-950 bg-slate-200/70 text-xs">
                       {totals.totalBenches}
-                    </td>
-                    <td className="py-3 px-3 text-center font-black text-indigo-900 bg-indigo-100/70 text-xs">
-                      {totals.capacityOne}
                     </td>
                     <td className="py-3 px-3 text-center font-black text-purple-900 bg-purple-100/70 text-xs">
                       {totals.capacityTwo}
@@ -315,33 +443,30 @@ export default function MasterRoomsPage() {
           <div className="border-t border-slate-200 bg-slate-50/70 p-4">
             {/* Total Metric Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3.5">
-              {/* Total Benches Card */}
-              <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-2xs">
+              {/* Total Rooms Card (replaced Total Benches) */}
+              <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-2xs relative overflow-hidden">
                 <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                  Total Benches
+                  Total Rooms
                 </div>
                 <div className="text-2xl font-black text-slate-900 mt-0.5">
-                  {totals.totalBenches}
+                  {rooms.length}
                 </div>
                 <div className="text-[11px] text-slate-500 font-medium mt-0.5">
-                  {totals.leftBenches} Left + {totals.rightBenches} Right
+                  {rooms.length} Active Examination {rooms.length === 1 ? 'Hall' : 'Halls'}
                 </div>
               </div>
 
-              {/* 1/Bench Capacity Card */}
+              {/* Total Benches Card (replaced Capacity 1/Bench) */}
               <div className="bg-white border border-indigo-200 rounded-lg p-3 shadow-2xs relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-12 h-12 bg-indigo-50 rounded-bl-full pointer-events-none -mr-2 -mt-2" />
                 <div className="text-[10px] font-bold text-indigo-700 uppercase tracking-wider flex items-center justify-between">
-                  <span>Capacity (1/Bench)</span>
-                  <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200 text-[9px] px-1 py-0 h-4">
-                    1&times;
-                  </Badge>
+                  <span>Total Benches</span>
                 </div>
                 <div className="text-2xl font-black text-indigo-900 mt-0.5">
-                  {totals.capacityOne}
+                  {totals.totalBenches}
                 </div>
                 <div className="text-[11px] text-indigo-600 font-medium mt-0.5">
-                  Max students at 1 per bench
+                  {totals.leftBenches} Left{totals.middleBenches > 0 ? ` + ${totals.middleBenches} Middle` : ''} + {totals.rightBenches} Right
                 </div>
               </div>
 
@@ -384,9 +509,55 @@ export default function MasterRoomsPage() {
             <div className="pt-2 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
               <div className="text-slate-500 font-medium flex items-center gap-1.5">
                 <span>Total Configured Rooms: <strong className="text-slate-800">{rooms.length}</strong></span>
+                {isRoomsLocked && (
+                  <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-300 text-[10px] font-bold gap-1 ml-2">
+                    <Lock className="w-3 h-3 text-amber-600" /> Locked
+                  </Badge>
+                )}
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setIsClearConfirmOpen(true)}
+                  disabled={rooms.length === 0 || isRoomsLocked || isSaving}
+                  className="h-8 px-3 text-xs font-bold rounded-lg border-rose-200 text-rose-700 hover:bg-rose-50 hover:text-rose-800 transition-all gap-1.5 shadow-2xs disabled:opacity-50"
+                  title={isRoomsLocked ? "Unlock rooms before clearing" : "Clear all configured rooms"}
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                  <span>Clear All Rooms</span>
+                </Button>
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleToggleLock}
+                  disabled={rooms.length === 0 || isSaving}
+                  className={cn(
+                    "h-8 px-3 text-xs font-bold rounded-lg transition-all gap-1.5 shadow-2xs",
+                    isRoomsLocked
+                      ? "border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 font-bold"
+                      : "border-slate-300 text-slate-700 hover:bg-slate-50 font-bold"
+                  )}
+                  title={isRoomsLocked ? "Click to unlock saved rooms" : "Lock the saved rooms against modifications"}
+                >
+                  {isRoomsLocked ? (
+                    <>
+                      <Lock className="w-3.5 h-3.5 text-amber-600" />
+                      <span>Lock the Saved Room</span>
+                      <Badge className="ml-1 bg-amber-200 text-amber-900 border-none text-[9px] px-1 py-0">
+                        Locked
+                      </Badge>
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="w-3.5 h-3.5 text-slate-600" />
+                      <span>Lock the Saved Room</span>
+                    </>
+                  )}
+                </Button>
+
                 <Button
                   size="sm"
                   onClick={handleSaveAllRooms}
@@ -421,6 +592,68 @@ export default function MasterRoomsPage() {
         roomToEdit={editingRoom}
         onSave={handleSaveRoom}
       />
+
+      {/* Clear All Rooms Confirmation Dialog */}
+      <AlertDialog
+        open={isClearConfirmOpen}
+        onOpenChange={setIsClearConfirmOpen}
+      >
+        <AlertDialogContent className="bg-white border border-slate-200">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-2.5 mb-1">
+              <div className="p-2 bg-rose-50 text-rose-600 rounded-lg">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <AlertDialogTitle className="font-headline text-lg font-bold text-slate-900">
+                Clear All Examination Rooms?
+              </AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="text-xs text-slate-600 leading-relaxed">
+              Are you sure you want to clear all <strong>{rooms.length}</strong> configured examination rooms? This will remove all rooms and their bench configurations from the system. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="text-xs h-9">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleClearAllRooms}
+              className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs h-9"
+            >
+              Clear All Rooms
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Unlock Rooms Confirmation Dialog */}
+      <AlertDialog
+        open={isUnlockConfirmOpen}
+        onOpenChange={setIsUnlockConfirmOpen}
+      >
+        <AlertDialogContent className="bg-white border border-slate-200">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-2.5 mb-1">
+              <div className="p-2 bg-amber-50 text-amber-600 rounded-lg">
+                <Unlock className="w-5 h-5" />
+              </div>
+              <AlertDialogTitle className="font-headline text-lg font-bold text-slate-900">
+                Unlock Examination Rooms?
+              </AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="text-xs text-slate-600 leading-relaxed">
+              Examination rooms are currently locked against edits. Unlocking will allow adding, editing, and deleting rooms.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="text-xs h-9">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmUnlock}
+              className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs h-9"
+            >
+              Unlock Rooms
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog

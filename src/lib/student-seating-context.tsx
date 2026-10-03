@@ -22,6 +22,12 @@ import {
   saveSeatingRoomsToCloud,
   fetchSeatingRoomsFromCloud,
 } from './student-seating-service';
+import {
+  idbGet,
+  idbSet,
+  safeSetLocalStorage,
+  purgeBloatedLocalStorageKeys,
+} from './idb-storage';
 
 interface StudentSeatingContextType {
   rooms: SeatingMasterRoom[];
@@ -34,9 +40,24 @@ interface StudentSeatingContextType {
   isCloudSynced: boolean;
 
   // Room Management
-  addRoom: (roomNo: string, leftBenches: number, rightBenches: number) => SeatingMasterRoom;
-  updateRoom: (id: string, roomNo: string, leftBenches: number, rightBenches: number) => void;
+  addRoom: (
+    roomNo: string,
+    leftBenches: number,
+    middleBenchesOrRight: number | undefined,
+    rightBenches?: number
+  ) => SeatingMasterRoom;
+  updateRoom: (
+    id: string,
+    roomNo: string,
+    leftBenches: number,
+    middleBenchesOrRight: number | undefined,
+    rightBenches?: number
+  ) => void;
   deleteRoom: (id: string) => { success: boolean; wasInUse: boolean };
+  clearRooms: () => void;
+  isRoomsLocked: boolean;
+  setIsRoomsLocked: (locked: boolean) => void;
+  toggleRoomsLock: () => boolean;
   isRoomInUse: (roomId: string) => boolean;
   saveRoomsToStorage: (roomsToSave?: SeatingMasterRoom[]) => Promise<boolean>;
 
@@ -107,6 +128,34 @@ function normalizeStudentsBySubject(
   }
 
   return result;
+}
+
+/**
+ * Normalizes examination rooms to guarantee backwards compatibility.
+ * If middleBenches is not present, <= 0, or invalid, it is treated as undefined (Nil).
+ * Automatically calculates totalBenches = left + (middle || 0) + right
+ * and updates capacities accordingly.
+ */
+function normalizeRooms(rawRooms: SeatingMasterRoom[]): SeatingMasterRoom[] {
+  return rawRooms.map((r) => {
+    const mBenches =
+      typeof r.middleBenches === 'number' && r.middleBenches > 0
+        ? r.middleBenches
+        : undefined;
+    const left = Math.max(0, Number(r.leftBenches) || 0);
+    const right = Math.max(0, Number(r.rightBenches) || 0);
+    const total = left + (mBenches || 0) + right;
+    return {
+      ...r,
+      leftBenches: left,
+      middleBenches: mBenches,
+      rightBenches: right,
+      totalBenches: total,
+      capacityOne: total * 1,
+      capacityTwo: total * 2,
+      capacityThree: total * 3,
+    };
+  });
 }
 
 /**
@@ -273,6 +322,32 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
   const prevUserIdRef = useRef<string | undefined>(undefined);
   const isInitialLoadDoneRef = useRef<boolean>(false);
 
+  const [isRoomsLocked, setIsRoomsLockedState] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      const scope = user?.id ? user.id : 'guest';
+      return localStorage.getItem(`dutyflow_${scope}_rooms_locked`) === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const setIsRoomsLocked = useCallback((locked: boolean) => {
+    setIsRoomsLockedState(locked);
+    const scope = user?.id ? user.id : 'guest';
+    safeSetLocalStorage(`dutyflow_${scope}_rooms_locked`, locked);
+    idbSet(`dutyflow_${scope}_rooms_locked`, locked);
+    if (user?.id && isUUID(user.id)) {
+      syncUserWorkspaceToDatabase(user.id, { isRoomsLocked: locked }).catch(() => {});
+    }
+  }, [user?.id]);
+
+  const toggleRoomsLock = useCallback((): boolean => {
+    const next = !isRoomsLocked;
+    setIsRoomsLocked(next);
+    return next;
+  }, [isRoomsLocked, setIsRoomsLocked]);
+
   const getStorageKey = useCallback((key: string) => {
     const scope = user?.id ? user.id : 'guest';
     return `dutyflow_${scope}_seating_${key}`;
@@ -283,6 +358,9 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
     let isMounted = true;
     const currentUserId = user?.id;
     const scope = currentUserId ? currentUserId : 'guest';
+
+    // Proactively purge duplicate guest keys & preview data to prevent quota bloat
+    purgeBloatedLocalStorageKeys(currentUserId);
 
     // If user switched accounts or auth transitioned, lock saving until loaded
     if (prevUserIdRef.current !== currentUserId) {
@@ -315,13 +393,13 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
             const parsed = JSON.parse(guestRooms);
             if (Array.isArray(parsed) && parsed.length > 0) {
               loadedRooms = parsed;
-              localStorage.setItem(`dutyflow_${scope}_seating_rooms`, guestRooms);
+              safeSetLocalStorage(`dutyflow_${scope}_seating_rooms`, guestRooms);
             }
           } catch (_) { }
         }
       }
 
-      finalRooms = loadedRooms && loadedRooms.length > 0 ? loadedRooms : DEFAULT_STUDENT_ROOMS;
+      finalRooms = loadedRooms && loadedRooms.length > 0 ? normalizeRooms(loadedRooms) : DEFAULT_STUDENT_ROOMS;
       if (isMounted) setRooms(finalRooms);
 
       // 2. Recover subjects across all storage keys
@@ -343,7 +421,7 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
         setStudentsBySubject(normalizedStudents);
       }
 
-      // 4. Recover allocations
+      // 4. Recover allocations (fast localStorage check)
       let loadedAllocs: SeatingAllocationRecord[] = [];
       const storedAllocations = localStorage.getItem(getStorageKey('allocations'));
       if (storedAllocations) {
@@ -362,17 +440,47 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
       }
       if (isMounted) setAllocations(loadedAllocs);
 
-      // Persist recovered data immediately to current scope
-      try {
-        localStorage.setItem(`dutyflow_${scope}_seating_rooms`, JSON.stringify(finalRooms));
-        localStorage.setItem(`dutyflow_${scope}_seating_subjects`, JSON.stringify(reconciledSubjects));
-        localStorage.setItem(`dutyflow_${scope}_seating_students`, JSON.stringify(normalizedStudents));
-        localStorage.setItem('dutyflow_guest_seating_subjects', JSON.stringify(reconciledSubjects));
-        localStorage.setItem('dutyflow_guest_seating_students', JSON.stringify(normalizedStudents));
-      } catch (_) {}
+      // 5. Asynchronous IndexedDB Recovery (handles allocations larger than localStorage 5MB quota)
+      idbGet<SeatingAllocationRecord[]>(`dutyflow_${scope}_seating_allocations`).then((idbAllocs) => {
+        if (!isMounted) return;
+        if (idbAllocs && Array.isArray(idbAllocs) && idbAllocs.length > 0) {
+          setAllocations((prev) => {
+            if (!prev || prev.length === 0) return idbAllocs;
+            const prevHasPlans = (prev[0]?.roomPlans?.length ?? 0) > 0;
+            const idbHasPlans = (idbAllocs[0]?.roomPlans?.length ?? 0) > 0;
+            if (!prevHasPlans && idbHasPlans) return idbAllocs;
+            if (idbAllocs.length >= prev.length) return idbAllocs;
+            return prev;
+          });
+        }
+      }).catch(() => {});
+
+      idbGet<Record<string, StudentRecord[]>>(`dutyflow_${scope}_seating_students`).then((idbStudents) => {
+        if (!isMounted) return;
+        if (idbStudents && typeof idbStudents === 'object' && Object.keys(idbStudents).length > 0) {
+          setStudentsBySubject((prev) => {
+            const hasPrev = prev && Object.keys(prev).length > 0;
+            if (!hasPrev) return idbStudents;
+            return { ...idbStudents, ...prev };
+          });
+        }
+      }).catch(() => {});
+
+      // Persist recovered data safely
+      safeSetLocalStorage(`dutyflow_${scope}_seating_rooms`, finalRooms);
+      safeSetLocalStorage(`dutyflow_${scope}_seating_subjects`, reconciledSubjects);
+      safeSetLocalStorage(`dutyflow_${scope}_seating_students`, normalizedStudents);
+      if (scope === 'guest') {
+        safeSetLocalStorage('dutyflow_guest_seating_subjects', reconciledSubjects);
+        safeSetLocalStorage('dutyflow_guest_seating_students', normalizedStudents);
+      }
+
+      idbSet(`dutyflow_${scope}_seating_rooms`, finalRooms);
+      idbSet(`dutyflow_${scope}_seating_subjects`, reconciledSubjects);
+      idbSet(`dutyflow_${scope}_seating_students`, normalizedStudents);
 
     } catch (err) {
-      console.error('Error loading student seating data:', err);
+      console.warn('[DutyFlow Storage] Notice during student seating data load:', err);
     }
 
     // CENTRAL CLOUD RESTORATION:
@@ -387,17 +495,17 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
 
         // 1. Restore Rooms (prefer central workspace, fallback to cloudRooms)
         if (ws?.seatingRooms && Array.isArray(ws.seatingRooms) && ws.seatingRooms.length > 0) {
-          setRooms(ws.seatingRooms);
+          const normalized = normalizeRooms(ws.seatingRooms);
+          setRooms(normalized);
           setIsRoomsCloudSynced(true);
-          try {
-            localStorage.setItem(`dutyflow_${currentUserId}_seating_rooms`, JSON.stringify(ws.seatingRooms));
-          } catch (_) { }
+          safeSetLocalStorage(`dutyflow_${currentUserId}_seating_rooms`, normalized);
+          idbSet(`dutyflow_${currentUserId}_seating_rooms`, normalized);
         } else if (cloudRooms && Array.isArray(cloudRooms) && cloudRooms.length > 0) {
-          setRooms(cloudRooms);
+          const normalized = normalizeRooms(cloudRooms);
+          setRooms(normalized);
           setIsRoomsCloudSynced(true);
-          try {
-            localStorage.setItem(`dutyflow_${currentUserId}_seating_rooms`, JSON.stringify(cloudRooms));
-          } catch (_) { }
+          safeSetLocalStorage(`dutyflow_${currentUserId}_seating_rooms`, normalized);
+          idbSet(`dutyflow_${currentUserId}_seating_rooms`, normalized);
         }
 
         // 2. Restore Subjects from central database
@@ -405,9 +513,8 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
         if (ws?.subjects && Array.isArray(ws.subjects) && ws.subjects.length > 0) {
           activeSubjects = ws.subjects;
           setSubjects(ws.subjects);
-          try {
-            localStorage.setItem(`dutyflow_${currentUserId}_seating_subjects`, JSON.stringify(ws.subjects));
-          } catch (_) { }
+          safeSetLocalStorage(`dutyflow_${currentUserId}_seating_subjects`, ws.subjects);
+          idbSet(`dutyflow_${currentUserId}_seating_subjects`, ws.subjects);
         }
 
         // 3. Restore Student Records from central database (MERGE without overwriting local data with empty cloud)
@@ -415,9 +522,8 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
           setStudentsBySubject((prev) => {
             const merged = { ...prev, ...ws.studentsBySubject };
             const normalized = normalizeStudentsBySubject(merged, activeSubjects);
-            try {
-              localStorage.setItem(`dutyflow_${currentUserId}_seating_students`, JSON.stringify(normalized));
-            } catch (_) { }
+            safeSetLocalStorage(`dutyflow_${currentUserId}_seating_students`, normalized);
+            idbSet(`dutyflow_${currentUserId}_seating_students`, normalized);
             return normalized;
           });
         } else if (Object.keys(normalizedStudents).length > 0) {
@@ -431,9 +537,8 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
         // 4. Restore Seating Allocations from central database
         if (cloudAllocs && Array.isArray(cloudAllocs) && cloudAllocs.length > 0) {
           setAllocations(cloudAllocs);
-          try {
-            localStorage.setItem(`dutyflow_${currentUserId}_seating_allocations`, JSON.stringify(cloudAllocs));
-          } catch (_) { }
+          idbSet(`dutyflow_${currentUserId}_seating_allocations`, cloudAllocs);
+          safeSetLocalStorage(`dutyflow_${currentUserId}_seating_allocations`, cloudAllocs);
 
           // Restore active allocation
           if (ws?.activeSeatingAllocationId) {
@@ -475,32 +580,29 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
         fetchUserSeatingAllocationsFromDatabase(user.id),
       ]).then(([ws, cloudAllocs]) => {
         if (ws?.seatingRooms?.length) {
-          setRooms(ws.seatingRooms);
-          try {
-            localStorage.setItem(`dutyflow_${user.id}_seating_rooms`, JSON.stringify(ws.seatingRooms));
-          } catch (_) { }
+          const normalized = normalizeRooms(ws.seatingRooms);
+          setRooms(normalized);
+          safeSetLocalStorage(`dutyflow_${user.id}_seating_rooms`, normalized);
+          idbSet(`dutyflow_${user.id}_seating_rooms`, normalized);
         }
         if (ws?.subjects?.length) {
           setSubjects(ws.subjects);
-          try {
-            localStorage.setItem(getStorageKey('subjects'), JSON.stringify(ws.subjects));
-          } catch (_) { }
+          safeSetLocalStorage(getStorageKey('subjects'), ws.subjects);
+          idbSet(getStorageKey('subjects'), ws.subjects);
         }
         if (ws?.studentsBySubject && Object.keys(ws.studentsBySubject).length) {
           setStudentsBySubject((prev) => {
             const merged = { ...prev, ...ws.studentsBySubject };
             const normalized = normalizeStudentsBySubject(merged, ws.subjects || subjects);
-            try {
-              localStorage.setItem(getStorageKey('students'), JSON.stringify(normalized));
-            } catch (_) { }
+            safeSetLocalStorage(getStorageKey('students'), normalized);
+            idbSet(getStorageKey('students'), normalized);
             return normalized;
           });
         }
         if (cloudAllocs && Array.isArray(cloudAllocs)) {
           setAllocations(cloudAllocs);
-          try {
-            localStorage.setItem(getStorageKey('allocations'), JSON.stringify(cloudAllocs));
-          } catch (_) { }
+          idbSet(getStorageKey('allocations'), cloudAllocs);
+          safeSetLocalStorage(getStorageKey('allocations'), cloudAllocs);
           if (ws?.activeSeatingAllocationId) {
             const active = cloudAllocs.find((a) => a.id === ws.activeSeatingAllocationId);
             if (active) setActiveAllocation(active);
@@ -523,25 +625,35 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
     };
   }, [user?.id, getStorageKey, subjects]);
 
-  // Save changes to localStorage only after initial load is fully verified
+  // Save changes safely to IndexedDB and localStorage only after initial load is fully verified
   useEffect(() => {
     if (!isLoaded || !isInitialLoadDoneRef.current) return;
     if (prevUserIdRef.current !== user?.id) return;
 
     try {
       const scope = user?.id ? user.id : 'guest';
-      localStorage.setItem(`dutyflow_${scope}_seating_rooms`, JSON.stringify(rooms));
-      localStorage.setItem(`dutyflow_${scope}_seating_subjects`, JSON.stringify(subjects));
-      localStorage.setItem(`dutyflow_${scope}_seating_students`, JSON.stringify(studentsBySubject));
-      localStorage.setItem(`dutyflow_${scope}_seating_allocations`, JSON.stringify(allocations));
 
-      if (scope !== 'guest') {
-        localStorage.setItem('dutyflow_guest_seating_rooms', JSON.stringify(rooms));
-        localStorage.setItem('dutyflow_guest_seating_subjects', JSON.stringify(subjects));
-        localStorage.setItem('dutyflow_guest_seating_students', JSON.stringify(studentsBySubject));
+      // 1. High-capacity IndexedDB storage (virtually unlimited capacity for heavy allocations & student rosters)
+      idbSet(`dutyflow_${scope}_seating_rooms`, rooms);
+      idbSet(`dutyflow_${scope}_seating_subjects`, subjects);
+      idbSet(`dutyflow_${scope}_seating_students`, studentsBySubject);
+      idbSet(`dutyflow_${scope}_seating_allocations`, allocations);
+
+      // 2. Safe localStorage setter (with quota guard & automatic fallback compression)
+      safeSetLocalStorage(`dutyflow_${scope}_seating_rooms`, rooms);
+      safeSetLocalStorage(`dutyflow_${scope}_seating_subjects`, subjects);
+      safeSetLocalStorage(`dutyflow_${scope}_seating_students`, studentsBySubject);
+      safeSetLocalStorage(`dutyflow_${scope}_seating_allocations`, allocations);
+
+      // Only write to guest keys if current scope is guest
+      if (scope === 'guest') {
+        safeSetLocalStorage('dutyflow_guest_seating_rooms', rooms);
+        safeSetLocalStorage('dutyflow_guest_seating_subjects', subjects);
+        safeSetLocalStorage('dutyflow_guest_seating_students', studentsBySubject);
+        safeSetLocalStorage('dutyflow_guest_seating_allocations', allocations);
       }
     } catch (err) {
-      console.error('Error saving student seating data to storage:', err);
+      console.warn('[DutyFlow Storage] Background sync to storage notice:', err);
     }
   }, [rooms, subjects, studentsBySubject, allocations, isLoaded, user?.id]);
 
@@ -550,12 +662,10 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
     const dataToSave = roomsToSave || rooms;
     const scope = user?.id ? user.id : 'guest';
 
-    try {
-      localStorage.setItem(`dutyflow_${scope}_seating_rooms`, JSON.stringify(dataToSave));
-      localStorage.setItem('dutyflow_guest_seating_rooms', JSON.stringify(dataToSave));
-    } catch (e) {
-      console.error('Error saving rooms to localStorage:', e);
-      return false;
+    safeSetLocalStorage(`dutyflow_${scope}_seating_rooms`, dataToSave);
+    idbSet(`dutyflow_${scope}_seating_rooms`, dataToSave);
+    if (scope === 'guest') {
+      safeSetLocalStorage('dutyflow_guest_seating_rooms', dataToSave);
     }
 
     if (user?.id && isUUID(user.id)) {
@@ -573,68 +683,118 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
   }, [rooms, user?.id]);
 
   // Room Management
-  const addRoom = useCallback((roomNo: string, leftBenches: number, rightBenches: number): SeatingMasterRoom => {
-    const total = leftBenches + rightBenches;
-    const newRoom: SeatingMasterRoom = {
-      id: `room-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      roomNo: roomNo.trim(),
-      leftBenches,
-      rightBenches,
-      totalBenches: total,
-      capacityOne: total * 1,
-      capacityTwo: total * 2,
-      capacityThree: total * 3,
-      status: 'Available',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+  const addRoom = useCallback(
+    (
+      roomNo: string,
+      leftBenches: number,
+      middleBenchesOrRight: number | undefined,
+      rightBenches?: number
+    ): SeatingMasterRoom => {
+      let middle: number | undefined = undefined;
+      let finalRight = 0;
 
-    setRooms((prev) => {
-      const updated = [...prev, newRoom];
-      const scope = user?.id ? user.id : 'guest';
-      try {
-        localStorage.setItem(`dutyflow_${scope}_seating_rooms`, JSON.stringify(updated));
-        localStorage.setItem('dutyflow_guest_seating_rooms', JSON.stringify(updated));
-      } catch (_) {}
-      if (user?.id && isUUID(user.id)) {
-        syncUserWorkspaceToDatabase(user.id, { seatingRooms: updated }).catch(() => {});
-        saveSeatingRoomsToCloud(updated, user.id).catch(() => {});
+      if (rightBenches === undefined) {
+        middle = undefined;
+        finalRight = typeof middleBenchesOrRight === 'number' ? middleBenchesOrRight : 0;
+      } else {
+        middle =
+          typeof middleBenchesOrRight === 'number' && middleBenchesOrRight > 0
+            ? middleBenchesOrRight
+            : undefined;
+        finalRight = rightBenches;
       }
-      return updated;
-    });
-    return newRoom;
-  }, [user?.id]);
 
-  const updateRoom = useCallback((id: string, roomNo: string, leftBenches: number, rightBenches: number) => {
-    const total = leftBenches + rightBenches;
-    setRooms((prev) => {
-      const updated = prev.map((r) =>
-        r.id === id
-          ? {
-            ...r,
-            roomNo: roomNo.trim(),
-            leftBenches,
-            rightBenches,
-            totalBenches: total,
-            capacityOne: total * 1,
-            capacityTwo: total * 2,
-            capacityThree: total * 3,
-            updatedAt: new Date().toISOString(),
-          }
-          : r
-      );
-      const scope = user?.id ? user.id : 'guest';
-      try {
-        localStorage.setItem(`dutyflow_${scope}_seating_rooms`, JSON.stringify(updated));
-        localStorage.setItem('dutyflow_guest_seating_rooms', JSON.stringify(updated));
-      } catch (_) {}
-      if (user?.id && isUUID(user.id)) {
-        syncUserWorkspaceToDatabase(user.id, { seatingRooms: updated }).catch(() => {});
-        saveSeatingRoomsToCloud(updated, user.id).catch(() => {});
+      const total = leftBenches + (middle || 0) + finalRight;
+      const newRoom: SeatingMasterRoom = {
+        id: `room-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        roomNo: roomNo.trim(),
+        leftBenches,
+        middleBenches: middle,
+        rightBenches: finalRight,
+        totalBenches: total,
+        capacityOne: total * 1,
+        capacityTwo: total * 2,
+        capacityThree: total * 3,
+        status: 'Available',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      setRooms((prev) => {
+        const updated = [...prev, newRoom];
+        const scope = user?.id ? user.id : 'guest';
+        safeSetLocalStorage(`dutyflow_${scope}_seating_rooms`, updated);
+        idbSet(`dutyflow_${scope}_seating_rooms`, updated);
+        if (scope === 'guest') {
+          safeSetLocalStorage('dutyflow_guest_seating_rooms', updated);
+        }
+        if (user?.id && isUUID(user.id)) {
+          syncUserWorkspaceToDatabase(user.id, { seatingRooms: updated }).catch(() => {});
+          saveSeatingRoomsToCloud(updated, user.id).catch(() => {});
+        }
+        return updated;
+      });
+      return newRoom;
+    },
+    [user?.id]
+  );
+
+  const updateRoom = useCallback(
+    (
+      id: string,
+      roomNo: string,
+      leftBenches: number,
+      middleBenchesOrRight: number | undefined,
+      rightBenches?: number
+    ) => {
+      let middle: number | undefined = undefined;
+      let finalRight = 0;
+
+      if (rightBenches === undefined) {
+        middle = undefined;
+        finalRight = typeof middleBenchesOrRight === 'number' ? middleBenchesOrRight : 0;
+      } else {
+        middle =
+          typeof middleBenchesOrRight === 'number' && middleBenchesOrRight > 0
+            ? middleBenchesOrRight
+            : undefined;
+        finalRight = rightBenches;
       }
-      return updated;
-    });
-  }, [user?.id]);
+
+      const total = leftBenches + (middle || 0) + finalRight;
+
+      setRooms((prev) => {
+        const updated = prev.map((r) =>
+          r.id === id
+            ? {
+                ...r,
+                roomNo: roomNo.trim(),
+                leftBenches,
+                middleBenches: middle,
+                rightBenches: finalRight,
+                totalBenches: total,
+                capacityOne: total * 1,
+                capacityTwo: total * 2,
+                capacityThree: total * 3,
+                updatedAt: new Date().toISOString(),
+              }
+            : r
+        );
+        const scope = user?.id ? user.id : 'guest';
+        safeSetLocalStorage(`dutyflow_${scope}_seating_rooms`, updated);
+        idbSet(`dutyflow_${scope}_seating_rooms`, updated);
+        if (scope === 'guest') {
+          safeSetLocalStorage('dutyflow_guest_seating_rooms', updated);
+        }
+        if (user?.id && isUUID(user.id)) {
+          syncUserWorkspaceToDatabase(user.id, { seatingRooms: updated }).catch(() => {});
+          saveSeatingRoomsToCloud(updated, user.id).catch(() => {});
+        }
+        return updated;
+      });
+    },
+    [user?.id]
+  );
 
   const isRoomInUse = useCallback((roomId: string): boolean => {
     return allocations.some((alloc) => alloc.roomIds.includes(roomId));
@@ -645,10 +805,11 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
     setRooms((prev) => {
       const updated = prev.filter((r) => r.id !== id);
       const scope = user?.id ? user.id : 'guest';
-      try {
-        localStorage.setItem(`dutyflow_${scope}_seating_rooms`, JSON.stringify(updated));
-        localStorage.setItem('dutyflow_guest_seating_rooms', JSON.stringify(updated));
-      } catch (_) {}
+      safeSetLocalStorage(`dutyflow_${scope}_seating_rooms`, updated);
+      idbSet(`dutyflow_${scope}_seating_rooms`, updated);
+      if (scope === 'guest') {
+        safeSetLocalStorage('dutyflow_guest_seating_rooms', updated);
+      }
       if (user?.id && isUUID(user.id)) {
         syncUserWorkspaceToDatabase(user.id, { seatingRooms: updated }).catch(() => {});
         saveSeatingRoomsToCloud(updated, user.id).catch(() => {});
@@ -657,6 +818,20 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
     });
     return { success: true, wasInUse: inUse };
   }, [isRoomInUse, user?.id]);
+
+  const clearRooms = useCallback(() => {
+    setRooms([]);
+    const scope = user?.id ? user.id : 'guest';
+    safeSetLocalStorage(`dutyflow_${scope}_seating_rooms`, []);
+    idbSet(`dutyflow_${scope}_seating_rooms`, []);
+    if (scope === 'guest') {
+      safeSetLocalStorage('dutyflow_guest_seating_rooms', []);
+    }
+    if (user?.id && isUUID(user.id)) {
+      syncUserWorkspaceToDatabase(user.id, { seatingRooms: [] }).catch(() => {});
+      saveSeatingRoomsToCloud([], user.id).catch(() => {});
+    }
+  }, [user?.id]);
 
   // Subject Management
   const addSubject = useCallback((name: string, code?: string, expectedStudents: number = 0): StudentSubject => {
@@ -672,10 +847,11 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
 
     setSubjects((prev) => {
       const updated = [...prev, newSubj];
-      try {
-        localStorage.setItem(`dutyflow_${scope}_seating_subjects`, JSON.stringify(updated));
-        localStorage.setItem('dutyflow_guest_seating_subjects', JSON.stringify(updated));
-      } catch (_) {}
+      safeSetLocalStorage(`dutyflow_${scope}_seating_subjects`, updated);
+      idbSet(`dutyflow_${scope}_seating_subjects`, updated);
+      if (scope === 'guest') {
+        safeSetLocalStorage('dutyflow_guest_seating_subjects', updated);
+      }
       if (user?.id && isUUID(user.id)) {
         syncUserWorkspaceToDatabase(user.id, { subjects: updated }).catch(() => {});
       }
@@ -688,10 +864,11 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
     const scope = user?.id ? user.id : 'guest';
     setSubjects((prev) => {
       const updated = prev.map((s) => (s.id === id ? { ...s, ...data } : s));
-      try {
-        localStorage.setItem(`dutyflow_${scope}_seating_subjects`, JSON.stringify(updated));
-        localStorage.setItem('dutyflow_guest_seating_subjects', JSON.stringify(updated));
-      } catch (_) {}
+      safeSetLocalStorage(`dutyflow_${scope}_seating_subjects`, updated);
+      idbSet(`dutyflow_${scope}_seating_subjects`, updated);
+      if (scope === 'guest') {
+        safeSetLocalStorage('dutyflow_guest_seating_subjects', updated);
+      }
       if (user?.id && isUUID(user.id)) {
         syncUserWorkspaceToDatabase(user.id, { subjects: updated }).catch(() => {});
       }
@@ -705,10 +882,11 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
 
     setSubjects((prev) => {
       const updatedSubjs = prev.filter((s) => s.id !== id);
-      try {
-        localStorage.setItem(`dutyflow_${scope}_seating_subjects`, JSON.stringify(updatedSubjs));
-        localStorage.setItem('dutyflow_guest_seating_subjects', JSON.stringify(updatedSubjs));
-      } catch (_) {}
+      safeSetLocalStorage(`dutyflow_${scope}_seating_subjects`, updatedSubjs);
+      idbSet(`dutyflow_${scope}_seating_subjects`, updatedSubjs);
+      if (scope === 'guest') {
+        safeSetLocalStorage('dutyflow_guest_seating_subjects', updatedSubjs);
+      }
       if (user?.id && isUUID(user.id)) {
         syncUserWorkspaceToDatabase(user.id, { subjects: updatedSubjs }).catch(() => {});
       }
@@ -722,10 +900,11 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
         delete nextStudents[subj.name];
         delete nextStudents[subj.name.toLowerCase()];
       }
-      try {
-        localStorage.setItem(`dutyflow_${scope}_seating_students`, JSON.stringify(nextStudents));
-        localStorage.setItem('dutyflow_guest_seating_students', JSON.stringify(nextStudents));
-      } catch (_) {}
+      safeSetLocalStorage(`dutyflow_${scope}_seating_students`, nextStudents);
+      idbSet(`dutyflow_${scope}_seating_students`, nextStudents);
+      if (scope === 'guest') {
+        safeSetLocalStorage('dutyflow_guest_seating_students', nextStudents);
+      }
       if (user?.id && isUUID(user.id)) {
         syncUserWorkspaceToDatabase(user.id, { studentsBySubject: nextStudents }).catch(() => {});
       }
@@ -748,12 +927,11 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
         nextStudents[matchedSubj.name] = students;
       }
 
-      // Synchronously write to localStorage immediately to guarantee persistence
-      try {
-        localStorage.setItem(`dutyflow_${scope}_seating_students`, JSON.stringify(nextStudents));
-        localStorage.setItem('dutyflow_guest_seating_students', JSON.stringify(nextStudents));
-      } catch (e) {
-        console.error('Error saving students to localStorage:', e);
+      // Synchronously write to storage safely to guarantee persistence
+      safeSetLocalStorage(`dutyflow_${scope}_seating_students`, nextStudents);
+      idbSet(`dutyflow_${scope}_seating_students`, nextStudents);
+      if (scope === 'guest') {
+        safeSetLocalStorage('dutyflow_guest_seating_students', nextStudents);
       }
 
       // Sync to cloud database
@@ -774,11 +952,10 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
           : s
       );
 
-      try {
-        localStorage.setItem(`dutyflow_${scope}_seating_subjects`, JSON.stringify(nextSubjs));
-        localStorage.setItem('dutyflow_guest_seating_subjects', JSON.stringify(nextSubjs));
-      } catch (e) {
-        console.error('Error saving subjects to localStorage:', e);
+      safeSetLocalStorage(`dutyflow_${scope}_seating_subjects`, nextSubjs);
+      idbSet(`dutyflow_${scope}_seating_subjects`, nextSubjs);
+      if (scope === 'guest') {
+        safeSetLocalStorage('dutyflow_guest_seating_subjects', nextSubjs);
       }
 
       if (user?.id && isUUID(user.id)) {
@@ -855,10 +1032,11 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
         delete nextStudents[subj.name.toLowerCase()];
       }
 
-      try {
-        localStorage.setItem(`dutyflow_${scope}_seating_students`, JSON.stringify(nextStudents));
-        localStorage.setItem('dutyflow_guest_seating_students', JSON.stringify(nextStudents));
-      } catch (_) {}
+      safeSetLocalStorage(`dutyflow_${scope}_seating_students`, nextStudents);
+      idbSet(`dutyflow_${scope}_seating_students`, nextStudents);
+      if (scope === 'guest') {
+        safeSetLocalStorage('dutyflow_guest_seating_students', nextStudents);
+      }
 
       if (user?.id && isUUID(user.id)) {
         syncUserWorkspaceToDatabase(user.id, { studentsBySubject: nextStudents }).catch(() => {});
@@ -871,10 +1049,11 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
         s.id === subjectId ? { ...s, uploadedStudentsCount: 0 } : s
       );
 
-      try {
-        localStorage.setItem(`dutyflow_${scope}_seating_subjects`, JSON.stringify(nextSubjs));
-        localStorage.setItem('dutyflow_guest_seating_subjects', JSON.stringify(nextSubjs));
-      } catch (_) {}
+      safeSetLocalStorage(`dutyflow_${scope}_seating_subjects`, nextSubjs);
+      idbSet(`dutyflow_${scope}_seating_subjects`, nextSubjs);
+      if (scope === 'guest') {
+        safeSetLocalStorage('dutyflow_guest_seating_subjects', nextSubjs);
+      }
 
       if (user?.id && isUUID(user.id)) {
         syncUserWorkspaceToDatabase(user.id, { subjects: nextSubjs }).catch(() => {});
@@ -904,10 +1083,11 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
         next = [allocation, ...prev];
       }
 
-      try {
-        localStorage.setItem(`dutyflow_${scope}_seating_allocations`, JSON.stringify(next));
-        localStorage.setItem('dutyflow_guest_seating_allocations', JSON.stringify(next));
-      } catch (_) {}
+      safeSetLocalStorage(`dutyflow_${scope}_seating_allocations`, next);
+      idbSet(`dutyflow_${scope}_seating_allocations`, next);
+      if (scope === 'guest') {
+        safeSetLocalStorage('dutyflow_guest_seating_allocations', next);
+      }
 
       if (user?.id && isUUID(user.id)) {
         syncSeatingAllocationToDatabase(allocation, user.id).catch(() => {});
@@ -924,10 +1104,11 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
 
     setAllocations((prev) => {
       const next = prev.filter((a) => a.id !== id);
-      try {
-        localStorage.setItem(`dutyflow_${scope}_seating_allocations`, JSON.stringify(next));
-        localStorage.setItem('dutyflow_guest_seating_allocations', JSON.stringify(next));
-      } catch (_) {}
+      safeSetLocalStorage(`dutyflow_${scope}_seating_allocations`, next);
+      idbSet(`dutyflow_${scope}_seating_allocations`, next);
+      if (scope === 'guest') {
+        safeSetLocalStorage('dutyflow_guest_seating_allocations', next);
+      }
 
       if (user?.id && isUUID(user.id)) {
         deleteSeatingAllocationFromDatabase(id, user.id).catch(() => {});
@@ -959,10 +1140,11 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
 
     setAllocations((prev) => {
       const next = [duplicated, ...prev];
-      try {
-        localStorage.setItem(`dutyflow_${scope}_seating_allocations`, JSON.stringify(next));
-        localStorage.setItem('dutyflow_guest_seating_allocations', JSON.stringify(next));
-      } catch (_) {}
+      safeSetLocalStorage(`dutyflow_${scope}_seating_allocations`, next);
+      idbSet(`dutyflow_${scope}_seating_allocations`, next);
+      if (scope === 'guest') {
+        safeSetLocalStorage('dutyflow_guest_seating_allocations', next);
+      }
 
       if (user?.id && isUUID(user.id)) {
         syncSeatingAllocationToDatabase(duplicated, user.id).catch(() => {});
@@ -986,6 +1168,10 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
         addRoom,
         updateRoom,
         deleteRoom,
+        clearRooms,
+        isRoomsLocked,
+        setIsRoomsLocked,
+        toggleRoomsLock,
         isRoomInUse,
         saveRoomsToStorage,
         isRoomsCloudSynced,

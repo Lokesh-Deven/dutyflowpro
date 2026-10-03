@@ -30,7 +30,7 @@ export interface StudentExaminationDetail {
   roomNo: string;            // e.g. "108"
   roomId?: string;
   benchNumber: string;       // e.g. "B12"
-  benchSide?: 'LEFT' | 'RIGHT';
+  benchSide?: 'LEFT' | 'MIDDLE' | 'RIGHT';
   position: 'Left' | 'Center' | 'Right' | 'Side A' | 'Side B' | 'Unassigned';
   positionSlot?: PositionSlot;
   rowLabel?: string;         // e.g. "Row 2"

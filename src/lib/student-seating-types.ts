@@ -6,12 +6,14 @@ export interface SeatingMasterRoom {
   id: string;
   roomNo: string;
   leftBenches: number;
+  middleBenches?: number;
   rightBenches: number;
   totalBenches: number;
   capacityOne: number;
   capacityTwo: number;
   capacityThree: number;
   status: 'Available' | 'In Use';
+  isLocked?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -43,7 +45,7 @@ export interface BenchPositionSeat {
 
 export interface PhysicalBench {
   benchNumber: number;
-  side: 'LEFT' | 'RIGHT';
+  side: 'LEFT' | 'MIDDLE' | 'RIGHT';
   seats: BenchPositionSeat[];
   rowNumber?: number;
   rowLabel?: string;
@@ -61,6 +63,19 @@ export interface MultiSubjectRow {
 
 export type MultiSubjectOrder = MultiSubjectRow;
 
+export interface ThreeColumnBenchConfig {
+  sideA: string;   // subjectId or 'EMPTY' / 'VACANT'
+  center: string;  // subjectId or 'EMPTY' / 'VACANT'
+  sideB: string;   // subjectId or 'EMPTY' / 'VACANT'
+}
+
+export interface ThreeColumnPatternConfig {
+  enabled: boolean;
+  left: ThreeColumnBenchConfig;
+  middle: ThreeColumnBenchConfig;
+  right: ThreeColumnBenchConfig;
+}
+
 export interface MultiSubjectConfig {
   enabled: boolean;
   rows: MultiSubjectRow[];
@@ -70,6 +85,7 @@ export interface RoomSeatingPlan {
   roomId: string;
   roomNo: string;
   leftBenches: number;
+  middleBenches?: number;
   rightBenches: number;
   totalBenches: number;
   capacity: number;
@@ -116,6 +132,7 @@ export interface SeatingAllocationRecord {
   subjectStats: SubjectAllocationStat[];
   summary: SeatingAllocationSummary;
   multiSubjectConfig?: MultiSubjectConfig;
+  threeColumnConfig?: ThreeColumnPatternConfig;
   status: 'Draft' | 'Finalized';
   createdAt: string;
   updatedAt: string;

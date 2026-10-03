@@ -23,18 +23,32 @@ export function RoomSeatingDiagram({
   className,
 }: RoomSeatingDiagramProps) {
   const leftBenches = plan.benches.filter((b) => b.side === 'LEFT');
+  const middleBenches = plan.benches.filter((b) => b.side === 'MIDDLE');
   const rightBenches = plan.benches.filter((b) => b.side === 'RIGHT');
+  const hasMiddleColumn = middleBenches.length > 0;
 
-  // Compute unique subjects and their seat counts in this room
+  // Compute unique subjects and their allocated student counts in this room
   const roomSubjects = React.useMemo(() => {
     const map = new Map<string, number>();
+    let studentCount = 0;
     plan.benches.forEach((bench) => {
       bench.seats.forEach((seat) => {
-        if (seat.subjectName) {
+        if (seat.student && seat.subjectName) {
+          studentCount++;
           map.set(seat.subjectName, (map.get(seat.subjectName) || 0) + 1);
         }
       });
     });
+    // Fallback if no students allocated yet (e.g. empty room template preview)
+    if (studentCount === 0) {
+      plan.benches.forEach((bench) => {
+        bench.seats.forEach((seat) => {
+          if (seat.subjectName) {
+            map.set(seat.subjectName, (map.get(seat.subjectName) || 0) + 1);
+          }
+        });
+      });
+    }
     return Array.from(map.entries()).map(([name, count]) => ({ name, count }));
   }, [plan]);
 
@@ -82,21 +96,10 @@ export function RoomSeatingDiagram({
         </div>
 
         {isVacant ? (
-          <div className="py-2.5 text-center">
-            <span className="text-[10px] italic text-slate-400 font-medium">VACANT</span>
-            {seat.subjectName && subjStyle && (
-              <div
-                className="mt-1.5 px-1.5 py-0.5 rounded-md text-[9.5px] font-bold text-center truncate border shadow-3xs opacity-80"
-                style={{
-                  backgroundColor: subjStyle.bgCss,
-                  color: subjStyle.textCss,
-                  borderColor: subjStyle.borderCss,
-                }}
-                title={`Planned Subject: ${seat.subjectName}`}
-              >
-                {seat.subjectName}
-              </div>
-            )}
+          <div className="py-3 text-center flex flex-col items-center justify-center my-auto min-h-[46px]">
+            <span className="text-[10px] italic text-slate-400 font-medium tracking-wide">
+              VACANT
+            </span>
           </div>
         ) : (
           <div className="space-y-0.5 my-0.5">
@@ -124,6 +127,29 @@ export function RoomSeatingDiagram({
       </div>
     );
   };
+
+  const renderBenchCard = (bench: typeof plan.benches[0], keyPrefix: string) => (
+    <div
+      key={`${keyPrefix}-${bench.benchNumber}`}
+      className="flex items-stretch gap-2 bg-white p-2 sm:p-2.5 rounded-lg border border-slate-200/80 shadow-2xs min-w-0"
+    >
+      {/* Bench Number Indicator */}
+      <div className="w-11 sm:w-12 shrink-0 bg-slate-100/80 rounded-md flex flex-col items-center justify-center font-headline font-bold text-xs text-slate-600 border border-slate-200/50 py-1">
+        <span className="text-[9px] uppercase text-slate-400 font-medium">B</span>
+        <span>{String(bench.benchNumber).padStart(2, '0')}</span>
+        {bench.rowLabel && (
+          <span className="mt-1 text-[8px] font-extrabold text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-1 py-0.2 rounded-xs whitespace-nowrap">
+            {bench.rowLabel}
+          </span>
+        )}
+      </div>
+
+      {/* Bench Physical Seat Slots */}
+      <div className="flex-1 flex gap-1.5 sm:gap-2 min-w-0">
+        {bench.seats.map((seat, sIdx) => renderSeat(seat, sIdx, bench.seats.length))}
+      </div>
+    </div>
+  );
 
   return (
     <div className={cn("bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-4", className)}>
@@ -219,31 +245,58 @@ export function RoomSeatingDiagram({
             </div>
 
             {/* Directional Orientation Guide Bar */}
-            <div className="w-full grid grid-cols-1 md:grid-cols-3 items-center gap-2 pt-1 border-t border-emerald-500/20">
-              {/* Left Column Orientation */}
-              <div className="flex items-center justify-center md:justify-start gap-2 text-emerald-100 font-bold text-xs bg-emerald-900/40 px-3 py-1.5 rounded-md border border-emerald-500/30 shadow-xs">
-                <ArrowLeft className="w-4 h-4 text-emerald-300 shrink-0" />
-                <span className="uppercase tracking-wider">Left Side Benches</span>
-                <span className="text-[10px] text-emerald-300/80 font-normal">({leftBenches.length} Benches)</span>
-              </div>
-
-              {/* Center Facing Indicator */}
-              <div className="flex flex-col items-center justify-center text-center py-0.5">
-                <div className="text-[11px] font-black text-amber-300 tracking-wider uppercase flex items-center gap-1">
-                  <span>&#9650; Facing The Blackboard &#9650;</span>
+            {hasMiddleColumn ? (
+              /* 3-Column Orientation */
+              <div className="w-full grid grid-cols-1 md:grid-cols-3 items-center gap-2 pt-1 border-t border-emerald-500/20">
+                {/* Left Column */}
+                <div className="flex items-center justify-center md:justify-start gap-2 text-emerald-100 font-bold text-xs bg-emerald-900/40 px-3 py-1.5 rounded-md border border-emerald-500/30 shadow-xs">
+                  <ArrowLeft className="w-4 h-4 text-emerald-300 shrink-0" />
+                  <span className="uppercase tracking-wider">Left Side Benches</span>
+                  <span className="text-[10px] text-emerald-300/80 font-normal">({leftBenches.length} Benches)</span>
                 </div>
-                <div className="text-[10px] text-emerald-200/90 font-medium">
-                  Facing the board, benches on your left and right match below
+
+                {/* Middle Column */}
+                <div className="flex items-center justify-center gap-2 text-emerald-100 font-bold text-xs bg-emerald-900/40 px-3 py-1.5 rounded-md border border-emerald-500/30 shadow-xs">
+                  <ArrowDown className="w-4 h-4 text-amber-300 shrink-0" />
+                  <span className="uppercase tracking-wider">Middle Benches</span>
+                  <span className="text-[10px] text-emerald-300/80 font-normal">({middleBenches.length} Benches)</span>
+                </div>
+
+                {/* Right Column */}
+                <div className="flex items-center justify-center md:justify-end gap-2 text-emerald-100 font-bold text-xs bg-emerald-900/40 px-3 py-1.5 rounded-md border border-emerald-500/30 shadow-xs">
+                  <span className="text-[10px] text-emerald-300/80 font-normal">({rightBenches.length} Benches)</span>
+                  <span className="uppercase tracking-wider">Right Side Benches</span>
+                  <ArrowRight className="w-4 h-4 text-emerald-300 shrink-0" />
                 </div>
               </div>
+            ) : (
+              /* 2-Column Orientation */
+              <div className="w-full grid grid-cols-1 md:grid-cols-3 items-center gap-2 pt-1 border-t border-emerald-500/20">
+                {/* Left Column Orientation */}
+                <div className="flex items-center justify-center md:justify-start gap-2 text-emerald-100 font-bold text-xs bg-emerald-900/40 px-3 py-1.5 rounded-md border border-emerald-500/30 shadow-xs">
+                  <ArrowLeft className="w-4 h-4 text-emerald-300 shrink-0" />
+                  <span className="uppercase tracking-wider">Left Side Benches</span>
+                  <span className="text-[10px] text-emerald-300/80 font-normal">({leftBenches.length} Benches)</span>
+                </div>
 
-              {/* Right Column Orientation */}
-              <div className="flex items-center justify-center md:justify-end gap-2 text-emerald-100 font-bold text-xs bg-emerald-900/40 px-3 py-1.5 rounded-md border border-emerald-500/30 shadow-xs">
-                <span className="text-[10px] text-emerald-300/80 font-normal">({rightBenches.length} Benches)</span>
-                <span className="uppercase tracking-wider">Right Side Benches</span>
-                <ArrowRight className="w-4 h-4 text-emerald-300 shrink-0" />
+                {/* Center Facing Indicator */}
+                <div className="flex flex-col items-center justify-center text-center py-0.5">
+                  <div className="text-[11px] font-black text-amber-300 tracking-wider uppercase flex items-center gap-1">
+                    <span>&#9650; Facing The Blackboard &#9650;</span>
+                  </div>
+                  <div className="text-[10px] text-emerald-200/90 font-medium">
+                    Facing the board, benches on your left and right match below
+                  </div>
+                </div>
+
+                {/* Right Column Orientation */}
+                <div className="flex items-center justify-center md:justify-end gap-2 text-emerald-100 font-bold text-xs bg-emerald-900/40 px-3 py-1.5 rounded-md border border-emerald-500/30 shadow-xs">
+                  <span className="text-[10px] text-emerald-300/80 font-normal">({rightBenches.length} Benches)</span>
+                  <span className="uppercase tracking-wider">Right Side Benches</span>
+                  <ArrowRight className="w-4 h-4 text-emerald-300 shrink-0" />
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
@@ -262,80 +315,89 @@ export function RoomSeatingDiagram({
         </div>
       </div>
 
-      {/* Two Column Graphical Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left Side Benches */}
-        <div className="space-y-3 bg-slate-50/50 p-4 rounded-xl border border-slate-100">
-          <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-            <span className="font-bold text-xs uppercase tracking-wider text-[#1E2A5E] flex items-center gap-1.5">
-              <ArrowDown className="w-3.5 h-3.5 text-indigo-600" />
-              Left Side Benches ({leftBenches.length})
-            </span>
-            <span className="text-[11px] text-slate-400 font-medium">Benches 01 &rarr; {String(leftBenches.length).padStart(2, '0')}</span>
-          </div>
-
-          <div className="space-y-2.5">
-            {leftBenches.map((bench) => (
-              <div
-                key={`left-${bench.benchNumber}`}
-                className="flex items-stretch gap-2 bg-white p-2 rounded-lg border border-slate-200/80 shadow-2xs"
-              >
-                {/* Bench Number Indicator */}
-                <div className="w-12 shrink-0 bg-slate-100/80 rounded-md flex flex-col items-center justify-center font-headline font-bold text-xs text-slate-600 border border-slate-200/50 py-1">
-                  <span className="text-[9px] uppercase text-slate-400 font-medium">B</span>
-                  <span>{String(bench.benchNumber).padStart(2, '0')}</span>
-                  {bench.rowLabel && (
-                    <span className="mt-1 text-[8px] font-extrabold text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-1 py-0.2 rounded-xs whitespace-nowrap">
-                      {bench.rowLabel}
-                    </span>
-                  )}
-                </div>
-
-                {/* Bench Physical Seat Slots */}
-                <div className="flex-1 flex gap-2">
-                  {bench.seats.map((seat, sIdx) => renderSeat(seat, sIdx, bench.seats.length))}
-                </div>
+      {/* Graphical Layout (2-Column or 3-Column based on room configuration) */}
+      {hasMiddleColumn ? (
+        <div className="overflow-x-auto pb-2">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 lg:gap-5 min-w-[980px]">
+            {/* Left Side Benches */}
+            <div className="space-y-3 bg-slate-50/50 p-3.5 sm:p-4 rounded-xl border border-slate-100 min-w-0">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                <span className="font-bold text-xs uppercase tracking-wider text-[#1E2A5E] flex items-center gap-1.5">
+                  <ArrowDown className="w-3.5 h-3.5 text-indigo-600" />
+                  Left Side Benches ({leftBenches.length})
+                </span>
+                <span className="text-[11px] text-slate-400 font-medium">Benches 01 &rarr; {String(leftBenches.length).padStart(2, '0')}</span>
               </div>
-            ))}
+
+              <div className="space-y-2.5">
+                {leftBenches.map((bench) => renderBenchCard(bench, 'left'))}
+              </div>
+            </div>
+
+            {/* Middle Benches */}
+            <div className="space-y-3 bg-indigo-50/20 p-3.5 sm:p-4 rounded-xl border border-indigo-100/70 min-w-0">
+              <div className="flex items-center justify-between border-b border-indigo-200/60 pb-2">
+                <span className="font-bold text-xs uppercase tracking-wider text-indigo-900 flex items-center gap-1.5">
+                  <ArrowDown className="w-3.5 h-3.5 text-indigo-600" />
+                  Middle Benches ({middleBenches.length})
+                </span>
+                <span className="text-[11px] text-indigo-600/70 font-medium">Benches 01 &rarr; {String(middleBenches.length).padStart(2, '0')}</span>
+              </div>
+
+              <div className="space-y-2.5">
+                {middleBenches.map((bench) => renderBenchCard(bench, 'middle'))}
+              </div>
+            </div>
+
+            {/* Right Side Benches */}
+            <div className="space-y-3 bg-slate-50/50 p-3.5 sm:p-4 rounded-xl border border-slate-100 min-w-0">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                <span className="font-bold text-xs uppercase tracking-wider text-[#1E2A5E] flex items-center gap-1.5">
+                  <ArrowDown className="w-3.5 h-3.5 text-indigo-600" />
+                  Right Side Benches ({rightBenches.length})
+                </span>
+                <span className="text-[11px] text-slate-400 font-medium">Benches 01 &rarr; {String(rightBenches.length).padStart(2, '0')}</span>
+              </div>
+
+              <div className="space-y-2.5">
+                {rightBenches.map((bench) => renderBenchCard(bench, 'right'))}
+              </div>
+            </div>
           </div>
         </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left Side Benches */}
+          <div className="space-y-3 bg-slate-50/50 p-4 rounded-xl border border-slate-100 min-w-0">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+              <span className="font-bold text-xs uppercase tracking-wider text-[#1E2A5E] flex items-center gap-1.5">
+                <ArrowDown className="w-3.5 h-3.5 text-indigo-600" />
+                Left Side Benches ({leftBenches.length})
+              </span>
+              <span className="text-[11px] text-slate-400 font-medium">Benches 01 &rarr; {String(leftBenches.length).padStart(2, '0')}</span>
+            </div>
 
-        {/* Right Side Benches */}
-        <div className="space-y-3 bg-slate-50/50 p-4 rounded-xl border border-slate-100">
-          <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-            <span className="font-bold text-xs uppercase tracking-wider text-[#1E2A5E] flex items-center gap-1.5">
-              <ArrowDown className="w-3.5 h-3.5 text-indigo-600" />
-              Right Side Benches ({rightBenches.length})
-            </span>
-            <span className="text-[11px] text-slate-400 font-medium">Benches 01 &rarr; {String(rightBenches.length).padStart(2, '0')}</span>
+            <div className="space-y-2.5">
+              {leftBenches.map((bench) => renderBenchCard(bench, 'left'))}
+            </div>
           </div>
 
-          <div className="space-y-2.5">
-            {rightBenches.map((bench) => (
-              <div
-                key={`right-${bench.benchNumber}`}
-                className="flex items-stretch gap-2 bg-white p-2 rounded-lg border border-slate-200/80 shadow-2xs"
-              >
-                {/* Bench Number Indicator */}
-                <div className="w-12 shrink-0 bg-slate-100/80 rounded-md flex flex-col items-center justify-center font-headline font-bold text-xs text-slate-600 border border-slate-200/50 py-1">
-                  <span className="text-[9px] uppercase text-slate-400 font-medium">B</span>
-                  <span>{String(bench.benchNumber).padStart(2, '0')}</span>
-                  {bench.rowLabel && (
-                    <span className="mt-1 text-[8px] font-extrabold text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-1 py-0.2 rounded-xs whitespace-nowrap">
-                      {bench.rowLabel}
-                    </span>
-                  )}
-                </div>
+          {/* Right Side Benches */}
+          <div className="space-y-3 bg-slate-50/50 p-4 rounded-xl border border-slate-100 min-w-0">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+              <span className="font-bold text-xs uppercase tracking-wider text-[#1E2A5E] flex items-center gap-1.5">
+                <ArrowDown className="w-3.5 h-3.5 text-indigo-600" />
+                Right Side Benches ({rightBenches.length})
+              </span>
+              <span className="text-[11px] text-slate-400 font-medium">Benches 01 &rarr; {String(rightBenches.length).padStart(2, '0')}</span>
+            </div>
 
-                {/* Bench Physical Seat Slots */}
-                <div className="flex-1 flex gap-2">
-                  {bench.seats.map((seat, sIdx) => renderSeat(seat, sIdx, bench.seats.length))}
-                </div>
-              </div>
-            ))}
+            <div className="space-y-2.5">
+              {rightBenches.map((bench) => renderBenchCard(bench, 'right'))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
