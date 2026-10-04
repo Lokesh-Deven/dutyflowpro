@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useStudentSeating } from '@/lib/student-seating-context';
+import { useAuth } from '@/lib/auth-context';
 import { StudentSubject, StudentRecord } from '@/lib/student-seating-types';
 import { STANDARD_STUDENT_SUBJECTS, STANDARD_SUBJECT_CODES } from '@/lib/student-seating-service';
 import { StudentUploadDialog } from '@/components/dashboard/student-seating/student-upload-dialog';
@@ -44,6 +45,7 @@ export default function StudentDataPage() {
     clearSubjectStudents,
   } = useStudentSeating();
   const { toast } = useToast();
+  const { profile } = useAuth();
 
   const [uploadSubject, setUploadSubject] = useState<StudentSubject | null>(null);
   const [viewingSubject, setViewingSubject] = useState<StudentSubject | null>(null);
@@ -150,10 +152,11 @@ export default function StudentDataPage() {
             variant="outline"
             onClick={() => {
               if (typeof window !== 'undefined') {
-                const url = `${window.location.origin}/student/login`;
+                const code = profile?.institution_code || '001';
+                const url = `${window.location.origin}/student/login?code=${encodeURIComponent(code)}`;
                 navigator.clipboard.writeText(url);
                 toast({
-                  title: "Student Portal Link Copied!",
+                  title: `Student Portal Link Copied! (Inst ${code})`,
                   description: "Share this URL with students: " + url,
                 });
               }

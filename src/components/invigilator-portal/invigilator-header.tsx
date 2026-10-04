@@ -38,6 +38,11 @@ export function InvigilatorHeader({ activeTab = 'today', onTabChange }: Invigila
               <span className="text-[10px] bg-indigo-500/30 text-indigo-300 font-bold px-2 py-0.5 rounded-full border border-indigo-400/30 uppercase tracking-wider ml-1">
                 Invigilator
               </span>
+              {session?.institutionCode && (
+                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 font-bold px-2 py-0.5 rounded-full border border-emerald-400/30 tracking-wider">
+                  Inst {session.institutionCode}
+                </span>
+              )}
             </div>
             <p className="text-[11px] text-slate-400 font-medium truncate max-w-[200px] sm:max-w-xs">
               {session?.institutionName || 'Examination Portal'}

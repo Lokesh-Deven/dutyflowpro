@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { StudentLoginForm } from '@/components/student-portal/student-login-form';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Loader2 } from 'lucide-react';
 
 export default function StudentLoginPage() {
   return (
@@ -30,7 +31,16 @@ export default function StudentLoginPage() {
 
       {/* Main Content Form */}
       <main className="flex-1 flex items-center justify-center my-auto py-6">
-        <StudentLoginForm />
+        <Suspense
+          fallback={
+            <div className="w-full max-w-[420px] mx-auto bg-white border border-slate-200 rounded-2xl shadow-xl p-8 flex flex-col items-center justify-center min-h-[300px]">
+              <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mb-3" />
+              <p className="text-xs text-slate-500 font-medium">Loading Student Access...</p>
+            </div>
+          }
+        >
+          <StudentLoginForm />
+        </Suspense>
       </main>
 
       {/* Footer */}

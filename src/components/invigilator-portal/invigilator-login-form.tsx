@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useInvigilatorPortal } from '@/lib/invigilator-portal-context';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +12,7 @@ import {
   Eye,
   EyeOff,
   UserCheck,
+  Building2,
   ShieldCheck,
   Sparkles,
   ArrowRight,
@@ -22,22 +23,37 @@ import Link from 'next/link';
 
 export function InvigilatorLoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const { login } = useInvigilatorPortal();
 
+  const [institutionCode, setInstitutionCode] = useState('001');
   const [identifier, setIdentifier] = useState('');
   const [pin, setPin] = useState('');
   const [showPin, setShowPin] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Read code query param if passed e.g. /invigilator/login?code=001
+  useEffect(() => {
+    const codeParam = searchParams.get('code');
+    if (codeParam) {
+      setInstitutionCode(codeParam.replace(/\D/g, '').slice(0, 3));
+    }
+  }, [searchParams]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
+    const cleanCode = institutionCode.trim();
     const cleanId = identifier.trim();
     const cleanPin = pin.trim();
 
+    if (!cleanCode) {
+      setErrorMessage('Please enter your 3-digit Institution Code.');
+      return;
+    }
     if (!cleanId) {
       setErrorMessage('Please enter your Email ID or Mobile Number.');
       return;
@@ -49,11 +65,11 @@ export function InvigilatorLoginForm() {
 
     setIsSubmitting(true);
     try {
-      const res = await login(cleanId, cleanPin);
+      const res = await login(cleanCode, cleanId, cleanPin);
       if (res.success && res.session) {
         toast({
           title: 'Login Successful',
-          description: `Welcome, ${res.session.name}! Opening your examination duties...`,
+          description: `Welcome, ${res.session.name}! Connected to Institution ${res.session.institutionCode}.`,
         });
         router.push('/invigilator/dashboard');
       } else {
@@ -67,6 +83,7 @@ export function InvigilatorLoginForm() {
   };
 
   const handleQuickDemo = () => {
+    setInstitutionCode('001');
     setIdentifier('kumar@dutyflow.in');
     setPin('1234');
     setErrorMessage(null);
@@ -101,6 +118,27 @@ export function InvigilatorLoginForm() {
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Institution Code Field */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="inv-inst-code" className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+              <Building2 className="w-3.5 h-3.5 text-indigo-600" />
+              Institution Code:
+            </Label>
+            <span className="text-[11px] text-slate-400 font-medium">3 Digits (e.g. 001)</span>
+          </div>
+          <Input
+            id="inv-inst-code"
+            type="text"
+            maxLength={3}
+            placeholder="e.g. 001"
+            value={institutionCode}
+            onChange={(e) => setInstitutionCode(e.target.value.replace(/\D/g, '').slice(0, 3))}
+            className="rounded-lg h-10 bg-slate-50/50 border-slate-300 text-sm font-mono font-bold tracking-widest text-slate-900 placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-indigo-600"
+            required
+          />
+        </div>
+
         {/* Identifier Field */}
         <div className="space-y-1.5">
           <Label htmlFor="inv-identifier" className="text-xs font-semibold text-slate-700">
@@ -113,7 +151,6 @@ export function InvigilatorLoginForm() {
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
             className="rounded-lg h-10 bg-slate-50/50 border-slate-300 text-sm text-slate-900 placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-indigo-600"
-            autoFocus
             required
           />
         </div>
@@ -183,7 +220,7 @@ export function InvigilatorLoginForm() {
           className="text-xs text-indigo-700 hover:text-indigo-900 font-semibold inline-flex items-center gap-1.5 transition-colors"
         >
           <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-          Fill Sample Invigilator (Mr. Kumar)
+          Fill Quick Demo (001 • Mr. Kumar)
         </button>
       </div>
 

@@ -5,7 +5,9 @@ export interface StudentSession {
   studentName: string;
   section?: string;
   courseStream?: string;
-  institutionName?: string;
+  institutionCode: string; // User-facing 3-digit Code (e.g. '001')
+  institutionId: string; // Internal Institution ID (UUID)
+  institutionName: string;
   loginAt: string;
   role: 'student';
 }
@@ -42,6 +44,7 @@ export interface StudentExaminationDetail {
 
 export interface StudentPinRecord {
   registerNumber: string;
+  institutionId?: string;
   pinHash: string;
   salt: string;
   isCustomPin: boolean;

@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,22 +20,38 @@ import {
   Building2,
   AlertCircle,
   Sparkles,
+  Hash,
 } from 'lucide-react';
 
 export function StudentLoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const { login } = useStudentPortal();
 
+  const [institutionCode, setInstitutionCode] = useState(() => searchParams.get('code') || '');
   const [registerNumber, setRegisterNumber] = useState('');
   const [pin, setPin] = useState('');
   const [showPin, setShowPin] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  useEffect(() => {
+    const codeParam = searchParams.get('code');
+    if (codeParam && !institutionCode) {
+      setInstitutionCode(codeParam.replace(/\D/g, '').slice(0, 3));
+    }
+  }, [searchParams, institutionCode]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
+
+    const cleanCode = institutionCode.trim();
+    if (!cleanCode) {
+      setErrorMessage('Please enter your 3-digit Institution Code.');
+      return;
+    }
 
     const cleanRegNo = registerNumber.trim();
     if (!cleanRegNo) {
@@ -51,7 +67,7 @@ export function StudentLoginForm() {
     setIsSubmitting(true);
 
     try {
-      const res = await login(cleanRegNo, pin.trim());
+      const res = await login(cleanCode, cleanRegNo, pin.trim());
 
       if (res.success && res.session) {
         toast({
@@ -104,6 +120,34 @@ export function StudentLoginForm() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Institution Code Input */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label
+                htmlFor="inst-code"
+                className="text-xs font-bold text-slate-700 flex items-center gap-1.5"
+              >
+                <Hash className="w-3.5 h-3.5 text-indigo-600" />
+                Institution Code <span className="text-rose-500">*</span>
+              </Label>
+              <span className="text-[10px] text-slate-400 font-medium">3-digit college code</span>
+            </div>
+
+            <div className="relative">
+              <Input
+                id="inst-code"
+                type="text"
+                autoComplete="off"
+                placeholder="e.g. 001"
+                maxLength={3}
+                value={institutionCode}
+                onChange={(e) => setInstitutionCode(e.target.value.replace(/\D/g, '').slice(0, 3))}
+                className="h-11 rounded-xl text-base font-mono font-bold tracking-widest text-slate-900 placeholder:text-slate-400 bg-slate-50/60 focus:bg-white border-slate-200 focus-visible:border-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-100 transition-all uppercase"
+                required
+              />
+            </div>
+          </div>
+
           {/* Register Number Input */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
@@ -121,8 +165,7 @@ export function StudentLoginForm() {
                 id="reg-number"
                 type="text"
                 autoComplete="username"
-                autoFocus
-                placeholder="e.g. 123456 or 23UG0101"
+                placeholder="e.g. 101 or 123456"
                 value={registerNumber}
                 onChange={(e) => setRegisterNumber(e.target.value.toUpperCase())}
                 className="h-11 rounded-xl text-sm font-semibold tracking-wider text-slate-900 placeholder:text-slate-400 bg-slate-50/60 focus:bg-white border-slate-200 focus-visible:border-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-100 transition-all uppercase"
@@ -174,6 +217,23 @@ export function StudentLoginForm() {
             <p className="text-[11px] text-slate-500 leading-relaxed">
               Use your <strong>Register Number</strong> or <strong>last 4 digits</strong> as your initial PIN. You can change your PIN inside the portal.
             </p>
+          </div>
+
+          {/* Quick Demo Helper */}
+          <div className="pt-1 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setInstitutionCode('001');
+                setRegisterNumber('101');
+                setPin('4582');
+                setErrorMessage(null);
+              }}
+              className="text-[11px] text-indigo-600 hover:text-indigo-800 font-semibold hover:underline inline-flex items-center gap-1.5 transition-colors"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+              <span>Fill Demo Credentials: Inst 001 • Roll 101 • PIN 4582</span>
+            </button>
           </div>
 
           {/* Submit Button */}

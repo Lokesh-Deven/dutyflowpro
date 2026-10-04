@@ -31,7 +31,10 @@ import {
   Layers,
   FileText,
   Users,
-  CalendarRange
+  CalendarRange,
+  Hash,
+  Copy,
+  Check,
 } from 'lucide-react';
 
 export function ProfileView() {
@@ -55,6 +58,19 @@ export function ProfileView() {
 
   // Strictly single letter initial (first letter of institution name)
   const singleInitial = (institutionName.trim().charAt(0) || email.trim().charAt(0) || "U").toUpperCase();
+
+  const institutionCode = profile?.institution_code || '001';
+  const [copiedCode, setCopiedCode] = useState(false);
+
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(institutionCode);
+    setCopiedCode(true);
+    toast({
+      title: "Institution Code Copied",
+      description: `Copied Institution Code ${institutionCode} to clipboard.`,
+    });
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
 
   const totalDownloads = profile?.download_count ?? 0;
   const masterRosters = quota.master_roster;
@@ -144,6 +160,11 @@ export function ProfileView() {
                   <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                     <span className="text-[11px] font-bold uppercase tracking-wider bg-white/15 text-indigo-100 px-2.5 py-0.5 rounded-full border border-white/20 backdrop-blur-xs">
                       Institution Profile
+                    </span>
+
+                    <span className="text-[11px] font-mono font-bold bg-white/20 text-white px-2.5 py-0.5 rounded-full border border-white/30 backdrop-blur-xs flex items-center gap-1">
+                      <Hash className="w-3 h-3 text-indigo-200" />
+                      Code: {institutionCode}
                     </span>
 
                     <Badge className="bg-emerald-400/20 text-emerald-100 border-emerald-300/40 text-[10px] font-bold py-0 px-2 rounded-full backdrop-blur-xs">
@@ -243,6 +264,32 @@ export function ProfileView() {
             <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 space-y-1">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Account Email ID</span>
               <p className="text-sm font-bold text-slate-900 dark:text-white">{email}</p>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-gradient-to-r from-purple-50/80 via-indigo-50/70 to-blue-50/60 dark:from-purple-950/40 dark:via-indigo-950/40 dark:to-blue-950/30 border border-purple-200/80 dark:border-purple-900/60 flex items-center justify-between">
+              <div className="space-y-0.5">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#6342e8] dark:text-purple-300 flex items-center gap-1.5">
+                  <Hash className="h-3.5 w-3.5" />
+                  Institution Code
+                </span>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                  Required for Student &amp; Invigilator portal logins
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Badge className="bg-[#6342e8] hover:bg-[#5232d6] text-white font-mono text-base font-black px-3 py-1 rounded-xl shadow-xs tracking-widest">
+                  {institutionCode}
+                </Badge>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-slate-500 hover:text-slate-900 dark:hover:text-white rounded-lg"
+                  onClick={handleCopyCode}
+                  title="Copy Institution Code"
+                >
+                  {copiedCode ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

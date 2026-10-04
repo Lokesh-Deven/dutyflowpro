@@ -173,6 +173,14 @@ export function MyExaminationView() {
               >
                 Student
               </Badge>
+              {session.institutionCode && (
+                <Badge
+                  variant="outline"
+                  className="bg-purple-50 text-[#6342e8] border-purple-200 font-mono text-[10px] font-bold py-0 h-4"
+                >
+                  Code: {session.institutionCode}
+                </Badge>
+              )}
             </div>
             <p className="text-[11px] text-slate-500 font-medium truncate max-w-[200px] sm:max-w-xs">
               {session.institutionName || 'Examination Center'}

@@ -32,7 +32,7 @@ interface InvigilatorPortalContextType {
   setActiveDuty: (duty: InvigilatorDuty | null) => void;
   isOnline: boolean;
   refreshDuties: () => void;
-  login: (identifier: string, pin: string) => Promise<InvigilatorAuthResult>;
+  login: (institutionCode: string, identifier: string, pin: string) => Promise<InvigilatorAuthResult>;
   logout: () => void;
   changePin: (currentPin: string, newPin: string) => Promise<{ success: boolean; error?: string }>;
 }
@@ -63,13 +63,13 @@ export function InvigilatorPortalProvider({ children }: { children: ReactNode })
     };
   }, []);
 
-  // Sync session and duty records
+  // Sync session and duty records strictly within institution scope
   const syncSessionAndData = useCallback(() => {
     const cur = getInvigilatorSession();
     setSessionState(cur);
 
     if (cur?.invigilatorId) {
-      const allDuties = getInvigilatorDuties(cur.invigilatorId, cur.name);
+      const allDuties = getInvigilatorDuties(cur.invigilatorId, cur.name, cur.institutionId);
       setDuties(allDuties);
       // Auto-set active duty if none chosen and today's duties exist
       setActiveDuty((prev) => {
@@ -93,7 +93,7 @@ export function InvigilatorPortalProvider({ children }: { children: ReactNode })
     const handleAuthChange = () => syncSessionAndData();
     const handleAttendanceChange = () => {
       if (session?.invigilatorId) {
-        const updated = getInvigilatorDuties(session.invigilatorId, session.name);
+        const updated = getInvigilatorDuties(session.invigilatorId, session.name, session.institutionId);
         setDuties(updated);
       }
     };
@@ -105,13 +105,13 @@ export function InvigilatorPortalProvider({ children }: { children: ReactNode })
       window.removeEventListener('dutyflow:invigilator-auth-change', handleAuthChange);
       window.removeEventListener('dutyflow:attendance-updated', handleAttendanceChange);
     };
-  }, [syncSessionAndData, session?.invigilatorId, session?.name]);
+  }, [syncSessionAndData, session?.invigilatorId, session?.name, session?.institutionId]);
 
-  const login = useCallback(async (identifier: string, pin: string) => {
-    const res = await authenticateInvigilator(identifier, pin);
+  const login = useCallback(async (institutionCode: string, identifier: string, pin: string) => {
+    const res = await authenticateInvigilator(institutionCode, identifier, pin);
     if (res.success && res.session) {
       setSessionState(res.session);
-      const allDuties = getInvigilatorDuties(res.session.invigilatorId, res.session.name);
+      const allDuties = getInvigilatorDuties(res.session.invigilatorId, res.session.name, res.session.institutionId);
       setDuties(allDuties);
       const todayPending = allDuties.find((d) => d.isToday && !d.attendanceSubmitted);
       setActiveDuty(todayPending || allDuties[0] || null);
@@ -130,14 +130,14 @@ export function InvigilatorPortalProvider({ children }: { children: ReactNode })
     if (!session?.invigilatorId) {
       return { success: false, error: 'Invigilator not logged in.' };
     }
-    return changeInvigilatorPin(session.invigilatorId, currentPin, newPin);
-  }, [session?.invigilatorId]);
+    return changeInvigilatorPin(session.invigilatorId, currentPin, newPin, session.institutionId);
+  }, [session?.invigilatorId, session?.institutionId]);
 
   const refreshDuties = useCallback(() => {
     if (!session?.invigilatorId) return;
-    const allDuties = getInvigilatorDuties(session.invigilatorId, session.name);
+    const allDuties = getInvigilatorDuties(session.invigilatorId, session.name, session.institutionId);
     setDuties(allDuties);
-  }, [session?.invigilatorId, session?.name]);
+  }, [session?.invigilatorId, session?.name, session?.institutionId]);
 
   const todayDuties = duties.filter((d) => d.isToday);
   const historyDuties = duties.filter((d) => d.isPast || d.attendanceSubmitted);

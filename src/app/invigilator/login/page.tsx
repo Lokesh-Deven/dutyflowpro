@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useInvigilatorPortal } from '@/lib/invigilator-portal-context';
 import { InvigilatorLoginForm } from '@/components/invigilator-portal/invigilator-login-form';
@@ -30,7 +30,16 @@ export default function InvigilatorLoginPage() {
       {/* Soft vector ambient glow */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
       <div className="relative z-10 w-full">
-        <InvigilatorLoginForm />
+        <Suspense
+          fallback={
+            <div className="w-full max-w-[420px] mx-auto bg-white border border-slate-200 rounded-2xl shadow-xl p-8 flex flex-col items-center justify-center min-h-[300px]">
+              <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mb-3" />
+              <p className="text-xs text-slate-500 font-medium">Loading Invigilator Access...</p>
+            </div>
+          }
+        >
+          <InvigilatorLoginForm />
+        </Suspense>
       </div>
     </main>
   );

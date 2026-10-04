@@ -5,6 +5,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import { useRouter } from 'next/navigation';
 import { isUUID } from './storage-service';
+import { getOrCreateInstitutionCode, registerLocalInstitution, formatInstitutionCode } from './institution-service';
 
 export type SubscriptionStatus = 'Subscribed' | 'Unsubscribed' | 'Free Access';
 export type DownloadCategory = 'master_roster' | 'individual_profile' | 'daywise_profile';
@@ -22,7 +23,9 @@ export const QUOTA_LIMITS: Record<DownloadCategory, number> = {
 };
 
 export interface UserProfile {
-  id: string;
+  id: string; // Internal Institution ID (UUID)
+  institution_id: string; // Internal Institution ID (UUID)
+  institution_code: string; // 3-digit User-facing Institution Code (e.g. '001')
   email: string;
   institution_name: string;
   subscription_status: SubscriptionStatus;
@@ -58,6 +61,8 @@ interface AuthContextType {
 
 export const DEFAULT_GUEST_PROFILE: UserProfile = {
   id: 'guest-session',
+  institution_id: 'guest-session',
+  institution_code: '001',
   email: 'guest@dutyflow.in',
   institution_name: 'Guest Profile',
   subscription_status: 'Free Access',
@@ -109,9 +114,13 @@ export const createProfileFromUser = (currentUser: User, dbData?: any): UserProf
     || 'Free Access';
 
   const downloadCount = dbData?.download_count ?? 0;
+  const institutionCode = formatInstitutionCode(dbData?.institution_code || meta.institution_code || '001');
+  const institutionId = dbData?.institution_id || currentUser.id;
 
   return {
     id: currentUser.id,
+    institution_id: institutionId,
+    institution_code: institutionCode,
     email: dbData?.email || currentUser.email || '',
     institution_name: institutionName,
     subscription_status: subscriptionStatus,
@@ -167,26 +176,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, email, institution_name, subscription_status, subscription_start_date, subscription_end_date, download_count, signatory_name, signatory_designation')
+        .select('*')
         .eq('id', currentUser.id)
         .maybeSingle();
 
       if (error) {
         console.error('Error fetching profile from database:', error.message || error);
-        // Retain user metadata profile even if remote query had issue
         setProfile(createProfileFromUser(currentUser));
         return;
       }
 
       if (data) {
-        setProfile(createProfileFromUser(currentUser, data));
+        let code = data.institution_code;
+        if (!code) {
+          code = await getOrCreateInstitutionCode(currentUser.email || '', currentUser.id, data.institution_name);
+          // Try to update DB row
+          try {
+            await supabase.from('profiles').update({ institution_code: code, institution_id: currentUser.id }).eq('id', currentUser.id);
+          } catch (_) {}
+        }
+        registerLocalInstitution(code, currentUser.id, currentUser.email || '', data.institution_name || 'Institution');
+        setProfile(createProfileFromUser(currentUser, { ...data, institution_code: code, institution_id: currentUser.id }));
       } else {
-        // First-time user without profile row: construct and persist sanitized row
-        const newProfile = createProfileFromUser(currentUser);
+        // First-time user without profile row: construct and allocate code
+        const code = await getOrCreateInstitutionCode(currentUser.email || '', currentUser.id);
+        const newProfile = createProfileFromUser(currentUser, { institution_code: code, institution_id: currentUser.id });
         setProfile(newProfile);
+        registerLocalInstitution(code, currentUser.id, currentUser.email || '', newProfile.institution_name);
 
         const insertRow = {
           id: currentUser.id,
+          institution_id: currentUser.id,
+          institution_code: code,
           email: currentUser.email || '',
           institution_name: newProfile.institution_name,
           subscription_status: newProfile.subscription_status,
@@ -196,7 +217,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           signatory_name: newProfile.signatory_name,
           signatory_designation: newProfile.signatory_designation,
         };
-        await supabase.from('profiles').upsert(insertRow);
+        try {
+          await supabase.from('profiles').upsert(insertRow);
+        } catch (_) {}
       }
     } catch (err: any) {
       console.error('Error in fetchProfile:', err?.message || err);
@@ -382,8 +405,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const now = new Date();
         const endDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
+        // Automatically allocate unique 3-digit Institution Code (or reinstate if previously registered)
+        const assignedCode = await getOrCreateInstitutionCode(trimmedEmail, data.user.id, trimmedInst);
+        registerLocalInstitution(assignedCode, data.user.id, trimmedEmail, trimmedInst);
+
         const newProfileData: UserProfile = {
           id: data.user.id,
+          institution_id: data.user.id,
+          institution_code: assignedCode,
           email: trimmedEmail,
           institution_name: trimmedInst,
           subscription_status: 'Free Access',
@@ -403,6 +432,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setProfile(newProfileData);
           const insertRow = {
             id: data.user.id,
+            institution_id: data.user.id,
+            institution_code: assignedCode,
             email: trimmedEmail,
             institution_name: trimmedInst,
             subscription_status: 'Free Access',
@@ -410,7 +441,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             subscription_end_date: endDate.toISOString(),
             download_count: 0,
           };
-          await supabase.from('profiles').upsert(insertRow);
+          try {
+            await supabase.from('profiles').upsert(insertRow);
+          } catch (_) {}
           return { error: null, needsEmailConfirmation: false };
         } else {
           return { error: null, needsEmailConfirmation: true };

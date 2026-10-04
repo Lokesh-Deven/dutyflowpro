@@ -11,7 +11,9 @@ export interface InvigilatorSession {
   mobile: string;
   designation?: string;
   department?: string;
-  institutionName?: string;
+  institutionCode: string; // User-facing 3-digit Code (e.g. '001')
+  institutionId: string; // Internal Institution ID (UUID)
+  institutionName: string;
   loginAt: string;
   role: 'invigilator';
 }

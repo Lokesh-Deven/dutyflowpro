@@ -20,7 +20,7 @@ interface StudentPortalContextType {
   examinations: StudentExaminationDetail[];
   isLoading: boolean;
   refreshExaminations: () => void;
-  login: (registerNumber: string, pin: string) => Promise<StudentAuthResult>;
+  login: (institutionCode: string, registerNumber: string, pin: string) => Promise<StudentAuthResult>;
   logout: () => void;
   changePin: (currentPin: string, newPin: string) => Promise<{ success: boolean; error?: string }>;
 }
@@ -37,8 +37,8 @@ export function StudentPortalProvider({ children }: { children: ReactNode }) {
     const cur = getStudentSession();
     setSessionState(cur);
 
-    if (cur?.registerNumber) {
-      const exams = getStudentExaminations(cur.registerNumber);
+    if (cur?.registerNumber && cur?.institutionId) {
+      const exams = getStudentExaminations(cur.registerNumber, cur.institutionId);
       setExaminations(exams);
     } else {
       setExaminations([]);
@@ -62,13 +62,13 @@ export function StudentPortalProvider({ children }: { children: ReactNode }) {
     };
   }, [syncSessionAndData]);
 
-  const login = useCallback(async (registerNumber: string, pin: string): Promise<StudentAuthResult> => {
+  const login = useCallback(async (institutionCode: string, registerNumber: string, pin: string): Promise<StudentAuthResult> => {
     setIsLoading(true);
     try {
-      const res = await authenticateStudent(registerNumber, pin);
+      const res = await authenticateStudent(institutionCode, registerNumber, pin);
       if (res.success && res.session) {
         setSessionState(res.session);
-        const exams = getStudentExaminations(res.session.registerNumber);
+        const exams = getStudentExaminations(res.session.registerNumber, res.session.institutionId);
         setExaminations(exams);
       }
       return res;
@@ -87,14 +87,14 @@ export function StudentPortalProvider({ children }: { children: ReactNode }) {
     if (!session?.registerNumber) {
       return { success: false, error: 'Student not authenticated.' };
     }
-    return changeStudentPin(session.registerNumber, currentPin, newPin);
-  }, [session?.registerNumber]);
+    return changeStudentPin(session.registerNumber, currentPin, newPin, session.institutionCode);
+  }, [session?.registerNumber, session?.institutionCode]);
 
   const refreshExaminations = useCallback(() => {
-    if (!session?.registerNumber) return;
-    const exams = getStudentExaminations(session.registerNumber);
+    if (!session?.registerNumber || !session?.institutionId) return;
+    const exams = getStudentExaminations(session.registerNumber, session.institutionId);
     setExaminations(exams);
-  }, [session?.registerNumber]);
+  }, [session?.registerNumber, session?.institutionId]);
 
   return (
     <StudentPortalContext.Provider

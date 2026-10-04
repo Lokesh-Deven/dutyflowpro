@@ -9,6 +9,7 @@ import {
 } from './invigilator-portal-types';
 import { SeatingAllocationRecord } from './student-seating-types';
 import { DirectoryInvigilator, Invigilator, SavedAllotment } from './types';
+import { resolveInstitutionByCode, formatInstitutionCode } from './institution-service';
 
 const SESSION_KEY = 'dutyflow_active_invigilator_session';
 const PINS_KEY = 'dutyflow_invigilator_pins';
@@ -53,33 +54,69 @@ function saveStoredPins(pins: Record<string, InvigilatorPinRecord>) {
 }
 
 /**
- * Finds invigilator record across Directory, Allotments and fallback
+ * Finds invigilator record strictly within the specified institution.
+ * Never searches or leaks across other institutions.
  */
 export function findInvigilatorByIdentifier(
-  identifier: string
+  identifier: string,
+  targetInstitutionId?: string
 ): { invigilator: DirectoryInvigilator | Invigilator; source: string } | null {
   if (!identifier) return null;
   const cleanId = identifier.trim().toLowerCase();
+  const institutionId = targetInstitutionId || 'guest-session';
 
-  // 1. Search Directory from localStorage
   if (typeof window !== 'undefined') {
     try {
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (!key) continue;
-        if (key.includes('invigilator') && (key.includes('directory') || key.includes('invigilators'))) {
-          const raw = localStorage.getItem(key);
-          if (raw) {
-            const list = JSON.parse(raw);
-            if (Array.isArray(list)) {
-              const found = list.find((inv: any) => {
-                const em = (inv.email || '').trim().toLowerCase();
-                const mob = (inv.mobile || '').trim().replace(/[^0-9]/g, '');
-                const cleanMob = cleanId.replace(/[^0-9]/g, '');
-                return em === cleanId || (mob && cleanMob && mob.endsWith(cleanMob));
-              });
-              if (found) {
-                return { invigilator: found, source: 'directory' };
+      // 1. Check directory strictly for target institution
+      const keysToCheck: string[] = [
+        `dutyflow_${institutionId}_invigilator_directory`,
+      ];
+      if (institutionId === 'guest-session') {
+        keysToCheck.push('dutyflow_guest_invigilator_directory');
+      }
+
+      for (const key of keysToCheck) {
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const list = JSON.parse(raw);
+          if (Array.isArray(list)) {
+            const found = list.find((inv: any) => {
+              const em = (inv.email || '').trim().toLowerCase();
+              const mob = (inv.mobile || '').trim().replace(/[^0-9]/g, '');
+              const cleanMob = cleanId.replace(/[^0-9]/g, '');
+              return em === cleanId || (mob && cleanMob && mob.endsWith(cleanMob));
+            });
+            if (found) {
+              return { invigilator: found, source: 'directory' };
+            }
+          }
+        }
+      }
+
+      // 2. Check saved allotments strictly for target institution
+      const allotKeysToCheck: string[] = [
+        `dutyflow_${institutionId}_saved_allotments`,
+      ];
+      if (institutionId === 'guest-session') {
+        allotKeysToCheck.push('dutyflow_guest_saved_allotments');
+      }
+
+      for (const k of allotKeysToCheck) {
+        const raw = localStorage.getItem(k);
+        if (raw) {
+          const allotments: SavedAllotment[] = JSON.parse(raw);
+          if (Array.isArray(allotments)) {
+            for (const allot of allotments) {
+              if (Array.isArray(allot.invigilators)) {
+                const found = allot.invigilators.find((inv: any) => {
+                  const em = (inv.email || '').trim().toLowerCase();
+                  const mob = (inv.mobile || '').trim().replace(/[^0-9]/g, '');
+                  const cleanMob = cleanId.replace(/[^0-9]/g, '');
+                  return em === cleanId || (mob && cleanMob && mob.endsWith(cleanMob));
+                });
+                if (found) {
+                  return { invigilator: found, source: 'allotment' };
+                }
               }
             }
           }
@@ -88,13 +125,14 @@ export function findInvigilatorByIdentifier(
     } catch (_) {}
   }
 
-  // 2. Sample Demo Fallback for Mr. Kumar
+  // 3. Sample Demo Fallback for Mr. Kumar (eligible only for default guest or institution 001)
   if (
-    cleanId.includes('kumar') ||
-    cleanId === '9876543210' ||
-    cleanId === 'kumar@dutyflow.in' ||
-    cleanId === 'demo' ||
-    cleanId === 'invigilator'
+    institutionId === 'guest-session' &&
+    (cleanId.includes('kumar') ||
+      cleanId === '9876543210' ||
+      cleanId === 'kumar@dutyflow.in' ||
+      cleanId === 'demo' ||
+      cleanId === 'invigilator')
   ) {
     return {
       invigilator: {
@@ -112,15 +150,21 @@ export function findInvigilatorByIdentifier(
 }
 
 /**
- * Authenticates an invigilator using Email / Mobile Number and PIN
+ * Authenticates an invigilator using Institution Code, Email/Mobile Number, and PIN.
+ * Resolves institution first, guaranteeing complete tenant isolation.
  */
 export async function authenticateInvigilator(
+  institutionCode: string,
   identifier: string,
   pin: string
 ): Promise<InvigilatorAuthResult> {
+  const rawCode = (institutionCode || '').trim();
   const cleanId = (identifier || '').trim();
   const cleanPin = (pin || '').trim();
 
+  if (!rawCode) {
+    return { success: false, error: 'Please enter your 3-digit Institution Code.' };
+  }
   if (!cleanId) {
     return { success: false, error: 'Please enter your Email or Mobile Number.' };
   }
@@ -128,17 +172,32 @@ export async function authenticateInvigilator(
     return { success: false, error: 'Please enter your password / PIN.' };
   }
 
-  const record = findInvigilatorByIdentifier(cleanId);
+  // 1. Resolve Institution by Code first
+  const inst = await resolveInstitutionByCode(rawCode);
+  if (!inst) {
+    return {
+      success: false,
+      error: `Institution Code "${rawCode}" not found. Please verify the 3-digit code provided by your institution.`,
+    };
+  }
+
+  // 2. Locate Invigilator STRICTLY within that institution's ecosystem
+  const record = findInvigilatorByIdentifier(cleanId, inst.institutionId);
   if (!record) {
     return {
       success: false,
-      error: `No invigilator account found matching "${cleanId}". Please check your email or mobile number.`,
+      error: `No invigilator account found matching "${cleanId}" in Institution ${inst.institutionCode} (${inst.institutionName}).`,
     };
   }
 
   const { invigilator } = record;
   const storedPins = getStoredPins();
-  const userPinRecord = storedPins[invigilator.id] || storedPins[cleanId.toLowerCase()];
+  const scopedPinKey = `${inst.institutionId}:${invigilator.id}`;
+  const userPinRecord =
+    storedPins[scopedPinKey] ||
+    storedPins[invigilator.id] ||
+    storedPins[`${inst.institutionId}:${cleanId.toLowerCase()}`] ||
+    storedPins[cleanId.toLowerCase()];
 
   let isValid = false;
   let isFirstTime = false;
@@ -173,27 +232,15 @@ export async function authenticateInvigilator(
     };
   }
 
-  // Get college name from profile
-  let instName = 'College Examination Center';
-  if (typeof window !== 'undefined') {
-    try {
-      const pRaw = localStorage.getItem('dutyflow_guest_profile');
-      if (pRaw) {
-        const p = JSON.parse(pRaw);
-        if (p.institution_name && p.institution_name !== 'Guest Profile') {
-          instName = p.institution_name;
-        }
-      }
-    } catch (_) {}
-  }
-
   const session: InvigilatorSession = {
     invigilatorId: invigilator.id,
     name: invigilator.name,
     email: invigilator.email || `${cleanId}@dutyflow.in`,
     mobile: invigilator.mobile || cleanId,
     designation: invigilator.designation || 'Faculty Invigilator',
-    institutionName: instName,
+    institutionCode: inst.institutionCode,
+    institutionId: inst.institutionId,
+    institutionName: inst.institutionName,
     loginAt: new Date().toISOString(),
     role: 'invigilator',
   };
@@ -208,20 +255,25 @@ export async function authenticateInvigilator(
 }
 
 /**
- * Changes an invigilator's PIN
+ * Changes an invigilator's PIN (scoped to their institution)
  */
 export async function changeInvigilatorPin(
   invigilatorId: string,
   currentPin: string,
-  newPin: string
+  newPin: string,
+  targetInstitutionId?: string
 ): Promise<{ success: boolean; error?: string }> {
   if (!invigilatorId) return { success: false, error: 'Invigilator session missing.' };
   if (!newPin || newPin.trim().length < 4) {
     return { success: false, error: 'New PIN must be at least 4 characters long.' };
   }
 
+  const activeSession = getInvigilatorSession();
+  const instId = targetInstitutionId || activeSession?.institutionId || 'guest-session';
+  const scopedPinKey = `${instId}:${invigilatorId}`;
+
   const storedPins = getStoredPins();
-  const existing = storedPins[invigilatorId];
+  const existing = storedPins[scopedPinKey] || storedPins[invigilatorId];
 
   if (existing) {
     const oldHash = await hashPin(currentPin.trim(), existing.salt);
@@ -233,7 +285,7 @@ export async function changeInvigilatorPin(
   const salt = generateSalt();
   const pinHash = await hashPin(newPin.trim(), salt);
 
-  storedPins[invigilatorId] = {
+  storedPins[scopedPinKey] = {
     invigilatorId,
     identifier: invigilatorId,
     pinHash,
@@ -324,11 +376,13 @@ function getSessionPeriod(startTime: string): 'Morning' | 'Afternoon' | 'Evening
 }
 
 /**
- * Retrieves all duties for an invigilator
+ * Retrieves all duties for an invigilator strictly within their institution.
+ * Guarantees zero cross-institution access.
  */
 export function getInvigilatorDuties(
   invigilatorId: string,
-  invigilatorName?: string
+  invigilatorName?: string,
+  targetInstitutionId?: string
 ): InvigilatorDuty[] {
   if (typeof window === 'undefined' || !invigilatorId) return [];
 
@@ -340,29 +394,36 @@ export function getInvigilatorDuties(
   const cleanInvName = (invigilatorName || '').toLowerCase().trim();
   const targetId = invigilatorId.toLowerCase().trim();
 
-  // 1. Gather all SavedAllotments & SeatingAllocations
+  // Resolve institution scope
+  const activeSession = getInvigilatorSession();
+  const institutionId = targetInstitutionId || activeSession?.institutionId || 'guest-session';
+  const institutionCode = activeSession?.institutionCode || '001';
+
+  // 1. Gather SavedAllotments & SeatingAllocations STRICTLY for this institution
   const savedAllotments: SavedAllotment[] = [];
   const seatingAllocations: SeatingAllocationRecord[] = [];
 
   try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (!key) continue;
+    const allotKeysToCheck = [`dutyflow_${institutionId}_saved_allotments`];
+    const allocKeysToCheck = [`dutyflow_${institutionId}_seating_allocations`];
+    if (institutionId === 'guest-session') {
+      allotKeysToCheck.push('dutyflow_guest_saved_allotments');
+      allocKeysToCheck.push('dutyflow_guest_seating_allocations');
+    }
 
-      if (key.includes('saved_allotments') || key.includes('dutyflow_saved')) {
-        const val = localStorage.getItem(key);
-        if (val) {
-          const p = JSON.parse(val);
-          if (Array.isArray(p)) savedAllotments.push(...p);
-        }
+    for (const key of allotKeysToCheck) {
+      const val = localStorage.getItem(key);
+      if (val) {
+        const p = JSON.parse(val);
+        if (Array.isArray(p)) savedAllotments.push(...p);
       }
+    }
 
-      if (key.includes('allocations') && key.includes('dutyflow') && !key.includes('invigilator')) {
-        const val = localStorage.getItem(key);
-        if (val) {
-          const p = JSON.parse(val);
-          if (Array.isArray(p)) seatingAllocations.push(...p);
-        }
+    for (const key of allocKeysToCheck) {
+      const val = localStorage.getItem(key);
+      if (val) {
+        const p = JSON.parse(val);
+        if (Array.isArray(p)) seatingAllocations.push(...p);
       }
     }
   } catch (_) {}
@@ -447,8 +508,9 @@ export function getInvigilatorDuties(
     }
   }
 
-  // 3. Demo / Sample Duties for Mr. Kumar (matches exact prompt requirements)
-  if (duties.length === 0 || targetId.includes('kumar') || cleanInvName.includes('kumar')) {
+  // 3. Demo / Sample Duties for Mr. Kumar (active only for default guest or institution 001)
+  const isDemoEligible = institutionId === 'guest-session' || institutionCode === '001';
+  if (isDemoEligible && (duties.length === 0 || targetId.includes('kumar') || cleanInvName.includes('kumar'))) {
     // Duty 1: English, Room 108, 10:00 AM – 11:30 AM, 32 Students
     const duty1Id = 'demo-duty-108-english';
     const sub1 = subMap.get(duty1Id);
@@ -589,45 +651,52 @@ export function getInvigilatorDuties(
 }
 
 /**
- * Retrieves the complete student list for a room duty.
+ * Retrieves the complete student list for a room duty strictly within the institution.
  * Directly links with SeatingAllocationRecord room plans.
  */
-export function getRoomStudentsForDuty(duty: InvigilatorDuty): StudentAttendanceRecord[] {
+export function getRoomStudentsForDuty(
+  duty: InvigilatorDuty,
+  targetInstitutionId?: string
+): StudentAttendanceRecord[] {
   if (typeof window === 'undefined') return [];
 
   const targetRoom = String(duty.roomNo).trim();
   const students: StudentAttendanceRecord[] = [];
+  const activeSession = getInvigilatorSession();
+  const institutionId = targetInstitutionId || activeSession?.institutionId || 'guest-session';
+  const institutionCode = activeSession?.institutionCode || '001';
 
-  // 1. Scan existing seating allocations for matching roomNo
+  // 1. Scan existing seating allocations STRICTLY for target institution
   try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (!key) continue;
-      if (key.includes('allocations') && key.includes('dutyflow') && !key.includes('invigilator')) {
-        const val = localStorage.getItem(key);
-        if (val) {
-          const list = JSON.parse(val);
-          if (Array.isArray(list)) {
-            for (const alloc of list) {
-              if (duty.examinationId && alloc.examination?.examId && alloc.examination.examId !== duty.examinationId) {
-                // Skip if distinct exam
-                continue;
-              }
-              for (const room of alloc.roomPlans || []) {
-                if (String(room.roomNo).trim() === targetRoom) {
-                  for (const bench of room.benches || []) {
-                    for (const seat of bench.seats || []) {
-                      if (seat && seat.student && seat.student.rollNo) {
-                        const pos = seat.position === 'SIDE_A' ? 'Left' : seat.position === 'SIDE_B' ? 'Right' : seat.position === 'CENTER' ? 'Center' : 'Unassigned';
-                        students.push({
-                          registerNumber: seat.student.rollNo,
-                          studentName: seat.student.name || 'Candidate',
-                          section: seat.student.section || 'A',
-                          benchNumber: `B${bench.benchNumber}`,
-                          position: pos,
-                          status: 'Not Marked',
-                        });
-                      }
+    const keysToCheck = [`dutyflow_${institutionId}_seating_allocations`];
+    if (institutionId === 'guest-session') {
+      keysToCheck.push('dutyflow_guest_seating_allocations');
+    }
+
+    for (const key of keysToCheck) {
+      const val = localStorage.getItem(key);
+      if (val) {
+        const list = JSON.parse(val);
+        if (Array.isArray(list)) {
+          for (const alloc of list) {
+            if (duty.examinationId && alloc.examination?.examId && alloc.examination.examId !== duty.examinationId) {
+              // Skip if distinct exam
+              continue;
+            }
+            for (const room of alloc.roomPlans || []) {
+              if (String(room.roomNo).trim() === targetRoom) {
+                for (const bench of room.benches || []) {
+                  for (const seat of bench.seats || []) {
+                    if (seat && seat.student && seat.student.rollNo) {
+                      const pos = seat.position === 'SIDE_A' ? 'Left' : seat.position === 'SIDE_B' ? 'Right' : seat.position === 'CENTER' ? 'Center' : 'Unassigned';
+                      students.push({
+                        registerNumber: seat.student.rollNo,
+                        studentName: seat.student.name || 'Candidate',
+                        section: seat.student.section || 'A',
+                        benchNumber: `B${bench.benchNumber}`,
+                        position: pos,
+                        status: 'Not Marked',
+                      });
                     }
                   }
                 }
@@ -650,7 +719,12 @@ export function getRoomStudentsForDuty(duty: InvigilatorDuty): StudentAttendance
     });
   }
 
-  // 2. Generate Realistic Candidate Roster matching prompt requirements
+  // 2. Generate Realistic Candidate Roster matching prompt requirements (only for institution 001 or guest-session)
+  const isDemoEligible = institutionId === 'guest-session' || institutionCode === '001';
+  if (!isDemoEligible) {
+    return students;
+  }
+
   // E.g. Room 108 has 32 students, including Rahul Kumar (123456, Section 2A, Bench B12, Left)
   if (targetRoom === '108') {
     const list: StudentAttendanceRecord[] = [
