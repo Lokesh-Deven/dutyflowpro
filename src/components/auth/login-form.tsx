@@ -78,7 +78,7 @@ export function LoginForm() {
           </div>
         </div>
         <CardTitle className="text-2xl font-headline font-bold text-slate-900 dark:text-white">Welcome to DutyFlow</CardTitle>
-        <CardDescription className="text-xs text-slate-500">Enter your institutional credentials to log in.</CardDescription>
+        <CardDescription className="text-xs font-semibold text-slate-500 tracking-wide uppercase">Your Smart Exam Partner</CardDescription>
       </CardHeader>
       <form onSubmit={handleLogin}>
         <CardContent className="grid gap-3.5 px-6">

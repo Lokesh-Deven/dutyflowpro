@@ -4,8 +4,8 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/lib/auth-context';
 
 export const metadata: Metadata = {
-  title: 'DutyFlow - Exam Duty Allocation Software',
-  description: 'DutyFlow - Exam Duty Allocation Software | Streamlined Invigilation Allotment',
+  title: 'DutyFlow - Your Smart Exam Partner',
+  description: 'DutyFlow - Your Smart Exam Partner | Automated Examination Duty Allocation & Seating Software',
   icons: {
     icon: [
       { url: '/images/favicon.png', type: 'image/png' },

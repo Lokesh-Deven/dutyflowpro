@@ -235,10 +235,13 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
           <Link
             href="/dashboard/examinations"
             onClick={handleNavClick}
-            className="flex items-center group select-none px-1"
+            className="flex flex-col group select-none px-1"
           >
             <span className="text-2xl font-black font-headline tracking-tight text-white leading-none">
               Duty<span className="text-sky-400">Flow</span>
+            </span>
+            <span className="text-[10px] font-semibold text-slate-400 tracking-wider uppercase mt-1">
+              Your Smart Exam Partner
             </span>
           </Link>
         )}

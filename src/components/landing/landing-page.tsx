@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
 import { Loader2, Eye, EyeOff, Building2, Mail, Lock, CheckCircle2, ArrowLeft, KeyRound, HelpCircle, GraduationCap, ArrowRight, UserCheck } from 'lucide-react';
+import { RegistrationSuccessDialog } from '@/components/auth/registration-success-dialog';
 
 export function LandingPage() {
   const router = useRouter();
@@ -44,6 +45,11 @@ export function LandingPage() {
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
   const [showSignupPassword, setShowSignupPassword] = useState(false);
+
+  // Registration success popup and banner
+  const [showSignupSuccessPopup, setShowSignupSuccessPopup] = useState(false);
+  const [signupSuccessEmail, setSignupSuccessEmail] = useState('');
+  const [signupSuccessBanner, setSignupSuccessBanner] = useState(false);
 
   // Loading & error states
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -111,7 +117,7 @@ export function LandingPage() {
     setIsSubmitting(true);
 
     try {
-      const { error, needsEmailConfirmation } = await signUp(institutionName, signupEmail, signupPassword);
+      const { error } = await signUp(institutionName, signupEmail, signupPassword);
 
       if (error) {
         setErrorMessage(error.message || "Sign up failed. Please check your information.");
@@ -121,20 +127,16 @@ export function LandingPage() {
           description: error.message || "Could not complete account registration.",
         });
       } else {
-        if (needsEmailConfirmation) {
-          toast({
-            title: "Account Created!",
-            description: "Please check your email to confirm your account, or sign in now.",
-          });
-          setAuthMode('login');
-          setLoginEmail(signupEmail);
-        } else {
-          toast({
-            title: "Account Created Successfully!",
-            description: `Welcome ${institutionName}! Taking you to New Allotment...`,
-          });
-          router.push('/dashboard/examinations');
-        }
+        setSignupSuccessEmail(signupEmail);
+        setShowSignupSuccessPopup(true);
+        setSignupSuccessBanner(true);
+        setLoginEmail(signupEmail);
+        setAuthMode('login');
+        setErrorMessage(null);
+        toast({
+          title: "Registration Successful",
+          description: "Please check your email to verify your email address.",
+        });
       }
     } catch (err: any) {
       setErrorMessage(err?.message || "An error occurred during registration.");
@@ -188,9 +190,9 @@ export function LandingPage() {
         {/* ========================================================================= */}
         {/* LEFT COLUMN: Title & Vector Illustration */}
         {/* ========================================================================= */}
-        <div className="w-full md:w-1/2 flex flex-col items-center justify-center space-y-5 px-2">
+        <div className="w-full md:w-1/2 flex flex-col items-center justify-center space-y-4 px-2">
           {/* Main Title */}
-          <div className="relative inline-flex flex-col items-center select-none">
+          <div className="relative inline-flex flex-col items-center select-none text-center">
             {/* Soft vector ambient glow echoing the illustration fluid background */}
             <div className="absolute -inset-x-8 -inset-y-3 bg-gradient-to-r from-[#CADDFE]/50 via-[#DBEAFE]/40 to-[#CADDFE]/50 rounded-3xl blur-xl -z-10 pointer-events-none" />
 
@@ -200,6 +202,9 @@ export function LandingPage() {
                 Flow
               </span>
             </h1>
+            <p className="mt-2 text-sm sm:text-base font-bold tracking-tight text-[#1E2A5E]/85">
+              Your Smart Exam Partner
+            </p>
           </div>
 
           {/* Vector Illustration */}
@@ -275,6 +280,28 @@ export function LandingPage() {
                   >
                     Sign Up
                   </button>
+                </div>
+              </div>
+            )}
+
+            {/* Registration Success Banner on Login Form */}
+            {signupSuccessBanner && authMode === 'login' && (
+              <div className="mb-4 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 text-xs space-y-2 animate-in fade-in">
+                <div className="flex items-center gap-1.5 font-bold text-emerald-800 text-sm">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                  Registration Successful
+                </div>
+                <p className="leading-relaxed text-emerald-900 font-semibold">
+                  Please check your email and click the confirmation link to verify your email address. You must confirm your email before you can sign in.
+                </p>
+                <div className="pt-2 border-t border-emerald-200/80 text-[11.5px] text-emerald-800 flex flex-wrap items-center gap-1.5">
+                  <span className="font-medium">Look for email:</span>
+                  <span className="font-mono bg-white px-2 py-0.5 rounded border border-emerald-300 font-bold text-emerald-950">
+                    Confirm your email address
+                  </span>
+                  {signupSuccessEmail && (
+                    <span className="text-emerald-700">sent to <strong>{signupSuccessEmail}</strong></span>
+                  )}
                 </div>
               </div>
             )}
@@ -671,6 +698,17 @@ export function LandingPage() {
         </div>
 
       </div>
+
+      {/* Information Popup on Successful Registration */}
+      <RegistrationSuccessDialog
+        open={showSignupSuccessPopup}
+        onOpenChange={setShowSignupSuccessPopup}
+        email={signupSuccessEmail}
+        onConfirm={() => {
+          setAuthMode('login');
+          setErrorMessage(null);
+        }}
+      />
     </main>
   );
 }

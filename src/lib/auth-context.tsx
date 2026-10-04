@@ -368,10 +368,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const trimmedInst = institutionName.trim();
       const trimmedEmail = email.trim();
 
+      const redirectUrl = typeof window !== 'undefined'
+        ? `${window.location.origin}/dashboard/examinations`
+        : undefined;
+
       const { data, error } = await supabase.auth.signUp({
         email: trimmedEmail,
         password,
         options: {
+          emailRedirectTo: redirectUrl,
           data: {
             institution_name: trimmedInst,
           },

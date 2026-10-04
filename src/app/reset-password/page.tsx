@@ -84,13 +84,16 @@ export default function ResetPasswordPage() {
     <div className="min-h-screen bg-[#F0F4FF] flex flex-col justify-between p-4 sm:p-6 lg:p-8">
       {/* Top Brand Header */}
       <div className="flex items-center justify-between max-w-6xl w-full mx-auto py-2">
-        <Link href="/" className="inline-flex items-center gap-2">
-          <h1 className="font-headline text-2xl font-black tracking-tight">
+        <Link href="/" className="inline-flex flex-col">
+          <h1 className="font-headline text-2xl font-black tracking-tight leading-none">
             <span className="text-[#1E2A5E]">Duty</span>
             <span className="bg-gradient-to-br from-[#1E40AF] via-[#3B82F6] to-[#60A5FA] bg-clip-text text-transparent">
               Flow
             </span>
           </h1>
+          <span className="text-[10px] font-semibold text-slate-500 tracking-wider uppercase mt-1">
+            Your Smart Exam Partner
+          </span>
         </Link>
 
         <Link
