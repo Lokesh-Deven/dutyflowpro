@@ -58,6 +58,7 @@ export const studentSeatingSubmenu = [
 ];
 
 export const navItems = [
+  { href: '/dashboard/examination-timetable', label: 'Examination Timetable', icon: CalendarClock },
   { href: '/dashboard/examinations', label: 'New Allotment', icon: PlusSquare },
   { href: '/dashboard/saved', label: 'Saved Allotments', icon: Bookmark },
   { href: '/dashboard/room-allocations', label: 'Room Allocations', icon: DoorOpen },
@@ -68,7 +69,6 @@ export const navItems = [
   { href: '/dashboard/instructions', label: 'Add Instructions', icon: ListChecks },
   { href: '/dashboard/signatory', label: 'Add Signatory', icon: Signature },
   { href: '/dashboard/directory', label: 'Invigilator Directory', icon: BookUser },
-  { href: '/dashboard/examination-timetable', label: 'Examination Timetable', icon: CalendarClock },
   { href: '/dashboard/templates', label: 'Download Templates', icon: FileSpreadsheet },
 ];
 
@@ -96,9 +96,7 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
 
   const userRole = isGuest
     ? 'Guest'
-    : profile?.subscription_status === 'Subscribed'
-      ? 'Pro Member'
-      : 'Free Access';
+    : 'Institution Account';
 
   const singleInitial = (institutionName.trim().charAt(0) || user?.email?.trim().charAt(0) || "U").toUpperCase();
 

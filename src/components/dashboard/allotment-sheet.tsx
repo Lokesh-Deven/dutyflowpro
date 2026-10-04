@@ -36,7 +36,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { SubscriptionDialog } from '@/components/dashboard/subscription-dialog';
 
 type AllotmentSheetProps = {
   invigilators: Invigilator[];
@@ -55,7 +54,6 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
   const [isSaveAlertOpen, setIsSaveAlertOpen] = useState(false);
   const [isDuplicateAlertOpen, setIsDuplicateAlertOpen] = useState(false);
   const [duplicateTarget, setDuplicateTarget] = useState<SavedAllotment | null>(null);
-  const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false);
 
   // Table horizontal scrolling & floating navigator state
   const tableContainerRef = useRef<HTMLDivElement>(null);
@@ -314,11 +312,6 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
   };
 
   const handleDownload = async () => {
-    const check = canDownload('master_roster');
-    if (!check.allowed) {
-      setIsSubscriptionDialogOpen(true);
-      return;
-    }
 
     recordCategoryDownload('master_roster');
     toast({
@@ -1194,12 +1187,6 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
           </Button>
         </CardFooter>
       </Card>
-
-      <SubscriptionDialog
-        open={isSubscriptionDialogOpen}
-        onOpenChange={setIsSubscriptionDialogOpen}
-        category="master_roster"
-      />
     </TooltipProvider>
   );
 }

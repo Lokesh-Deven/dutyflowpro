@@ -258,9 +258,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [fetchProfile]);
 
-  const isSubscribed = useMemo(() => profile?.subscription_status === 'Subscribed', [profile?.subscription_status]);
-  const isUnsubscribed = useMemo(() => profile?.subscription_status === 'Unsubscribed', [profile?.subscription_status]);
-  const isFreeAccess = useMemo(() => !profile || profile.subscription_status === 'Free Access', [profile?.subscription_status]);
+  // Subscription plans temporarily suspended — full unrestricted access granted to all users
+  const isSubscribed = true;
+  const isUnsubscribed = false;
+  const isFreeAccess = false;
 
   const quota: DownloadQuota = useMemo(() => ({
     master_roster: profile?.master_roster_downloads ?? 0,
@@ -269,25 +270,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }), [profile?.master_roster_downloads, profile?.individual_profile_downloads, profile?.daywise_profile_downloads]);
 
   const canDownload = useCallback((category: DownloadCategory) => {
-    // If unsubscribed, permission denied
-    if (profile?.subscription_status === 'Unsubscribed') {
-      return { allowed: false, remaining: 0, current: quota[category] || 0, max: QUOTA_LIMITS[category] };
-    }
-    // If subscribed, unlimited access
-    if (profile?.subscription_status === 'Subscribed') {
-      return { allowed: true, remaining: 9999, current: quota[category] || 0, max: 9999 };
-    }
-    // Free Access tier (limited to 3 each)
-    const current = quota[category] || 0;
-    const max = QUOTA_LIMITS[category];
-    const remaining = Math.max(0, max - current);
+    // Unrestricted downloads while subscription plans are suspended
     return {
-      allowed: current < max,
-      remaining,
-      current,
-      max,
+      allowed: true,
+      remaining: 9999,
+      current: quota[category] || 0,
+      max: 9999,
     };
-  }, [profile?.subscription_status, quota]);
+  }, [quota]);
 
   const recordCategoryDownload = async (category: DownloadCategory, count: number = 1) => {
     const incrementAmount = Math.max(1, count);

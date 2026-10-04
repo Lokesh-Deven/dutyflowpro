@@ -56,16 +56,6 @@ export function ProfileView() {
   // Strictly single letter initial (first letter of institution name)
   const singleInitial = (institutionName.trim().charAt(0) || email.trim().charAt(0) || "U").toUpperCase();
 
-  const subscriptionStatus = profile?.subscription_status || "Free Access";
-
-  const startDateFormatted = profile?.subscription_start_date
-    ? format(new Date(profile.subscription_start_date), "dd MMM yyyy")
-    : format(new Date(), "dd MMM yyyy");
-
-  const endDateFormatted = profile?.subscription_end_date
-    ? format(new Date(profile.subscription_end_date), "dd MMM yyyy")
-    : isSubscribed ? "Active / Auto-Renewing" : "Unlimited Trial";
-
   const totalDownloads = profile?.download_count ?? 0;
   const masterRosters = quota.master_roster;
   const individualProfiles = quota.individual_profile;
@@ -75,7 +65,7 @@ export function ProfileView() {
   const supportEmail = "admin@dutyflow.in";
   const whatsappNumber = "9113815925";
   const whatsappDisplay = "+91 91138 15925";
-  const whatsappLink = `https://wa.me/919113815925?text=Hi%20DutyFlow%20Admin,%20I%20would%20like%20to%20inquire%20about%20subscription%20and%20assistance.`;
+  const whatsappLink = `https://wa.me/919113815925?text=Hi%20DutyFlow%20Admin,%20I%20would%20like%20to%20inquire%20about%20assistance.`;
 
   const handleSaveInstitution = async () => {
     if (!editedName.trim()) {
@@ -122,7 +112,7 @@ export function ProfileView() {
           User Settings
         </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Manage your institution profile, active subscription plan, download quota, and account preferences.
+          Manage your institution profile, download activity, and account preferences.
         </p>
       </div>
 
@@ -156,22 +146,10 @@ export function ProfileView() {
                       Institution Profile
                     </span>
 
-                    {isSubscribed ? (
-                      <Badge className="bg-emerald-400/20 text-emerald-100 border-emerald-300/40 text-[10px] font-bold py-0 px-2 rounded-full backdrop-blur-xs">
-                        <ShieldCheck className="mr-1 h-3 w-3 text-emerald-300" />
-                        Subscribed (Full Access)
-                      </Badge>
-                    ) : isUnsubscribed ? (
-                      <Badge variant="destructive" className="text-[10px] font-bold py-0 px-2 rounded-full bg-rose-500/80 text-white border-rose-300/40">
-                        <ShieldX className="mr-1 h-3 w-3" />
-                        Unsubscribed (Access Denied)
-                      </Badge>
-                    ) : (
-                      <Badge className="bg-white/20 text-white border-white/30 text-[10px] font-bold py-0 px-2 rounded-full backdrop-blur-xs">
-                        <Sparkles className="mr-1 h-3 w-3 text-amber-300" />
-                        Free Access (Quota Limited)
-                      </Badge>
-                    )}
+                    <Badge className="bg-emerald-400/20 text-emerald-100 border-emerald-300/40 text-[10px] font-bold py-0 px-2 rounded-full backdrop-blur-xs">
+                      <ShieldCheck className="mr-1 h-3 w-3 text-emerald-300" />
+                      Active Account
+                    </Badge>
                   </div>
 
                   <h1 className="text-2xl sm:text-3xl font-headline font-extrabold text-white tracking-tight break-words drop-shadow-xs">
@@ -269,69 +247,57 @@ export function ProfileView() {
           </CardContent>
         </Card>
 
-        {/* Card B: Subscription & Downloads Stack */}
+        {/* Card B: Download Activity Stack */}
         <Card className="border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs bg-white dark:bg-slate-900">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-[#6342e8]">
                 <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-950/50">
-                  <CreditCard className="h-4 w-4" />
+                  <Download className="h-4 w-4" />
                 </div>
-                <CardTitle className="text-base font-headline font-bold text-slate-900 dark:text-white">Subscription Status</CardTitle>
+                <CardTitle className="text-base font-headline font-bold text-slate-900 dark:text-white">Download Activity</CardTitle>
               </div>
-              <Badge className={
-                isSubscribed
-                  ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 font-bold text-xs rounded-full"
-                  : isUnsubscribed
-                    ? "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200 font-bold text-xs rounded-full"
-                    : "bg-purple-50 text-[#6342e8] dark:bg-purple-950/60 dark:text-purple-300 border-purple-200 font-bold text-xs rounded-full"
-              }>
-                {subscriptionStatus}
+              <Badge className="bg-purple-50 text-[#6342e8] dark:bg-purple-950/60 dark:text-purple-300 border-purple-200 font-bold text-xs rounded-full">
+                Active
               </Badge>
             </div>
-            <CardDescription className="text-xs text-slate-500">Current tier permissions and download quota usage</CardDescription>
+            <CardDescription className="text-xs text-slate-500">Summary of generated examination documents and reports</CardDescription>
           </CardHeader>
 
           <CardContent className="space-y-3 pt-1">
-            {/* 3 Quota Breakdown Chips */}
+            {/* 3 Activity Breakdown Chips */}
             <div className="grid grid-cols-3 gap-2">
-              {/* Quota 1: Master Rosters */}
+              {/* Activity 1: Master Rosters */}
               <div className="p-2.5 rounded-xl bg-purple-50/50 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900/40 text-center space-y-1">
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 block truncate">Master Roster</span>
                 <div className="text-base font-black font-headline text-[#6342e8]">
-                  {isSubscribed ? masterRosters : `${masterRosters}/3`}
+                  {masterRosters}
                 </div>
-                {isSubscribed && (
-                  <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 block tracking-tight">
-                    Unlimited
-                  </span>
-                )}
+                <span className="text-[9px] font-medium text-slate-400 block tracking-tight">
+                  Generated
+                </span>
               </div>
 
-              {/* Quota 2: Individual Profiles */}
+              {/* Activity 2: Individual Profiles */}
               <div className="p-2.5 rounded-xl bg-purple-50/50 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900/40 text-center space-y-1">
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 block truncate">Indiv. Slips</span>
                 <div className="text-base font-black font-headline text-[#6342e8]">
-                  {isSubscribed ? individualProfiles : `${individualProfiles}/3`}
+                  {individualProfiles}
                 </div>
-                {isSubscribed && (
-                  <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 block tracking-tight">
-                    Unlimited
-                  </span>
-                )}
+                <span className="text-[9px] font-medium text-slate-400 block tracking-tight">
+                  Generated
+                </span>
               </div>
 
-              {/* Quota 3: Day-wise Profiles */}
+              {/* Activity 3: Day-wise Profiles */}
               <div className="p-2.5 rounded-xl bg-amber-50/50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/40 text-center space-y-1">
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 block truncate">Day-wise</span>
                 <div className="text-base font-black font-headline text-[#f59e0b]">
-                  {isSubscribed ? daywiseProfiles : `${daywiseProfiles}/3`}
+                  {daywiseProfiles}
                 </div>
-                {isSubscribed && (
-                  <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 block tracking-tight">
-                    Unlimited
-                  </span>
-                )}
+                <span className="text-[9px] font-medium text-slate-400 block tracking-tight">
+                  Generated
+                </span>
               </div>
             </div>
 
@@ -353,7 +319,7 @@ export function ProfileView() {
       </div>
 
       {/* ========================================================================= */}
-      {/* 3. SUBSCRIPTION ENQUIRIES & SUPPORT CARD */}
+      {/* 3. HELP & SUPPORT CARD */}
       {/* ========================================================================= */}
       <Card className="border border-purple-100 dark:border-purple-900/50 rounded-2xl shadow-xs overflow-hidden bg-white dark:bg-slate-900">
         <CardHeader className="pb-3">
@@ -361,10 +327,10 @@ export function ProfileView() {
             <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-950/50">
               <HelpCircle className="h-4 w-4" />
             </div>
-            <CardTitle className="text-base font-headline font-bold text-slate-900 dark:text-white">Subscription Enquiries & Support</CardTitle>
+            <CardTitle className="text-base font-headline font-bold text-slate-900 dark:text-white">Help & Support</CardTitle>
           </div>
           <CardDescription className="text-xs text-slate-500">
-            Have questions about institutional subscriptions, annual licensing, or need technical assistance? Reach out directly.
+            Have questions about DutyFlow, feature suggestions, or need technical assistance? Reach out directly.
           </CardDescription>
         </CardHeader>
 
@@ -379,7 +345,7 @@ export function ProfileView() {
               </div>
               <p className="text-sm font-bold text-slate-900 dark:text-white select-all">{supportEmail}</p>
               <Button asChild variant="outline" size="sm" className="w-full text-xs font-semibold h-8 border-purple-200 dark:border-purple-800 text-[#6342e8] hover:bg-purple-50/50 rounded-lg">
-                <a href={`mailto:${supportEmail}?subject=DutyFlow%20Subscription%20Inquiry%20-%20${encodeURIComponent(institutionName)}`}>
+                <a href={`mailto:${supportEmail}?subject=DutyFlow%20Support%20Request%20-%20${encodeURIComponent(institutionName)}`}>
                   <Mail className="mr-1.5 h-3.5 w-3.5" />
                   Send Email ({supportEmail})
                 </a>

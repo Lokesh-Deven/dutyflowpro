@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'User Settings | DutyFlow',
-  description: 'Manage your institution profile, subscription plan, usage, and contact support.',
+  description: 'Manage your institution profile, usage, download activity, and contact support.',
 };
 
 export default function ProfilePage() {

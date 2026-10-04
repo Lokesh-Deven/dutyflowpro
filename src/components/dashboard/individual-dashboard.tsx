@@ -63,7 +63,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { SubscriptionDialog } from '@/components/dashboard/subscription-dialog';
 
 type IndividualDashboardProps = {
   invigilators: Invigilator[];
@@ -78,8 +77,6 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
   const [isBulkEmailConfirmOpen, setIsBulkEmailConfirmOpen] = useState(false);
   const [isSingleEmailSending, setIsSingleEmailSending] = useState(false);
   const [isBulkEmailSending, setIsBulkEmailSending] = useState(false);
-  const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false);
-  const [customSubscriptionMessage, setCustomSubscriptionMessage] = useState<string | undefined>(undefined);
   const [emailStatusDialog, setEmailStatusDialog] = useState<{
     open: boolean;
     type: 'success' | 'error';
@@ -532,12 +529,6 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
 
   const handleDownload = () => {
     if (!selectedInvigilator) return;
-    const check = canDownload('individual_profile');
-    if (!check.allowed) {
-      setCustomSubscriptionMessage(undefined);
-      setIsSubscriptionDialogOpen(true);
-      return;
-    }
 
     recordCategoryDownload('individual_profile');
     toast({
@@ -578,11 +569,6 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
   };
 
   const handleDownloadAll = async () => {
-    if (!isSubscribed) {
-      setCustomSubscriptionMessage("Bulk download of all invigilators' summaries exceeds the 3-profile limit. Please subscribe to download the complete roster.");
-      setIsSubscriptionDialogOpen(true);
-      return;
-    }
 
     const totalInvigilatorsCount = invigilators.length;
     recordCategoryDownload('individual_profile', totalInvigilatorsCount);
@@ -1184,12 +1170,7 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
             variant="outline"
             className="w-full sm:w-auto border-[#0891B2]/40 text-[#0891B2] hover:bg-[#0891B2]/10 dark:text-cyan-400 font-semibold rounded-lg h-10 px-5"
             onClick={() => {
-              if (!isSubscribed) {
-                setCustomSubscriptionMessage("Bulk download of all invigilators' summaries exceeds the 3-profile limit. Please subscribe to download the complete roster.");
-                setIsSubscriptionDialogOpen(true);
-              } else {
-                setIsConfirmOpen(true);
-              }
+              setIsConfirmOpen(true);
             }}
           >
             <FolderArchive className="mr-2 h-4 w-4" /> Download All Invigilators&apos; Summaries
@@ -1319,13 +1300,6 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <SubscriptionDialog
-        open={isSubscriptionDialogOpen}
-        onOpenChange={setIsSubscriptionDialogOpen}
-        category="individual_profile"
-        customMessage={customSubscriptionMessage}
-      />
 
       {/* Pop-up Dialog stating Email Status (Success or Error) */}
       <Dialog

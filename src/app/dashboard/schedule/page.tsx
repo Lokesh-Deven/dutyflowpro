@@ -33,7 +33,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { SubscriptionDialog } from "@/components/dashboard/subscription-dialog";
 
 interface DutySlot {
   date: Date;
@@ -48,7 +47,6 @@ export default function SchedulePage() {
   const { user, profile, canDownload, recordCategoryDownload } = useAuth();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [showFullSchedule, setShowFullSchedule] = useState(false);
-  const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const handleAllotmentChange = (id: string) => {
@@ -121,11 +119,6 @@ export default function SchedulePage() {
   }, [scheduleData]);
 
   const handleDownload = async (isFull: boolean = false) => {
-    const check = canDownload('daywise_profile');
-    if (!check.allowed) {
-      setIsSubscriptionDialogOpen(true);
-      return;
-    }
 
     const dataToExport = isFull
       ? scheduleData
@@ -581,12 +574,6 @@ export default function SchedulePage() {
           </Card>
         </div>
       </div>
-
-      <SubscriptionDialog
-        open={isSubscriptionDialogOpen}
-        onOpenChange={setIsSubscriptionDialogOpen}
-        category="daywise_profile"
-      />
     </div>
   );
 }
