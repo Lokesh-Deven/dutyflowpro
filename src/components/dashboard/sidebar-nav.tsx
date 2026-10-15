@@ -291,11 +291,11 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
               </Link>
             );
 
-            if (item.href === '/dashboard/room-allocations') {
+            if (item.href === '/dashboard/examination-timetable') {
               return (
                 <React.Fragment key={item.href}>
                   {navLink}
-                  {/* Student Seating Module in between Room Allocations and Day-wise Schedule */}
+                  {/* Student Seating Module in between Examination Timetable and New Allotment */}
                   {renderStudentSeating()}
                 </React.Fragment>
               );
