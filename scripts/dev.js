@@ -19,7 +19,7 @@ forwarder.listen(9002, () => {
 });
 
 // 2. Start Next.js on port 3000 (matching Supabase authentication Site URL)
-const nextProcess = spawn('npx', ['next', 'dev', '--turbopack', '-p', '3000'], {
+const nextProcess = spawn('npx', ['next', 'dev', '-p', '3000'], {
   stdio: 'inherit',
   shell: true,
 });
