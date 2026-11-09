@@ -373,7 +373,7 @@ BEGIN
   LEFT JOIN auth.users u ON u.id = p.id
   LEFT JOIN public.institution_code_registry reg 
     ON LOWER(TRIM(reg.institution_email)) = LOWER(TRIM(COALESCE(p.email, u.email, '')))
-  WHERE p.id <> 'guest-session'
+  WHERE p.id IS NOT NULL
     AND (
       p_status = 'all' 
       OR p_status IS NULL 
@@ -605,10 +605,10 @@ BEGIN
     RAISE EXCEPTION 'Unauthorized';
   END IF;
 
-  SELECT COUNT(*) INTO v_total FROM public.profiles WHERE id <> 'guest-session';
-  SELECT COUNT(*) INTO v_pending FROM public.profiles WHERE approval_status = 'pending' AND id <> 'guest-session';
-  SELECT COUNT(*) INTO v_approved FROM public.profiles WHERE approval_status = 'approved' AND id <> 'guest-session';
-  SELECT COUNT(*) INTO v_suspended FROM public.profiles WHERE approval_status = 'suspended' AND id <> 'guest-session';
+  SELECT COUNT(*) INTO v_total FROM public.profiles WHERE id IS NOT NULL;
+  SELECT COUNT(*) INTO v_pending FROM public.profiles WHERE approval_status = 'pending';
+  SELECT COUNT(*) INTO v_approved FROM public.profiles WHERE approval_status = 'approved';
+  SELECT COUNT(*) INTO v_suspended FROM public.profiles WHERE approval_status = 'suspended';
 
   RETURN jsonb_build_object(
     'total_institutions', v_total,

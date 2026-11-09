@@ -30,38 +30,38 @@ export async function GET(req: NextRequest) {
       }
     } catch (_) {}
 
-    // 2. Direct table fallback with resilient columns
+    // 2. Direct table fallback (Do NOT filter by 'guest-session' in Postgres query since id is UUID)
     let rawProfiles: any[] = [];
     const fullQuery = await supabase
       .from('profiles')
       .select('id, institution_id, institution_code, institution_name, email, approval_status, approved_at, approved_by, rejection_reason, created_at, updated_at, subscription_status')
-      .neq('id', 'guest-session')
       .order('created_at', { ascending: false });
 
     if (!fullQuery.error && fullQuery.data) {
-      rawProfiles = fullQuery.data;
+      rawProfiles = fullQuery.data.filter((p) => p.id && p.id !== 'guest-session');
     } else {
-      // Fallback: If columns do not exist yet on profiles table, query standard columns
+      // Fallback: If newer columns do not exist yet on profiles table, query basic columns
       const basicQuery = await supabase
         .from('profiles')
         .select('id, email, institution_name, created_at, updated_at, subscription_status')
-        .neq('id', 'guest-session')
         .order('created_at', { ascending: false });
 
       if (basicQuery.data) {
-        rawProfiles = basicQuery.data.map((p: any) => ({
-          ...p,
-          institution_id: p.id,
-          institution_code: '',
-          approval_status: 'pending',
-          approved_at: null,
-          approved_by: null,
-          rejection_reason: null,
-        }));
+        rawProfiles = basicQuery.data
+          .filter((p: any) => p.id && p.id !== 'guest-session')
+          .map((p: any) => ({
+            ...p,
+            institution_id: p.id,
+            institution_code: '',
+            approval_status: 'pending',
+            approved_at: null,
+            approved_by: null,
+            rejection_reason: null,
+          }));
       }
     }
 
-    // 3. Fetch registry to enrich records
+    // 3. Fetch registry to cross-reference and enrich records
     const { data: regData } = await supabase.from('institution_code_registry').select('*');
     const registryByEmail = new Map<string, any>();
     const registryById = new Map<string, any>();
