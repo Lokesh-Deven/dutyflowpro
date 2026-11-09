@@ -125,7 +125,7 @@ export default function ResetPasswordPage() {
 
               <div className="pt-3">
                 <Button
-                  onClick={() => router.push('/dashboard/examinations')}
+                  onClick={() => router.push('/dashboard/examination-timetable')}
                   className="w-full bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs tracking-wider h-10 rounded-lg shadow-sm"
                 >
                   GO TO DASHBOARD

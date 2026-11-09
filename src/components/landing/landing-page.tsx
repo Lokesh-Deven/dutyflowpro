@@ -85,9 +85,9 @@ export function LandingPage() {
       } else {
         toast({
           title: "Login Successful",
-          description: "Welcome to DutyFlow! Taking you to New Allotment...",
+          description: "Welcome to DutyFlow! Taking you to Examination Timetable...",
         });
-        router.push('/dashboard/examinations');
+        router.push('/dashboard/examination-timetable');
       }
     } catch (err: any) {
       setErrorMessage(err?.message || "An unexpected error occurred during login.");

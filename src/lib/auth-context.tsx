@@ -427,7 +427,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const trimmedEmail = email.trim();
 
       const redirectUrl = typeof window !== 'undefined'
-        ? `${window.location.origin}/dashboard/examinations`
+        ? `${window.location.origin}/dashboard/examination-timetable`
         : undefined;
 
       const { data, error } = await supabase.auth.signUp({

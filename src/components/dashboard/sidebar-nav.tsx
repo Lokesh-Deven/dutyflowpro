@@ -320,7 +320,7 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
           <Tooltip>
             <TooltipTrigger asChild>
               <Link
-                href="/dashboard/examinations"
+                href="/dashboard/examination-timetable"
                 onClick={handleNavClick}
                 className="flex items-center justify-center hover:scale-105 transition-all duration-200 mx-auto w-10 h-10 rounded-xl bg-white/10 hover:bg-white/15 text-white font-black text-base select-none tracking-tight font-headline"
               >
@@ -333,7 +333,7 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
           </Tooltip>
         ) : (
           <Link
-            href="/dashboard/examinations"
+            href="/dashboard/examination-timetable"
             onClick={handleNavClick}
             className="flex flex-col group select-none px-1"
           >
