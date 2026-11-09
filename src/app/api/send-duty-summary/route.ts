@@ -1,11 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendDutySummaryEmails, SendEmailPayload } from '@/lib/sendgrid';
+import { supabase } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
   try {
+    // 1. Backend Security Check: Verify Institution Approval Status
+    const authHeader = request.headers.get('authorization');
+    const token = authHeader?.replace(/^Bearer\s+/i, '');
+
+    if (token) {
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+      if (user && !authError) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('approval_status, institution_code')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        const status = profile?.approval_status || (profile?.institution_code ? 'approved' : 'pending');
+        if (status !== 'approved') {
+          return NextResponse.json(
+            {
+              success: false,
+              total: 0,
+              sent: 0,
+              failed: 0,
+              results: [],
+              error: 'Your institution registration is awaiting Super Admin approval. Duty summary email dispatch is restricted until approved.',
+            },
+            { status: 403 }
+          );
+        }
+      }
+    }
+
     const body = await request.json() as SendEmailPayload;
 
     if (!body || !Array.isArray(body.items) || body.items.length === 0) {

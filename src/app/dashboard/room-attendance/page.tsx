@@ -6,6 +6,8 @@ import {
   getInvigilatorDuties,
 } from '@/lib/invigilator-portal-service';
 import { RoomAttendanceSubmission } from '@/lib/invigilator-portal-types';
+import { useAuth } from '@/lib/auth-context';
+import { ApprovalRestrictionDialog } from '@/components/dashboard/approval-restriction-dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -33,11 +35,13 @@ import {
 } from 'lucide-react';
 
 export default function AdminRoomAttendancePage() {
+  const { isApproved } = useAuth();
   const { toast } = useToast();
   const [submissions, setSubmissions] = useState<RoomAttendanceSubmission[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSub, setSelectedSub] = useState<RoomAttendanceSubmission | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isRestrictionDialogOpen, setIsRestrictionDialogOpen] = useState(false);
 
   const loadSubmissions = () => {
     setIsRefreshing(true);
@@ -121,6 +125,10 @@ export default function AdminRoomAttendancePage() {
 
   // Requirement 23: Download Attendance Report as CSV
   const handleDownloadCsvReport = () => {
+    if (!isApproved) {
+      setIsRestrictionDialogOpen(true);
+      return;
+    }
     if (submissions.length === 0) {
       toast({
         variant: 'destructive',
@@ -428,6 +436,12 @@ export default function AdminRoomAttendancePage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <ApprovalRestrictionDialog
+        open={isRestrictionDialogOpen}
+        onOpenChange={setIsRestrictionDialogOpen}
+        featureName="Room Attendance CSV Report"
+      />
     </div>
   );
 }

@@ -28,6 +28,7 @@ import {
 import { RoomSeatingDiagram } from '@/components/dashboard/student-seating/room-seating-diagram';
 import { getSubjectColor } from '@/lib/student-seating-colors';
 import { ExaminationTimetable, TimetableRow } from '@/lib/examination-timetable-types';
+import { ApprovalRestrictionDialog } from '@/components/dashboard/approval-restriction-dialog';
 import { getSavedTimetables, fetchTimetablesFromCloud, sortTimetableRows } from '@/lib/examination-timetable-service';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -85,8 +86,9 @@ export default function SeatingAllocationWizardPage() {
   } = useStudentSeating();
 
   const { activeAllotment, signatory, pdfPaletteId } = useAllotment();
-  const { profile, user } = useAuth();
+  const { profile, user, isApproved } = useAuth();
   const { toast } = useToast();
+  const [isRestrictionDialogOpen, setIsRestrictionDialogOpen] = useState(false);
 
   const institutionName =
     (profile?.institution_name && profile.institution_name !== 'Guest Profile'
@@ -629,6 +631,11 @@ export default function SeatingAllocationWizardPage() {
 
   // Run Allocation
   const handleGenerateAllocation = () => {
+    if (!isApproved) {
+      setIsRestrictionDialogOpen(true);
+      return;
+    }
+
     if (!isCapacitySufficient) {
       toast({
         variant: "destructive",
@@ -707,6 +714,10 @@ export default function SeatingAllocationWizardPage() {
   // PDF Export Handlers
   const handleDownloadAllRoomsPdf = async () => {
     if (!activeAllocation) return;
+    if (!isApproved) {
+      setIsRestrictionDialogOpen(true);
+      return;
+    }
     setIsDownloadingPdf(true);
     try {
       await generateRoomSeatingPlanPdf({
@@ -732,6 +743,10 @@ export default function SeatingAllocationWizardPage() {
 
   const handleDownloadSingleRoomPdf = async (plan: RoomSeatingPlan) => {
     if (!activeAllocation) return;
+    if (!isApproved) {
+      setIsRestrictionDialogOpen(true);
+      return;
+    }
     setIsDownloadingPdf(true);
     try {
       await generateRoomSeatingPlanPdf({
@@ -758,6 +773,10 @@ export default function SeatingAllocationWizardPage() {
 
   const handleDownloadIndexPdf = async () => {
     if (!activeAllocation) return;
+    if (!isApproved) {
+      setIsRestrictionDialogOpen(true);
+      return;
+    }
     setIsDownloadingPdf(true);
     try {
       await generateStudentSeatingIndexPdf({
@@ -3100,6 +3119,12 @@ export default function SeatingAllocationWizardPage() {
           </Dialog>
         </div>
       )}
+
+      <ApprovalRestrictionDialog
+        open={isRestrictionDialogOpen}
+        onOpenChange={setIsRestrictionDialogOpen}
+        featureName="Student Seating Allocation & Diagrams"
+      />
     </div>
   );
 }

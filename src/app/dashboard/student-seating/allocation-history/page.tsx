@@ -7,6 +7,7 @@ import { useAllotment } from '@/lib/allotment-context';
 import { useAuth } from '@/lib/auth-context';
 import { SeatingAllocationRecord } from '@/lib/student-seating-types';
 import { generateRoomSeatingPlanPdf, generateStudentSeatingIndexPdf } from '@/lib/student-seating-pdf-service';
+import { ApprovalRestrictionDialog } from '@/components/dashboard/approval-restriction-dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -40,12 +41,13 @@ export default function AllocationHistoryPage() {
   } = useStudentSeating();
 
   const { signatory, pdfPaletteId } = useAllotment();
-  const { profile, user } = useAuth();
+  const { profile, user, isApproved } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
 
   const [allocationToDelete, setAllocationToDelete] = useState<SeatingAllocationRecord | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [isRestrictionDialogOpen, setIsRestrictionDialogOpen] = useState(false);
 
   const institutionName =
     (profile?.institution_name && profile.institution_name !== 'Guest Profile'
@@ -80,6 +82,10 @@ export default function AllocationHistoryPage() {
   };
 
   const handleDownloadPdf = async (alloc: SeatingAllocationRecord) => {
+    if (!isApproved) {
+      setIsRestrictionDialogOpen(true);
+      return;
+    }
     setIsExporting(true);
     try {
       await generateRoomSeatingPlanPdf({
@@ -104,6 +110,10 @@ export default function AllocationHistoryPage() {
   };
 
   const handleDownloadIndex = async (alloc: SeatingAllocationRecord) => {
+    if (!isApproved) {
+      setIsRestrictionDialogOpen(true);
+      return;
+    }
     setIsExporting(true);
     try {
       await generateStudentSeatingIndexPdf({
@@ -350,6 +360,12 @@ export default function AllocationHistoryPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ApprovalRestrictionDialog
+        open={isRestrictionDialogOpen}
+        onOpenChange={setIsRestrictionDialogOpen}
+        featureName="Saved Student Seating Allocation PDF"
+      />
     </div>
   );
 }

@@ -13,26 +13,8 @@ import { X } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { getStudentSession } from '@/lib/student-portal-service';
 import { getInvigilatorSession } from '@/lib/invigilator-portal-service';
-
-interface DashboardLayoutContextType {
-  isDesktopSidebarCollapsed: boolean;
-  setIsDesktopSidebarCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
-  toggleSidebar: () => void;
-}
-
-const DashboardLayoutContext = createContext<DashboardLayoutContextType | null>(null);
-
-export const useDashboardLayout = () => {
-  const context = useContext(DashboardLayoutContext);
-  if (!context) {
-    return {
-      isDesktopSidebarCollapsed: false,
-      setIsDesktopSidebarCollapsed: () => {},
-      toggleSidebar: () => {},
-    };
-  }
-  return context;
-};
+import { DashboardLayoutContext } from '@/lib/dashboard-layout-context';
+import { InstitutionApprovalBanner } from '@/components/dashboard/institution-approval-banner';
 
 export default function AppLayout({
   children,
@@ -136,6 +118,7 @@ export default function AppLayout({
                   onToggleSidebar={toggleSidebar}
                   isSidebarCollapsed={isDesktopSidebarCollapsed}
                 />
+                <InstitutionApprovalBanner />
 
                 <main
                   className={cn(

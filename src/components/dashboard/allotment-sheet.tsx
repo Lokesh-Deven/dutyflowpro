@@ -11,8 +11,9 @@ import { format } from 'date-fns';
 import { formatAppDate, formatAppDateWithDay, parseAppDate } from '@/lib/date-utils';
 import { useAllotment } from '@/lib/allotment-context';
 import { useAuth } from '@/lib/auth-context';
-import { useDashboardLayout } from '@/app/dashboard/layout';
+import { useDashboardLayout } from '@/lib/dashboard-layout-context';
 import { uploadUserFile } from '@/lib/storage-service';
+import { ApprovalRestrictionDialog } from '@/components/dashboard/approval-restriction-dialog';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { cn, formatTimeTo12Hour } from '@/lib/utils';
@@ -47,13 +48,14 @@ type AllotmentSheetProps = {
 export function AllotmentSheet({ invigilators, examinations, allotmentResult: initialAllotmentResult, onAllotmentChange }: AllotmentSheetProps) {
   const { toast } = useToast();
   const { activeAllotment, saveCurrentAllotment, savedAllotments } = useAllotment();
-  const { user, profile, canDownload, recordCategoryDownload } = useAuth();
+  const { user, profile, canDownload, recordCategoryDownload, isApproved } = useAuth();
   const { isDesktopSidebarCollapsed, setIsDesktopSidebarCollapsed } = useDashboardLayout();
   const [isCompactDensity, setIsCompactDensity] = useState(() => examinations.length > 8);
   const [allotmentResult, setAllotmentResult] = useState<AllotmentResult>(initialAllotmentResult);
   const [isSaveAlertOpen, setIsSaveAlertOpen] = useState(false);
   const [isDuplicateAlertOpen, setIsDuplicateAlertOpen] = useState(false);
   const [duplicateTarget, setDuplicateTarget] = useState<SavedAllotment | null>(null);
+  const [isRestrictionDialogOpen, setIsRestrictionDialogOpen] = useState(false);
 
   // Table horizontal scrolling & floating navigator state
   const tableContainerRef = useRef<HTMLDivElement>(null);
@@ -312,6 +314,10 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
   };
 
   const handleDownload = async () => {
+    if (!isApproved) {
+      setIsRestrictionDialogOpen(true);
+      return;
+    }
 
     recordCategoryDownload('master_roster');
     toast({
@@ -1187,6 +1193,12 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
           </Button>
         </CardFooter>
       </Card>
+
+      <ApprovalRestrictionDialog
+        open={isRestrictionDialogOpen}
+        onOpenChange={setIsRestrictionDialogOpen}
+        featureName="Master Allotment PDF Report"
+      />
     </TooltipProvider>
   );
 }

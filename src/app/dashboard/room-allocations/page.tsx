@@ -53,10 +53,12 @@ import {
 } from 'lucide-react';
 import { formatAppDate } from '@/lib/date-utils';
 import { Examination } from '@/lib/types';
+import { ApprovalRestrictionDialog } from '@/components/dashboard/approval-restriction-dialog';
 
 export default function RoomAllocationsPage() {
-  const { user, profile } = useAuth();
+  const { user, profile, isApproved } = useAuth();
   const { toast } = useToast();
+  const [isRestrictionDialogOpen, setIsRestrictionDialogOpen] = useState(false);
   const {
     activeAllotment,
     savedAllotments,
@@ -118,6 +120,10 @@ export default function RoomAllocationsPage() {
 
   const handleGenerateRoomAllocationPdf = async () => {
     if (!activeExam || !activeAllotment) return;
+    if (!isApproved) {
+      setIsRestrictionDialogOpen(true);
+      return;
+    }
     const alloc = activeAllotment.roomAllocations?.[activeExam.id];
     if (!alloc || alloc.status === 'Pending') {
       toast({
@@ -154,6 +160,10 @@ export default function RoomAllocationsPage() {
 
   const handleGenerateRelieverSlipsPdf = async () => {
     if (!activeExam || !activeAllotment) return;
+    if (!isApproved) {
+      setIsRestrictionDialogOpen(true);
+      return;
+    }
     const alloc = activeAllotment.roomAllocations?.[activeExam.id];
     if (!alloc || alloc.status === 'Pending') {
       toast({
@@ -195,6 +205,10 @@ export default function RoomAllocationsPage() {
         title: "No Allotment Selected",
         description: "Please select a Master Allotment first.",
       });
+      return;
+    }
+    if (!isApproved) {
+      setIsRestrictionDialogOpen(true);
       return;
     }
     setIsGeneratingPdf(true);
@@ -624,6 +638,12 @@ export default function RoomAllocationsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ApprovalRestrictionDialog
+        open={isRestrictionDialogOpen}
+        onOpenChange={setIsRestrictionDialogOpen}
+        featureName="Examination Room Allocations PDF"
+      />
     </div>
   );
 }

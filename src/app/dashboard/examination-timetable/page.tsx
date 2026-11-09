@@ -26,6 +26,7 @@ import { SubjectSelectorPopover } from '@/components/dashboard/timetable/subject
 import { TimePickerInput } from '@/components/dashboard/timetable/time-picker-input';
 import { TimetablePreviewDialog } from '@/components/dashboard/timetable/timetable-preview-dialog';
 import { SavedTimetablesList } from '@/components/dashboard/timetable/saved-timetables-list';
+import { ApprovalRestrictionDialog } from '@/components/dashboard/approval-restriction-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -60,9 +61,10 @@ import {
 import { cn } from '@/lib/utils';
 
 export default function ExaminationTimetablePage() {
-  const { user, profile } = useAuth();
+  const { user, profile, isApproved } = useAuth();
   const { signatory, pdfPaletteId } = useAllotment();
   const { toast } = useToast();
+  const [isRestrictionDialogOpen, setIsRestrictionDialogOpen] = useState(false);
 
   const userId = user?.id || profile?.id;
 
@@ -518,6 +520,10 @@ export default function ExaminationTimetablePage() {
 
   // Direct PDF Download
   const handleDownloadPdf = async () => {
+    if (!isApproved) {
+      setIsRestrictionDialogOpen(true);
+      return;
+    }
     try {
       await generateExaminationTimetablePdf({
         timetable,
@@ -1108,6 +1114,12 @@ export default function ExaminationTimetablePage() {
         onOpenChange={setIsPreviewOpen}
         timetable={timetable}
         signatory={signatory}
+      />
+
+      <ApprovalRestrictionDialog
+        open={isRestrictionDialogOpen}
+        onOpenChange={setIsRestrictionDialogOpen}
+        featureName="Official Examination Timetable PDF"
       />
     </div>
   );

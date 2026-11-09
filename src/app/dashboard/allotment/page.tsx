@@ -1,6 +1,7 @@
 "use client";
 
 import { useAllotment } from '@/lib/allotment-context';
+import { useAuth } from '@/lib/auth-context';
 import { generateAllotment } from '@/lib/allotment';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AllotmentSheet } from '@/components/dashboard/allotment-sheet';
@@ -29,6 +30,7 @@ function AllotmentContent() {
   }, [tabParam]);
 
   const { invigilators, examinations, activeAllotment } = useAllotment();
+  const { isApproved } = useAuth();
   const [allotment, setAllotment] = useState<AllotmentResult>({ assignments: {} });
   
   const processedExaminations = useMemo(() => examinations.map(exam => ({
@@ -40,12 +42,17 @@ function AllotmentContent() {
     if (activeAllotment && Object.keys(activeAllotment.assignments).length > 0) {
       setAllotment({ assignments: activeAllotment.assignments });
     } else if (invigilators.length > 0 && examinations.length > 0) {
-      const generated = generateAllotment(invigilators, processedExaminations);
-      setAllotment(generated);
+      if (!isApproved) {
+        // Institutional duty generation is restricted until approved by Super Admin
+        setAllotment({ assignments: {} });
+      } else {
+        const generated = generateAllotment(invigilators, processedExaminations);
+        setAllotment(generated);
+      }
     } else {
       setAllotment({ assignments: {} });
     }
-  }, [invigilators, examinations, activeAllotment, processedExaminations]);
+  }, [invigilators, examinations, activeAllotment, processedExaminations, isApproved]);
 
   if (invigilators.length === 0 || examinations.length === 0) {
     return (

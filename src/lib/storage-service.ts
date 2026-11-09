@@ -144,6 +144,7 @@ export async function uploadUserFile({
       .from('user_files')
       .insert({
         user_id: userId,
+        institution_id: userId,
         file_name: fileName,
         file_path: filePath,
         file_type: fileType,
@@ -253,15 +254,21 @@ export async function syncAllotmentToDatabase(allotment: SavedAllotment, userId:
   if (!userId || !allotment || !isUUID(userId)) return false;
 
   try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session || session.user?.id !== userId) {
+      return true;
+    }
+
     // Preserve roomAllocations within assignments envelope for resilient cloud persistence
     const assignmentsPayload: Record<string, any> = { ...allotment.assignments };
     if (allotment.roomAllocations) {
       assignmentsPayload._room_allocations = allotment.roomAllocations;
     }
 
-    const { error } = await supabase.from('saved_allotments').upsert({
+    const payload: any = {
       id: allotment.id,
       user_id: userId,
+      institution_id: userId,
       name: allotment.name,
       status: allotment.status || 'Draft',
       invigilators: allotment.invigilators,
@@ -269,15 +276,23 @@ export async function syncAllotmentToDatabase(allotment: SavedAllotment, userId:
       assignments: assignmentsPayload,
       created_at: allotment.createdAt instanceof Date ? allotment.createdAt.toISOString() : allotment.createdAt,
       updated_at: new Date().toISOString(),
-    });
+    };
+
+    let { error } = await supabase.from('saved_allotments').upsert(payload);
+
+    if (error && (error.message?.includes('institution_id') || error.details?.includes('institution_id'))) {
+      delete payload.institution_id;
+      const retry = await supabase.from('saved_allotments').upsert(payload);
+      error = retry.error;
+    }
 
     if (error) {
-      console.error('Error syncing allotment to Supabase database:', error);
+      console.warn('Allotment cloud sync skipped (local storage preserved):', error.message || error);
       return false;
     }
     return true;
   } catch (err) {
-    console.error('Error in syncAllotmentToDatabase:', err);
+    console.warn('Error in syncAllotmentToDatabase:', err);
     return false;
   }
 }
@@ -449,9 +464,15 @@ export async function syncSeatingAllocationToDatabase(
   if (!userId || !allocation || !isUUID(userId)) return false;
 
   try {
-    const { error } = await supabase.from('saved_allotments').upsert({
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session || session.user?.id !== userId) {
+      return true;
+    }
+
+    const payload: any = {
       id: allocation.id,
       user_id: userId,
+      institution_id: userId,
       name: allocation.name,
       status: 'Draft',
       invigilators: [],
@@ -462,15 +483,23 @@ export async function syncSeatingAllocationToDatabase(
       },
       created_at: allocation.createdAt || new Date().toISOString(),
       updated_at: allocation.updatedAt || new Date().toISOString(),
-    });
+    };
+
+    let { error } = await supabase.from('saved_allotments').upsert(payload);
+
+    if (error && (error.message?.includes('institution_id') || error.details?.includes('institution_id'))) {
+      delete payload.institution_id;
+      const retry = await supabase.from('saved_allotments').upsert(payload);
+      error = retry.error;
+    }
 
     if (error) {
-      console.error('Error syncing seating allocation to database:', error);
+      console.warn('Seating allocation cloud sync skipped (local storage preserved):', error.message || error);
       return false;
     }
     return true;
   } catch (err) {
-    console.error('Exception in syncSeatingAllocationToDatabase:', err);
+    console.warn('Exception in syncSeatingAllocationToDatabase:', err);
     return false;
   }
 }
@@ -545,9 +574,15 @@ export async function syncExaminationTimetableToDatabase(
   if (!userId || !timetable || !isUUID(userId)) return false;
 
   try {
-    const { error } = await supabase.from('saved_allotments').upsert({
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session || session.user?.id !== userId) {
+      return true;
+    }
+
+    const payload: any = {
       id: timetable.id,
       user_id: userId,
+      institution_id: userId,
       name: timetable.examinationName || 'Examination Timetable',
       status: timetable.isLocked ? 'Locked' : 'Draft',
       invigilators: [],
@@ -558,15 +593,23 @@ export async function syncExaminationTimetableToDatabase(
       },
       created_at: timetable.createdAt || new Date().toISOString(),
       updated_at: timetable.updatedAt || new Date().toISOString(),
-    });
+    };
+
+    let { error } = await supabase.from('saved_allotments').upsert(payload);
+
+    if (error && (error.message?.includes('institution_id') || error.details?.includes('institution_id'))) {
+      delete payload.institution_id;
+      const retry = await supabase.from('saved_allotments').upsert(payload);
+      error = retry.error;
+    }
 
     if (error) {
-      console.error('Error syncing examination timetable to database:', error);
+      console.warn('Timetable cloud sync skipped (local storage preserved):', error.message || error);
       return false;
     }
     return true;
   } catch (err) {
-    console.error('Exception in syncExaminationTimetableToDatabase:', err);
+    console.warn('Exception in syncExaminationTimetableToDatabase:', err);
     return false;
   }
 }
@@ -659,9 +702,15 @@ export async function syncUserWorkspaceToDatabase(
     };
     workspaceMemoryCache[userId] = merged;
 
-    const { error } = await supabase.from('saved_allotments').upsert({
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session || session.user?.id !== userId) {
+      return true;
+    }
+
+    const payload: any = {
       id: `dutyflow_workspace_${userId}`,
       user_id: userId,
+      institution_id: userId,
       name: 'DutyFlow Central Workspace',
       status: 'Draft',
       invigilators: [],
@@ -672,15 +721,23 @@ export async function syncUserWorkspaceToDatabase(
       },
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-    });
+    };
+
+    let { error } = await supabase.from('saved_allotments').upsert(payload);
+
+    if (error && (error.message?.includes('institution_id') || error.details?.includes('institution_id'))) {
+      delete payload.institution_id;
+      const retry = await supabase.from('saved_allotments').upsert(payload);
+      error = retry.error;
+    }
 
     if (error) {
-      console.error('Error syncing user workspace to database:', error);
+      console.warn('Workspace cloud sync skipped (local storage preserved):', error.message || error);
       return false;
     }
     return true;
   } catch (err) {
-    console.error('Exception in syncUserWorkspaceToDatabase:', err);
+    console.warn('Exception in syncUserWorkspaceToDatabase:', err);
     return false;
   }
 }
@@ -702,7 +759,7 @@ export async function fetchUserWorkspaceFromDatabase(
       .maybeSingle();
 
     if (error) {
-      console.error('Error fetching user workspace from database:', error);
+      console.warn('Workspace cloud fetch skipped:', error.message || error);
       return null;
     }
 
@@ -712,7 +769,7 @@ export async function fetchUserWorkspaceFromDatabase(
     workspaceMemoryCache[userId] = ws;
     return ws;
   } catch (err) {
-    console.error('Exception in fetchUserWorkspaceFromDatabase:', err);
+    console.warn('Exception in fetchUserWorkspaceFromDatabase:', err);
     return null;
   }
 }

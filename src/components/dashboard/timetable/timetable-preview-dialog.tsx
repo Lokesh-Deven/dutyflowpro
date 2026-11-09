@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,8 @@ import { SignatoryInfo } from '@/lib/types';
 import { generateExaminationTimetablePdf } from '@/lib/examination-timetable-pdf';
 import { Download, FileText, CheckCircle2, Lock } from 'lucide-react';
 import { formatDateToDDMMYYYY } from '@/lib/examination-timetable-service';
+import { useAuth } from '@/lib/auth-context';
+import { ApprovalRestrictionDialog } from '@/components/dashboard/approval-restriction-dialog';
 
 interface TimetablePreviewDialogProps {
   open: boolean;
@@ -27,9 +29,16 @@ export function TimetablePreviewDialog({
   timetable,
   signatory,
 }: TimetablePreviewDialogProps) {
+  const { isApproved } = useAuth();
+  const [isRestrictionDialogOpen, setIsRestrictionDialogOpen] = useState(false);
+
   if (!timetable) return null;
 
   const handleDownloadPdf = async () => {
+    if (!isApproved) {
+      setIsRestrictionDialogOpen(true);
+      return;
+    }
     await generateExaminationTimetablePdf({
       timetable,
       signatory,
@@ -47,6 +56,7 @@ export function TimetablePreviewDialog({
   });
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl bg-slate-100 p-0 border border-slate-200 overflow-hidden shadow-2xl">
         <DialogHeader className="p-4 bg-white border-b border-slate-200 flex flex-row items-center justify-between">
@@ -190,5 +200,12 @@ export function TimetablePreviewDialog({
         </div>
       </DialogContent>
     </Dialog>
+
+    <ApprovalRestrictionDialog
+      open={isRestrictionDialogOpen}
+      onOpenChange={setIsRestrictionDialogOpen}
+      featureName="Timetable PDF Preview Download"
+    />
+    </>
   );
 }

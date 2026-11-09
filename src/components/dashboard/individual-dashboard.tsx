@@ -41,6 +41,7 @@ import 'jspdf-autotable';
 import { useAllotment } from '@/lib/allotment-context';
 import { useAuth } from '@/lib/auth-context';
 import { uploadUserFile } from '@/lib/storage-service';
+import { ApprovalRestrictionDialog } from '@/components/dashboard/approval-restriction-dialog';
 import { cn, formatTimeTo12Hour, getInvigilatorInitial, getDutySummaryFileName } from '@/lib/utils';
 import { getPdfPalette } from '@/lib/pdf-palette';
 import JSZip from 'jszip';
@@ -90,7 +91,8 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
     message: '',
   });
   const { activeAllotment, instructions, signatory, pdfPaletteId } = useAllotment();
-  const { user, profile, isSubscribed, canDownload, recordCategoryDownload } = useAuth();
+  const { user, session, profile, isSubscribed, canDownload, recordCategoryDownload, isApproved } = useAuth();
+  const [isRestrictionDialogOpen, setIsRestrictionDialogOpen] = useState(false);
 
   useEffect(() => {
     if (invigilators.length > 0 && !selectedInvigilatorId) {
@@ -529,6 +531,10 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
 
   const handleDownload = () => {
     if (!selectedInvigilator) return;
+    if (!isApproved) {
+      setIsRestrictionDialogOpen(true);
+      return;
+    }
 
     recordCategoryDownload('individual_profile');
     toast({
@@ -569,6 +575,10 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
   };
 
   const handleDownloadAll = async () => {
+    if (!isApproved) {
+      setIsRestrictionDialogOpen(true);
+      return;
+    }
 
     const totalInvigilatorsCount = invigilators.length;
     recordCategoryDownload('individual_profile', totalInvigilatorsCount);
@@ -637,6 +647,10 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
 
   const handleSendSingleEmail = async () => {
     if (!selectedInvigilator) return;
+    if (!isApproved) {
+      setIsRestrictionDialogOpen(true);
+      return;
+    }
 
     const targetEmail = selectedInvigilator.email?.trim();
     if (!targetEmail || !targetEmail.includes('@')) {
@@ -661,7 +675,10 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
 
       const response = await fetch('/api/send-duty-summary', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
         body: JSON.stringify({
           items: [
             {
@@ -734,6 +751,11 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
   const handleExecuteBulkEmail = async () => {
     setIsBulkEmailConfirmOpen(false);
 
+    if (!isApproved) {
+      setIsRestrictionDialogOpen(true);
+      return;
+    }
+
     const eligibleInvigilators = invigilators.filter(i => i.email && i.email.includes('@'));
     if (eligibleInvigilators.length === 0) {
       toast({
@@ -785,7 +807,10 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
         const batch = items.slice(i, i + BATCH_SIZE);
         const response = await fetch('/api/send-duty-summary', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+          },
           body: JSON.stringify({
             items: batch,
             examName,
@@ -1359,6 +1384,12 @@ export default function IndividualDashboard({ invigilators, examinations, allotm
           </div>
         </DialogContent>
       </Dialog>
+
+      <ApprovalRestrictionDialog
+        open={isRestrictionDialogOpen}
+        onOpenChange={setIsRestrictionDialogOpen}
+        featureName="Faculty Duty Summary PDF & Email"
+      />
     </div>
   );
 }

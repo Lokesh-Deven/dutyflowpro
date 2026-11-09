@@ -5,7 +5,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import { useRouter } from 'next/navigation';
 import { isUUID } from './storage-service';
-import { getOrCreateInstitutionCode, registerLocalInstitution, formatInstitutionCode } from './institution-service';
+import { getOrCreateInstitutionCode, registerLocalInstitution, formatInstitutionCode, ensureInstitutionCodeRegistryRecord } from './institution-service';
 
 export type SubscriptionStatus = 'Subscribed' | 'Unsubscribed' | 'Free Access';
 export type DownloadCategory = 'master_roster' | 'individual_profile' | 'daywise_profile';
@@ -28,6 +28,10 @@ export interface UserProfile {
   institution_code: string; // 3-digit User-facing Institution Code (e.g. '001')
   email: string;
   institution_name: string;
+  approval_status: 'pending' | 'approved' | 'rejected' | 'suspended';
+  approved_at?: string | null;
+  approved_by?: string | null;
+  rejection_reason?: string | null;
   subscription_status: SubscriptionStatus;
   subscription_start_date: string | null;
   subscription_end_date: string | null;
@@ -47,6 +51,8 @@ interface AuthContextType {
   isSubscribed: boolean;
   isUnsubscribed: boolean;
   isFreeAccess: boolean;
+  isApproved: boolean;
+  approvalStatus: 'pending' | 'approved' | 'rejected' | 'suspended';
   quota: DownloadQuota;
   canDownload: (category: DownloadCategory) => { allowed: boolean; remaining: number; current: number; max: number };
   recordCategoryDownload: (category: DownloadCategory, count?: number) => Promise<void>;
@@ -65,6 +71,7 @@ export const DEFAULT_GUEST_PROFILE: UserProfile = {
   institution_code: '001',
   email: 'guest@dutyflow.in',
   institution_name: 'Guest Profile',
+  approval_status: 'approved',
   subscription_status: 'Free Access',
   subscription_start_date: new Date().toISOString(),
   subscription_end_date: null,
@@ -114,7 +121,13 @@ export const createProfileFromUser = (currentUser: User, dbData?: any): UserProf
     || 'Free Access';
 
   const downloadCount = dbData?.download_count ?? 0;
-  const institutionCode = formatInstitutionCode(dbData?.institution_code || meta.institution_code || '001');
+  const isGuest = currentUser.id === 'guest-session';
+  const approvalStatus = (dbData?.approval_status as 'pending' | 'approved' | 'rejected' | 'suspended')
+    || (isGuest ? 'approved' : (dbData?.institution_code ? 'approved' : 'pending'));
+
+  const institutionCode = dbData?.institution_code
+    ? formatInstitutionCode(dbData.institution_code)
+    : (isGuest ? '001' : (meta.institution_code ? formatInstitutionCode(meta.institution_code) : ''));
   const institutionId = dbData?.institution_id || currentUser.id;
 
   return {
@@ -123,6 +136,10 @@ export const createProfileFromUser = (currentUser: User, dbData?: any): UserProf
     institution_code: institutionCode,
     email: dbData?.email || currentUser.email || '',
     institution_name: institutionName,
+    approval_status: approvalStatus,
+    approved_at: dbData?.approved_at || null,
+    approved_by: dbData?.approved_by || null,
+    rejection_reason: dbData?.rejection_reason || null,
     subscription_status: subscriptionStatus,
     subscription_start_date: dbData?.subscription_start_date || dbData?.created_at || currentUser.created_at || new Date().toISOString(),
     subscription_end_date: dbData?.subscription_end_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
@@ -187,29 +204,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (data) {
-        let code = data.institution_code;
-        if (!code) {
-          code = await getOrCreateInstitutionCode(currentUser.email || '', currentUser.id, data.institution_name);
-          // Try to update DB row
-          try {
-            await supabase.from('profiles').update({ institution_code: code, institution_id: currentUser.id }).eq('id', currentUser.id);
-          } catch (_) {}
+        const code = data.institution_code || '';
+        const approvalStatus = (data.approval_status as 'pending' | 'approved' | 'rejected' | 'suspended')
+          || (code ? 'approved' : 'pending');
+
+        if (code) {
+          registerLocalInstitution(code, currentUser.id, currentUser.email || '', data.institution_name || 'Institution');
         }
-        registerLocalInstitution(code, currentUser.id, currentUser.email || '', data.institution_name || 'Institution');
-        setProfile(createProfileFromUser(currentUser, { ...data, institution_code: code, institution_id: currentUser.id }));
+        setProfile(createProfileFromUser(currentUser, { ...data, approval_status: approvalStatus, institution_code: code, institution_id: currentUser.id }));
       } else {
-        // First-time user without profile row: construct and allocate code
-        const code = await getOrCreateInstitutionCode(currentUser.email || '', currentUser.id);
-        const newProfile = createProfileFromUser(currentUser, { institution_code: code, institution_id: currentUser.id });
+        // First-time user without profile row: construct pending profile with NO code
+        const newProfile = createProfileFromUser(currentUser, { approval_status: 'pending', institution_code: '', institution_id: currentUser.id });
         setProfile(newProfile);
-        registerLocalInstitution(code, currentUser.id, currentUser.email || '', newProfile.institution_name);
 
         const insertRow = {
           id: currentUser.id,
           institution_id: currentUser.id,
-          institution_code: code,
+          institution_code: '', // Assigned ONLY after Super Admin approval
           email: currentUser.email || '',
           institution_name: newProfile.institution_name,
+          approval_status: 'pending',
           subscription_status: newProfile.subscription_status,
           subscription_start_date: newProfile.subscription_start_date,
           subscription_end_date: newProfile.subscription_end_date,
@@ -286,6 +300,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isUnsubscribed = false;
   const isFreeAccess = false;
 
+  const isGuest = !user || user.id === 'guest-session';
+  const approvalStatus: 'pending' | 'approved' | 'rejected' | 'suspended' = isGuest
+    ? 'approved'
+    : (profile?.approval_status || (profile?.institution_code ? 'approved' : 'pending'));
+  const isApproved = approvalStatus === 'approved';
+
   const quota: DownloadQuota = useMemo(() => ({
     master_roster: profile?.master_roster_downloads ?? 0,
     individual_profile: profile?.individual_profile_downloads ?? 0,
@@ -293,6 +313,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }), [profile?.master_roster_downloads, profile?.individual_profile_downloads, profile?.daywise_profile_downloads]);
 
   const canDownload = useCallback((category: DownloadCategory) => {
+    // If institution is awaiting Super Admin approval, downloads and exports are restricted
+    if (!isApproved) {
+      return {
+        allowed: false,
+        remaining: 0,
+        current: quota[category] || 0,
+        max: 0,
+      };
+    }
     // Unrestricted downloads while subscription plans are suspended
     return {
       allowed: true,
@@ -300,7 +329,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       current: quota[category] || 0,
       max: 9999,
     };
-  }, [quota]);
+  }, [isApproved, quota]);
 
   const recordCategoryDownload = async (category: DownloadCategory, count: number = 1) => {
     const incrementAmount = Math.max(1, count);
@@ -405,16 +434,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const now = new Date();
         const endDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
-        // Automatically allocate unique 3-digit Institution Code (or reinstate if previously registered)
-        const assignedCode = await getOrCreateInstitutionCode(trimmedEmail, data.user.id, trimmedInst);
-        registerLocalInstitution(assignedCode, data.user.id, trimmedEmail, trimmedInst);
-
+        // NOTE: Institution Code is NOT assigned on sign up.
+        // It is generated and assigned ONLY after Super Admin approval.
         const newProfileData: UserProfile = {
           id: data.user.id,
           institution_id: data.user.id,
-          institution_code: assignedCode,
+          institution_code: '', // Assigned ONLY after Super Admin approval
           email: trimmedEmail,
           institution_name: trimmedInst,
+          approval_status: 'pending',
           subscription_status: 'Free Access',
           subscription_start_date: now.toISOString(),
           subscription_end_date: endDate.toISOString(),
@@ -433,9 +461,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const insertRow = {
             id: data.user.id,
             institution_id: data.user.id,
-            institution_code: assignedCode,
+            institution_code: '', // Pending approval
             email: trimmedEmail,
             institution_name: trimmedInst,
+            approval_status: 'pending',
             subscription_status: 'Free Access',
             subscription_start_date: now.toISOString(),
             subscription_end_date: endDate.toISOString(),
@@ -481,6 +510,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             institution_name: updated.institution_name,
           }
         }).catch(err => console.error('Error updating user metadata:', err));
+
+        Promise.resolve(
+          supabase
+            .from('institution_code_registry')
+            .update({
+              institution_name: updated.institution_name,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('institution_id', user.id)
+        ).catch(() => {});
       }
 
       setProfile(prev => prev ? { ...prev, ...updated } : null);
@@ -564,6 +603,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isSubscribed,
       isUnsubscribed,
       isFreeAccess,
+      isApproved,
+      approvalStatus,
       quota,
       canDownload,
       recordCategoryDownload,

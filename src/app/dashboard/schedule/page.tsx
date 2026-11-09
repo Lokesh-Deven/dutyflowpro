@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { useAllotment } from "@/lib/allotment-context";
 import { useAuth } from "@/lib/auth-context";
 import { uploadUserFile } from "@/lib/storage-service";
+import { ApprovalRestrictionDialog } from "@/components/dashboard/approval-restriction-dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -44,9 +45,10 @@ interface DutySlot {
 
 export default function SchedulePage() {
   const { invigilators, examinations, activeAllotment, savedAllotments, setActiveAllotment } = useAllotment();
-  const { user, profile, canDownload, recordCategoryDownload } = useAuth();
+  const { user, profile, canDownload, recordCategoryDownload, isApproved } = useAuth();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [showFullSchedule, setShowFullSchedule] = useState(false);
+  const [isRestrictionDialogOpen, setIsRestrictionDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const handleAllotmentChange = (id: string) => {
@@ -119,6 +121,10 @@ export default function SchedulePage() {
   }, [scheduleData]);
 
   const handleDownload = async (isFull: boolean = false) => {
+    if (!isApproved) {
+      setIsRestrictionDialogOpen(true);
+      return;
+    }
 
     const dataToExport = isFull
       ? scheduleData
@@ -574,6 +580,12 @@ export default function SchedulePage() {
           </Card>
         </div>
       </div>
+
+      <ApprovalRestrictionDialog
+        open={isRestrictionDialogOpen}
+        onOpenChange={setIsRestrictionDialogOpen}
+        featureName="Daywise Examination Schedule PDF"
+      />
     </div>
   );
 }
