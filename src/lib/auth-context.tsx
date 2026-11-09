@@ -59,6 +59,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (institutionName: string, email: string, password: string) => Promise<{ error: Error | null; needsEmailConfirmation?: boolean }>;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
   updateProfile: (updated: Partial<UserProfile>) => Promise<{ error: Error | null }>;
   recordDownload: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
@@ -306,6 +307,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     : (profile?.approval_status || (profile?.institution_code ? 'approved' : 'pending'));
   const isApproved = approvalStatus === 'approved';
 
+  const refreshProfile = useCallback(async () => {
+    if (user && user.id !== 'guest-session') {
+      await fetchProfile(user);
+    }
+  }, [user, fetchProfile]);
+
+  // Auto-refresh periodically if registration is pending approval so access unlocks automatically
+  useEffect(() => {
+    if (!user || user.id === 'guest-session' || isApproved) return;
+    const interval = setInterval(() => {
+      refreshProfile();
+    }, 12000);
+    return () => clearInterval(interval);
+  }, [user, isApproved, refreshProfile]);
+
   const quota: DownloadQuota = useMemo(() => ({
     master_roster: profile?.master_roster_downloads ?? 0,
     individual_profile: profile?.individual_profile_downloads ?? 0,
@@ -434,6 +450,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const now = new Date();
         const endDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
+        // Always register the pending institution in Supabase so the Super Admin console sees it immediately
+        try {
+          await fetch('/api/auth/register-pending-profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: data.user.id,
+              email: trimmedEmail,
+              institutionName: trimmedInst,
+            }),
+          });
+        } catch (apiErr) {
+          console.warn('register-pending-profile notification warning:', apiErr);
+        }
+
         // NOTE: Institution Code is NOT assigned on sign up.
         // It is generated and assigned ONLY after Super Admin approval.
         const newProfileData: UserProfile = {
@@ -458,7 +489,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(data.user);
           setSession(data.session);
           setProfile(newProfileData);
-          const insertRow = {
+          const insertRow: any = {
             id: data.user.id,
             institution_id: data.user.id,
             institution_code: '', // Pending approval
@@ -472,7 +503,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           };
           try {
             await supabase.from('profiles').upsert(insertRow);
-          } catch (_) {}
+          } catch (_) {
+            try {
+              delete insertRow.institution_id;
+              delete insertRow.institution_code;
+              delete insertRow.approval_status;
+              await supabase.from('profiles').upsert(insertRow);
+            } catch (__) {}
+          }
           return { error: null, needsEmailConfirmation: false };
         } else {
           return { error: null, needsEmailConfirmation: true };
@@ -611,6 +649,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signIn,
       signUp,
       signOut,
+      refreshProfile,
       updateProfile,
       recordDownload,
       resetPassword,

@@ -1,12 +1,16 @@
 "use client";
 
-import React from 'react';
-import { Clock, ShieldAlert, Sparkles, ExternalLink } from 'lucide-react';
+import React, { useState } from 'react';
+import { Clock, ShieldAlert, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 export function InstitutionApprovalBanner() {
-  const { user, profile, isApproved } = useAuth();
+  const { user, profile, isApproved, refreshProfile } = useAuth();
+  const { toast } = useToast();
+  const [isChecking, setIsChecking] = useState(false);
 
   // If user is guest or already approved, do not show banner
   if (!user || user.id === 'guest-session' || isApproved) {
@@ -15,6 +19,20 @@ export function InstitutionApprovalBanner() {
 
   const isRejected = profile?.approval_status === 'rejected';
   const isSuspended = profile?.approval_status === 'suspended';
+
+  const handleManualCheck = async () => {
+    setIsChecking(true);
+    try {
+      await refreshProfile();
+      toast({
+        title: 'Status Checked',
+        description: 'Profile status synchronized with server.',
+      });
+    } catch (_) {}
+    finally {
+      setIsChecking(false);
+    }
+  };
 
   if (isRejected) {
     return (
@@ -50,7 +68,7 @@ export function InstitutionApprovalBanner() {
   }
 
   return (
-    <div className="bg-gradient-to-r from-amber-500/15 via-indigo-500/10 to-purple-500/15 border-b border-amber-500/30 dark:border-amber-500/20 px-4 sm:px-6 py-3 text-amber-900 dark:text-amber-200 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 shadow-xs animate-in fade-in duration-200">
+    <div className="bg-gradient-to-r from-amber-500/15 via-indigo-500/10 to-purple-500/15 border-b border-amber-500/30 dark:border-amber-500/20 px-4 sm:px-6 py-2.5 text-amber-900 dark:text-amber-200 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 shadow-xs animate-in fade-in duration-200">
       <div className="flex items-center gap-2.5">
         <div className="p-1.5 rounded-lg bg-amber-500/20 text-amber-700 dark:text-amber-300 shrink-0">
           <Clock className="w-4 h-4" />
@@ -65,8 +83,17 @@ export function InstitutionApprovalBanner() {
         <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border-amber-300 dark:border-amber-800 text-[10px] font-semibold">
           Pending Approval
         </Badge>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleManualCheck}
+          disabled={isChecking}
+          className="h-6 px-2 text-[10px] bg-white/50 dark:bg-slate-900/50 border-amber-400/40 hover:bg-white text-slate-700 dark:text-slate-200"
+        >
+          <RefreshCw className={`w-3 h-3 mr-1 ${isChecking ? 'animate-spin' : ''}`} />
+          Check Status
+        </Button>
       </div>
     </div>
   );
 }
-

@@ -19,23 +19,95 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const statusFilter = searchParams.get('status') || 'all';
 
-    let query = supabase
+    // 1. Try RPC get_institution_registrations first
+    try {
+      const { data: rpcData, error: rpcErr } = await supabase.rpc('get_institution_registrations', {
+        p_status: statusFilter,
+      });
+
+      if (!rpcErr && Array.isArray(rpcData) && rpcData.length > 0) {
+        return NextResponse.json({ success: true, data: rpcData });
+      }
+    } catch (_) {}
+
+    // 2. Direct table fallback with resilient columns
+    let rawProfiles: any[] = [];
+    const fullQuery = await supabase
       .from('profiles')
       .select('id, institution_id, institution_code, institution_name, email, approval_status, approved_at, approved_by, rejection_reason, created_at, updated_at, subscription_status')
       .neq('id', 'guest-session')
       .order('created_at', { ascending: false });
 
+    if (!fullQuery.error && fullQuery.data) {
+      rawProfiles = fullQuery.data;
+    } else {
+      // Fallback: If columns do not exist yet on profiles table, query standard columns
+      const basicQuery = await supabase
+        .from('profiles')
+        .select('id, email, institution_name, created_at, updated_at, subscription_status')
+        .neq('id', 'guest-session')
+        .order('created_at', { ascending: false });
+
+      if (basicQuery.data) {
+        rawProfiles = basicQuery.data.map((p: any) => ({
+          ...p,
+          institution_id: p.id,
+          institution_code: '',
+          approval_status: 'pending',
+          approved_at: null,
+          approved_by: null,
+          rejection_reason: null,
+        }));
+      }
+    }
+
+    // 3. Fetch registry to enrich records
+    const { data: regData } = await supabase.from('institution_code_registry').select('*');
+    const registryByEmail = new Map<string, any>();
+    const registryById = new Map<string, any>();
+    if (regData) {
+      for (const reg of regData) {
+        if (reg.institution_email) {
+          registryByEmail.set(reg.institution_email.trim().toLowerCase(), reg);
+        }
+        if (reg.institution_id) {
+          registryById.set(reg.institution_id, reg);
+        }
+      }
+    }
+
+    // 4. Enrich profiles
+    let enriched = rawProfiles.map((p) => {
+      const email = (p.email || '').trim().toLowerCase();
+      const reg = registryByEmail.get(email) || registryById.get(p.id) || registryById.get(p.institution_id);
+      const assignedCode = p.institution_code || reg?.institution_code || '';
+      const status = p.approval_status
+        ? p.approval_status
+        : (assignedCode ? 'approved' : 'pending');
+
+      return {
+        id: p.id,
+        institution_id: p.institution_id || p.id,
+        institution_code: assignedCode,
+        institution_name: p.institution_name || reg?.institution_name || 'Institution',
+        email: p.email || reg?.institution_email || '',
+        approval_status: status,
+        approved_at: p.approved_at || null,
+        approved_by: p.approved_by || null,
+        rejection_reason: p.rejection_reason || null,
+        created_at: p.created_at || new Date().toISOString(),
+        updated_at: p.updated_at || new Date().toISOString(),
+        subscription_status: p.subscription_status || 'Free Access',
+      };
+    });
+
     if (statusFilter !== 'all') {
-      query = query.eq('approval_status', statusFilter);
+      enriched = enriched.filter((item) => item.approval_status === statusFilter);
     }
 
-    const { data, error } = await query;
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json({ success: true, data: data || [] });
+    return NextResponse.json({ success: true, data: enriched });
   } catch (err: any) {
+    console.error('Error fetching registrations in approvals API:', err);
     return NextResponse.json({ error: err?.message || 'Error fetching registrations.' }, { status: 500 });
   }
 }
@@ -81,9 +153,9 @@ export async function POST(req: NextRequest) {
       if (!assignedCode) {
         const { data: prof, error: profErr } = await supabase
           .from('profiles')
-          .select('id, email, institution_name, institution_code')
+          .select('*')
           .eq('id', institutionId)
-          .single();
+          .maybeSingle();
 
         if (profErr || !prof) {
           return NextResponse.json({ error: 'Institution profile not found.' }, { status: 404 });
@@ -92,7 +164,7 @@ export async function POST(req: NextRequest) {
         adminEmail = (prof.email || '').trim().toLowerCase();
         collegeName = prof.institution_name || 'Institution';
 
-        // Check reinstatement rule
+        // Check reinstatement rule: preserve existing code if email registered previously
         const { data: existingReg } = await supabase
           .from('institution_code_registry')
           .select('institution_code')
@@ -103,7 +175,11 @@ export async function POST(req: NextRequest) {
           assignedCode = existingReg.institution_code;
           await supabase
             .from('institution_code_registry')
-            .update({ institution_id: institutionId, institution_name: collegeName, updated_at: new Date().toISOString() })
+            .update({
+              institution_id: institutionId,
+              institution_name: collegeName,
+              updated_at: new Date().toISOString(),
+            })
             .eq('institution_code', assignedCode);
         } else {
           // Allocate next sequential 3-digit code
@@ -111,7 +187,7 @@ export async function POST(req: NextRequest) {
             .from('institution_code_registry')
             .select('institution_code')
             .order('institution_code', { ascending: false })
-            .limit(20);
+            .limit(50);
 
           let maxNum = 0;
           if (rows) {
@@ -131,29 +207,42 @@ export async function POST(req: NextRequest) {
         }
 
         // Update profile
-        await supabase
-          .from('profiles')
-          .update({
-            approval_status: 'approved',
-            institution_code: assignedCode,
-            institution_id: institutionId,
-            approved_by: SUPERADMIN_EMAIL,
-            approved_at: new Date().toISOString(),
-            rejection_reason: null,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', institutionId);
+        try {
+          await supabase
+            .from('profiles')
+            .update({
+              approval_status: 'approved',
+              institution_code: assignedCode,
+              institution_id: institutionId,
+              approved_by: SUPERADMIN_EMAIL,
+              approved_at: new Date().toISOString(),
+              rejection_reason: null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', institutionId);
+        } catch (_) {
+          await supabase
+            .from('profiles')
+            .update({
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', institutionId);
+        }
       }
 
       // Notify Institution Administrator via SendGrid
       if (adminEmail && assignedCode) {
-        sendInstitutionApprovedEmail(adminEmail, collegeName, assignedCode).catch(() => {});
+        sendInstitutionApprovedEmail(adminEmail, collegeName, assignedCode).catch((err) => {
+          console.error('SendGrid approval notification error:', err);
+        });
       }
 
       return NextResponse.json({
         success: true,
         action: 'approved',
         institution_code: assignedCode,
+        institution_name: collegeName,
+        institution_email: adminEmail,
         message: `Institution successfully approved with Institution Code: ${assignedCode}`,
       });
     }
@@ -169,16 +258,18 @@ export async function POST(req: NextRequest) {
           p_reason: cleanReason,
         });
       } catch (_) {
-        await supabase
-          .from('profiles')
-          .update({
-            approval_status: 'rejected',
-            rejection_reason: cleanReason,
-            approved_by: SUPERADMIN_EMAIL,
-            approved_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', institutionId);
+        try {
+          await supabase
+            .from('profiles')
+            .update({
+              approval_status: 'rejected',
+              rejection_reason: cleanReason,
+              approved_by: SUPERADMIN_EMAIL,
+              approved_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', institutionId);
+        } catch (__) {}
       }
 
       // Fetch profile to dispatch rejection email
@@ -202,14 +293,24 @@ export async function POST(req: NextRequest) {
     // 3. SUSPEND ACTION
     if (action === 'suspend') {
       const cleanReason = (reason || '').trim() || 'Operations suspended by Super Admin.';
-      await supabase
-        .from('profiles')
-        .update({
-          approval_status: 'suspended',
-          rejection_reason: cleanReason,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', institutionId);
+      try {
+        await supabase.rpc('suspend_institution', {
+          p_institution_id: institutionId,
+          p_admin_email: SUPERADMIN_EMAIL,
+          p_reason: cleanReason,
+        });
+      } catch (_) {
+        try {
+          await supabase
+            .from('profiles')
+            .update({
+              approval_status: 'suspended',
+              rejection_reason: cleanReason,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', institutionId);
+        } catch (__) {}
+      }
 
       return NextResponse.json({
         success: true,
@@ -220,14 +321,23 @@ export async function POST(req: NextRequest) {
 
     // 4. REACTIVATE ACTION
     if (action === 'reactivate') {
-      await supabase
-        .from('profiles')
-        .update({
-          approval_status: 'approved',
-          rejection_reason: null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', institutionId);
+      try {
+        await supabase.rpc('reactivate_institution', {
+          p_institution_id: institutionId,
+          p_admin_email: SUPERADMIN_EMAIL,
+        });
+      } catch (_) {
+        try {
+          await supabase
+            .from('profiles')
+            .update({
+              approval_status: 'approved',
+              rejection_reason: null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', institutionId);
+        } catch (__) {}
+      }
 
       return NextResponse.json({
         success: true,
@@ -242,4 +352,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: err?.message || 'Error processing request.' }, { status: 500 });
   }
 }
-

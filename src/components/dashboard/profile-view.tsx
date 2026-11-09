@@ -59,10 +59,12 @@ export function ProfileView() {
   // Strictly single letter initial (first letter of institution name)
   const singleInitial = (institutionName.trim().charAt(0) || email.trim().charAt(0) || "U").toUpperCase();
 
-  const institutionCode = profile?.institution_code || '001';
+  const isApproved = profile?.approval_status === 'approved' || (profile?.institution_code && profile?.approval_status !== 'suspended' && profile?.approval_status !== 'rejected') || isGuest;
+  const institutionCode = profile?.institution_code || (isGuest ? '001' : '');
   const [copiedCode, setCopiedCode] = useState(false);
 
   const handleCopyCode = () => {
+    if (!institutionCode) return;
     navigator.clipboard.writeText(institutionCode);
     setCopiedCode(true);
     toast({
@@ -164,13 +166,20 @@ export function ProfileView() {
 
                     <span className="text-[11px] font-mono font-bold bg-white/20 text-white px-2.5 py-0.5 rounded-full border border-white/30 backdrop-blur-xs flex items-center gap-1">
                       <Hash className="w-3 h-3 text-indigo-200" />
-                      Code: {institutionCode}
+                      Code: {institutionCode ? institutionCode : 'Pending Approval'}
                     </span>
 
-                    <Badge className="bg-emerald-400/20 text-emerald-100 border-emerald-300/40 text-[10px] font-bold py-0 px-2 rounded-full backdrop-blur-xs">
-                      <ShieldCheck className="mr-1 h-3 w-3 text-emerald-300" />
-                      Active Account
-                    </Badge>
+                    {isApproved ? (
+                      <Badge className="bg-emerald-400/20 text-emerald-100 border-emerald-300/40 text-[10px] font-bold py-0 px-2 rounded-full backdrop-blur-xs">
+                        <ShieldCheck className="mr-1 h-3 w-3 text-emerald-300" />
+                        Active Account
+                      </Badge>
+                    ) : (
+                      <Badge className="bg-amber-400/20 text-amber-100 border-amber-300/40 text-[10px] font-bold py-0 px-2 rounded-full backdrop-blur-xs">
+                        <Clock className="mr-1 h-3 w-3 text-amber-300" />
+                        Pending Approval
+                      </Badge>
+                    )}
                   </div>
 
                   <h1 className="text-2xl sm:text-3xl font-headline font-extrabold text-white tracking-tight break-words drop-shadow-xs">
@@ -277,18 +286,26 @@ export function ProfileView() {
                 </p>
               </div>
               <div className="flex items-center gap-1.5">
-                <Badge className="bg-[#6342e8] hover:bg-[#5232d6] text-white font-mono text-base font-black px-3 py-1 rounded-xl shadow-xs tracking-widest">
-                  {institutionCode}
-                </Badge>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-slate-500 hover:text-slate-900 dark:hover:text-white rounded-lg"
-                  onClick={handleCopyCode}
-                  title="Copy Institution Code"
-                >
-                  {copiedCode ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
-                </Button>
+                {institutionCode ? (
+                  <>
+                    <Badge className="bg-[#6342e8] hover:bg-[#5232d6] text-white font-mono text-base font-black px-3 py-1 rounded-xl shadow-xs tracking-widest">
+                      {institutionCode}
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-slate-500 hover:text-slate-900 dark:hover:text-white rounded-lg"
+                      onClick={handleCopyCode}
+                      title="Copy Institution Code"
+                    >
+                      {copiedCode ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
+                    </Button>
+                  </>
+                ) : (
+                  <Badge className="bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-400/40 font-semibold text-xs px-2.5 py-1 rounded-lg">
+                    Awaiting Super Admin Approval
+                  </Badge>
+                )}
               </div>
             </div>
           </CardContent>

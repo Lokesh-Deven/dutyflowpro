@@ -26,20 +26,37 @@ export async function GET(req: NextRequest) {
       }
     } catch (_) {}
 
-    // 2. Direct query fallback
-    const { data: profiles, error } = await supabase
+    // 2. Direct query fallback with column resilience
+    let profiles: any[] = [];
+    const fullQuery = await supabase
       .from('profiles')
       .select('id, approval_status, institution_code');
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    if (!fullQuery.error && fullQuery.data) {
+      profiles = fullQuery.data;
+    } else {
+      const basicQuery = await supabase.from('profiles').select('id');
+      if (basicQuery.data) {
+        profiles = basicQuery.data.map((p) => ({
+          id: p.id,
+          approval_status: 'pending',
+          institution_code: '',
+        }));
+      }
     }
 
-    const filtered = (profiles || []).filter((p) => p.id !== 'guest-session');
+    // Check registry
+    const { data: registry } = await supabase.from('institution_code_registry').select('institution_id, institution_code');
+    const registeredIds = new Set((registry || []).map((r) => r.institution_id).filter(Boolean));
+
+    const filtered = profiles.filter((p) => p.id !== 'guest-session');
     const total = filtered.length;
-    const pending = filtered.filter((p) => p.approval_status === 'pending' || (!p.approval_status && !p.institution_code)).length;
-    const approved = filtered.filter((p) => p.approval_status === 'approved' || (p.institution_code && p.approval_status !== 'suspended' && p.approval_status !== 'rejected')).length;
+    const approved = filtered.filter(
+      (p) => p.approval_status === 'approved' || registeredIds.has(p.id) || (p.institution_code && p.approval_status !== 'suspended' && p.approval_status !== 'rejected')
+    ).length;
     const suspended = filtered.filter((p) => p.approval_status === 'suspended').length;
+    const rejected = filtered.filter((p) => p.approval_status === 'rejected').length;
+    const pending = Math.max(0, total - approved - suspended - rejected);
 
     return NextResponse.json({
       success: true,
@@ -51,7 +68,7 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (err: any) {
+    console.error('Error in stats route:', err);
     return NextResponse.json({ error: err?.message || 'Failed to fetch stats.' }, { status: 500 });
   }
 }
-
