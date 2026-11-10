@@ -32,6 +32,7 @@ interface AcademicCalendarViewProps {
   onSlotClick?: (slot: ExaminationScheduleItem) => void;
   className?: string;
   showDraftsNotice?: boolean;
+  focusDate?: Date | null;
 }
 
 const MONTH_NAMES = [
@@ -57,10 +58,18 @@ export function AcademicCalendarView({
   onSlotClick,
   className,
   showDraftsNotice = false,
+  focusDate,
 }: AcademicCalendarViewProps) {
   const today = useMemo(() => new Date(), []);
-  const [currentDate, setCurrentDate] = useState<Date>(() => new Date());
+  const [currentDate, setCurrentDate] = useState<Date>(() => focusDate || new Date());
   const [selectedExamDetails, setSelectedExamDetails] = useState<ExaminationScheduleItem | null>(null);
+
+  // Sync with focusDate when updated from parent
+  React.useEffect(() => {
+    if (focusDate) {
+      setCurrentDate(focusDate);
+    }
+  }, [focusDate]);
 
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth();
@@ -109,14 +118,13 @@ export function AcademicCalendarView({
     return `${year}-${m}-${d}`;
   };
 
-  // Check which exams fall on a specific date string
+  // Check which exams fall on a specific date string (YYYY-MM-DD)
   const getExamsForDay = (dayString: string) => {
-    const targetTime = new Date(dayString).getTime();
-
     return activePublishedSchedules.filter((exam) => {
-      const s = new Date(exam.start_date).getTime();
-      const e = new Date(exam.end_date).getTime();
-      return targetTime >= s && targetTime <= e;
+      const s = (exam.start_date || '').trim();
+      const e = (exam.end_date || '').trim();
+      if (!s || !e) return false;
+      return dayString >= s && dayString <= e;
     });
   };
 
@@ -243,7 +251,7 @@ export function AcademicCalendarView({
                 <div
                   key={`day-${dayNum}`}
                   className={cn(
-                    "min-h-[85px] sm:min-h-[105px] p-1.5 sm:p-2 transition-colors relative flex flex-col group",
+                    "min-h-[96px] sm:min-h-[118px] p-1.5 sm:p-2 transition-colors relative flex flex-col group",
                     isToday ? "bg-indigo-50/30 dark:bg-indigo-950/20" : "bg-white dark:bg-slate-900 hover:bg-slate-50/80 dark:hover:bg-slate-800/40",
                     isSunday && "bg-slate-50/20"
                   )}
@@ -264,14 +272,14 @@ export function AcademicCalendarView({
                     </span>
 
                     {dayExams.length > 0 && (
-                      <span className="text-[9px] font-mono font-bold text-slate-400 opacity-60">
+                      <span className="text-[9px] font-mono font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full">
                         {dayExams.length} {dayExams.length === 1 ? 'Exam' : 'Exams'}
                       </span>
                     )}
                   </div>
 
-                  {/* Scheduled Examination Pills */}
-                  <div className="space-y-1 flex-1 flex flex-col justify-start overflow-hidden">
+                  {/* Scheduled Examination Pills: Displays all examinations taking place on this date */}
+                  <div className="space-y-1 flex-1 flex flex-col justify-start">
                     {dayExams.map((exam) => {
                       const isFinal = exam.publication_status === 'final_published';
                       const isTentative = exam.publication_status === 'tentative_published';
@@ -281,23 +289,23 @@ export function AcademicCalendarView({
 
                       return (
                         <button
-                          key={`${exam.slot_number}-${dateStr}`}
+                          key={`slot-${exam.slot_number}-${dateStr}`}
                           type="button"
                           onClick={() => {
                             setSelectedExamDetails(exam);
                             if (onSlotClick) onSlotClick(exam);
                           }}
                           className={cn(
-                            "w-full text-left px-1.5 py-0.5 sm:py-1 rounded-md text-[10px] font-bold tracking-tight truncate transition-all shadow-xs cursor-pointer select-none flex items-center justify-between gap-1",
+                            "w-full text-left px-2 py-1 rounded-md text-[10px] sm:text-[11px] font-bold tracking-tight transition-all shadow-xs cursor-pointer select-none flex items-center justify-between gap-1 leading-snug shrink-0",
                             isFinal
-                              ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-900/10"
-                              : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-900/10"
+                              ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-900/10 ring-1 ring-emerald-500/20"
+                              : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-900/10 ring-1 ring-blue-500/20"
                           )}
-                          title={`${exam.exam_name} (${isFinal ? 'Final' : 'Tentative'}) - ${exam.start_date} to ${exam.end_date}`}
+                          title={`${exam.exam_name} (${isFinal ? 'Confirmed' : 'Tentative'}) - ${exam.start_date} to ${exam.end_date}`}
                         >
-                          <span className="truncate">{exam.exam_name}</span>
+                          <span className="truncate block font-semibold">{exam.exam_name}</span>
                           {(isStart || isEnd) && (
-                            <span className="text-[8px] uppercase tracking-widest opacity-80 shrink-0 font-mono hidden xs:inline">
+                            <span className="text-[7.5px] uppercase tracking-wider opacity-85 shrink-0 font-mono px-1 py-0.2 rounded bg-black/20">
                               {isStart && isEnd ? '1D' : isStart ? 'Start' : 'End'}
                             </span>
                           )}

@@ -19,16 +19,17 @@ export const DEFAULT_EXAMINATION_NAMES: string[] = [
 
 export function getDefaultSlots(
   institutionId: string = 'default',
-  institutionCode: string = ''
+  institutionCode: string = '',
+  count: number = 10
 ): ExaminationScheduleItem[] {
-  return Array.from({ length: 10 }, (_, index) => {
+  return Array.from({ length: Math.max(10, count) }, (_, index) => {
     const slotNumber = index + 1;
     return {
       slot_number: slotNumber,
-      exam_name: DEFAULT_EXAMINATION_NAMES[index] || `Examination ${slotNumber}`,
+      exam_name: '',
       start_date: '',
       end_date: '',
-      total_marks: index < 2 ? 50 : 100,
+      total_marks: '',
       date_type: 'tentative',
       publication_status: 'draft',
       tentative_start_date: null,
@@ -54,10 +55,22 @@ export function getLocalExaminationCalendar(
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        // Merge with defaults to ensure all 10 slots exist
-        const defaults = getDefaultSlots(institutionId, institutionCode);
+        // Clean up legacy default titles/marks if not scheduled and still in draft
+        const cleaned = parsed.map((item: any) => {
+          const isLegacyDefaultName = DEFAULT_EXAMINATION_NAMES.includes(item.exam_name);
+          const isUnscheduledDraft = !item.start_date && !item.end_date && item.publication_status === 'draft';
+          return {
+            ...item,
+            exam_name: isLegacyDefaultName && isUnscheduledDraft ? '' : (item.exam_name || ''),
+            total_marks: (item.total_marks === 50 || item.total_marks === 100) && isUnscheduledDraft ? '' : (item.total_marks ?? ''),
+          };
+        });
+
+        // Ensure at least 10 slots
+        const count = Math.max(10, cleaned.length);
+        const defaults = getDefaultSlots(institutionId, institutionCode, count);
         return defaults.map((def) => {
-          const found = parsed.find((p) => p.slot_number === def.slot_number);
+          const found = cleaned.find((p: any) => p.slot_number === def.slot_number);
           return found ? { ...def, ...found } : def;
         });
       }

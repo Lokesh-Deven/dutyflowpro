@@ -7,7 +7,6 @@ import {
   CalendarRange,
   Clock,
   CheckCircle2,
-  AlertTriangle,
   Save,
   RotateCcw,
   Sparkles,
@@ -20,6 +19,9 @@ import {
   AlertCircle,
   HelpCircle,
   ArrowRight,
+  Eraser,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,27 +34,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/auth-context';
 import {
   ExaminationScheduleItem,
   ExaminationDateType,
-  ExaminationConflict,
 } from '@/lib/examination-calendar-types';
 import {
+  DEFAULT_EXAMINATION_NAMES,
   getDefaultSlots,
   getLocalExaminationCalendar,
   saveLocalExaminationCalendar,
-  detectExaminationConflicts,
   fetchExaminationCalendarApi,
   saveExaminationCalendarApi,
 } from '@/lib/examination-calendar-service';
@@ -72,18 +65,8 @@ export default function ExaminationCalendarAdminPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Publishing confirmation dialog state
-  const [pendingPublishSlot, setPendingPublishSlot] = useState<{
-    slot: ExaminationScheduleItem;
-    targetDateType: ExaminationDateType;
-  } | null>(null);
-
-  // Conflict warning dialog state
-  const [detectedConflicts, setDetectedConflicts] = useState<{
-    slot: ExaminationScheduleItem;
-    targetDateType: ExaminationDateType;
-    conflicts: ExaminationConflict[];
-  } | null>(null);
+  // Calendar focus date to automatically jump to the month of the published exam
+  const [calendarFocusDate, setCalendarFocusDate] = useState<Date | null>(null);
 
   // Load schedules on mount
   useEffect(() => {
@@ -92,7 +75,17 @@ export default function ExaminationCalendarAdminPage() {
       setIsLoading(true);
       const data = await fetchExaminationCalendarApi(institutionId, institutionCode, 'admin');
       if (isMounted) {
-        setSchedules(data);
+        // Ensure legacy mock defaults on unscheduled drafts are left empty
+        const cleaned = data.map((item) => {
+          const isLegacyDefaultName = DEFAULT_EXAMINATION_NAMES.includes(item.exam_name);
+          const isUnscheduledDraft = !item.start_date && !item.end_date && item.publication_status === 'draft';
+          return {
+            ...item,
+            exam_name: isLegacyDefaultName && isUnscheduledDraft ? '' : (item.exam_name || ''),
+            total_marks: (item.total_marks === 50 || item.total_marks === 100) && isUnscheduledDraft ? '' : (item.total_marks ?? ''),
+          };
+        });
+        setSchedules(cleaned);
         setIsLoading(false);
       }
     }
@@ -121,28 +114,34 @@ export default function ExaminationCalendarAdminPage() {
     );
   };
 
-  // Trigger publish workflow
-  const handleInitiatePublish = (slot: ExaminationScheduleItem, dateType: ExaminationDateType) => {
+  // Direct publishing workflow - completely allows overlapping/repeated dates across any slot
+  const handlePublishSlot = async (
+    slotNumber: number,
+    dateType: ExaminationDateType
+  ) => {
+    const targetSlot = schedules.find((s) => s.slot_number === slotNumber);
+    if (!targetSlot) return;
+
     // 1. Validation: Must have Exam Name, Start Date, and End Date
-    if (!slot.exam_name?.trim()) {
+    if (!targetSlot.exam_name?.trim()) {
       toast({
         variant: 'destructive',
         title: 'Examination Name Required',
-        description: `Please enter an examination name for Slot #${slot.slot_number}.`,
+        description: `Please enter an examination name for Slot #${slotNumber}.`,
       });
       return;
     }
 
-    if (!slot.start_date || !slot.end_date) {
+    if (!targetSlot.start_date || !targetSlot.end_date) {
       toast({
         variant: 'destructive',
         title: 'Dates Required',
-        description: `Please select both Start Date and End Date for ${slot.exam_name}.`,
+        description: `Please select both Start Date and End Date for ${targetSlot.exam_name}.`,
       });
       return;
     }
 
-    if (new Date(slot.start_date).getTime() > new Date(slot.end_date).getTime()) {
+    if (targetSlot.start_date > targetSlot.end_date) {
       toast({
         variant: 'destructive',
         title: 'Invalid Date Range',
@@ -151,37 +150,13 @@ export default function ExaminationCalendarAdminPage() {
       return;
     }
 
-    // 2. Conflict Detection
-    const conflicts = detectExaminationConflicts(slot, schedules);
-    if (conflicts.length > 0) {
-      setDetectedConflicts({
-        slot,
-        targetDateType: dateType,
-        conflicts,
-      });
-      return;
-    }
-
-    // 3. Normal confirmation dialog
-    setPendingPublishSlot({
-      slot,
-      targetDateType: dateType,
-    });
-  };
-
-  // Perform the actual publishing
-  const executePublish = async (
-    targetSlot: ExaminationScheduleItem,
-    dateType: ExaminationDateType
-  ) => {
     setIsSaving(true);
     try {
       const now = new Date().toISOString();
-      const updatedSchedules = schedules.map((item) => {
-        if (item.slot_number === targetSlot.slot_number) {
-          const isFinal = dateType === 'final';
+      const isFinal = dateType === 'final';
 
-          // Preserve historical tentative dates if publishing final dates
+      const updatedSchedules = schedules.map((item) => {
+        if (item.slot_number === slotNumber) {
           const preservedTentativeStart = isFinal
             ? item.tentative_start_date || item.start_date
             : item.start_date;
@@ -210,10 +185,15 @@ export default function ExaminationCalendarAdminPage() {
       // Save to API and localStorage
       await saveExaminationCalendarApi(institutionId, institutionCode, updatedSchedules);
 
+      // Automatically focus calendar on the published examination's month so it is immediately visible
+      if (targetSlot.start_date) {
+        setCalendarFocusDate(new Date(targetSlot.start_date + 'T00:00:00'));
+      }
+
       toast({
-        title: dateType === 'final' ? 'Confirmed Dates Published' : 'Tentative Dates Published',
-        description: `${targetSlot.exam_name} is now published to the Student Portal as ${
-          dateType === 'final' ? 'Confirmed Dates' : 'Provisional Tentative Dates'
+        title: isFinal ? 'Confirmed Dates Published' : 'Tentative Dates Published',
+        description: `${targetSlot.exam_name} is now published on the calendar as ${
+          isFinal ? 'Confirmed Dates' : 'Provisional Tentative Dates'
         }.`,
       });
     } catch (err: any) {
@@ -224,25 +204,24 @@ export default function ExaminationCalendarAdminPage() {
       });
     } finally {
       setIsSaving(false);
-      setPendingPublishSlot(null);
-      setDetectedConflicts(null);
     }
   };
 
-  // Reset to draft
-  const handleUnpublish = async (slotNumber: number) => {
-    const target = schedules.find((s) => s.slot_number === slotNumber);
-    if (!target) return;
-
-    if (!confirm(`Revert ${target.exam_name} to Draft status? It will no longer be visible on the Student Portal.`)) {
-      return;
-    }
-
+  // Clear a row's inputs completely
+  const handleClearRow = async (slotNumber: number) => {
     const updated = schedules.map((item) => {
       if (item.slot_number === slotNumber) {
         return {
           ...item,
+          exam_name: '',
+          start_date: '',
+          end_date: '',
+          total_marks: '',
+          date_type: 'tentative' as ExaminationDateType,
           publication_status: 'draft' as const,
+          tentative_start_date: null,
+          tentative_end_date: null,
+          published_at: null,
           updated_at: new Date().toISOString(),
         };
       }
@@ -253,8 +232,55 @@ export default function ExaminationCalendarAdminPage() {
     await saveExaminationCalendarApi(institutionId, institutionCode, updated);
 
     toast({
-      title: 'Schedule Reverted to Draft',
-      description: `${target.exam_name} has been unpublished from student view.`,
+      title: `Row #${slotNumber} Cleared`,
+      description: 'Examination details have been reset and left empty.',
+    });
+  };
+
+  // Add a new row below the 10th row
+  const handleAddRow = () => {
+    setSchedules((prev) => {
+      const nextSlotNumber = prev.length > 0 ? Math.max(...prev.map((s) => s.slot_number)) + 1 : 1;
+      const newSlot: ExaminationScheduleItem = {
+        slot_number: nextSlotNumber,
+        exam_name: '',
+        start_date: '',
+        end_date: '',
+        total_marks: '',
+        date_type: 'tentative',
+        publication_status: 'draft',
+        tentative_start_date: null,
+        tentative_end_date: null,
+        published_at: null,
+        institution_id: institutionId,
+        institution_code: institutionCode,
+      };
+      const updated = [...prev, newSlot];
+      saveLocalExaminationCalendar(institutionId, updated);
+      return updated;
+    });
+
+    toast({
+      title: 'Row Added',
+      description: `New examination slot #${schedules.length + 1} has been created.`,
+    });
+  };
+
+  // Delete an added row (applicable for rows beyond slot 10)
+  const handleDeleteRow = async (slotNumber: number) => {
+    const filtered = schedules.filter((s) => s.slot_number !== slotNumber);
+    // Re-index remaining rows so numbering stays clean and sequential
+    const reindexed = filtered.map((item, idx) => ({
+      ...item,
+      slot_number: idx + 1,
+    }));
+
+    setSchedules(reindexed);
+    await saveExaminationCalendarApi(institutionId, institutionCode, reindexed);
+
+    toast({
+      title: 'Row Removed',
+      description: `Examination slot #${slotNumber} has been removed. Total rows: ${reindexed.length}.`,
     });
   };
 
@@ -333,7 +359,11 @@ export default function ExaminationCalendarAdminPage() {
           </span>
         </div>
 
-        <AcademicCalendarView schedules={schedules} readOnly={false} />
+        <AcademicCalendarView
+          schedules={schedules}
+          readOnly={false}
+          focusDate={calendarFocusDate}
+        />
       </section>
 
       {/* 3. Examination Schedule Table Section */}
@@ -345,14 +375,14 @@ export default function ExaminationCalendarAdminPage() {
               <span>Examination Schedule Table</span>
             </h2>
             <p className="text-xs text-slate-500">
-              Configure 10 examination slots for your academic calendar. Select date type to publish tentative or final schedules.
+              Configure examination slots for your academic calendar. Select date type to publish tentative or confirmed schedules.
             </p>
           </div>
 
           <div className="flex items-center gap-2 text-xs">
             <span className="text-slate-400">Total Slots:</span>
             <Badge variant="outline" className="font-mono text-xs font-bold bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-              10 Slots
+              {schedules.length} Slots
             </Badge>
           </div>
         </div>
@@ -369,7 +399,7 @@ export default function ExaminationCalendarAdminPage() {
                     <th className="py-3 px-3.5 min-w-[140px]">End Date</th>
                     <th className="py-3 px-3 text-center min-w-[90px]">Total Marks</th>
                     <th className="py-3 px-3.5 min-w-[150px]">Date Type</th>
-                    <th className="py-3 px-4 text-center min-w-[200px]">Status / Action</th>
+                    <th className="py-3 px-4 text-center min-w-[240px]">Status / Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
@@ -398,7 +428,7 @@ export default function ExaminationCalendarAdminPage() {
                             onChange={(e) =>
                               handleFieldChange(slot.slot_number, 'exam_name', e.target.value)
                             }
-                            placeholder="e.g. First Test"
+                            placeholder="Enter examination name"
                             className="h-8 text-xs font-semibold bg-transparent border-slate-200 dark:border-slate-700 focus-visible:bg-white dark:focus-visible:bg-slate-800"
                           />
                         </td>
@@ -433,12 +463,12 @@ export default function ExaminationCalendarAdminPage() {
                             type="number"
                             min={1}
                             max={500}
-                            value={slot.total_marks || ''}
+                            value={slot.total_marks ?? ''}
                             onChange={(e) =>
                               handleFieldChange(slot.slot_number, 'total_marks', e.target.value)
                             }
                             className="h-8 text-xs font-mono text-center w-20 mx-auto bg-transparent border-slate-200 dark:border-slate-700"
-                            placeholder="100"
+                            placeholder="Marks"
                           />
                         </td>
 
@@ -472,10 +502,10 @@ export default function ExaminationCalendarAdminPage() {
                               <Button
                                 type="button"
                                 size="sm"
-                                onClick={() => handleInitiatePublish(slot, 'tentative')}
+                                onClick={() => handlePublishSlot(slot.slot_number, 'tentative')}
                                 disabled={isSaving}
                                 className={cn(
-                                  "h-8 px-3 text-xs font-bold rounded-lg transition-all shadow-xs gap-1.5",
+                                  "h-8 px-3 text-xs font-bold rounded-lg transition-all shadow-xs gap-1.5 cursor-pointer",
                                   "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20"
                                 )}
                               >
@@ -486,10 +516,10 @@ export default function ExaminationCalendarAdminPage() {
                               <Button
                                 type="button"
                                 size="sm"
-                                onClick={() => handleInitiatePublish(slot, 'final')}
+                                onClick={() => handlePublishSlot(slot.slot_number, 'final')}
                                 disabled={isSaving}
                                 className={cn(
-                                  "h-8 px-3 text-xs font-bold rounded-lg transition-all shadow-xs gap-1.5",
+                                  "h-8 px-3 text-xs font-bold rounded-lg transition-all shadow-xs gap-1.5 cursor-pointer",
                                   "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20"
                                 )}
                               >
@@ -513,214 +543,59 @@ export default function ExaminationCalendarAdminPage() {
                               </Badge>
                             )}
 
-                            {/* Revert to Draft action if currently published */}
-                            {!isDraft && (
-                              <button
+                            {/* Clear Button: present on each row by default whether info is filled or not */}
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleClearRow(slot.slot_number)}
+                              title={`Clear Row #${slot.slot_number}`}
+                              className="h-8 px-2.5 text-xs font-semibold text-slate-600 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-slate-200 dark:border-slate-700 rounded-lg gap-1.5 transition-colors cursor-pointer"
+                            >
+                              <Eraser className="w-3.5 h-3.5" />
+                              <span>Clear</span>
+                            </Button>
+
+                            {/* Extra row removal for slots beyond 10 */}
+                            {slot.slot_number > 10 && (
+                              <Button
                                 type="button"
-                                onClick={() => handleUnpublish(slot.slot_number)}
-                                title="Revert to Draft"
-                                className="text-[10px] text-slate-400 hover:text-rose-500 transition-colors p-1"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteRow(slot.slot_number)}
+                                title={`Delete Slot #${slot.slot_number}`}
+                                className="h-8 w-8 p-0 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer"
                               >
-                                <RotateCcw className="w-3.5 h-3.5" />
-                              </button>
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
                             )}
                           </div>
                         </td>
                       </tr>
                     );
                   })}
+
+                  {/* Add Row Button Row below the 10th row */}
+                  <tr className="border-t border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/40">
+                    <td colSpan={7} className="py-3.5 px-4 text-center">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleAddRow}
+                        className="h-9 px-5 text-xs font-bold text-indigo-600 dark:text-indigo-400 border-dashed border-indigo-300 dark:border-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:border-indigo-400 rounded-xl gap-2 shadow-xs transition-all cursor-pointer"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>Add Row</span>
+                      </Button>
+                    </td>
+                  </tr>
                 </tbody>
               </table>
             </div>
           </CardContent>
         </Card>
       </section>
-
-      {/* ========================================================================= */}
-      {/* 4. Publishing Confirmation Dialog */}
-      {/* ========================================================================= */}
-      <Dialog
-        open={!!pendingPublishSlot}
-        onOpenChange={(open) => !open && setPendingPublishSlot(null)}
-      >
-        <DialogContent className="sm:max-w-md bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-xl">
-          <DialogHeader>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 shrink-0">
-                <CalendarIcon className="w-5 h-5" />
-              </span>
-              <div>
-                <DialogTitle className="text-base font-headline font-bold text-slate-900 dark:text-white">
-                  Confirm Schedule Publication
-                </DialogTitle>
-                <DialogDescription className="text-xs text-slate-500">
-                  Publish to Student Portal and institutional calendar
-                </DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
-
-          {pendingPublishSlot && (
-            <div className="space-y-3.5 py-2 text-xs">
-              <div className="bg-slate-50 dark:bg-slate-950/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1.5">
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-500">Examination Name:</span>
-                  <span className="font-bold text-slate-900 dark:text-white text-sm">
-                    {pendingPublishSlot.slot.exam_name}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-500">Scheduled Dates:</span>
-                  <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
-                    {pendingPublishSlot.slot.start_date} to {pendingPublishSlot.slot.end_date}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-500">Date Classification:</span>
-                  <Badge
-                    className={
-                      pendingPublishSlot.targetDateType === 'final'
-                        ? 'bg-emerald-600 text-white text-[10px]'
-                        : 'bg-blue-600 text-white text-[10px]'
-                    }
-                  >
-                    {pendingPublishSlot.targetDateType === 'final'
-                      ? 'Officially Confirmed Dates'
-                      : 'Provisional (Tentative Dates)'}
-                  </Badge>
-                </div>
-              </div>
-
-              {pendingPublishSlot.targetDateType === 'final' &&
-                pendingPublishSlot.slot.publication_status === 'tentative_published' && (
-                  <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 p-3 rounded-xl text-amber-900 dark:text-amber-300 text-[11px] leading-relaxed">
-                    <p className="font-bold flex items-center gap-1.5 mb-1">
-                      <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                      Notice on Confirmed Date Replacement:
-                    </p>
-                    These officially confirmed dates will replace the previous tentative schedule on the active calendar. The original tentative dates will be preserved in history.
-                  </div>
-                )}
-            </div>
-          )}
-
-          <DialogFooter className="flex items-center justify-end gap-2 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setPendingPublishSlot(null)}
-              className="text-xs border-slate-200"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              onClick={() => {
-                if (pendingPublishSlot) {
-                  executePublish(pendingPublishSlot.slot, pendingPublishSlot.targetDateType);
-                }
-              }}
-              className={cn(
-                "text-xs font-bold text-white",
-                pendingPublishSlot?.targetDateType === 'final'
-                  ? "bg-emerald-600 hover:bg-emerald-700"
-                  : "bg-blue-600 hover:bg-blue-700"
-              )}
-            >
-              Confirm &amp; Publish
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* ========================================================================= */}
-      {/* 5. Conflict Detection Warning Dialog */}
-      {/* ========================================================================= */}
-      <Dialog
-        open={!!detectedConflicts}
-        onOpenChange={(open) => !open && setDetectedConflicts(null)}
-      >
-        <DialogContent className="sm:max-w-md bg-white dark:bg-slate-900 border-red-200 dark:border-red-900 p-6 rounded-2xl shadow-xl">
-          <DialogHeader>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="p-2 rounded-xl bg-red-100 dark:bg-red-950 text-red-600 shrink-0">
-                <AlertTriangle className="w-5 h-5 text-red-600" />
-              </span>
-              <div>
-                <DialogTitle className="text-base font-headline font-bold text-red-600 dark:text-red-400">
-                  Examination Date Conflict Detected
-                </DialogTitle>
-                <DialogDescription className="text-xs text-slate-500">
-                  The scheduled date range overlaps with another scheduled examination
-                </DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
-
-          {detectedConflicts && (
-            <div className="space-y-3 py-2 text-xs">
-              <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-                You are scheduling <strong>{detectedConflicts.slot.exam_name}</strong> from{' '}
-                <span className="font-mono font-bold text-slate-900 dark:text-white">
-                  {detectedConflicts.slot.start_date}
-                </span>{' '}
-                to{' '}
-                <span className="font-mono font-bold text-slate-900 dark:text-white">
-                  {detectedConflicts.slot.end_date}
-                </span>
-                . It overlaps with:
-              </p>
-
-              <div className="space-y-2">
-                {detectedConflicts.conflicts.map((conf, idx) => (
-                  <div
-                    key={idx}
-                    className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 rounded-xl"
-                  >
-                    <div className="flex items-center justify-between font-bold text-red-950 dark:text-red-200">
-                      <span>Slot #{conf.conflictingSlot}: {conf.conflictingExamName}</span>
-                    </div>
-                    <p className="text-[11px] font-mono text-red-700 dark:text-red-400 mt-0.5">
-                      Date Range: {conf.conflictingStartDate} to {conf.conflictingEndDate}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              <p className="text-[11px] text-slate-500 italic">
-                Please resolve the overlapping dates or confirm if your institution permits simultaneous concurrent tests.
-              </p>
-            </div>
-          )}
-
-          <DialogFooter className="flex items-center justify-end gap-2 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setDetectedConflicts(null)}
-              className="text-xs border-slate-200"
-            >
-              Cancel &amp; Edit Dates
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              size="sm"
-              onClick={() => {
-                if (detectedConflicts) {
-                  executePublish(detectedConflicts.slot, detectedConflicts.targetDateType);
-                }
-              }}
-              className="text-xs font-bold"
-            >
-              Proceed &amp; Publish Anyway
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
