@@ -1,6 +1,9 @@
 import React, { ReactNode } from 'react';
 import { StudentPortalProvider } from '@/lib/student-portal-context';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export const metadata = {
   title: 'DutyFlow - Student Access & My Examination',
   description: 'View your examination dates, timings, room allotment, and bench seating.',

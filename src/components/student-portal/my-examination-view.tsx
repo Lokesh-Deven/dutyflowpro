@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useStudentPortal } from '@/lib/student-portal-context';
 import { StudentExaminationDetail } from '@/lib/student-portal-types';
-import { getInvigilatorInitial } from '@/lib/utils';
+import { getInvigilatorInitial, cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -43,7 +43,7 @@ import {
 export function MyExaminationView() {
   const router = useRouter();
   const { toast } = useToast();
-  const { session, examinations, isLoading, logout, changePin, refreshExaminations } =
+  const { session, examinations, isLoading, isSyncing, logout, changePin, refreshExaminations } =
     useStudentPortal();
 
   // Change PIN modal state
@@ -60,6 +60,21 @@ export function MyExaminationView() {
   // Pull active exam (either selected or top upcoming)
   const activeExam: StudentExaminationDetail | undefined =
     examinations.find((e) => e.id === selectedExamId) || examinations[0];
+
+  const handleManualRefresh = async () => {
+    try {
+      await refreshExaminations();
+      toast({
+        title: 'Data Synchronized',
+        description: 'Latest examination schedules and seating allocations updated from cloud.',
+      });
+    } catch (_) {
+      toast({
+        title: 'Sync Notice',
+        description: 'Showing latest available examination schedule.',
+      });
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -210,11 +225,13 @@ export function MyExaminationView() {
           <Button
             size="sm"
             variant="ghost"
-            onClick={refreshExaminations}
-            title="Refresh examination schedule"
-            className="h-8 w-8 p-0 text-slate-500 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg"
+            disabled={isSyncing}
+            onClick={handleManualRefresh}
+            title="Refresh examination schedule from cloud"
+            className="h-8 px-2 text-xs font-semibold text-slate-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg flex items-center gap-1.5"
           >
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className={cn("w-3.5 h-3.5 text-indigo-600", isSyncing && "animate-spin")} />
+            <span className="hidden sm:inline">Refresh Data</span>
           </Button>
 
           <Button

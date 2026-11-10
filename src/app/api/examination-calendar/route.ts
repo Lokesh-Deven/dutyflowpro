@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { ExaminationScheduleItem } from '@/lib/examination-calendar-types';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+const NO_CACHE_HEADERS = {
+  'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+  'Pragma': 'no-cache',
+  'Expires': '0',
+};
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -10,7 +19,7 @@ export async function GET(req: NextRequest) {
     const role = (searchParams.get('role') || 'admin').trim().toLowerCase();
 
     if (!institutionId && !institutionCode) {
-      return NextResponse.json({ success: true, data: [] });
+      return NextResponse.json({ success: true, data: [] }, { headers: NO_CACHE_HEADERS });
     }
 
     let query = supabase.from('examination_calendar').select('*');
@@ -35,13 +44,13 @@ export async function GET(req: NextRequest) {
     if (error) {
       // Table might not exist yet before SQL migration is executed
       console.warn('Note: examination_calendar query notice:', error.message);
-      return NextResponse.json({ success: true, data: [], note: error.message });
+      return NextResponse.json({ success: true, data: [], note: error.message }, { headers: NO_CACHE_HEADERS });
     }
 
-    return NextResponse.json({ success: true, data: data || [] });
+    return NextResponse.json({ success: true, data: data || [] }, { headers: NO_CACHE_HEADERS });
   } catch (err: any) {
     console.error('Error fetching examination calendar:', err);
-    return NextResponse.json({ success: false, error: err?.message || 'Server error' }, { status: 500 });
+    return NextResponse.json({ success: false, error: err?.message || 'Server error' }, { status: 500, headers: NO_CACHE_HEADERS });
   }
 }
 
@@ -75,6 +84,17 @@ export async function POST(req: NextRequest) {
     const { data, error } = await supabase
       .from('examination_calendar')
       .upsert(rows, { onConflict: 'institution_id, slot_number' });
+
+    // Targeted deletion when a specific slot is explicitly removed by the user
+    if (body.deletedSlotNumber) {
+      try {
+        await supabase
+          .from('examination_calendar')
+          .delete()
+          .eq('institution_id', institutionId)
+          .eq('slot_number', body.deletedSlotNumber);
+      } catch (_) {}
+    }
 
     if (error) {
       console.warn('Supabase examination_calendar upsert warning:', error.message);

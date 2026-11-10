@@ -198,6 +198,100 @@ export function findStudentRecordByRegisterNumber(
 }
 
 /**
+ * Fetches latest real-time student examinations, rosters, and schedules from the cloud.
+ * Updates local device cache to support offline viewing and instant rendering.
+ */
+export async function syncStudentPortalFromCloud(
+  institutionCode: string,
+  institutionId?: string,
+  registerNumber?: string
+): Promise<{
+  success: boolean;
+  student?: StudentRecord | null;
+  subject?: StudentSubject | null;
+  examinations: StudentExaminationDetail[];
+  calendarSchedules: any[];
+  institutionId?: string;
+  institutionCode?: string;
+  institutionName?: string;
+  error?: string;
+}> {
+  try {
+    const params = new URLSearchParams({
+      institutionCode: (institutionCode || '').trim(),
+      institutionId: (institutionId || '').trim(),
+      registerNumber: (registerNumber || '').trim(),
+      _t: String(Date.now()),
+    });
+
+    const res = await fetch(`/api/student-portal/sync?${params.toString()}`, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+      },
+    });
+
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success) {
+        const effInstId = json.institutionId || institutionId || 'guest-session';
+
+        // Cache student in localStorage so local lookup succeeds
+        if (json.student && typeof window !== 'undefined') {
+          try {
+            const studentKey = `dutyflow_${effInstId}_seating_students`;
+            const raw = localStorage.getItem(studentKey);
+            const currentObj: Record<string, StudentRecord[]> = raw ? JSON.parse(raw) : {};
+            const subjKey = json.student.subjectId || 'default';
+            const existingList = Array.isArray(currentObj[subjKey]) ? currentObj[subjKey] : [];
+            const idx = existingList.findIndex(
+              (s) => s.rollNo.trim().toLowerCase() === json.student.rollNo.trim().toLowerCase()
+            );
+            if (idx >= 0) {
+              existingList[idx] = json.student;
+            } else {
+              existingList.push(json.student);
+            }
+            currentObj[subjKey] = existingList;
+            localStorage.setItem(studentKey, JSON.stringify(currentObj));
+          } catch (_) {}
+        }
+
+        // Cache examinations in localStorage for instant rendering and offline mode
+        if (Array.isArray(json.examinations) && typeof window !== 'undefined' && registerNumber) {
+          try {
+            const cleanTarget = registerNumber.trim().toUpperCase();
+            const examCacheKey = `dutyflow_${effInstId}_student_exams_${cleanTarget}`;
+            localStorage.setItem(examCacheKey, JSON.stringify(json.examinations));
+          } catch (_) {}
+        }
+
+        return {
+          success: true,
+          student: json.student,
+          subject: json.subject,
+          examinations: json.examinations || [],
+          calendarSchedules: json.calendarSchedules || [],
+          institutionId: json.institutionId,
+          institutionCode: json.institutionCode,
+          institutionName: json.institutionName,
+        };
+      }
+    }
+  } catch (err: any) {
+    console.warn('Student portal cloud sync notice:', err);
+  }
+
+  return {
+    success: false,
+    examinations: [],
+    calendarSchedules: [],
+    error: 'Could not connect to synchronization service.',
+  };
+}
+
+/**
  * Authenticates a student using Institution Code + Register Number + PIN/Password.
  * Checks Institution Code first to resolve internal institution ID, then verifies student within that institution.
  */
@@ -229,8 +323,29 @@ export async function authenticateStudent(
     };
   }
 
-  // 2. Locate student STRICTLY inside this institution
-  const record = findStudentRecordByRegisterNumber(cleanRegNo, institution.institutionId);
+  // 2. Locate student STRICTLY inside this institution (local storage first)
+  let record = findStudentRecordByRegisterNumber(cleanRegNo, institution.institutionId);
+  let cloudExams: StudentExaminationDetail[] = [];
+
+  if (!record) {
+    // Attempt cloud synchronization from Supabase for mobile & new devices
+    const cloudRes = await syncStudentPortalFromCloud(
+      institution.institutionCode,
+      institution.institutionId,
+      cleanRegNo
+    );
+    if (cloudRes.success && cloudRes.student) {
+      record = {
+        student: cloudRes.student,
+        subject: cloudRes.subject || undefined,
+        institutionName: cloudRes.institutionName || institution.institutionName,
+      };
+      if (cloudRes.examinations && cloudRes.examinations.length > 0) {
+        cloudExams = cloudRes.examinations;
+      }
+    }
+  }
+
   if (!record) {
     return {
       success: false,
@@ -289,6 +404,16 @@ export async function authenticateStudent(
   };
 
   setStudentSession(session);
+
+  // If cloud examinations were retrieved, cache them immediately
+  if (cloudExams.length > 0 && typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(
+        `dutyflow_${institution.institutionId}_student_exams_${cleanRegNo}`,
+        JSON.stringify(cloudExams)
+      );
+    } catch (_) {}
+  }
 
   return {
     success: true,
@@ -400,6 +525,19 @@ export function getStudentExaminations(
 
   const results: StudentExaminationDetail[] = [];
   const seenKeys = new Set<string>();
+
+  // 0. Check cached cloud-synced examinations for instant mobile rendering
+  const cleanRoll = registerNumber.trim().toUpperCase();
+  const cloudCacheKey = `dutyflow_${effectiveInstId}_student_exams_${cleanRoll}`;
+  try {
+    const rawCloud = localStorage.getItem(cloudCacheKey);
+    if (rawCloud) {
+      const parsedCloud = JSON.parse(rawCloud);
+      if (Array.isArray(parsedCloud) && parsedCloud.length > 0) {
+        return parsedCloud;
+      }
+    }
+  } catch (_) {}
 
   // 1. Gather allocations strictly from this institution
   const allocations: SeatingAllocationRecord[] = [];

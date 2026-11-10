@@ -34,6 +34,32 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Open+Sans:wght@500;700;800&family=Roboto:wght@900&family=Source+Code+Pro&display=swap" rel="stylesheet" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  if (typeof window !== 'undefined') {
+                    if ('serviceWorker' in navigator) {
+                      navigator.serviceWorker.getRegistrations().then(function(regs) {
+                        for (var i = 0; i < regs.length; i++) {
+                          regs[i].unregister().catch(function() {});
+                        }
+                      }).catch(function() {});
+                    }
+                    if ('caches' in window) {
+                      caches.keys().then(function(names) {
+                        for (var i = 0; i < names.length; i++) {
+                          caches.delete(names[i]).catch(function() {});
+                        }
+                      }).catch(function() {});
+                    }
+                  }
+                } catch(e) {}
+              })();
+            `,
+          }}
+        />
       </head>
       <body className="font-body antialiased">
         <ThemeProvider

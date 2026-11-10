@@ -4,6 +4,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Loader2 } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default function StudentLoginPage() {
   return (
     <div className="flex-1 flex flex-col justify-between p-4 sm:p-6 lg:p-8">

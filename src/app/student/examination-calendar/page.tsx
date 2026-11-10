@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useStudentPortal } from '@/lib/student-portal-context';
 import { ExaminationScheduleItem } from '@/lib/examination-calendar-types';
 import { fetchExaminationCalendarApi, getLocalExaminationCalendar } from '@/lib/examination-calendar-service';
+import { supabase } from '@/lib/supabase';
 import { AcademicCalendarView } from '@/components/calendar/academic-calendar-view';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -85,10 +86,50 @@ export default function StudentExaminationCalendarPage() {
   }, [session, toast]);
 
   useEffect(() => {
-    if (session) {
-      loadCalendarData();
-    }
+    if (!session) return;
+    loadCalendarData();
+
+    const handleRefresh = () => loadCalendarData();
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        loadCalendarData();
+      }
+    };
+
+    window.addEventListener('focus', handleRefresh);
+    window.addEventListener('online', handleRefresh);
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      window.removeEventListener('focus', handleRefresh);
+      window.removeEventListener('online', handleRefresh);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, [session, loadCalendarData]);
+
+  // Realtime subscription to live examination calendar changes
+  useEffect(() => {
+    if (!session?.institutionId) return;
+
+    const channel = supabase
+      .channel(`student_exam_cal_${session.institutionId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'examination_calendar',
+        },
+        () => {
+          loadCalendarData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [session?.institutionId, loadCalendarData]);
 
   const handleManualRefresh = async () => {
     setIsRefreshing(true);

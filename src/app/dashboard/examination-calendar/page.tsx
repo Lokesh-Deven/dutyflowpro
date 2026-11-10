@@ -60,7 +60,7 @@ export default function ExaminationCalendarAdminPage() {
   const institutionName = profile?.institution_name || 'Institution';
 
   const [schedules, setSchedules] = useState<ExaminationScheduleItem[]>(() =>
-    getDefaultSlots(institutionId, institutionCode)
+    getDefaultSlots(institutionId, institutionCode, 1)
   );
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -73,19 +73,26 @@ export default function ExaminationCalendarAdminPage() {
     let isMounted = true;
     async function loadData() {
       setIsLoading(true);
-      const data = await fetchExaminationCalendarApi(institutionId, institutionCode, 'admin');
+
+      // 1. Immediately display local cached items to prevent flicker or wiping
+      const localCached = getLocalExaminationCalendar(institutionId, institutionCode);
+      if (isMounted && localCached.length > 0) {
+        setSchedules(localCached);
+      }
+
+      // 2. Fetch from cloud
+      const cloudData = await fetchExaminationCalendarApi(institutionId, institutionCode, 'admin');
       if (isMounted) {
-        // Ensure legacy mock defaults on unscheduled drafts are left empty
-        const cleaned = data.map((item) => {
-          const isLegacyDefaultName = DEFAULT_EXAMINATION_NAMES.includes(item.exam_name);
-          const isUnscheduledDraft = !item.start_date && !item.end_date && item.publication_status === 'draft';
-          return {
-            ...item,
-            exam_name: isLegacyDefaultName && isUnscheduledDraft ? '' : (item.exam_name || ''),
-            total_marks: (item.total_marks === 50 || item.total_marks === 100) && isUnscheduledDraft ? '' : (item.total_marks ?? ''),
-          };
-        });
-        setSchedules(cleaned);
+        if (cloudData && Array.isArray(cloudData) && cloudData.length > 0) {
+          setSchedules(cloudData);
+          saveLocalExaminationCalendar(institutionId, cloudData);
+        } else if (localCached && localCached.length > 0) {
+          setSchedules(localCached);
+        } else {
+          const defaultOne = getDefaultSlots(institutionId, institutionCode, 1);
+          setSchedules(defaultOne);
+          saveLocalExaminationCalendar(institutionId, defaultOne);
+        }
         setIsLoading(false);
       }
     }
@@ -95,14 +102,14 @@ export default function ExaminationCalendarAdminPage() {
     };
   }, [institutionId, institutionCode]);
 
-  // Handle cell text / date changes
+  // Handle cell text / date changes - persist immediately to local storage so user inputs are never lost
   const handleFieldChange = (
     slotNumber: number,
     field: keyof ExaminationScheduleItem,
     value: any
   ) => {
-    setSchedules((prev) =>
-      prev.map((item) => {
+    setSchedules((prev) => {
+      const updated = prev.map((item) => {
         if (item.slot_number === slotNumber) {
           return {
             ...item,
@@ -110,8 +117,10 @@ export default function ExaminationCalendarAdminPage() {
           };
         }
         return item;
-      })
-    );
+      });
+      saveLocalExaminationCalendar(institutionId, updated);
+      return updated;
+    });
   };
 
   // Direct publishing workflow - completely allows overlapping/repeated dates across any slot
@@ -237,7 +246,7 @@ export default function ExaminationCalendarAdminPage() {
     });
   };
 
-  // Add a new row below the 10th row
+  // Add a new row below the existing rows
   const handleAddRow = () => {
     setSchedules((prev) => {
       const nextSlotNumber = prev.length > 0 ? Math.max(...prev.map((s) => s.slot_number)) + 1 : 1;
@@ -257,6 +266,7 @@ export default function ExaminationCalendarAdminPage() {
       };
       const updated = [...prev, newSlot];
       saveLocalExaminationCalendar(institutionId, updated);
+      saveExaminationCalendarApi(institutionId, institutionCode, updated).catch(() => {});
       return updated;
     });
 
@@ -266,8 +276,9 @@ export default function ExaminationCalendarAdminPage() {
     });
   };
 
-  // Delete an added row (applicable for rows beyond slot 10)
+  // Delete a row (applicable when more than 1 row exists)
   const handleDeleteRow = async (slotNumber: number) => {
+    if (schedules.length <= 1) return;
     const filtered = schedules.filter((s) => s.slot_number !== slotNumber);
     // Re-index remaining rows so numbering stays clean and sequential
     const reindexed = filtered.map((item, idx) => ({
@@ -276,7 +287,8 @@ export default function ExaminationCalendarAdminPage() {
     }));
 
     setSchedules(reindexed);
-    await saveExaminationCalendarApi(institutionId, institutionCode, reindexed);
+    saveLocalExaminationCalendar(institutionId, reindexed);
+    await saveExaminationCalendarApi(institutionId, institutionCode, reindexed, slotNumber);
 
     toast({
       title: 'Row Removed',
@@ -291,7 +303,7 @@ export default function ExaminationCalendarAdminPage() {
       await saveExaminationCalendarApi(institutionId, institutionCode, schedules);
       toast({
         title: 'Examination Schedule Saved',
-        description: 'All 10 examination slots and updates have been saved.',
+        description: `All ${schedules.length} examination slots and updates have been saved.`,
       });
     } catch (err: any) {
       toast({
@@ -556,14 +568,14 @@ export default function ExaminationCalendarAdminPage() {
                               <span>Clear</span>
                             </Button>
 
-                            {/* Extra row removal for slots beyond 10 */}
-                            {slot.slot_number > 10 && (
+                            {/* Row deletion button when more than 1 row exists */}
+                            {schedules.length > 1 && (
                               <Button
                                 type="button"
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleDeleteRow(slot.slot_number)}
-                                title={`Delete Slot #${slot.slot_number}`}
+                                title={`Delete Row #${slot.slot_number}`}
                                 className="h-8 w-8 p-0 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />

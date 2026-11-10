@@ -20,9 +20,9 @@ export const DEFAULT_EXAMINATION_NAMES: string[] = [
 export function getDefaultSlots(
   institutionId: string = 'default',
   institutionCode: string = '',
-  count: number = 10
+  count: number = 1
 ): ExaminationScheduleItem[] {
-  return Array.from({ length: Math.max(10, count) }, (_, index) => {
+  return Array.from({ length: Math.max(1, count) }, (_, index) => {
     const slotNumber = index + 1;
     return {
       slot_number: slotNumber,
@@ -49,34 +49,25 @@ export function getLocalExaminationCalendar(
   institutionId: string = 'default',
   institutionCode: string = ''
 ): ExaminationScheduleItem[] {
-  if (typeof window === 'undefined') return getDefaultSlots(institutionId, institutionCode);
+  if (typeof window === 'undefined') return getDefaultSlots(institutionId, institutionCode, 1);
   try {
-    const raw = localStorage.getItem(getStorageKey(institutionId));
+    let raw = localStorage.getItem(getStorageKey(institutionId));
+    if (!raw && institutionId !== 'guest-session') {
+      raw = localStorage.getItem(getStorageKey('guest-session'));
+    }
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        // Clean up legacy default titles/marks if not scheduled and still in draft
-        const cleaned = parsed.map((item: any) => {
-          const isLegacyDefaultName = DEFAULT_EXAMINATION_NAMES.includes(item.exam_name);
-          const isUnscheduledDraft = !item.start_date && !item.end_date && item.publication_status === 'draft';
-          return {
-            ...item,
-            exam_name: isLegacyDefaultName && isUnscheduledDraft ? '' : (item.exam_name || ''),
-            total_marks: (item.total_marks === 50 || item.total_marks === 100) && isUnscheduledDraft ? '' : (item.total_marks ?? ''),
-          };
-        });
-
-        // Ensure at least 10 slots
-        const count = Math.max(10, cleaned.length);
-        const defaults = getDefaultSlots(institutionId, institutionCode, count);
-        return defaults.map((def) => {
-          const found = cleaned.find((p: any) => p.slot_number === def.slot_number);
-          return found ? { ...def, ...found } : def;
-        });
+        return parsed.map((item: any, idx: number) => ({
+          ...item,
+          slot_number: typeof item.slot_number === 'number' ? item.slot_number : idx + 1,
+          institution_id: institutionId,
+          institution_code: institutionCode || item.institution_code,
+        }));
       }
     }
   } catch (_) {}
-  return getDefaultSlots(institutionId, institutionCode);
+  return getDefaultSlots(institutionId, institutionCode, 1);
 }
 
 export function saveLocalExaminationCalendar(
@@ -85,7 +76,11 @@ export function saveLocalExaminationCalendar(
 ): void {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(getStorageKey(institutionId), JSON.stringify(items));
+    const jsonStr = JSON.stringify(items);
+    localStorage.setItem(getStorageKey(institutionId), jsonStr);
+    if (institutionId !== 'guest-session') {
+      localStorage.setItem(getStorageKey('guest-session'), jsonStr);
+    }
     window.dispatchEvent(new Event('dutyflow:examination-calendar-change'));
   } catch (_) {}
 }
@@ -145,9 +140,16 @@ export async function fetchExaminationCalendarApi(
       institutionId: institutionId || '',
       institutionCode: institutionCode || '',
       role,
+      _t: String(Date.now()), // Cache-buster
     });
 
-    const res = await fetch(`/api/examination-calendar?${params.toString()}`);
+    const res = await fetch(`/api/examination-calendar?${params.toString()}`, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+      },
+    });
     if (res.ok) {
       const json = await res.json();
       if (json.success && Array.isArray(json.data) && json.data.length > 0) {
@@ -167,7 +169,8 @@ export async function fetchExaminationCalendarApi(
 export async function saveExaminationCalendarApi(
   institutionId: string,
   institutionCode: string = '',
-  items: ExaminationScheduleItem[]
+  items: ExaminationScheduleItem[],
+  deletedSlotNumber?: number
 ): Promise<boolean> {
   // Always update local cache first
   saveLocalExaminationCalendar(institutionId, items);
@@ -180,6 +183,7 @@ export async function saveExaminationCalendarApi(
         institutionId,
         institutionCode,
         items,
+        deletedSlotNumber,
       }),
     });
 
