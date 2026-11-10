@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { ExaminationTimetable } from '@/lib/examination-timetable-types';
 import { SignatoryInfo } from '@/lib/types';
 import { generateExaminationTimetablePdf } from '@/lib/examination-timetable-pdf';
-import { Download, FileText, CheckCircle2, Lock } from 'lucide-react';
+import { Download, FileText, CheckCircle2, Lock, Globe, Loader2 } from 'lucide-react';
 import { formatDateToDDMMYYYY } from '@/lib/examination-timetable-service';
 import { useAuth } from '@/lib/auth-context';
 import { ApprovalRestrictionDialog } from '@/components/dashboard/approval-restriction-dialog';
@@ -21,6 +21,8 @@ interface TimetablePreviewDialogProps {
   onOpenChange: (open: boolean) => void;
   timetable: ExaminationTimetable | null;
   signatory?: SignatoryInfo;
+  onPublish?: () => void;
+  isPublishing?: boolean;
 }
 
 export function TimetablePreviewDialog({
@@ -28,6 +30,8 @@ export function TimetablePreviewDialog({
   onOpenChange,
   timetable,
   signatory,
+  onPublish,
+  isPublishing,
 }: TimetablePreviewDialogProps) {
   const { isApproved } = useAuth();
   const [isRestrictionDialogOpen, setIsRestrictionDialogOpen] = useState(false);
@@ -75,11 +79,32 @@ export function TimetablePreviewDialog({
           </div>
 
           <div className="flex items-center gap-2 pr-6">
+            {timetable.isPublished && (
+              <span className="flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-md">
+                <Globe className="w-3.5 h-3.5 text-emerald-600" />
+                Published
+              </span>
+            )}
             {timetable.isLocked && (
               <span className="flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded-md">
                 <Lock className="w-3.5 h-3.5" />
                 Locked
               </span>
+            )}
+            {onPublish && (
+              <Button
+                onClick={onPublish}
+                disabled={isPublishing}
+                variant="outline"
+                className="text-xs h-8 px-3.5 gap-1.5 font-bold border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+              >
+                {isPublishing ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Globe className="w-3.5 h-3.5 text-indigo-600" />
+                )}
+                <span>{timetable.isPublished ? "Update on Student Portal" : "Publish on Student Portal"}</span>
+              </Button>
             )}
             <Button
               onClick={handleDownloadPdf}

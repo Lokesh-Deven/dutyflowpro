@@ -28,6 +28,7 @@ import {
   Calendar,
   Layers,
   Sparkles,
+  Globe,
 } from 'lucide-react';
 
 interface SavedTimetablesListProps {
@@ -37,6 +38,7 @@ interface SavedTimetablesListProps {
   onPreviewTimetable: (timetable: ExaminationTimetable) => void;
   onToggleLock: (id: string, lock: boolean) => void;
   onDeleteTimetable: (id: string) => void;
+  onPublishTimetable?: (timetable: ExaminationTimetable) => void;
   signatory?: SignatoryInfo;
 }
 
@@ -47,6 +49,7 @@ export function SavedTimetablesList({
   onPreviewTimetable,
   onToggleLock,
   onDeleteTimetable,
+  onPublishTimetable,
   signatory,
 }: SavedTimetablesListProps) {
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
@@ -105,17 +108,25 @@ export function SavedTimetablesList({
                     </p>
                   </div>
 
-                  {item.isLocked ? (
-                    <Badge className="bg-amber-100 text-amber-800 border-amber-300 text-[10px] px-1.5 py-0.5 font-bold gap-1 shrink-0">
-                      <Lock className="w-3 h-3" />
-                      Locked
-                    </Badge>
-                  ) : (
-                    <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] px-1.5 py-0.5 font-bold gap-1 shrink-0">
-                      <Sparkles className="w-3 h-3" />
-                      Draft
-                    </Badge>
-                  )}
+                  <div className="flex items-center gap-1 shrink-0">
+                    {item.isPublished && (
+                      <Badge className="bg-emerald-50 text-emerald-800 border-emerald-300 text-[10px] px-1.5 py-0.5 font-bold gap-1">
+                        <Globe className="w-3 h-3 text-emerald-600" />
+                        Published
+                      </Badge>
+                    )}
+                    {item.isLocked ? (
+                      <Badge className="bg-amber-100 text-amber-800 border-amber-300 text-[10px] px-1.5 py-0.5 font-bold gap-1">
+                        <Lock className="w-3 h-3" />
+                        Locked
+                      </Badge>
+                    ) : !item.isPublished ? (
+                      <Badge className="bg-slate-100 text-slate-600 border-slate-200 text-[10px] px-1.5 py-0.5 font-semibold gap-1">
+                        <Sparkles className="w-3 h-3" />
+                        Draft
+                      </Badge>
+                    ) : null}
+                  </div>
                 </div>
 
                 <div className="space-y-1 text-[11px] text-slate-600 bg-slate-50/70 p-2.5 rounded-lg border border-slate-100">
@@ -160,6 +171,17 @@ export function SavedTimetablesList({
                   >
                     <Download className="w-3.5 h-3.5" />
                   </Button>
+                  {onPublishTimetable && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => onPublishTimetable(item)}
+                      className="h-7 w-7 p-0 text-slate-600 hover:text-indigo-600"
+                      title={item.isPublished ? "Update on Student Portal" : "Publish on Student Portal"}
+                    >
+                      <Globe className="w-3.5 h-3.5 text-indigo-600" />
+                    </Button>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-1">

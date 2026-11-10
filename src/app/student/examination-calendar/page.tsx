@@ -15,6 +15,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import {
   CalendarRange,
+  CalendarClock,
   GraduationCap,
   Calendar,
   Clock,
@@ -253,14 +254,21 @@ export default function StudentExaminationCalendarPage() {
             <div className="bg-slate-100 p-1 rounded-xl flex items-center border border-slate-200/80">
               <Link
                 href="/student/my-examination"
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors flex items-center gap-1.5"
+                className="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors flex items-center gap-1.5"
               >
                 <BookOpen className="w-3.5 h-3.5" />
                 <span className="hidden xs:inline">My Slip</span>
               </Link>
-              <div className="px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-indigo-700 shadow-xs flex items-center gap-1.5">
+              <Link
+                href="/student/examination-timetable"
+                className="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors flex items-center gap-1.5"
+              >
+                <CalendarClock className="w-3.5 h-3.5" />
+                <span>Timetable</span>
+              </Link>
+              <div className="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-indigo-700 shadow-xs flex items-center gap-1.5">
                 <CalendarRange className="w-3.5 h-3.5 text-indigo-600" />
-                <span>Exam Calendar</span>
+                <span className="hidden xs:inline">Calendar</span>
               </div>
             </div>
 

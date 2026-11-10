@@ -3,6 +3,7 @@ import {
   TimetableClassColumn,
   TimetableRow,
   TimetableClassTiming,
+  PublishedTimetableRecord,
 } from './examination-timetable-types';
 import { STANDARD_STUDENT_SUBJECTS } from './student-seating-service';
 import {
@@ -339,3 +340,180 @@ export function createNewTimetable(
 export const DEFAULT_SUBJECT_OPTIONS: string[] = [
   ...STANDARD_STUDENT_SUBJECTS,
 ];
+
+const PUBLISHED_TIMETABLES_PREFIX = 'dutyflow_published_timetables_';
+
+function getPublishedStorageKey(institutionId?: string): string {
+  return `${PUBLISHED_TIMETABLES_PREFIX}${institutionId || 'guest'}`;
+}
+
+export function getLocalPublishedTimetables(institutionId?: string): PublishedTimetableRecord[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const key = getPublishedStorageKey(institutionId);
+    let raw = localStorage.getItem(key);
+    if (!raw && institutionId !== 'guest') {
+      raw = localStorage.getItem(getPublishedStorageKey('guest'));
+    }
+    if (!raw) return [];
+    return JSON.parse(raw) as PublishedTimetableRecord[];
+  } catch (_) {
+    return [];
+  }
+}
+
+export function saveLocalPublishedTimetables(institutionId: string, list: PublishedTimetableRecord[]): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const key = getPublishedStorageKey(institutionId);
+    localStorage.setItem(key, JSON.stringify(list));
+    if (institutionId !== 'guest') {
+      localStorage.setItem(getPublishedStorageKey('guest'), JSON.stringify(list));
+    }
+    window.dispatchEvent(new Event('dutyflow:published-timetables-change'));
+  } catch (_) {}
+}
+
+/**
+ * Publishes an examination timetable to the Student Portal
+ */
+export async function publishTimetableToStudentPortal(
+  timetable: ExaminationTimetable,
+  institutionId: string,
+  institutionCode?: string
+): Promise<{ success: boolean; updatedTimetable?: ExaminationTimetable; error?: string }> {
+  try {
+    const now = new Date().toISOString();
+    const updated: ExaminationTimetable = {
+      ...timetable,
+      isPublished: true,
+      publishedAt: now,
+      updatedAt: now,
+    };
+
+    // 1. Update saved timetables locally & in central workspace
+    saveTimetable(updated, institutionId);
+
+    // 2. Format published record
+    const rows = updated.rows || [];
+    const totalDays = rows.filter((r) => r.subjects && r.subjects.length > 0).length;
+    const totalSubjects = rows.reduce((acc, r) => acc + (r.subjects ? r.subjects.length : 0), 0);
+    const classesCount = updated.classes?.length || 0;
+
+    const record: PublishedTimetableRecord = {
+      id: updated.id,
+      institutionId,
+      institutionCode,
+      institutionName: updated.institutionName,
+      examinationName: updated.examinationName,
+      timetable: updated,
+      dateRange: computeDateRange(rows),
+      totalDays,
+      totalSubjects,
+      classesCount,
+      publishedAt: now,
+      updatedAt: now,
+    };
+
+    // 3. Save locally
+    const existing = getLocalPublishedTimetables(institutionId);
+    const idx = existing.findIndex((t) => t.id === updated.id);
+    let nextList: PublishedTimetableRecord[];
+    if (idx >= 0) {
+      nextList = [...existing];
+      nextList[idx] = record;
+    } else {
+      nextList = [record, ...existing];
+    }
+    saveLocalPublishedTimetables(institutionId, nextList);
+
+    // 4. Send to API / Supabase
+    try {
+      const res = await fetch('/api/published-timetables', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          timetable: updated,
+          institutionId,
+          institutionCode,
+          institutionName: updated.institutionName,
+        }),
+      });
+
+      if (!res.ok) {
+        console.warn('Notice: API timetable publish returned non-ok, local published copy preserved');
+      }
+    } catch (apiErr) {
+      console.warn('Notice: Network request for published timetable failed, local copy preserved:', apiErr);
+    }
+
+    return { success: true, updatedTimetable: updated };
+  } catch (err: any) {
+    console.error('Error publishing timetable:', err);
+    return { success: false, error: err?.message || 'Failed to publish timetable.' };
+  }
+}
+
+/**
+ * Fetch all published examination timetables for Student Portal
+ */
+export async function fetchPublishedTimetables(
+  institutionId?: string,
+  institutionCode?: string
+): Promise<PublishedTimetableRecord[]> {
+  const localList = getLocalPublishedTimetables(institutionId);
+
+  try {
+    const params = new URLSearchParams({
+      institutionId: institutionId || '',
+      institutionCode: institutionCode || '',
+      _t: String(Date.now()),
+    });
+
+    const res = await fetch(`/api/published-timetables?${params.toString()}`, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+      },
+    });
+
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && Array.isArray(json.timetables) && json.timetables.length > 0) {
+        if (institutionId) {
+          saveLocalPublishedTimetables(institutionId, json.timetables);
+        }
+        return json.timetables;
+      }
+    }
+  } catch (err) {
+    console.warn('Could not fetch published timetables from API, using local cache:', err);
+  }
+
+  return localList;
+}
+
+/**
+ * Unpublishes an examination timetable from Student Portal
+ */
+export async function unpublishTimetableFromStudentPortal(
+  timetableId: string,
+  institutionId: string
+): Promise<boolean> {
+  try {
+    const existing = getLocalPublishedTimetables(institutionId);
+    const filtered = existing.filter((t) => t.id !== timetableId);
+    saveLocalPublishedTimetables(institutionId, filtered);
+
+    try {
+      await fetch(`/api/published-timetables?id=${timetableId}&institutionId=${institutionId}`, {
+        method: 'DELETE',
+      });
+    } catch (_) {}
+
+    return true;
+  } catch (_) {
+    return false;
+  }
+}

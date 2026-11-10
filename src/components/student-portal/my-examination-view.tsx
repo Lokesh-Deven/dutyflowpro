@@ -22,6 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 import {
   GraduationCap,
   Calendar,
+  CalendarClock,
   CalendarRange,
   Clock,
   MapPin,
@@ -214,11 +215,18 @@ export function MyExaminationView() {
               <span className="hidden xs:inline">My Slip</span>
             </div>
             <Link
+              href="/student/examination-timetable"
+              className="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors flex items-center gap-1.5"
+            >
+              <CalendarClock className="w-3.5 h-3.5" />
+              <span>Timetable</span>
+            </Link>
+            <Link
               href="/student/examination-calendar"
               className="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors flex items-center gap-1.5"
             >
               <CalendarRange className="w-3.5 h-3.5" />
-              <span>Exam Calendar</span>
+              <span className="hidden xs:inline">Calendar</span>
             </Link>
           </div>
 

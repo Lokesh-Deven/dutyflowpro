@@ -20,6 +20,7 @@ import {
   sortTimetableRows,
   isEndTimeValid,
   DEFAULT_SUBJECT_OPTIONS,
+  publishTimetableToStudentPortal,
 } from '@/lib/examination-timetable-service';
 import { generateExaminationTimetablePdf } from '@/lib/examination-timetable-pdf';
 import { SubjectSelectorPopover } from '@/components/dashboard/timetable/subject-selector-popover';
@@ -57,6 +58,9 @@ import {
   AlertTriangle,
   RotateCcw,
   Sparkles,
+  Globe,
+  CheckCircle2,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -90,6 +94,7 @@ export default function ExaminationTimetablePage() {
   const [isLockConfirmOpen, setIsLockConfirmOpen] = useState(false);
   const [isUnlockConfirmOpen, setIsUnlockConfirmOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Custom subjects pool added by user
@@ -543,6 +548,63 @@ export default function ExaminationTimetablePage() {
     }
   };
 
+  // Publish configured examination timetable to Student Portal
+  const handlePublishToStudentPortal = async (ttToPublish?: ExaminationTimetable) => {
+    const target = ttToPublish || timetable;
+    if (!target.examinationName || target.examinationName.trim().length === 0) {
+      toast({
+        variant: "destructive",
+        title: "Examination Title Required",
+        description: "Please enter a Name of Examination before publishing to the Student Portal.",
+      });
+      return;
+    }
+    if (!target.rows || target.rows.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "Examination Rows Required",
+        description: "Please configure at least one examination schedule row before publishing.",
+      });
+      return;
+    }
+
+    setIsPublishing(true);
+    try {
+      const institutionCode = profile?.institution_code || '';
+      const instId = userId || profile?.id || '';
+
+      const result = await publishTimetableToStudentPortal(
+        target,
+        instId,
+        institutionCode
+      );
+
+      if (result.success && result.updatedTimetable) {
+        setTimetable(result.updatedTimetable);
+        setSavedTimetables(getSavedTimetables(userId));
+        setHasUnsavedChanges(false);
+        toast({
+          title: "Published on Student Portal",
+          description: `"${target.examinationName}" is now live and accessible to students.`,
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Publish Failed",
+          description: result.error || "Failed to publish examination timetable.",
+        });
+      }
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Publish Failed",
+        description: err?.message || "Failed to publish examination timetable.",
+      });
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
   return (
     <div className="space-y-8 pb-20 max-w-7xl mx-auto">
       {/* Top Banner Header */}
@@ -553,10 +615,20 @@ export default function ExaminationTimetablePage() {
               <CalendarClock className="w-6 h-6 text-indigo-700" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="font-headline text-2xl font-black tracking-tight text-slate-800">
                   Examination Timetable
                 </h1>
+                {timetable.isPublished ? (
+                  <Badge className="bg-emerald-50 text-emerald-800 border-emerald-300 font-bold text-xs px-2.5 py-0.5 gap-1.5 rounded-full">
+                    <Globe className="w-3.5 h-3.5 text-emerald-600" />
+                    Published on Student Portal
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-slate-500 border-slate-300 text-xs px-2 py-0.5 rounded-full font-medium">
+                    Unpublished on Portal
+                  </Badge>
+                )}
                 {timetable.isLocked ? (
                   <Badge className="bg-amber-500/15 text-amber-800 border-amber-300 font-bold text-xs px-2.5 py-0.5 gap-1 rounded-full">
                     <Lock className="w-3 h-3" />
@@ -595,6 +667,27 @@ export default function ExaminationTimetablePage() {
           >
             <Download className="w-3.5 h-3.5" />
             Generate & Download PDF
+          </Button>
+
+          <Button
+            type="button"
+            onClick={() => handlePublishToStudentPortal()}
+            disabled={isPublishing}
+            className={cn(
+              "font-bold text-xs h-9 px-4 gap-1.5 shadow-sm transition-all",
+              timetable.isPublished
+                ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                : "bg-indigo-600 hover:bg-indigo-700 text-white"
+            )}
+          >
+            {isPublishing ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : timetable.isPublished ? (
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-100" />
+            ) : (
+              <Globe className="w-3.5 h-3.5" />
+            )}
+            <span>{timetable.isPublished ? "Update on Student Portal" : "Publish on Student Portal"}</span>
           </Button>
 
           {timetable.isLocked ? (
@@ -1001,8 +1094,8 @@ export default function ExaminationTimetablePage() {
           </div>
         </div>
 
-        {/* Right: Preview Timetable & Save Timetable Buttons */}
-        <div className="flex items-center gap-2.5 shrink-0 self-end lg:self-center">
+        {/* Right: Preview Timetable, Publish & Save Timetable Buttons */}
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-end lg:self-center">
           <Button
             type="button"
             variant="outline"
@@ -1015,9 +1108,30 @@ export default function ExaminationTimetablePage() {
 
           <Button
             type="button"
+            onClick={() => handlePublishToStudentPortal()}
+            disabled={isPublishing}
+            className={cn(
+              "text-xs h-10 px-4 gap-2 font-bold rounded-xl shadow-xs transition-all",
+              timetable.isPublished
+                ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                : "bg-indigo-600 hover:bg-indigo-700 text-white"
+            )}
+          >
+            {isPublishing ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : timetable.isPublished ? (
+              <CheckCircle2 className="w-4 h-4" />
+            ) : (
+              <Globe className="w-4 h-4" />
+            )}
+            <span>{timetable.isPublished ? "Update on Student Portal" : "Publish on Student Portal"}</span>
+          </Button>
+
+          <Button
+            type="button"
             onClick={handleSave}
             disabled={isSaving || timetable.isLocked}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs h-10 px-5 gap-2 rounded-xl shadow-xs hover:shadow cursor-pointer transition-all disabled:opacity-50"
+            className="bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs h-10 px-5 gap-2 rounded-xl shadow-xs hover:shadow cursor-pointer transition-all disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
             {hasUnsavedChanges && (
@@ -1038,6 +1152,7 @@ export default function ExaminationTimetablePage() {
             setTimetable(tt);
             setIsPreviewOpen(true);
           }}
+          onPublishTimetable={handlePublishToStudentPortal}
           onToggleLock={(id, lock) => {
             const updated = toggleLockTimetable(id, lock, userId);
             if (updated) {
@@ -1114,6 +1229,8 @@ export default function ExaminationTimetablePage() {
         onOpenChange={setIsPreviewOpen}
         timetable={timetable}
         signatory={signatory}
+        onPublish={() => handlePublishToStudentPortal()}
+        isPublishing={isPublishing}
       />
 
       <ApprovalRestrictionDialog

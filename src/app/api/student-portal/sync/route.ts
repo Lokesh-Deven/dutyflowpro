@@ -179,6 +179,7 @@ export async function GET(req: NextRequest) {
     let resolvedCode: string = institutionCode;
     let institutionName: string = 'Institution';
     let calendarSchedules: any[] = [];
+    let publishedTimetables: any[] = [];
     let workspace: any = null;
     let allocations: SeatingAllocationRecord[] = [];
 
@@ -240,7 +241,7 @@ export async function GET(req: NextRequest) {
 
         if (calData) calendarSchedules = calData;
 
-        // 2c. Fetch workspace & allocations from saved_allotments
+        // 2d. Fetch workspace & allocations from saved_allotments
         const { data: allotmentsData } = await supabase
           .from('saved_allotments')
           .select('*')
@@ -263,6 +264,40 @@ export async function GET(req: NextRequest) {
             }
           }
         }
+      }
+    }
+
+    // Step 2.5: Always fetch published examination timetables for this institution
+    if (institutionId || resolvedCode) {
+      try {
+        let query = supabase
+          .from('published_timetables')
+          .select('*')
+          .order('published_at', { ascending: false });
+
+        if (institutionId && resolvedCode) {
+          query = query.or(`institution_id.eq.${institutionId},institution_code.eq.${resolvedCode}`);
+        } else if (institutionId) {
+          query = query.eq('institution_id', institutionId);
+        } else if (resolvedCode) {
+          query = query.eq('institution_code', resolvedCode);
+        }
+
+        const { data: ptData } = await query;
+        if (ptData && Array.isArray(ptData)) {
+          publishedTimetables = ptData.map((row: any) => ({
+            id: row.id,
+            institutionId: row.institution_id,
+            institutionCode: row.institution_code,
+            institutionName: row.institution_name,
+            examinationName: row.examination_name,
+            timetable: row.timetable_data,
+            publishedAt: row.published_at,
+            updatedAt: row.updated_at,
+          }));
+        }
+      } catch (err) {
+        console.warn('Could not query published_timetables in sync route:', err);
       }
     }
 
@@ -339,6 +374,7 @@ export async function GET(req: NextRequest) {
         subject: matchedSubject || null,
         examinations: studentExaminations,
         calendarSchedules,
+        publishedTimetables,
         totalAllocations: allocations.length,
         hasWorkspace: Boolean(workspace),
         timestamp: new Date().toISOString(),

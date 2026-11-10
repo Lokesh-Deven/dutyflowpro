@@ -11,10 +11,10 @@ export interface GenerateTimetablePdfOptions {
   paletteId?: PaletteId;
 }
 
-export async function generateExaminationTimetablePdf({
+export function buildExaminationTimetablePdfDoc({
   timetable,
   signatory,
-}: GenerateTimetablePdfOptions): Promise<void> {
+}: GenerateTimetablePdfOptions): jsPDF {
   // A4 Landscape: 297mm width x 210mm height
   const doc = new jsPDF({
     orientation: 'landscape',
@@ -371,7 +371,22 @@ export async function generateExaminationTimetablePdf({
     { align: 'right' }
   );
 
-  // Trigger browser download
-  const safeFilename = `${(timetable.examinationName || 'Examination').replace(/[^a-zA-Z0-9_-]/g, '_')}_Timetable.pdf`;
+  // Return completed jsPDF instance
+  return doc;
+}
+
+export async function generateExaminationTimetablePdf(options: GenerateTimetablePdfOptions): Promise<void> {
+  const doc = buildExaminationTimetablePdfDoc(options);
+  const safeFilename = `${(options.timetable.examinationName || 'Examination').replace(/[^a-zA-Z0-9_-]/g, '_')}_Timetable.pdf`;
   doc.save(safeFilename);
+}
+
+export function generateExaminationTimetablePdfBlob(options: GenerateTimetablePdfOptions): Blob {
+  const doc = buildExaminationTimetablePdfDoc(options);
+  return doc.output('blob');
+}
+
+export function generateExaminationTimetablePdfDataUrl(options: GenerateTimetablePdfOptions): string {
+  const doc = buildExaminationTimetablePdfDoc(options);
+  return doc.output('datauristring');
 }

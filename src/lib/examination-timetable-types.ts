@@ -26,6 +26,8 @@ export interface ExaminationTimetable {
   classes: TimetableClassColumn[];
   rows: TimetableRow[];
   isLocked: boolean;
+  isPublished?: boolean;
+  publishedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -39,5 +41,22 @@ export interface SavedTimetableSummary {
   totalSubjects: number;
   classesCount: number;
   isLocked: boolean;
+  isPublished?: boolean;
+  publishedAt?: string | null;
+  updatedAt: string;
+}
+
+export interface PublishedTimetableRecord {
+  id: string;
+  institutionId: string;
+  institutionCode?: string;
+  institutionName: string;
+  examinationName: string;
+  timetable: ExaminationTimetable;
+  dateRange: string;
+  totalDays: number;
+  totalSubjects: number;
+  classesCount: number;
+  publishedAt: string;
   updatedAt: string;
 }
