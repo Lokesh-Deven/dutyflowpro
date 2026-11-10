@@ -6,6 +6,7 @@ import Link from 'next/link';
 import {
   Bookmark,
   CalendarDays,
+  CalendarRange,
   BarChart2,
   ListChecks,
   Signature,
@@ -448,6 +449,46 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
               </div>
             </button>
           )}
+
+          {/* Examination Calendar Button immediately below Color Palettes */}
+          {(() => {
+            const isCalendarActive = pathname === '/dashboard/examination-calendar';
+            return isCollapsed ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link
+                    href="/dashboard/examination-calendar"
+                    onClick={() => handleNavClick('Examination Calendar')}
+                    className={cn(
+                      "flex items-center justify-center w-11 h-11 mx-auto rounded-xl text-sm font-semibold transition-all duration-200 group relative",
+                      isCalendarActive
+                        ? "bg-[#6342e8] text-white shadow-lg shadow-purple-900/40"
+                        : "text-[#b4b1db] hover:text-white hover:bg-white/[0.07]"
+                    )}
+                  >
+                    <CalendarRange className={cn("w-5 h-5 shrink-0 transition-transform group-hover:scale-110", isCalendarActive ? "text-white" : "text-[#9d99ce]")} />
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="bg-[#1e1957] text-white border-[#31297e] font-semibold text-xs">
+                  Examination Calendar
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              <Link
+                href="/dashboard/examination-calendar"
+                onClick={() => handleNavClick('Examination Calendar')}
+                className={cn(
+                  "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 group relative cursor-pointer",
+                  isCalendarActive
+                    ? "bg-[#6342e8] text-white shadow-lg shadow-purple-900/30"
+                    : "text-[#b4b1db] hover:text-white hover:bg-white/[0.07]"
+                )}
+              >
+                <CalendarRange className={cn("w-4 h-4 shrink-0 transition-transform group-hover:scale-110", isCalendarActive ? "text-white" : "text-[#9d99ce]")} />
+                <span className="truncate">Examination Calendar</span>
+              </Link>
+            );
+          })()}
         </nav>
       </div>
 

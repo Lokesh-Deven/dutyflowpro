@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useStudentPortal } from '@/lib/student-portal-context';
 import { StudentExaminationDetail } from '@/lib/student-portal-types';
 import { getInvigilatorInitial } from '@/lib/utils';
@@ -21,6 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 import {
   GraduationCap,
   Calendar,
+  CalendarRange,
   Clock,
   MapPin,
   Armchair,
@@ -188,8 +190,23 @@ export function MyExaminationView() {
           </div>
         </div>
 
-        {/* Action Controls */}
-        <div className="flex items-center gap-1.5">
+        {/* Action Controls & Navigation Switcher */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Navigation Switcher */}
+          <div className="bg-slate-100 p-1 rounded-xl flex items-center border border-slate-200/80">
+            <div className="px-2.5 py-1 rounded-lg text-xs font-bold bg-white text-indigo-700 shadow-xs flex items-center gap-1.5">
+              <BookOpen className="w-3.5 h-3.5 text-indigo-600" />
+              <span className="hidden xs:inline">My Slip</span>
+            </div>
+            <Link
+              href="/student/examination-calendar"
+              className="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors flex items-center gap-1.5"
+            >
+              <CalendarRange className="w-3.5 h-3.5" />
+              <span>Exam Calendar</span>
+            </Link>
+          </div>
+
           <Button
             size="sm"
             variant="ghost"
