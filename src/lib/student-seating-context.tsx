@@ -81,50 +81,20 @@ interface StudentSeatingContextType {
 const StudentSeatingContext = createContext<StudentSeatingContextType | undefined>(undefined);
 
 /**
- * Normalizes studentsBySubject mapping so records can be accessed by both
- * subject.id and subject.name/code aliases.
+ * Normalizes studentsBySubject mapping strictly by subject.id,
+ * ensuring no old student data from memory/aliases is inherited by newly added subjects.
  */
 function normalizeStudentsBySubject(
   students: Record<string, StudentRecord[]>,
   currentSubjects: StudentSubject[]
 ): Record<string, StudentRecord[]> {
-  const result: Record<string, StudentRecord[]> = { ...students };
+  const result: Record<string, StudentRecord[]> = {};
 
   for (const subj of currentSubjects) {
-    // If not directly present under subj.id, check aliases
-    if (!result[subj.id] || result[subj.id].length === 0) {
-      const matchByName =
-        result[subj.name] ||
-        result[subj.name.toLowerCase()] ||
-        (subj.code ? result[subj.code] : undefined);
-
-      if (matchByName && matchByName.length > 0) {
-        result[subj.id] = matchByName.map((r) => ({ ...r, subjectId: subj.id }));
-      } else {
-        // Deep search across all student arrays for matching records
-        for (const [key, list] of Object.entries(students)) {
-          if (Array.isArray(list) && list.length > 0) {
-            const first = list[0];
-            if (
-              first &&
-              (first.subjectId === subj.id ||
-                first.subjectId === subj.name ||
-                first.subjectId?.toLowerCase() === subj.name.toLowerCase() ||
-                key.trim().toLowerCase() === subj.name.trim().toLowerCase())
-            ) {
-              result[subj.id] = list.map((r) => ({ ...r, subjectId: subj.id }));
-              break;
-            }
-          }
-        }
-      }
-    }
-
-    // Mirror to subj.name alias for seamless backwards lookup
-    if (result[subj.id] && result[subj.id].length > 0) {
-      if (!result[subj.name]) {
-        result[subj.name] = result[subj.id];
-      }
+    if (students && Array.isArray(students[subj.id])) {
+      result[subj.id] = students[subj.id];
+    } else {
+      result[subj.id] = [];
     }
   }
 
@@ -186,7 +156,7 @@ function recoverAllLocalStudents(scope: string): Record<string, StudentRecord[]>
   const cleanMap = (parsed: Record<string, StudentRecord[]>) => {
     const cleaned: Record<string, StudentRecord[]> = {};
     for (const [k, v] of Object.entries(parsed)) {
-      if (!LEGACY_SAMPLE_SUBJECT_IDS.has(k) && Array.isArray(v)) {
+      if (k.startsWith('subj-') && !LEGACY_SAMPLE_SUBJECT_IDS.has(k) && Array.isArray(v)) {
         cleaned[k] = v;
       }
     }
@@ -808,29 +778,52 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
   // Subject Management
   const addSubject = useCallback((name: string, code?: string, expectedStudents: number = 0): StudentSubject => {
     const scope = user?.id ? user.id : 'guest';
+    const cleanName = name.trim();
+    const cleanCode = code ? code.trim() : undefined;
+
     const newSubj: StudentSubject = {
       id: `subj-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      name: name.trim(),
-      code: code ? code.trim() : undefined,
+      name: cleanName,
+      code: cleanCode,
       expectedStudents,
       uploadedStudentsCount: 0,
       createdAt: new Date().toISOString(),
     };
 
-    setSubjects((prev) => {
-      const updated = [...prev, newSubj];
-      safeSetLocalStorage(`dutyflow_${scope}_seating_subjects`, updated);
-      idbSet(`dutyflow_${scope}_seating_subjects`, updated);
-      if (scope === 'guest') {
-        safeSetLocalStorage('dutyflow_guest_seating_subjects', updated);
-      }
-      if (user?.id && isUUID(user.id)) {
-        syncUserWorkspaceToDatabase(user.id, { subjects: updated }).catch(() => {});
-      }
-      return updated;
-    });
+    const updatedSubjs = [...subjects, newSubj];
+
+    // Explicitly retain student count zero for newly added subject and purge stale legacy memory
+    const nextStudents: Record<string, StudentRecord[]> = { ...studentsBySubject };
+    nextStudents[newSubj.id] = [];
+    delete nextStudents[cleanName];
+    delete nextStudents[cleanName.toLowerCase()];
+    if (cleanCode) {
+      delete nextStudents[cleanCode];
+      delete nextStudents[cleanCode.toLowerCase()];
+    }
+
+    setSubjects(updatedSubjs);
+    setStudentsBySubject(nextStudents);
+
+    safeSetLocalStorage(`dutyflow_${scope}_seating_subjects`, updatedSubjs);
+    idbSet(`dutyflow_${scope}_seating_subjects`, updatedSubjs);
+    safeSetLocalStorage(`dutyflow_${scope}_seating_students`, nextStudents);
+    idbSet(`dutyflow_${scope}_seating_students`, nextStudents);
+
+    if (scope === 'guest') {
+      safeSetLocalStorage('dutyflow_guest_seating_subjects', updatedSubjs);
+      safeSetLocalStorage('dutyflow_guest_seating_students', nextStudents);
+    }
+
+    if (user?.id && isUUID(user.id)) {
+      syncUserWorkspaceToDatabase(user.id, {
+        subjects: updatedSubjs,
+        studentsBySubject: nextStudents,
+      }).catch(() => {});
+    }
+
     return newSubj;
-  }, [user?.id]);
+  }, [subjects, studentsBySubject, user?.id]);
 
   const updateSubject = useCallback((id: string, data: Partial<StudentSubject>) => {
     const scope = user?.id ? user.id : 'guest';
@@ -917,110 +910,51 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
   // Student Data Management
   const saveSubjectStudents = useCallback((subjectId: string, students: StudentRecord[]) => {
     const scope = user?.id ? user.id : 'guest';
-    const matchedSubj = subjects.find((s) => s.id === subjectId);
 
-    // 1. Update studentsBySubject state with direct ID and name aliases
-    setStudentsBySubject((prevStudents) => {
-      const nextStudents: Record<string, StudentRecord[]> = {
-        ...prevStudents,
-        [subjectId]: students,
-      };
-      if (matchedSubj) {
-        nextStudents[matchedSubj.name] = students;
-      }
+    // 1. Update studentsBySubject strictly by subjectId without name aliasing
+    const nextStudents: Record<string, StudentRecord[]> = {
+      ...studentsBySubject,
+      [subjectId]: students,
+    };
 
-      // Synchronously write to storage safely to guarantee persistence
-      safeSetLocalStorage(`dutyflow_${scope}_seating_students`, nextStudents);
-      idbSet(`dutyflow_${scope}_seating_students`, nextStudents);
-      if (scope === 'guest') {
-        safeSetLocalStorage('dutyflow_guest_seating_students', nextStudents);
-      }
+    setStudentsBySubject(nextStudents);
 
-      // Sync to cloud database
-      if (user?.id && isUUID(user.id)) {
-        syncUserWorkspaceToDatabase(user.id, {
-          studentsBySubject: nextStudents,
-        }).catch(() => {});
-      }
-
-      return nextStudents;
-    });
+    safeSetLocalStorage(`dutyflow_${scope}_seating_students`, nextStudents);
+    idbSet(`dutyflow_${scope}_seating_students`, nextStudents);
+    if (scope === 'guest') {
+      safeSetLocalStorage('dutyflow_guest_seating_students', nextStudents);
+    }
 
     // 2. Update subjects state with verified uploadedStudentsCount
-    setSubjects((prevSubjs) => {
-      const nextSubjs = prevSubjs.map((s) =>
-        s.id === subjectId
-          ? { ...s, uploadedStudentsCount: students.length }
-          : s
-      );
+    const nextSubjs = subjects.map((s) =>
+      s.id === subjectId
+        ? { ...s, uploadedStudentsCount: students.length }
+        : s
+    );
 
-      safeSetLocalStorage(`dutyflow_${scope}_seating_subjects`, nextSubjs);
-      idbSet(`dutyflow_${scope}_seating_subjects`, nextSubjs);
-      if (scope === 'guest') {
-        safeSetLocalStorage('dutyflow_guest_seating_subjects', nextSubjs);
-      }
+    setSubjects(nextSubjs);
 
-      if (user?.id && isUUID(user.id)) {
-        syncUserWorkspaceToDatabase(user.id, {
-          subjects: nextSubjs,
-        }).catch(() => {});
-      }
+    safeSetLocalStorage(`dutyflow_${scope}_seating_subjects`, nextSubjs);
+    idbSet(`dutyflow_${scope}_seating_subjects`, nextSubjs);
+    if (scope === 'guest') {
+      safeSetLocalStorage('dutyflow_guest_seating_subjects', nextSubjs);
+    }
 
-      return nextSubjs;
-    });
-  }, [subjects, user?.id]);
+    // Sync atomically to cloud database
+    if (user?.id && isUUID(user.id)) {
+      syncUserWorkspaceToDatabase(user.id, {
+        subjects: nextSubjs,
+        studentsBySubject: nextStudents,
+      }).catch(() => {});
+    }
+  }, [subjects, studentsBySubject, user?.id]);
 
   const getSubjectStudents = useCallback((subjectId: string): StudentRecord[] => {
     if (!subjectId) return [];
-
-    // 1. Direct match by subjectId
-    if (studentsBySubject[subjectId] && studentsBySubject[subjectId].length > 0) {
-      return studentsBySubject[subjectId];
-    }
-
-    // 2. Lookup subject metadata for name or code matching
-    const subj = subjects.find((s) => s.id === subjectId);
-    if (subj) {
-      const name = subj.name.trim();
-      const lowerName = name.toLowerCase();
-
-      // Check by subject name
-      if (studentsBySubject[name] && studentsBySubject[name].length > 0) {
-        return studentsBySubject[name];
-      }
-      if (studentsBySubject[lowerName] && studentsBySubject[lowerName].length > 0) {
-        return studentsBySubject[lowerName];
-      }
-
-      // Check all keys in studentsBySubject
-      for (const [k, list] of Object.entries(studentsBySubject)) {
-        if (!Array.isArray(list) || list.length === 0) continue;
-        if (k.trim().toLowerCase() === lowerName) return list;
-        if (subj.code && k.trim().toLowerCase() === subj.code.trim().toLowerCase()) return list;
-
-        // Check if records inside contain this subjectId or name
-        const first = list[0];
-        if (
-          first &&
-          (first.subjectId === subjectId ||
-            first.subjectId === name ||
-            first.subjectId?.toLowerCase() === lowerName)
-        ) {
-          return list;
-        }
-      }
-    }
-
-    // 3. Fallback: filter any list containing this subjectId
-    for (const [, list] of Object.entries(studentsBySubject)) {
-      if (Array.isArray(list) && list.length > 0) {
-        const matches = list.filter((r) => r.subjectId === subjectId);
-        if (matches.length > 0) return matches;
-      }
-    }
-
+    const list = studentsBySubject[subjectId];
+    if (Array.isArray(list)) return list;
     return [];
-  }, [studentsBySubject, subjects]);
+  }, [studentsBySubject]);
 
   const clearSubjectStudents = useCallback((subjectId: string) => {
     const scope = user?.id ? user.id : 'guest';
