@@ -17,6 +17,16 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import {
   BookOpen,
@@ -40,6 +50,7 @@ export default function StudentDataPage() {
     subjects,
     addSubject,
     deleteSubject,
+    clearAllSubjects,
     saveSubjectStudents,
     getSubjectStudents,
     clearSubjectStudents,
@@ -50,6 +61,7 @@ export default function StudentDataPage() {
   const [uploadSubject, setUploadSubject] = useState<StudentSubject | null>(null);
   const [viewingSubject, setViewingSubject] = useState<StudentSubject | null>(null);
   const [isAddSubjectOpen, setIsAddSubjectOpen] = useState(false);
+  const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false);
   const [newSubjName, setNewSubjName] = useState('');
   const [newSubjCode, setNewSubjCode] = useState('');
   const [newSubjExpected, setNewSubjExpected] = useState<string>('');
@@ -168,6 +180,18 @@ export default function StudentDataPage() {
             <span className="hidden sm:inline">Student Portal</span> Link
           </Button>
 
+          {subjects.length > 0 && (
+            <Button
+              variant="outline"
+              onClick={() => setIsClearConfirmOpen(true)}
+              className="border-rose-200 text-rose-600 hover:bg-rose-50 hover:border-rose-300 font-bold text-xs h-9 px-3 gap-1.5 shadow-2xs"
+              title="Clear all subjects and student data"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span className="hidden sm:inline">Clear Space</span>
+            </Button>
+          )}
+
           <Button
             onClick={() => {
               setIsDropdownOpen(false);
@@ -232,104 +256,133 @@ export default function StudentDataPage() {
         </div>
       </div>
 
-      {/* Subject Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {subjects.map((subj) => {
-          const students = getSubjectStudents(subj.id);
-          const hasUploaded = students.length > 0;
+      {/* Subject Cards Grid or Clean Empty Space */}
+      {subjects.length === 0 ? (
+        <div className="bg-white border-2 border-dashed border-slate-200 rounded-2xl p-10 sm:p-14 text-center space-y-4 shadow-xs">
+          <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto shadow-xs border border-indigo-100">
+            <BookOpen className="w-7 h-7" />
+          </div>
+          <div className="space-y-1.5 max-w-md mx-auto">
+            <h3 className="font-headline font-bold text-base text-slate-800">
+              No Subjects Added Yet
+            </h3>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Your student workspace is clear and ready. Click <strong>Add Subject</strong> to configure examination subjects and upload student rosters fresh.
+            </p>
+          </div>
+          <Button
+            onClick={() => {
+              setIsDropdownOpen(false);
+              setNewSubjName('');
+              setNewSubjCode('');
+              setNewSubjExpected('');
+              setIsAddSubjectOpen(true);
+            }}
+            className="bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs h-9 px-4 gap-1.5 shadow-xs"
+          >
+            <Plus className="w-4 h-4" />
+            Add First Subject
+          </Button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {subjects.map((subj) => {
+            const students = getSubjectStudents(subj.id);
+            const hasUploaded = students.length > 0;
 
-          return (
-            <div
-              key={subj.id}
-              className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs hover:border-indigo-200 transition-all flex flex-col justify-between space-y-4"
-            >
-              <div className="space-y-2">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <h3 className="font-headline font-bold text-base text-slate-900 leading-tight">
-                      {subj.name}
-                    </h3>
-                    {subj.code && (
-                      <span className="text-[11px] text-slate-500 font-medium">
-                        Class: {subj.code}
-                      </span>
-                    )}
+            return (
+              <div
+                key={subj.id}
+                className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs hover:border-indigo-200 transition-all flex flex-col justify-between space-y-4"
+              >
+                <div className="space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h3 className="font-headline font-bold text-base text-slate-900 leading-tight">
+                        {subj.name}
+                      </h3>
+                      {subj.code && (
+                        <span className="text-[11px] text-slate-500 font-medium">
+                          Class: {subj.code}
+                        </span>
+                      )}
+                    </div>
+
+                    <Badge
+                      variant="outline"
+                      className={
+                        hasUploaded
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px]"
+                          : "bg-amber-50 text-amber-700 border-amber-200 text-[10px]"
+                      }
+                    >
+                      {hasUploaded ? "Uploaded" : "No Data"}
+                    </Badge>
                   </div>
 
-                  <Badge
-                    variant="outline"
-                    className={
-                      hasUploaded
-                        ? "bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px]"
-                        : "bg-amber-50 text-amber-700 border-amber-200 text-[10px]"
-                    }
-                  >
-                    {hasUploaded ? "Uploaded" : "No Data"}
-                  </Badge>
+                  {/* Counter Metric */}
+                  <div className="bg-slate-50/80 p-3 rounded-lg border border-slate-100 flex items-center justify-between">
+                    <div>
+                      <div className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">
+                        Student Count
+                      </div>
+                      <div className="font-headline font-black text-xl text-slate-800">
+                        {students.length}{" "}
+                        <span className="text-xs font-normal text-slate-400">
+                          {subj.expectedStudents > 0 ? `/ ${subj.expectedStudents} Exp.` : 'Students'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="p-2 bg-white rounded-lg border border-slate-200 text-indigo-600 shadow-2xs">
+                      <BookOpen className="w-5 h-5" />
+                    </div>
+                  </div>
                 </div>
 
-                {/* Counter Metric */}
-                <div className="bg-slate-50/80 p-3 rounded-lg border border-slate-100 flex items-center justify-between">
-                  <div>
-                    <div className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">
-                      Student Count
-                    </div>
-                    <div className="font-headline font-black text-xl text-slate-800">
-                      {students.length}{" "}
-                      <span className="text-xs font-normal text-slate-400">
-                        {subj.expectedStudents > 0 ? `/ ${subj.expectedStudents} Exp.` : 'Students'}
-                      </span>
-                    </div>
+                {/* Action Buttons */}
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setViewingSubject(subj)}
+                      disabled={!hasUploaded}
+                      className="h-8 text-xs font-semibold px-2.5 gap-1 text-slate-700 hover:bg-slate-100"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      View
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      onClick={() => setUploadSubject(subj)}
+                      className="h-8 text-xs font-bold px-3 gap-1 bg-[#1E2A5E] hover:bg-[#151D42] text-white"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      {hasUploaded ? "Re-upload" : "Upload"}
+                    </Button>
                   </div>
-                  <div className="p-2 bg-white rounded-lg border border-slate-200 text-indigo-600 shadow-2xs">
-                    <BookOpen className="w-5 h-5" />
-                  </div>
+
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => {
+                      if (confirm(`Delete subject ${subj.name} and all its uploaded students?`)) {
+                        deleteSubject(subj.id);
+                        toast({ title: "Subject Deleted", description: `Deleted ${subj.name}.` });
+                      }
+                    }}
+                    className="h-8 w-8 text-slate-400 hover:text-rose-600 hover:bg-rose-50"
+                    title="Delete Subject"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
                 </div>
               </div>
-
-              {/* Action Buttons */}
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setViewingSubject(subj)}
-                    disabled={!hasUploaded}
-                    className="h-8 text-xs font-semibold px-2.5 gap-1 text-slate-700 hover:bg-slate-100"
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                    View
-                  </Button>
-
-                  <Button
-                    size="sm"
-                    onClick={() => setUploadSubject(subj)}
-                    className="h-8 text-xs font-bold px-3 gap-1 bg-[#1E2A5E] hover:bg-[#151D42] text-white"
-                  >
-                    <Upload className="w-3.5 h-3.5" />
-                    {hasUploaded ? "Re-upload" : "Upload"}
-                  </Button>
-                </div>
-
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => {
-                    if (confirm(`Delete subject ${subj.name} and all its uploaded students?`)) {
-                      deleteSubject(subj.id);
-                      toast({ title: "Subject Deleted", description: `Deleted ${subj.name}.` });
-                    }
-                  }}
-                  className="h-8 w-8 text-slate-400 hover:text-rose-600 hover:bg-rose-50"
-                  title="Delete Subject"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </Button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Add Subject Modal */}
       <Dialog
@@ -593,6 +646,39 @@ export default function StudentDataPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Clear All Subjects & Students Confirmation Dialog */}
+      <AlertDialog open={isClearConfirmOpen} onOpenChange={setIsClearConfirmOpen}>
+        <AlertDialogContent className="bg-white border border-slate-200 max-w-md">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-2 text-rose-600 mb-1">
+              <Trash2 className="w-5 h-5" />
+              <AlertDialogTitle className="text-base font-bold text-slate-900">
+                Clear All Subjects & Student Data?
+              </AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="text-xs text-slate-600 leading-relaxed">
+              This will permanently delete all {subjects.length} subjects and any uploaded student rosters from your workspace, giving you a fresh, empty space to add new subjects. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="text-xs h-8">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                clearAllSubjects();
+                setIsClearConfirmOpen(false);
+                toast({
+                  title: "Student Space Cleared",
+                  description: "All subjects and student records have been permanently cleared.",
+                });
+              }}
+              className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs h-8 px-4"
+            >
+              Clear Everything
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -111,12 +111,7 @@ export const STANDARD_SUBJECT_CODES: Record<string, string> = {
   'Statistics': 'STA',
 };
 
-export const DEFAULT_STUDENT_SUBJECTS: StudentSubject[] = [
-  { id: 'subj-phy', name: 'Physics', code: 'PHY101', expectedStudents: 200, uploadedStudentsCount: 0 },
-  { id: 'subj-chem', name: 'Chemistry', code: 'CHM101', expectedStudents: 200, uploadedStudentsCount: 0 },
-  { id: 'subj-acc', name: 'Accountancy', code: 'ACC101', expectedStudents: 350, uploadedStudentsCount: 0 },
-  { id: 'subj-eng', name: 'English', code: 'ENG101', expectedStudents: 650, uploadedStudentsCount: 0 },
-];
+export const DEFAULT_STUDENT_SUBJECTS: StudentSubject[] = [];
 
 /**
  * Excel File Validation & Parser for Student Data

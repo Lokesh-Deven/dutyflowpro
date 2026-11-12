@@ -65,6 +65,7 @@ interface StudentSeatingContextType {
   addSubject: (name: string, code?: string, expectedStudents?: number) => StudentSubject;
   updateSubject: (id: string, data: Partial<StudentSubject>) => void;
   deleteSubject: (id: string) => void;
+  clearAllSubjects: () => void;
 
   // Student Data Management
   saveSubjectStudents: (subjectId: string, students: StudentRecord[]) => void;
@@ -158,22 +159,47 @@ function normalizeRooms(rawRooms: SeatingMasterRoom[]): SeatingMasterRoom[] {
   });
 }
 
+export const LEGACY_SAMPLE_SUBJECT_IDS = new Set(['subj-phy', 'subj-chem', 'subj-acc', 'subj-eng']);
+
 /**
- * Recovers all student records ever saved on localhost across scoped, guest,
- * or legacy storage keys to guarantee zero data loss.
+ * Checks whether a subject is one of the initial hardcoded sample subjects.
+ */
+export function isLegacySampleSubject(s: any): boolean {
+  if (!s) return false;
+  if (LEGACY_SAMPLE_SUBJECT_IDS.has(s.id)) return true;
+  const name = String(s.name || '').trim().toLowerCase();
+  const code = String(s.code || '').trim().toUpperCase();
+  if (name === 'physics' && (code === 'PHY101' || s.id === 'subj-phy')) return true;
+  if (name === 'chemistry' && (code === 'CHM101' || s.id === 'subj-chem')) return true;
+  if (name === 'accountancy' && (code === 'ACC101' || s.id === 'subj-acc')) return true;
+  if (name === 'english' && (code === 'ENG101' || s.id === 'subj-eng')) return true;
+  return false;
+}
+
+/**
+ * Recovers student records saved on localhost, strictly respecting user deletions
+ * and stripping out legacy sample data.
  */
 function recoverAllLocalStudents(scope: string): Record<string, StudentRecord[]> {
   if (typeof window === 'undefined') return {};
 
-  const candidates: Record<string, StudentRecord[]>[] = [];
+  const cleanMap = (parsed: Record<string, StudentRecord[]>) => {
+    const cleaned: Record<string, StudentRecord[]> = {};
+    for (const [k, v] of Object.entries(parsed)) {
+      if (!LEGACY_SAMPLE_SUBJECT_IDS.has(k) && Array.isArray(v)) {
+        cleaned[k] = v;
+      }
+    }
+    return cleaned;
+  };
 
-  // Priority 1: User-scoped key
+  // Priority 1: User-scoped key (if present, even if empty {}, respect user choice)
   try {
     const raw = localStorage.getItem(`dutyflow_${scope}_seating_students`);
-    if (raw) {
+    if (raw !== null) {
       const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
-        candidates.push(parsed);
+      if (parsed && typeof parsed === 'object') {
+        return cleanMap(parsed);
       }
     }
   } catch (_) {}
@@ -182,73 +208,32 @@ function recoverAllLocalStudents(scope: string): Record<string, StudentRecord[]>
   if (scope !== 'guest') {
     try {
       const raw = localStorage.getItem('dutyflow_guest_seating_students');
-      if (raw) {
+      if (raw !== null) {
         const parsed = JSON.parse(raw);
-        if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
-          candidates.push(parsed);
+        if (parsed && typeof parsed === 'object') {
+          return cleanMap(parsed);
         }
       }
     } catch (_) {}
   }
 
-  // Priority 3: Scan all localStorage keys for any saved student data
-  try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (!key) continue;
-      if (
-        (key.includes('dutyflow') && key.includes('students')) ||
-        key.endsWith('_seating_students') ||
-        key.endsWith('_students')
-      ) {
-        if (key === `dutyflow_${scope}_seating_students` || key === 'dutyflow_guest_seating_students') {
-          continue;
-        }
-        try {
-          const val = localStorage.getItem(key);
-          if (val) {
-            const parsed = JSON.parse(val);
-            if (parsed && typeof parsed === 'object') {
-              if (Array.isArray(parsed) && parsed.length > 0 && parsed[0]?.rollNo) {
-                candidates.push({ recovered: parsed });
-              } else if (Object.keys(parsed).length > 0) {
-                candidates.push(parsed);
-              }
-            }
-          }
-        } catch (_) {}
-      }
-    }
-  } catch (_) {}
-
-  // Merge discovered candidates (earlier priority candidates overwrite older ones)
-  const merged: Record<string, StudentRecord[]> = {};
-  for (const cand of candidates.reverse()) {
-    for (const [k, list] of Object.entries(cand)) {
-      if (Array.isArray(list) && list.length > 0) {
-        merged[k] = list;
-      }
-    }
-  }
-
-  return merged;
+  return {};
 }
 
 /**
- * Recovers all subjects saved on localhost across scoped, guest, or legacy keys.
+ * Recovers subjects saved on localhost, strictly respecting user deletions
+ * and never re-injecting sample subjects.
  */
 function recoverAllLocalSubjects(scope: string): StudentSubject[] {
-  if (typeof window === 'undefined') return DEFAULT_STUDENT_SUBJECTS;
+  if (typeof window === 'undefined') return [];
 
-  const candidates: StudentSubject[][] = [];
-
-  // Priority 1: User-scoped key
+  // Priority 1: User-scoped key (if present, even if empty [], respect user choice)
   try {
     const raw = localStorage.getItem(`dutyflow_${scope}_seating_subjects`);
-    if (raw) {
+    if (raw !== null) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        candidates.push(parsed);
+      if (Array.isArray(parsed)) {
+        return parsed.filter((s) => !isLegacySampleSubject(s));
       }
     }
   } catch (_) {}
@@ -257,61 +242,22 @@ function recoverAllLocalSubjects(scope: string): StudentSubject[] {
   if (scope !== 'guest') {
     try {
       const raw = localStorage.getItem('dutyflow_guest_seating_subjects');
-      if (raw) {
+      if (raw !== null) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          candidates.push(parsed);
+        if (Array.isArray(parsed)) {
+          return parsed.filter((s) => !isLegacySampleSubject(s));
         }
       }
     } catch (_) {}
   }
 
-  // Priority 3: Scan all localStorage keys
-  try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (!key) continue;
-      if (
-        (key.includes('dutyflow') && key.includes('subjects')) ||
-        key.endsWith('_seating_subjects') ||
-        key.endsWith('_subjects')
-      ) {
-        if (key === `dutyflow_${scope}_seating_subjects` || key === 'dutyflow_guest_seating_subjects') {
-          continue;
-        }
-        try {
-          const val = localStorage.getItem(key);
-          if (val) {
-            const parsed = JSON.parse(val);
-            if (Array.isArray(parsed) && parsed.length > 0 && parsed[0]?.name) {
-              candidates.push(parsed);
-            }
-          }
-        } catch (_) {}
-      }
-    }
-  } catch (_) {}
-
-  if (candidates.length === 0) return DEFAULT_STUDENT_SUBJECTS;
-
-  // Merge discovered subjects, guaranteeing standard subjects remain present
-  const subjectMap = new Map<string, StudentSubject>();
-  for (const s of DEFAULT_STUDENT_SUBJECTS) {
-    subjectMap.set(s.name.toLowerCase(), s);
-  }
-  for (const s of candidates[0]) {
-    if (s && s.name) {
-      subjectMap.set(s.name.toLowerCase(), s);
-    }
-  }
-
-  return Array.from(subjectMap.values());
+  return [];
 }
 
 export function StudentSeatingProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [rooms, setRooms] = useState<SeatingMasterRoom[]>(DEFAULT_STUDENT_ROOMS);
-  const [subjects, setSubjects] = useState<StudentSubject[]>(DEFAULT_STUDENT_SUBJECTS);
+  const [subjects, setSubjects] = useState<StudentSubject[]>([]);
   const [studentsBySubject, setStudentsBySubject] = useState<Record<string, StudentRecord[]>>({});
   const [allocations, setAllocations] = useState<SeatingAllocationRecord[]>([]);
   const [activeAllocation, setActiveAllocation] = useState<SeatingAllocationRecord | null>(null);
@@ -370,7 +316,7 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
     }
 
     let finalRooms = DEFAULT_STUDENT_ROOMS;
-    let finalSubjects = DEFAULT_STUDENT_SUBJECTS;
+    let finalSubjects: StudentSubject[] = [];
     let normalizedStudents: Record<string, StudentRecord[]> = {};
 
     try {
@@ -510,24 +456,47 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
 
         // 2. Restore Subjects from central database
         let activeSubjects = finalSubjects;
-        if (ws?.subjects && Array.isArray(ws.subjects) && ws.subjects.length > 0) {
-          activeSubjects = ws.subjects;
-          setSubjects(ws.subjects);
-          safeSetLocalStorage(`dutyflow_${currentUserId}_seating_subjects`, ws.subjects);
-          idbSet(`dutyflow_${currentUserId}_seating_subjects`, ws.subjects);
+        if (ws?.subjects && Array.isArray(ws.subjects)) {
+          const nonSampleCloudSubjects = ws.subjects.filter((s: StudentSubject) => !isLegacySampleSubject(s));
+          if (nonSampleCloudSubjects.length > 0) {
+            activeSubjects = nonSampleCloudSubjects;
+            setSubjects(nonSampleCloudSubjects);
+            safeSetLocalStorage(`dutyflow_${currentUserId}_seating_subjects`, nonSampleCloudSubjects);
+            idbSet(`dutyflow_${currentUserId}_seating_subjects`, nonSampleCloudSubjects);
+          } else {
+            activeSubjects = [];
+            setSubjects([]);
+            safeSetLocalStorage(`dutyflow_${currentUserId}_seating_subjects`, []);
+            idbSet(`dutyflow_${currentUserId}_seating_subjects`, []);
+            if (ws.subjects.length > 0) {
+              // Legacy sample subjects existed in cloud - clean them out of Supabase
+              syncUserWorkspaceToDatabase(currentUserId, { subjects: [], studentsBySubject: {} }).catch(() => {});
+            }
+          }
         }
 
-        // 3. Restore Student Records from central database (MERGE without overwriting local data with empty cloud)
-        if (ws?.studentsBySubject && typeof ws.studentsBySubject === 'object' && Object.keys(ws.studentsBySubject).length > 0) {
-          setStudentsBySubject((prev) => {
-            const merged = { ...prev, ...ws.studentsBySubject };
-            const normalized = normalizeStudentsBySubject(merged, activeSubjects);
-            safeSetLocalStorage(`dutyflow_${currentUserId}_seating_students`, normalized);
-            idbSet(`dutyflow_${currentUserId}_seating_students`, normalized);
-            return normalized;
-          });
+        // 3. Restore Student Records from central database (filter legacy sample keys)
+        if (ws?.studentsBySubject && typeof ws.studentsBySubject === 'object') {
+          const cleanedCloudStudents: Record<string, StudentRecord[]> = {};
+          for (const [k, v] of Object.entries(ws.studentsBySubject)) {
+            if (!LEGACY_SAMPLE_SUBJECT_IDS.has(k) && Array.isArray(v)) {
+              cleanedCloudStudents[k] = v;
+            }
+          }
+          if (Object.keys(cleanedCloudStudents).length > 0) {
+            setStudentsBySubject((prev) => {
+              const merged = { ...prev, ...cleanedCloudStudents };
+              const normalized = normalizeStudentsBySubject(merged, activeSubjects);
+              safeSetLocalStorage(`dutyflow_${currentUserId}_seating_students`, normalized);
+              idbSet(`dutyflow_${currentUserId}_seating_students`, normalized);
+              return normalized;
+            });
+          } else {
+            setStudentsBySubject({});
+            safeSetLocalStorage(`dutyflow_${currentUserId}_seating_students`, {});
+            idbSet(`dutyflow_${currentUserId}_seating_students`, {});
+          }
         } else if (Object.keys(normalizedStudents).length > 0) {
-          // If cloud has no students but local has students, sync local students to cloud!
           syncUserWorkspaceToDatabase(currentUserId, {
             studentsBySubject: normalizedStudents,
             subjects: activeSubjects,
@@ -585,19 +554,22 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
           safeSetLocalStorage(`dutyflow_${user.id}_seating_rooms`, normalized);
           idbSet(`dutyflow_${user.id}_seating_rooms`, normalized);
         }
-        if (ws?.subjects?.length) {
-          setSubjects(ws.subjects);
-          safeSetLocalStorage(getStorageKey('subjects'), ws.subjects);
-          idbSet(getStorageKey('subjects'), ws.subjects);
+        if (ws?.subjects && Array.isArray(ws.subjects)) {
+          const cleaned = ws.subjects.filter((s: StudentSubject) => !isLegacySampleSubject(s));
+          setSubjects(cleaned);
+          safeSetLocalStorage(getStorageKey('subjects'), cleaned);
+          idbSet(getStorageKey('subjects'), cleaned);
         }
-        if (ws?.studentsBySubject && Object.keys(ws.studentsBySubject).length) {
-          setStudentsBySubject((prev) => {
-            const merged = { ...prev, ...ws.studentsBySubject };
-            const normalized = normalizeStudentsBySubject(merged, ws.subjects || subjects);
-            safeSetLocalStorage(getStorageKey('students'), normalized);
-            idbSet(getStorageKey('students'), normalized);
-            return normalized;
-          });
+        if (ws?.studentsBySubject && typeof ws.studentsBySubject === 'object') {
+          const cleanedStudents: Record<string, StudentRecord[]> = {};
+          for (const [k, v] of Object.entries(ws.studentsBySubject)) {
+            if (!LEGACY_SAMPLE_SUBJECT_IDS.has(k) && Array.isArray(v)) {
+              cleanedStudents[k] = v;
+            }
+          }
+          setStudentsBySubject(cleanedStudents);
+          safeSetLocalStorage(getStorageKey('students'), cleanedStudents);
+          idbSet(getStorageKey('students'), cleanedStudents);
         }
         if (cloudAllocs && Array.isArray(cloudAllocs)) {
           setAllocations(cloudAllocs);
@@ -879,38 +851,68 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
   const deleteSubject = useCallback((id: string) => {
     const scope = user?.id ? user.id : 'guest';
     const subj = subjects.find((s) => s.id === id);
+    const updatedSubjs = subjects.filter((s) => s.id !== id);
 
-    setSubjects((prev) => {
-      const updatedSubjs = prev.filter((s) => s.id !== id);
-      safeSetLocalStorage(`dutyflow_${scope}_seating_subjects`, updatedSubjs);
-      idbSet(`dutyflow_${scope}_seating_subjects`, updatedSubjs);
-      if (scope === 'guest') {
-        safeSetLocalStorage('dutyflow_guest_seating_subjects', updatedSubjs);
-      }
-      if (user?.id && isUUID(user.id)) {
-        syncUserWorkspaceToDatabase(user.id, { subjects: updatedSubjs }).catch(() => {});
-      }
-      return updatedSubjs;
-    });
+    const nextStudents = { ...studentsBySubject };
+    delete nextStudents[id];
+    if (subj) {
+      delete nextStudents[subj.name];
+      delete nextStudents[subj.name.toLowerCase()];
+      if (subj.code) delete nextStudents[subj.code];
+    }
 
-    setStudentsBySubject((prevStudents) => {
-      const nextStudents = { ...prevStudents };
-      delete nextStudents[id];
-      if (subj) {
-        delete nextStudents[subj.name];
-        delete nextStudents[subj.name.toLowerCase()];
+    setSubjects(updatedSubjs);
+    setStudentsBySubject(nextStudents);
+
+    safeSetLocalStorage(`dutyflow_${scope}_seating_subjects`, updatedSubjs);
+    idbSet(`dutyflow_${scope}_seating_subjects`, updatedSubjs);
+    safeSetLocalStorage(`dutyflow_${scope}_seating_students`, nextStudents);
+    idbSet(`dutyflow_${scope}_seating_students`, nextStudents);
+
+    if (scope === 'guest') {
+      safeSetLocalStorage('dutyflow_guest_seating_subjects', updatedSubjs);
+      safeSetLocalStorage('dutyflow_guest_seating_students', nextStudents);
+    }
+
+    if (user?.id && isUUID(user.id)) {
+      syncUserWorkspaceToDatabase(user.id, {
+        subjects: updatedSubjs,
+        studentsBySubject: nextStudents,
+      }).catch(() => {});
+    }
+  }, [subjects, studentsBySubject, user?.id]);
+
+  const clearAllSubjects = useCallback(() => {
+    const scope = user?.id ? user.id : 'guest';
+    setSubjects([]);
+    setStudentsBySubject({});
+
+    safeSetLocalStorage(`dutyflow_${scope}_seating_subjects`, []);
+    safeSetLocalStorage(`dutyflow_${scope}_seating_students`, {});
+    idbSet(`dutyflow_${scope}_seating_subjects`, []);
+    idbSet(`dutyflow_${scope}_seating_students`, {});
+
+    if (scope === 'guest') {
+      safeSetLocalStorage('dutyflow_guest_seating_subjects', []);
+      safeSetLocalStorage('dutyflow_guest_seating_students', {});
+    }
+
+    try {
+      localStorage.setItem(`dutyflow_${scope}_seating_subjects`, '[]');
+      localStorage.setItem(`dutyflow_${scope}_seating_students`, '{}');
+      if (scope !== 'guest') {
+        localStorage.setItem('dutyflow_guest_seating_subjects', '[]');
+        localStorage.setItem('dutyflow_guest_seating_students', '{}');
       }
-      safeSetLocalStorage(`dutyflow_${scope}_seating_students`, nextStudents);
-      idbSet(`dutyflow_${scope}_seating_students`, nextStudents);
-      if (scope === 'guest') {
-        safeSetLocalStorage('dutyflow_guest_seating_students', nextStudents);
-      }
-      if (user?.id && isUUID(user.id)) {
-        syncUserWorkspaceToDatabase(user.id, { studentsBySubject: nextStudents }).catch(() => {});
-      }
-      return nextStudents;
-    });
-  }, [subjects, user?.id]);
+    } catch (_) {}
+
+    if (user?.id && isUUID(user.id)) {
+      syncUserWorkspaceToDatabase(user.id, {
+        subjects: [],
+        studentsBySubject: {},
+      }).catch(() => {});
+    }
+  }, [user?.id]);
 
   // Student Data Management
   const saveSubjectStudents = useCallback((subjectId: string, students: StudentRecord[]) => {
@@ -1179,6 +1181,7 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
         addSubject,
         updateSubject,
         deleteSubject,
+        clearAllSubjects,
         saveSubjectStudents,
         getSubjectStudents,
         clearSubjectStudents,
