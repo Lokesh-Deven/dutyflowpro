@@ -947,6 +947,7 @@ export default function SeatingAllocationWizardPage() {
                     {currentTimetableRows.map((row) => {
                       const dateLabel = row.displayDate || row.date;
                       const dayLabel = row.day ? `(${row.day})` : '';
+                      const courseLabel = row.course ? `[${row.course}] ` : '';
                       const subjectsLabel = row.subjects && row.subjects.length > 0 ? row.subjects.join(', ') : 'No exam scheduled';
                       let timingLabel = '';
                       if (row.timings) {
@@ -961,7 +962,7 @@ export default function SeatingAllocationWizardPage() {
                         <SelectItem key={row.id} value={row.id} className="text-xs py-2 cursor-pointer">
                           <div className="flex flex-col gap-0.5 text-left">
                             <div className="font-semibold text-slate-800">
-                              {dateLabel} {dayLabel} • {subjectsLabel}
+                              {dateLabel} {dayLabel} • {courseLabel}{subjectsLabel}
                             </div>
                             {timingLabel && (
                               <div className="text-[10px] text-slate-500 font-medium">
@@ -1022,6 +1023,7 @@ export default function SeatingAllocationWizardPage() {
                         {currentTimetableRows.map((row) => {
                           const dateLabel = row.displayDate || row.date;
                           const dayLabel = row.day ? `(${row.day})` : '';
+                          const courseLabel = row.course ? `[${row.course}] ` : '';
                           const subjectsLabel = row.subjects && row.subjects.length > 0 ? row.subjects.join(', ') : 'No exam scheduled';
                           let timingLabel = '';
                           if (row.timings) {
@@ -1036,7 +1038,7 @@ export default function SeatingAllocationWizardPage() {
                             <SelectItem key={row.id} value={row.id} className="text-xs py-2 cursor-pointer">
                               <div className="flex flex-col gap-0.5 text-left">
                                 <div className="font-semibold text-slate-800">
-                                  {dateLabel} {dayLabel} • {subjectsLabel}
+                                  {dateLabel} {dayLabel} • {courseLabel}{subjectsLabel}
                                 </div>
                                 {timingLabel && (
                                   <div className="text-[10px] text-slate-500 font-medium">

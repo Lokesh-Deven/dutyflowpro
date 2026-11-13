@@ -13,6 +13,7 @@ export interface TimetableRow {
   date: string; // 'YYYY-MM-DD'
   displayDate: string; // 'DD.MM.YYYY'
   day: string; // 'Monday', 'Tuesday', etc.
+  course?: string; // '1 PUC', '2 PUC', '1&2 PUC', or custom course name
   subjects: string[]; // e.g. ['English', 'Accountancy', 'Physics']
   timings: Record<string, TimetableClassTiming>; // key is classId
 }

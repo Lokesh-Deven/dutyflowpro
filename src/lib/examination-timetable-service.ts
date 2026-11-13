@@ -312,6 +312,7 @@ export function createNewTimetable(
     date: todayIso,
     displayDate: formatDateToDDMMYYYY(todayIso),
     day: getDayFromDate(todayIso),
+    course: '1&2 PUC',
     subjects: ['English'],
     timings: {
       [initialClassId]: {
@@ -333,6 +334,15 @@ export function createNewTimetable(
     updatedAt: new Date().toISOString(),
   };
 }
+
+/**
+ * Default course options for examination timetable dropdown
+ */
+export const DEFAULT_COURSE_OPTIONS: string[] = [
+  '1 PUC',
+  '2 PUC',
+  '1&2 PUC',
+];
 
 /**
  * Default subject options for multiple selection dropdown

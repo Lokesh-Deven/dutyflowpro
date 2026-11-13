@@ -20,9 +20,11 @@ import {
   sortTimetableRows,
   isEndTimeValid,
   DEFAULT_SUBJECT_OPTIONS,
+  DEFAULT_COURSE_OPTIONS,
   publishTimetableToStudentPortal,
 } from '@/lib/examination-timetable-service';
 import { generateExaminationTimetablePdf } from '@/lib/examination-timetable-pdf';
+import { CourseSelectorPopover } from '@/components/dashboard/timetable/course-selector-popover';
 import { SubjectSelectorPopover } from '@/components/dashboard/timetable/subject-selector-popover';
 import { TimePickerInput } from '@/components/dashboard/timetable/time-picker-input';
 import { TimetablePreviewDialog } from '@/components/dashboard/timetable/timetable-preview-dialog';
@@ -99,6 +101,8 @@ export default function ExaminationTimetablePage() {
 
   // Custom subjects pool added by user
   const [customSubjects, setCustomSubjects] = useState<string[]>([]);
+  // Custom courses pool added by user
+  const [customCourses, setCustomCourses] = useState<string[]>([]);
 
   // Initial Load from localStorage cache & Supabase central database
   useEffect(() => {
@@ -168,6 +172,16 @@ export default function ExaminationTimetablePage() {
       a.localeCompare(b)
     );
   }, [customSubjects]);
+
+  // Combined available courses
+  const allAvailableCourses = useMemo(() => {
+    const rowCourses = (timetable.rows || [])
+      .map((r) => r.course?.trim())
+      .filter((c): c is string => Boolean(c && !DEFAULT_COURSE_OPTIONS.includes(c)));
+    return Array.from(new Set([...customCourses, ...rowCourses])).sort((a, b) =>
+      a.localeCompare(b)
+    );
+  }, [timetable.rows, customCourses]);
 
   // Handlers for Institution & Exam Name
   const handleInstitutionChange = (val: string) => {
@@ -280,11 +294,14 @@ export default function ExaminationTimetablePage() {
       };
     });
 
+    const defaultCourse = lastRow?.course !== undefined ? lastRow.course : '1&2 PUC';
+
     const newRow: TimetableRow = {
       id: newRowId,
       date: nextDateIso,
       displayDate: formatDateToDDMMYYYY(nextDateIso),
       day: getDayFromDate(nextDateIso),
+      course: defaultCourse,
       subjects: [],
       timings: defaultTimings,
     };
@@ -297,6 +314,24 @@ export default function ExaminationTimetablePage() {
       };
     });
     setHasUnsavedChanges(true);
+  };
+
+  const handleCourseChange = (rowId: string, course: string) => {
+    if (timetable.isLocked) return;
+    setTimetable((prev) => ({
+      ...prev,
+      rows: prev.rows.map((r) => (r.id === rowId ? { ...r, course } : r)),
+    }));
+    setHasUnsavedChanges(true);
+  };
+
+  const handleAddCustomCourse = (course: string) => {
+    const trimmed = course.trim();
+    if (!trimmed) return;
+    setCustomCourses((prev) => {
+      if (prev.includes(trimmed) || DEFAULT_COURSE_OPTIONS.includes(trimmed)) return prev;
+      return [...prev, trimmed];
+    });
   };
 
   const handleDeleteRow = (rowId: string) => {
@@ -828,6 +863,9 @@ export default function ExaminationTimetablePage() {
                 <th rowSpan={2} className="py-2.5 px-3 text-center w-28 border-r border-slate-200">
                   Day
                 </th>
+                <th rowSpan={2} className="py-2.5 px-3 text-center w-36 border-r border-slate-200">
+                  Course
+                </th>
                 <th rowSpan={2} className="py-2.5 px-3 min-w-[200px] border-r border-slate-200">
                   Subject(s)
                 </th>
@@ -933,6 +971,17 @@ export default function ExaminationTimetablePage() {
                       <span className="font-semibold text-xs text-slate-800 bg-slate-100 px-2 py-1 rounded-md">
                         {row.day || '—'}
                       </span>
+                    </td>
+
+                    {/* Course Selector (Dropdown + Custom Type with Add Option) */}
+                    <td className="py-2 px-3 border-r border-slate-100">
+                      <CourseSelectorPopover
+                        value={row.course || ''}
+                        onChange={(val) => handleCourseChange(row.id, val)}
+                        disabled={timetable.isLocked}
+                        availableCourses={allAvailableCourses}
+                        onAddCustomCourse={handleAddCustomCourse}
+                      />
                     </td>
 
                     {/* Subject Multi-Select Popover */}

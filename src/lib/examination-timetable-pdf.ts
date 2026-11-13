@@ -140,6 +140,19 @@ export function buildExaminationTimetablePdfDoc({
       },
     },
     {
+      content: 'Course',
+      rowSpan: 2,
+      styles: {
+        halign: 'center',
+        valign: 'middle',
+        fillColor: COLOR_NAVY_PRIMARY,
+        textColor: COLOR_WHITE,
+        fontStyle: 'bold',
+        lineColor: COLOR_SLATE_400,
+        lineWidth: 0.2,
+      },
+    },
+    {
       content: 'Subject',
       rowSpan: 2,
       styles: {
@@ -213,10 +226,13 @@ export function buildExaminationTimetablePdfDoc({
       ? row.subjects.join(' / ')
       : '—';
 
+    const courseStr = row.course ? row.course : '—';
+
     const rowCells: any[] = [
       String(index + 1),
       displayDate,
       day,
+      courseStr,
       subjectsStr,
     ];
 
@@ -243,18 +259,20 @@ export function buildExaminationTimetablePdfDoc({
   const slNoWidth = 14;
   const dateWidth = 25;
   const dayWidth = 25;
-  const classTimingPairWidth = 23 * 2; // 46mm per class
+  const courseWidth = 24;
+  const classTimingPairWidth = Math.min(46, Math.max(36, (contentWidth - slNoWidth - dateWidth - dayWidth - courseWidth - 45) / Math.max(1, classes.length)));
   const totalClassesWidth = classTimingPairWidth * classes.length;
-  const subjectWidth = Math.max(45, contentWidth - slNoWidth - dateWidth - dayWidth - totalClassesWidth);
+  const subjectWidth = Math.max(40, contentWidth - slNoWidth - dateWidth - dayWidth - courseWidth - totalClassesWidth);
 
   const columnStyles: Record<number, any> = {
     0: { cellWidth: slNoWidth, halign: 'center' },
     1: { cellWidth: dateWidth, halign: 'center' },
     2: { cellWidth: dayWidth, halign: 'center' },
-    3: { cellWidth: subjectWidth, halign: 'left' },
+    3: { cellWidth: courseWidth, halign: 'center' },
+    4: { cellWidth: subjectWidth, halign: 'left' },
   };
 
-  let colIdx = 4;
+  let colIdx = 5;
   classes.forEach(() => {
     columnStyles[colIdx] = { cellWidth: classTimingPairWidth / 2, halign: 'center' };
     columnStyles[colIdx + 1] = { cellWidth: classTimingPairWidth / 2, halign: 'center' };
@@ -305,6 +323,11 @@ export function buildExaminationTimetablePdfDoc({
           data.cell.styles.textColor = COLOR_SLATE_700;
           data.cell.styles.halign = 'center';
         } else if (data.column.index === 3) {
+          // Course (font-bold text-slate-900)
+          data.cell.styles.textColor = COLOR_SLATE_900;
+          data.cell.styles.fontStyle = 'bold';
+          data.cell.styles.halign = 'center';
+        } else if (data.column.index === 4) {
           // Subject (text-left font-bold text-slate-900 px-3)
           data.cell.styles.textColor = COLOR_SLATE_900;
           data.cell.styles.fontStyle = 'bold';

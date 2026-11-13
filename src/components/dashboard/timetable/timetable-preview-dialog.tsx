@@ -142,6 +142,7 @@ export function TimetablePreviewDialog({
                     <th rowSpan={2} className="border border-slate-400/40 p-2 w-12">Sl. No.</th>
                     <th rowSpan={2} className="border border-slate-400/40 p-2 w-28">Date</th>
                     <th rowSpan={2} className="border border-slate-400/40 p-2 w-28">Day</th>
+                    <th rowSpan={2} className="border border-slate-400/40 p-2 w-24 text-center">Course</th>
                     <th rowSpan={2} className="border border-slate-400/40 p-2 text-left px-3">Subject</th>
                     {classes.map((c) => (
                       <th key={c.id} colSpan={2} className="border border-slate-400/40 p-2 text-center bg-[#18234D]">
@@ -167,6 +168,9 @@ export function TimetablePreviewDialog({
                           {row.displayDate || formatDateToDDMMYYYY(row.date) || '—'}
                         </td>
                         <td className="border border-slate-200 p-2 text-slate-700">{row.day || '—'}</td>
+                        <td className="border border-slate-200 p-2 text-center font-bold text-slate-800">
+                          {row.course || '—'}
+                        </td>
                         <td className="border border-slate-200 p-2 text-left font-bold text-slate-900 px-3">
                           {row.subjects && row.subjects.length > 0 ? row.subjects.join(' / ') : '—'}
                         </td>
@@ -190,7 +194,7 @@ export function TimetablePreviewDialog({
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={4 + classes.length * 2} className="p-6 text-center text-slate-400 italic">
+                      <td colSpan={5 + classes.length * 2} className="p-6 text-center text-slate-400 italic">
                         No examination dates added yet. Click &ldquo;+ Add Examination&rdquo; to add rows.
                       </td>
                     </tr>
