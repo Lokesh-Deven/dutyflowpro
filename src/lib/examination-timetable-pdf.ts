@@ -2,7 +2,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { ExaminationTimetable } from './examination-timetable-types';
 import { SignatoryInfo } from './types';
-import { formatDateToDDMMYYYY } from './examination-timetable-service';
+import { formatDateToDDMMYYYY, normalizeTimetableRows } from './examination-timetable-service';
 import { PaletteId } from './pdf-palette';
 
 export interface GenerateTimetablePdfOptions {
@@ -152,19 +152,6 @@ export function buildExaminationTimetablePdfDoc({
         lineWidth: 0.2,
       },
     },
-    {
-      content: 'Subject',
-      rowSpan: 2,
-      styles: {
-        halign: 'left',
-        valign: 'middle',
-        fillColor: COLOR_NAVY_PRIMARY,
-        textColor: COLOR_WHITE,
-        fontStyle: 'bold',
-        lineColor: COLOR_SLATE_400,
-        lineWidth: 0.2,
-      },
-    },
   ];
 
   classes.forEach((c) => {
@@ -181,6 +168,21 @@ export function buildExaminationTimetablePdfDoc({
         lineWidth: 0.2,
       },
     });
+  });
+
+  // Subject is moved next to Timings as the last column
+  headRow0.push({
+    content: 'Subject',
+    rowSpan: 2,
+    styles: {
+      halign: 'left',
+      valign: 'middle',
+      fillColor: COLOR_NAVY_PRIMARY,
+      textColor: COLOR_WHITE,
+      fontStyle: 'bold',
+      lineColor: COLOR_SLATE_400,
+      lineWidth: 0.2,
+    },
   });
 
   // Row 1: Start Time, End Time for each class (bg-[#243370] text-slate-200)
@@ -212,40 +214,86 @@ export function buildExaminationTimetablePdfDoc({
     });
   });
 
-  // Body data rows sorted chronologically
-  const sortedRows = [...timetable.rows].sort((a, b) => {
-    if (!a.date) return 1;
-    if (!b.date) return -1;
-    return a.date.localeCompare(b.date);
-  });
+  // Normalize rows to group multiple schedule slots under their unique Date & Day
+  const normalizedRows = normalizeTimetableRows(timetable.rows || []);
 
-  const bodyData = sortedRows.map((row, index) => {
+  const bodyData: any[] = [];
+  const dateColorByIndex: boolean[] = []; // true if even date, false if odd date
+
+  normalizedRows.forEach((row, dateIndex) => {
+    const slots = row.slots && row.slots.length > 0
+      ? row.slots
+      : [{ id: `${row.id}-s1`, course: row.course, subjects: row.subjects || [], timings: row.timings || {} }];
+    const slotCount = slots.length;
     const displayDate = row.displayDate || formatDateToDDMMYYYY(row.date) || '—';
     const day = row.day || '—';
-    const subjectsStr = (row.subjects && row.subjects.length > 0)
-      ? row.subjects.join(' / ')
+
+    // First slot has the rowSpanned Sl. No., Date, and Day
+    const slot0 = slots[0];
+    const course0Str = slot0.course ? slot0.course : '—';
+    const subjects0Str = (slot0.subjects && slot0.subjects.length > 0)
+      ? slot0.subjects.join(' / ')
       : '—';
 
-    const courseStr = row.course ? row.course : '—';
-
-    const rowCells: any[] = [
-      String(index + 1),
-      displayDate,
-      day,
-      courseStr,
-      subjectsStr,
+    const firstRowCells: any[] = [
+      {
+        content: String(dateIndex + 1),
+        rowSpan: slotCount,
+        styles: { halign: 'center', valign: 'middle' },
+      },
+      {
+        content: displayDate,
+        rowSpan: slotCount,
+        styles: { halign: 'center', valign: 'middle', fontStyle: 'bold' },
+      },
+      {
+        content: day,
+        rowSpan: slotCount,
+        styles: { halign: 'center', valign: 'middle' },
+      },
+      course0Str,
     ];
 
-    const hasExam = Boolean(row.subjects && row.subjects.length > 0);
+    const hasExam0 = Boolean(slot0.subjects && slot0.subjects.length > 0);
     classes.forEach((c) => {
-      const timing = row.timings ? row.timings[c.id] : undefined;
-      const startVal = (!hasExam || !timing?.startTime || timing.startTime === '-' || timing.startTime === '—') ? '-' : timing.startTime;
-      const endVal = (!hasExam || !timing?.endTime || timing.endTime === '-' || timing.endTime === '—') ? '-' : timing.endTime;
-      rowCells.push(startVal);
-      rowCells.push(endVal);
+      const timing = slot0.timings ? slot0.timings[c.id] : undefined;
+      const startVal = (!hasExam0 || !timing?.startTime || timing.startTime === '-' || timing.startTime === '—') ? '-' : timing.startTime;
+      const endVal = (!hasExam0 || !timing?.endTime || timing.endTime === '-' || timing.endTime === '—') ? '-' : timing.endTime;
+      firstRowCells.push(startVal);
+      firstRowCells.push(endVal);
     });
 
-    return rowCells;
+    firstRowCells.push(subjects0Str);
+
+    bodyData.push(firstRowCells);
+    dateColorByIndex.push(dateIndex % 2 === 0);
+
+    // Subsequent slots for the same date (columns 0, 1, 2 are spanned)
+    for (let sIdx = 1; sIdx < slotCount; sIdx++) {
+      const slot = slots[sIdx];
+      const courseStr = slot.course ? slot.course : '—';
+      const subjectsStr = (slot.subjects && slot.subjects.length > 0)
+        ? slot.subjects.join(' / ')
+        : '—';
+
+      const subRowCells: any[] = [
+        courseStr,
+      ];
+
+      const hasExam = Boolean(slot.subjects && slot.subjects.length > 0);
+      classes.forEach((c) => {
+        const timing = slot.timings ? slot.timings[c.id] : undefined;
+        const startVal = (!hasExam || !timing?.startTime || timing.startTime === '-' || timing.startTime === '—') ? '-' : timing.startTime;
+        const endVal = (!hasExam || !timing?.endTime || timing.endTime === '-' || timing.endTime === '—') ? '-' : timing.endTime;
+        subRowCells.push(startVal);
+        subRowCells.push(endVal);
+      });
+
+      subRowCells.push(subjectsStr);
+
+      bodyData.push(subRowCells);
+      dateColorByIndex.push(dateIndex % 2 === 0);
+    }
   });
 
   // Intelligent scaling calculation so that table fits strictly between currentY and maxTableBottomY (160 mm)
@@ -269,15 +317,16 @@ export function buildExaminationTimetablePdfDoc({
     1: { cellWidth: dateWidth, halign: 'center' },
     2: { cellWidth: dayWidth, halign: 'center' },
     3: { cellWidth: courseWidth, halign: 'center' },
-    4: { cellWidth: subjectWidth, halign: 'left' },
   };
 
-  let colIdx = 5;
+  let colIdx = 4;
   classes.forEach(() => {
     columnStyles[colIdx] = { cellWidth: classTimingPairWidth / 2, halign: 'center' };
     columnStyles[colIdx + 1] = { cellWidth: classTimingPairWidth / 2, halign: 'center' };
     colIdx += 2;
   });
+
+  columnStyles[colIdx] = { cellWidth: subjectWidth, halign: 'left' };
 
   (doc as any).autoTable({
     startY: currentY,
@@ -297,45 +346,50 @@ export function buildExaminationTimetablePdfDoc({
     },
     didParseCell: (data: any) => {
       if (data.section === 'body') {
-        // Alternating row background matching preview: even pure white, odd slate-50/70
-        if (data.row.index % 2 === 1) {
-          data.cell.styles.fillColor = COLOR_SLATE_50;
-        } else {
-          data.cell.styles.fillColor = COLOR_WHITE;
-        }
+        // Date block background: all slots of the same date share the same shade
+        const isEvenDate = dateColorByIndex[data.row.index] ?? (data.row.index % 2 === 0);
+        data.cell.styles.fillColor = isEvenDate ? COLOR_WHITE : COLOR_SLATE_50;
 
         // Cell border styling
         data.cell.styles.lineColor = COLOR_SLATE_200;
         data.cell.styles.lineWidth = 0.25;
+
+        const subjectColIndex = 4 + classes.length * 2;
 
         // Typography per column matching preview exactly
         if (data.column.index === 0) {
           // Sl. No. (text-slate-500 font-mono)
           data.cell.styles.textColor = COLOR_SLATE_500;
           data.cell.styles.halign = 'center';
+          data.cell.styles.valign = 'middle';
         } else if (data.column.index === 1) {
           // Date (font-bold text-slate-900 font-mono)
           data.cell.styles.textColor = COLOR_SLATE_900;
           data.cell.styles.fontStyle = 'bold';
           data.cell.styles.halign = 'center';
+          data.cell.styles.valign = 'middle';
         } else if (data.column.index === 2) {
           // Day (text-slate-700)
           data.cell.styles.textColor = COLOR_SLATE_700;
           data.cell.styles.halign = 'center';
+          data.cell.styles.valign = 'middle';
         } else if (data.column.index === 3) {
           // Course (font-bold text-slate-900)
           data.cell.styles.textColor = COLOR_SLATE_900;
           data.cell.styles.fontStyle = 'bold';
           data.cell.styles.halign = 'center';
-        } else if (data.column.index === 4) {
+          data.cell.styles.valign = 'middle';
+        } else if (data.column.index === subjectColIndex) {
           // Subject (text-left font-bold text-slate-900 px-3)
           data.cell.styles.textColor = COLOR_SLATE_900;
           data.cell.styles.fontStyle = 'bold';
           data.cell.styles.halign = 'left';
+          data.cell.styles.valign = 'middle';
         } else {
           // Timings (font-mono text-slate-700)
           data.cell.styles.textColor = COLOR_SLATE_700;
           data.cell.styles.halign = 'center';
+          data.cell.styles.valign = 'middle';
         }
       }
     },

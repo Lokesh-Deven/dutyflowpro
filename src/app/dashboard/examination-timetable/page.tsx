@@ -7,6 +7,7 @@ import {
   ExaminationTimetable,
   TimetableClassColumn,
   TimetableRow,
+  TimetableSlot,
 } from '@/lib/examination-timetable-types';
 import {
   createNewTimetable,
@@ -18,6 +19,8 @@ import {
   formatDateToDDMMYYYY,
   getDayFromDate,
   sortTimetableRows,
+  normalizeTimetableRows,
+  normalizeTimetable,
   isEndTimeValid,
   DEFAULT_SUBJECT_OPTIONS,
   DEFAULT_COURSE_OPTIONS,
@@ -110,7 +113,7 @@ export default function ExaminationTimetablePage() {
     const initialList = getSavedTimetables(userId);
     setSavedTimetables(initialList);
     if (initialList.length > 0) {
-      setTimetable(initialList[0]);
+      setTimetable(normalizeTimetable(initialList[0]));
     } else {
       setTimetable(createNewTimetable(defaultInstitutionName));
     }
@@ -122,7 +125,7 @@ export default function ExaminationTimetablePage() {
         if (cloudList.length > 0) {
           setTimetable((prev) => {
             const match = cloudList.find((t) => t.id === prev.id);
-            return match || cloudList[0];
+            return match ? normalizeTimetable(match) : normalizeTimetable(cloudList[0]);
           });
         }
       }).catch((err) => {
@@ -173,11 +176,18 @@ export default function ExaminationTimetablePage() {
     );
   }, [customSubjects]);
 
-  // Combined available courses
+  // Combined available courses across all schedule slots
   const allAvailableCourses = useMemo(() => {
-    const rowCourses = (timetable.rows || [])
-      .map((r) => r.course?.trim())
-      .filter((c): c is string => Boolean(c && !DEFAULT_COURSE_OPTIONS.includes(c)));
+    const rowCourses: string[] = [];
+    (timetable.rows || []).forEach((r) => {
+      const slots = r.slots && r.slots.length > 0 ? r.slots : [{ course: r.course }];
+      slots.forEach((s) => {
+        const c = s.course?.trim();
+        if (c && !DEFAULT_COURSE_OPTIONS.includes(c)) {
+          rowCourses.push(c);
+        }
+      });
+    });
     return Array.from(new Set([...customCourses, ...rowCourses])).sort((a, b) =>
       a.localeCompare(b)
     );
@@ -207,17 +217,31 @@ export default function ExaminationTimetablePage() {
     };
 
     setTimetable((prev) => {
-      // Default timings for all existing rows
-      const updatedRows = prev.rows.map((row) => ({
-        ...row,
-        timings: {
-          ...row.timings,
-          [newClassId]: {
-            startTime: '10:00 AM',
-            endTime: '01:00 PM',
+      // Default timings for all existing rows and their slots
+      const updatedRows = prev.rows.map((row) => {
+        const updatedSlots = (row.slots || []).map((slot) => ({
+          ...slot,
+          timings: {
+            ...slot.timings,
+            [newClassId]: {
+              startTime: '10:00 AM',
+              endTime: '01:00 PM',
+            },
           },
-        },
-      }));
+        }));
+
+        return {
+          ...row,
+          slots: updatedSlots,
+          timings: {
+            ...row.timings,
+            [newClassId]: {
+              startTime: '10:00 AM',
+              endTime: '01:00 PM',
+            },
+          },
+        };
+      });
 
       return {
         ...prev,
@@ -246,9 +270,20 @@ export default function ExaminationTimetablePage() {
     setTimetable((prev) => {
       const updatedClasses = prev.classes.filter((c) => c.id !== classId);
       const updatedRows = prev.rows.map((r) => {
+        const updatedSlots = (r.slots || []).map((slot) => {
+          const tCopy = { ...slot.timings };
+          delete tCopy[classId];
+          return { ...slot, timings: tCopy };
+        });
+
         const timingsCopy = { ...r.timings };
         delete timingsCopy[classId];
-        return { ...r, timings: timingsCopy };
+
+        return {
+          ...r,
+          slots: updatedSlots,
+          timings: timingsCopy,
+        };
       });
 
       return {
@@ -269,8 +304,9 @@ export default function ExaminationTimetablePage() {
     setHasUnsavedChanges(true);
   };
 
-  // Row Controls
-  const handleAddRow = () => {
+  // Row & Schedule Slot Controls
+  // Add a brand new Examination Date (with an initial schedule slot)
+  const handleAddDateRow = () => {
     if (timetable.isLocked) return;
     const newRowId = `row-${Date.now()}`;
 
@@ -285,7 +321,6 @@ export default function ExaminationTimetablePage() {
       nextDateIso = new Date().toISOString().split('T')[0];
     }
 
-    // Default timings for all classes (hyphen '-' when no exam is selected)
     const defaultTimings: Record<string, { startTime: string; endTime: string }> = {};
     timetable.classes.forEach((c) => {
       defaultTimings[c.id] = {
@@ -294,16 +329,25 @@ export default function ExaminationTimetablePage() {
       };
     });
 
-    const defaultCourse = lastRow?.course !== undefined ? lastRow.course : '1&2 PUC';
+    const lastSlot = lastRow?.slots?.[lastRow.slots.length - 1];
+    const defaultCourse = lastSlot?.course || lastRow?.course || '1&2 PUC';
+
+    const initialSlot: TimetableSlot = {
+      id: `slot-${Date.now()}-1`,
+      course: defaultCourse,
+      subjects: [],
+      timings: defaultTimings,
+    };
 
     const newRow: TimetableRow = {
       id: newRowId,
       date: nextDateIso,
       displayDate: formatDateToDDMMYYYY(nextDateIso),
       day: getDayFromDate(nextDateIso),
-      course: defaultCourse,
-      subjects: [],
-      timings: defaultTimings,
+      course: initialSlot.course,
+      subjects: initialSlot.subjects,
+      timings: initialSlot.timings,
+      slots: [initialSlot],
     };
 
     setTimetable((prev) => {
@@ -314,13 +358,243 @@ export default function ExaminationTimetablePage() {
       };
     });
     setHasUnsavedChanges(true);
+    toast({
+      title: "Examination Date Added",
+      description: `Added ${formatDateToDDMMYYYY(nextDateIso)} to the schedule.`,
+    });
   };
 
-  const handleCourseChange = (rowId: string, course: string) => {
+  // Add multiple schedule rows under an existing Date & Day
+  const handleAddSlotToDate = (rowId: string) => {
+    if (timetable.isLocked) return;
+
+    setTimetable((prev) => {
+      const updatedRows = prev.rows.map((r) => {
+        if (r.id !== rowId) return r;
+
+        const currentSlots = r.slots && r.slots.length > 0
+          ? r.slots
+          : [{ id: `slot-${r.id}-1`, course: r.course || '1&2 PUC', subjects: r.subjects || [], timings: r.timings || {} }];
+
+        const lastSlot = currentSlots[currentSlots.length - 1];
+
+        const defaultTimings: Record<string, { startTime: string; endTime: string }> = {};
+        prev.classes.forEach((c) => {
+          defaultTimings[c.id] = {
+            startTime: '-',
+            endTime: '-',
+          };
+        });
+
+        const newSlot: TimetableSlot = {
+          id: `slot-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+          course: lastSlot?.course || '1&2 PUC',
+          subjects: [],
+          timings: defaultTimings,
+        };
+
+        const nextSlots = [...currentSlots, newSlot];
+
+        return {
+          ...r,
+          slots: nextSlots,
+          course: nextSlots[0]?.course,
+          subjects: nextSlots[0]?.subjects,
+          timings: nextSlots[0]?.timings,
+        };
+      });
+
+      return {
+        ...prev,
+        rows: updatedRows,
+      };
+    });
+
+    setHasUnsavedChanges(true);
+    toast({
+      title: "Schedule Slot Added",
+      description: "Added a new examination schedule under this date.",
+    });
+  };
+
+  // Delete a specific schedule/slot from a date
+  const handleDeleteSlot = (rowId: string, slotId: string) => {
+    if (timetable.isLocked) return;
+
+    setTimetable((prev) => {
+      const targetRow = prev.rows.find((r) => r.id === rowId);
+      if (!targetRow) return prev;
+
+      const currentSlots = targetRow.slots && targetRow.slots.length > 0
+        ? targetRow.slots
+        : [{ id: `slot-${targetRow.id}-1`, course: targetRow.course, subjects: targetRow.subjects || [], timings: targetRow.timings || {} }];
+
+      // If more than 1 slot on this date, just remove this slot
+      if (currentSlots.length > 1) {
+        const nextSlots = currentSlots.filter((s) => s.id !== slotId);
+        return {
+          ...prev,
+          rows: prev.rows.map((r) =>
+            r.id === rowId
+              ? {
+                  ...r,
+                  slots: nextSlots,
+                  course: nextSlots[0]?.course,
+                  subjects: nextSlots[0]?.subjects,
+                  timings: nextSlots[0]?.timings,
+                }
+              : r
+          ),
+        };
+      }
+
+      // If only 1 slot on this date, deleting it deletes the date row
+      if (prev.rows.length <= 1) {
+        toast({
+          variant: "destructive",
+          title: "Cannot Delete",
+          description: "Timetable must have at least one examination date.",
+        });
+        return prev;
+      }
+
+      return {
+        ...prev,
+        rows: prev.rows.filter((r) => r.id !== rowId),
+      };
+    });
+
+    setHasUnsavedChanges(true);
+  };
+
+  const handleDateChange = (rowId: string, newDateIso: string) => {
+    if (timetable.isLocked) return;
+    const displayDate = formatDateToDDMMYYYY(newDateIso);
+    const day = getDayFromDate(newDateIso);
+
+    setTimetable((prev) => {
+      const modified = prev.rows.map((r) =>
+        r.id === rowId ? { ...r, date: newDateIso, displayDate, day } : r
+      );
+      return {
+        ...prev,
+        rows: sortTimetableRows(modified),
+      };
+    });
+    setHasUnsavedChanges(true);
+  };
+
+  const handleSlotCourseChange = (rowId: string, slotId: string, course: string) => {
     if (timetable.isLocked) return;
     setTimetable((prev) => ({
       ...prev,
-      rows: prev.rows.map((r) => (r.id === rowId ? { ...r, course } : r)),
+      rows: prev.rows.map((r) => {
+        if (r.id !== rowId) return r;
+        const currentSlots = r.slots && r.slots.length > 0
+          ? r.slots
+          : [{ id: slotId, course: r.course, subjects: r.subjects || [], timings: r.timings || {} }];
+        const nextSlots = currentSlots.map((s) => (s.id === slotId ? { ...s, course } : s));
+        return {
+          ...r,
+          slots: nextSlots,
+          course: nextSlots[0]?.course,
+        };
+      }),
+    }));
+    setHasUnsavedChanges(true);
+  };
+
+  const handleSlotSubjectsChange = (rowId: string, slotId: string, subjects: string[]) => {
+    if (timetable.isLocked) return;
+    setTimetable((prev) => ({
+      ...prev,
+      rows: prev.rows.map((r) => {
+        if (r.id !== rowId) return r;
+        const currentSlots = r.slots && r.slots.length > 0
+          ? r.slots
+          : [{ id: slotId, course: r.course, subjects: r.subjects || [], timings: r.timings || {} }];
+        const nextSlots = currentSlots.map((s) => {
+          if (s.id !== slotId) return s;
+          const nowHas = subjects.length > 0;
+          const updatedTimings = { ...s.timings };
+          if (!nowHas) {
+            prev.classes.forEach((c) => {
+              updatedTimings[c.id] = { startTime: '-', endTime: '-' };
+            });
+          } else {
+            prev.classes.forEach((c) => {
+              const cur = updatedTimings[c.id];
+              if (!cur || !cur.startTime || cur.startTime === '-' || cur.startTime === '—') {
+                updatedTimings[c.id] = { startTime: '10:00 AM', endTime: '01:00 PM' };
+              }
+            });
+          }
+          return {
+            ...s,
+            subjects,
+            timings: updatedTimings,
+          };
+        });
+
+        return {
+          ...r,
+          slots: nextSlots,
+          subjects: nextSlots[0]?.subjects,
+          timings: nextSlots[0]?.timings,
+        };
+      }),
+    }));
+    setHasUnsavedChanges(true);
+  };
+
+  const handleSlotTimingChange = (
+    rowId: string,
+    slotId: string,
+    classId: string,
+    field: 'startTime' | 'endTime',
+    value: string
+  ) => {
+    if (timetable.isLocked) return;
+    setTimetable((prev) => ({
+      ...prev,
+      rows: prev.rows.map((r) => {
+        if (r.id !== rowId) return r;
+        const currentSlots = r.slots && r.slots.length > 0
+          ? r.slots
+          : [{ id: slotId, course: r.course, subjects: r.subjects || [], timings: r.timings || {} }];
+        const nextSlots = currentSlots.map((s) => {
+          if (s.id !== slotId) return s;
+          const currentClassTiming = s.timings?.[classId] || { startTime: '-', endTime: '-' };
+          let newTiming = {
+            ...currentClassTiming,
+            [field]: value,
+          };
+
+          if (value === '-' || value === '—') {
+            newTiming = { startTime: '-', endTime: '-' };
+          } else {
+            if (field === 'startTime' && (newTiming.endTime === '-' || newTiming.endTime === '—' || !newTiming.endTime)) {
+              newTiming.endTime = '01:00 PM';
+            } else if (field === 'endTime' && (newTiming.startTime === '-' || newTiming.startTime === '—' || !newTiming.startTime)) {
+              newTiming.startTime = '10:00 AM';
+            }
+          }
+
+          return {
+            ...s,
+            timings: {
+              ...s.timings,
+              [classId]: newTiming,
+            },
+          };
+        });
+
+        return {
+          ...r,
+          slots: nextSlots,
+          timings: nextSlots[0]?.timings,
+        };
+      }),
     }));
     setHasUnsavedChanges(true);
   };
@@ -334,111 +608,6 @@ export default function ExaminationTimetablePage() {
     });
   };
 
-  const handleDeleteRow = (rowId: string) => {
-    if (timetable.isLocked) return;
-    setTimetable((prev) => ({
-      ...prev,
-      rows: prev.rows.filter((r) => r.id !== rowId),
-    }));
-    setHasUnsavedChanges(true);
-  };
-
-  const handleDateChange = (rowId: string, newDateIso: string) => {
-    if (timetable.isLocked) return;
-    const displayDate = formatDateToDDMMYYYY(newDateIso);
-    const day = getDayFromDate(newDateIso);
-
-    setTimetable((prev) => {
-      const modified = prev.rows.map((r) =>
-        r.id === rowId ? { ...r, date: newDateIso, displayDate, day } : r
-      );
-      // Automatically keep in chronological date order
-      return {
-        ...prev,
-        rows: sortTimetableRows(modified),
-      };
-    });
-    setHasUnsavedChanges(true);
-  };
-
-  const handleSubjectsChange = (rowId: string, subjects: string[]) => {
-    if (timetable.isLocked) return;
-    setTimetable((prev) => ({
-      ...prev,
-      rows: prev.rows.map((r) => {
-        if (r.id !== rowId) return r;
-        const nowHas = subjects.length > 0;
-        const updatedTimings = { ...r.timings };
-        if (!nowHas) {
-          // No exam on this date -> timings automatically fill with hyphen '-'
-          prev.classes.forEach((c) => {
-            updatedTimings[c.id] = {
-              startTime: '-',
-              endTime: '-',
-            };
-          });
-        } else {
-          // Exam selected -> if timings were hyphen or unset, populate with default timings
-          prev.classes.forEach((c) => {
-            const cur = updatedTimings[c.id];
-            if (!cur || !cur.startTime || cur.startTime === '-' || cur.startTime === '—') {
-              updatedTimings[c.id] = {
-                startTime: '10:00 AM',
-                endTime: '01:00 PM',
-              };
-            }
-          });
-        }
-        return { ...r, subjects, timings: updatedTimings };
-      }),
-    }));
-    setHasUnsavedChanges(true);
-  };
-
-  const handleTimingChange = (
-    rowId: string,
-    classId: string,
-    field: 'startTime' | 'endTime',
-    value: string
-  ) => {
-    if (timetable.isLocked) return;
-    setTimetable((prev) => ({
-      ...prev,
-      rows: prev.rows.map((r) => {
-        if (r.id !== rowId) return r;
-        const currentClassTiming = r.timings?.[classId] || { startTime: '-', endTime: '-' };
-        let newTiming = {
-          ...currentClassTiming,
-          [field]: value,
-        };
-
-        // If user selects '-' to indicate "No Exam", set both start and end time to '-'
-        if (value === '-' || value === '—') {
-          newTiming = {
-            startTime: '-',
-            endTime: '-',
-          };
-        } else {
-          // If user selects a specific time, ensure the paired field does not remain stranded as hyphen
-          if (field === 'startTime' && (newTiming.endTime === '-' || newTiming.endTime === '—' || !newTiming.endTime)) {
-            newTiming.endTime = '01:00 PM';
-          } else if (field === 'endTime' && (newTiming.startTime === '-' || newTiming.startTime === '—' || !newTiming.startTime)) {
-            newTiming.startTime = '10:00 AM';
-          }
-        }
-
-        return {
-          ...r,
-          timings: {
-            ...r.timings,
-            [classId]: newTiming,
-          },
-        };
-      }),
-    }));
-    setHasUnsavedChanges(true);
-  };
-
   // Add custom subject callback
   const handleAddCustomSubject = (subj: string) => {
     if (!customSubjects.includes(subj)) {
@@ -446,27 +615,43 @@ export default function ExaminationTimetablePage() {
     }
   };
 
-  // Computed metrics for Total Sessions and Total Subjects
-  const totalSessions = useMemo(() => {
-    return timetable.rows.filter((r) => r.subjects && r.subjects.length > 0).length;
+  // Computed metrics for Total Sessions and Total Subjects across all slots
+  const totalSlotsCount = useMemo(() => {
+    return (timetable.rows || []).reduce((acc, r) => {
+      const slots = r.slots && r.slots.length > 0 ? r.slots : [{ subjects: r.subjects }];
+      return acc + slots.length;
+    }, 0);
   }, [timetable.rows]);
 
-  const totalSubjects = useMemo(() => {
-    return timetable.rows.reduce((sum, r) => sum + (r.subjects ? r.subjects.length : 0), 0);
+  const totalSessions = useMemo(() => {
+    return (timetable.rows || []).reduce((acc, r) => {
+      const slots = r.slots && r.slots.length > 0 ? r.slots : [{ subjects: r.subjects }];
+      const active = slots.filter((s) => s.subjects && s.subjects.length > 0);
+      return acc + active.length;
+    }, 0);
   }, [timetable.rows]);
+
+  const allExamSubjects = useMemo(() => {
+    const list: string[] = [];
+    (timetable.rows || []).forEach((r) => {
+      const slots = r.slots && r.slots.length > 0 ? r.slots : [{ subjects: r.subjects || [] }];
+      slots.forEach((s) => {
+        if (Array.isArray(s.subjects)) list.push(...s.subjects);
+      });
+    });
+    return list;
+  }, [timetable.rows]);
+
+  const totalSubjects = allExamSubjects.length;
 
   const uniqueSubjectsCount = useMemo(() => {
-    const set = new Set<string>();
-    timetable.rows.forEach((r) => {
-      r.subjects?.forEach((s) => set.add(s));
-    });
-    return set.size;
-  }, [timetable.rows]);
+    return new Set(allExamSubjects).size;
+  }, [allExamSubjects]);
 
   const sessionProgressPct = useMemo(() => {
-    if (timetable.rows.length === 0) return 0;
-    return Math.min(100, Math.round((totalSessions / timetable.rows.length) * 100));
-  }, [totalSessions, timetable.rows.length]);
+    if (totalSlotsCount === 0) return 0;
+    return Math.min(100, Math.round((totalSessions / totalSlotsCount) * 100));
+  }, [totalSessions, totalSlotsCount]);
 
   // Save Timetable
   const handleSave = () => {
@@ -830,7 +1015,7 @@ export default function ExaminationTimetablePage() {
           <div>
             <h2 className="font-headline font-bold text-sm text-slate-800 flex items-center gap-2">
               <Calendar className="w-4 h-4 text-indigo-600" />
-              2. Timetable Schedule ({timetable.rows.length} Sessions)
+              2. Timetable Schedule ({totalSessions} Scheduled Sessions across {timetable.rows.length} Dates)
             </h2>
           </div>
 
@@ -838,12 +1023,12 @@ export default function ExaminationTimetablePage() {
             <Button
               type="button"
               size="sm"
-              onClick={handleAddRow}
+              onClick={handleAddDateRow}
               disabled={timetable.isLocked}
               className="bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs h-8 px-3.5 gap-1.5 shadow-xs"
             >
               <Plus className="w-3.5 h-3.5" />
-              Add Examination Row
+              Add Examination Date
             </Button>
           </div>
         </div>
@@ -865,9 +1050,6 @@ export default function ExaminationTimetablePage() {
                 </th>
                 <th rowSpan={2} className="py-2.5 px-3 text-center w-36 border-r border-slate-200">
                   Course
-                </th>
-                <th rowSpan={2} className="py-2.5 px-3 min-w-[200px] border-r border-slate-200">
-                  Subject(s)
                 </th>
 
                 {/* Class Columns */}
@@ -912,6 +1094,10 @@ export default function ExaminationTimetablePage() {
                   </th>
                 )}
 
+                <th rowSpan={2} className="py-2.5 px-3 min-w-[200px] border-r border-slate-200">
+                  Subject(s)
+                </th>
+
                 <th rowSpan={2} className="py-2.5 px-2 text-center w-12">
                   Action
                 </th>
@@ -933,133 +1119,179 @@ export default function ExaminationTimetablePage() {
             </thead>
 
             <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-              {timetable.rows.map((row, index) => {
-                const isEvenRow = index % 2 === 0;
-                const hasExamSelected = Boolean(row.subjects && row.subjects.length > 0);
+              {timetable.rows.map((row, dateIdx) => {
+                const slots = row.slots && row.slots.length > 0
+                  ? row.slots
+                  : [{ id: `slot-${row.id}-1`, course: row.course, subjects: row.subjects || [], timings: row.timings || {} }];
+                const slotCount = slots.length;
+                const isEvenDate = dateIdx % 2 === 0;
 
-                return (
-                  <tr
-                    key={row.id}
-                    className={cn(
-                      "transition-colors",
-                      isEvenRow ? "bg-white hover:bg-slate-50/70" : "bg-[#f8faff] hover:bg-indigo-50/30"
-                    )}
-                  >
-                    {/* Sl. No. */}
-                    <td className="py-3 px-3 text-center text-slate-500 font-mono text-[11px] border-r border-slate-100">
-                      {index + 1}
-                    </td>
+                return slots.map((slot, sIdx) => {
+                  const isFirstSlot = sIdx === 0;
+                  const isLastSlot = sIdx === slotCount - 1;
 
-                    {/* Date Picker + Strict DD.MM.YYYY Display */}
-                    <td className="py-2 px-3 border-r border-slate-100">
-                      <div className="space-y-1">
-                        <Input
-                          type="date"
-                          value={row.date}
-                          onChange={(e) => handleDateChange(row.id, e.target.value)}
+                  return (
+                    <tr
+                      key={`${row.id}-${slot.id || sIdx}`}
+                      className={cn(
+                        "transition-colors",
+                        isEvenDate ? "bg-white hover:bg-slate-50/70" : "bg-[#f8faff] hover:bg-indigo-50/30",
+                        isLastSlot && dateIdx !== timetable.rows.length - 1 && "border-b-2 border-slate-300"
+                      )}
+                    >
+                      {/* Sl. No. (spans all slots on this date) */}
+                      {isFirstSlot && (
+                        <td
+                          rowSpan={slotCount}
+                          className="py-3 px-3 text-center text-slate-500 font-mono text-[11px] border-r border-slate-200 align-middle bg-inherit"
+                        >
+                          <div className="font-bold text-slate-800 text-xs">{dateIdx + 1}</div>
+                          {slotCount > 1 && (
+                            <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 text-indigo-700 border-indigo-200 mt-1 font-semibold">
+                              {slotCount} slots
+                            </Badge>
+                          )}
+                        </td>
+                      )}
+
+                      {/* Date Picker + Strict DD.MM.YYYY Display + "+ Add Row" Button (spans all slots on this date) */}
+                      {isFirstSlot && (
+                        <td
+                          rowSpan={slotCount}
+                          className="py-2.5 px-3 border-r border-slate-200 align-middle bg-inherit"
+                        >
+                          <div className="space-y-1.5 max-w-[150px] mx-auto">
+                            <Input
+                              type="date"
+                              value={row.date}
+                              onChange={(e) => handleDateChange(row.id, e.target.value)}
+                              disabled={timetable.isLocked}
+                              className="h-8 text-xs font-semibold bg-white"
+                            />
+                            <div className="text-[10px] text-center font-mono font-bold text-indigo-700 bg-indigo-50/70 rounded px-1.5 py-0.5 border border-indigo-100">
+                              {row.displayDate || formatDateToDDMMYYYY(row.date) || '—'}
+                            </div>
+                            {!timetable.isLocked && (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleAddSlotToDate(row.id)}
+                                className="w-full text-[10px] h-6 px-1.5 font-bold text-indigo-700 border-indigo-200 bg-indigo-50/80 hover:bg-indigo-100/90 gap-1 mt-1 shadow-2xs cursor-pointer"
+                                title={`Add another examination schedule under ${row.displayDate || row.date}`}
+                              >
+                                <Plus className="w-3 h-3" />
+                                Add Row
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                      )}
+
+                      {/* Day (spans all slots on this date) */}
+                      {isFirstSlot && (
+                        <td
+                          rowSpan={slotCount}
+                          className="py-3 px-3 text-center border-r border-slate-200 align-middle bg-inherit"
+                        >
+                          <span className="font-semibold text-xs text-slate-800 bg-slate-100 px-2 py-1 rounded-md inline-block">
+                            {row.day || '—'}
+                          </span>
+                        </td>
+                      )}
+
+                      {/* Course Selector (Dropdown + Custom Type with Add Option) */}
+                      <td className="py-2 px-3 border-r border-slate-100">
+                        <CourseSelectorPopover
+                          value={slot.course || ''}
+                          onChange={(val) => handleSlotCourseChange(row.id, slot.id, val)}
                           disabled={timetable.isLocked}
-                          className="h-8 text-xs font-semibold bg-white"
+                          availableCourses={allAvailableCourses}
+                          onAddCustomCourse={handleAddCustomCourse}
                         />
-                        <div className="text-[10px] text-center font-mono font-bold text-indigo-700">
-                          {row.displayDate || formatDateToDDMMYYYY(row.date) || '—'}
-                        </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Day (Automatically generated, non-editable) */}
-                    <td className="py-3 px-3 text-center border-r border-slate-100">
-                      <span className="font-semibold text-xs text-slate-800 bg-slate-100 px-2 py-1 rounded-md">
-                        {row.day || '—'}
-                      </span>
-                    </td>
+                      {/* Class Timings (Start Time & End Time) */}
+                      {timetable.classes.map((c) => {
+                        const timing = slot.timings?.[c.id] || { startTime: '-', endTime: '-' };
+                        const currentStart = timing.startTime || '-';
+                        const currentEnd = timing.endTime || '-';
+                        const isValid = isEndTimeValid(currentStart, currentEnd);
 
-                    {/* Course Selector (Dropdown + Custom Type with Add Option) */}
-                    <td className="py-2 px-3 border-r border-slate-100">
-                      <CourseSelectorPopover
-                        value={row.course || ''}
-                        onChange={(val) => handleCourseChange(row.id, val)}
-                        disabled={timetable.isLocked}
-                        availableCourses={allAvailableCourses}
-                        onAddCustomCourse={handleAddCustomCourse}
-                      />
-                    </td>
+                        return (
+                          <React.Fragment key={`${row.id}-${slot.id}-${c.id}`}>
+                            <td className="py-2 px-2 border-r border-slate-100">
+                              <TimePickerInput
+                                value={currentStart}
+                                onChange={(val) => handleSlotTimingChange(row.id, slot.id, c.id, 'startTime', val)}
+                                placeholder="10:00 AM"
+                                disabled={timetable.isLocked}
+                              />
+                            </td>
+                            <td className="py-2 px-2 border-r border-slate-100">
+                              <TimePickerInput
+                                value={currentEnd}
+                                onChange={(val) => handleSlotTimingChange(row.id, slot.id, c.id, 'endTime', val)}
+                                placeholder="01:00 PM"
+                                isInvalid={!isValid}
+                                errorMessage="Must be later than Start Time"
+                                disabled={timetable.isLocked}
+                              />
+                            </td>
+                          </React.Fragment>
+                        );
+                      })}
 
-                    {/* Subject Multi-Select Popover */}
-                    <td className="py-2 px-3 border-r border-slate-100">
-                      <SubjectSelectorPopover
-                        selectedSubjects={row.subjects || []}
-                        onChange={(subjects) => handleSubjectsChange(row.id, subjects)}
-                        disabled={timetable.isLocked}
-                        allAvailableSubjects={allAvailableSubjects}
-                        onAddCustomSubject={handleAddCustomSubject}
-                      />
-                    </td>
+                      {/* Blank cell to balance "+" header */}
+                      {!timetable.isLocked && <td className="py-2 px-2 border-r border-slate-100"></td>}
 
-                    {/* Class Timings (Start Time & End Time) */}
-                    {timetable.classes.map((c) => {
-                      const timing = row.timings?.[c.id] || { startTime: '-', endTime: '-' };
-                      const currentStart = timing.startTime || '-';
-                      const currentEnd = timing.endTime || '-';
-                      const isValid = isEndTimeValid(currentStart, currentEnd);
+                      {/* Subject Multi-Select Popover */}
+                      <td className="py-2 px-3 border-r border-slate-100">
+                        <SubjectSelectorPopover
+                          selectedSubjects={slot.subjects || []}
+                          onChange={(subjects) => handleSlotSubjectsChange(row.id, slot.id, subjects)}
+                          disabled={timetable.isLocked}
+                          allAvailableSubjects={allAvailableSubjects}
+                          onAddCustomSubject={handleAddCustomSubject}
+                        />
+                      </td>
 
-                      return (
-                        <React.Fragment key={`${row.id}-${c.id}`}>
-                          <td className="py-2 px-2 border-r border-slate-100">
-                            <TimePickerInput
-                              value={currentStart}
-                              onChange={(val) => handleTimingChange(row.id, c.id, 'startTime', val)}
-                              placeholder="10:00 AM"
-                              disabled={timetable.isLocked}
-                            />
-                          </td>
-                          <td className="py-2 px-2 border-r border-slate-100">
-                            <TimePickerInput
-                              value={currentEnd}
-                              onChange={(val) => handleTimingChange(row.id, c.id, 'endTime', val)}
-                              placeholder="01:00 PM"
-                              isInvalid={!isValid}
-                              errorMessage="Must be later than Start Time"
-                              disabled={timetable.isLocked}
-                            />
-                          </td>
-                        </React.Fragment>
-                      );
-                    })}
-
-                    {/* Blank cell to balance "+" header */}
-                    {!timetable.isLocked && <td className="py-2 px-2 border-r border-slate-100"></td>}
-
-                    {/* Delete Row Action */}
-                    <td className="py-2 px-2 text-center">
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteRow(row.id)}
-                        disabled={timetable.isLocked || timetable.rows.length <= 1}
-                        title="Delete Examination Row"
-                        className="p-1.5 text-slate-400 hover:text-rose-600 disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </td>
-                  </tr>
-                );
+                      {/* Delete Row / Slot Action */}
+                      <td className="py-2 px-2 text-center align-middle">
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteSlot(row.id, slot.id)}
+                          disabled={timetable.isLocked || (timetable.rows.length <= 1 && slotCount <= 1)}
+                          title={slotCount > 1 ? "Delete this examination schedule" : "Delete examination date"}
+                          className="p-1.5 text-slate-400 hover:text-rose-600 disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                });
               })}
             </tbody>
           </table>
         </div>
 
         {/* Bottom table controls */}
-        <div className="flex justify-end pt-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+          <div className="text-xs text-slate-500 font-medium flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+            <span>Click <strong>&ldquo;+ Add Row&rdquo;</strong> inside any date to schedule multiple exams on that date without repeating the date and day.</span>
+          </div>
           <Button
             type="button"
             size="sm"
             variant="outline"
-            onClick={handleAddRow}
+            onClick={handleAddDateRow}
             disabled={timetable.isLocked}
-            className="text-xs h-8 px-3 gap-1 text-[#1E2A5E] font-bold border-indigo-200 hover:bg-indigo-50"
+            className="text-xs h-8 px-3.5 gap-1.5 text-[#1E2A5E] font-bold border-indigo-200 hover:bg-indigo-50 shadow-2xs self-end sm:self-auto"
           >
             <Plus className="w-3.5 h-3.5" />
-            Add Row
+            Add Examination Date
           </Button>
         </div>
       </div>
@@ -1085,7 +1317,7 @@ export default function ExaminationTimetablePage() {
                 </div>
               </div>
               <span className="text-[10px] font-bold text-indigo-700 bg-indigo-100/70 px-2 py-0.5 rounded-full shrink-0">
-                {totalSessions === timetable.rows.length
+                {totalSessions === totalSlotsCount
                   ? "100% Scheduled"
                   : `${sessionProgressPct}% Complete`}
               </span>
@@ -1099,8 +1331,8 @@ export default function ExaminationTimetablePage() {
                 />
               </div>
               <div className="flex justify-between items-center text-[10px] text-slate-500 font-medium mt-1">
-                <span>{totalSessions} of {timetable.rows.length} dates assigned</span>
-                <span>{sessionProgressPct}%</span>
+                <span>{totalSessions} of {totalSlotsCount} schedule slots assigned</span>
+                <span>{timetable.rows.length} {timetable.rows.length === 1 ? 'Date' : 'Dates'}</span>
               </div>
             </div>
           </div>

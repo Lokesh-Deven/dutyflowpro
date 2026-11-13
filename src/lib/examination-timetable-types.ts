@@ -8,14 +8,22 @@ export interface TimetableClassTiming {
   endTime: string;   // e.g. '01:00 PM'
 }
 
+export interface TimetableSlot {
+  id: string;
+  course?: string; // '1 PUC', '2 PUC', '1&2 PUC', or custom course name
+  subjects: string[]; // e.g. ['English', 'Accountancy', 'Physics']
+  timings: Record<string, TimetableClassTiming>; // key is classId
+}
+
 export interface TimetableRow {
   id: string;
   date: string; // 'YYYY-MM-DD'
   displayDate: string; // 'DD.MM.YYYY'
   day: string; // 'Monday', 'Tuesday', etc.
-  course?: string; // '1 PUC', '2 PUC', '1&2 PUC', or custom course name
-  subjects: string[]; // e.g. ['English', 'Accountancy', 'Physics']
-  timings: Record<string, TimetableClassTiming>; // key is classId
+  slots: TimetableSlot[]; // multiple examination schedules under this single date & day
+  course?: string; // backwards-compatible mirror of slots[0]?.course
+  subjects?: string[]; // backwards-compatible mirror of slots[0]?.subjects
+  timings?: Record<string, TimetableClassTiming>; // backwards-compatible mirror of slots[0]?.timings
 }
 
 export interface ExaminationTimetable {

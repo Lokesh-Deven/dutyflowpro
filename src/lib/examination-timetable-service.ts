@@ -2,6 +2,7 @@ import {
   ExaminationTimetable,
   TimetableClassColumn,
   TimetableRow,
+  TimetableSlot,
   TimetableClassTiming,
   PublishedTimetableRecord,
 } from './examination-timetable-types';
@@ -105,6 +106,68 @@ export function sortTimetableRows(rows: TimetableRow[]): TimetableRow[] {
 }
 
 /**
+ * Normalizes timetable rows to group multiple schedule slots under a single Date & Day.
+ * Automatically groups legacy separate rows that share the same date into a unified date row with slots.
+ */
+export function normalizeTimetableRows(rows: TimetableRow[]): TimetableRow[] {
+  if (!rows || rows.length === 0) return [];
+
+  const dateMap = new Map<string, TimetableRow>();
+
+  for (const r of rows) {
+    const dateKey = r.date ? r.date.trim() : `unknown-${r.id}`;
+
+    let extractedSlots: TimetableSlot[] = [];
+    if (Array.isArray(r.slots) && r.slots.length > 0) {
+      extractedSlots = r.slots.map((s, idx) => ({
+        id: s.id || `slot-${r.id}-${idx + 1}`,
+        course: s.course !== undefined ? s.course : '1&2 PUC',
+        subjects: Array.isArray(s.subjects) ? s.subjects : [],
+        timings: s.timings || {},
+      }));
+    } else {
+      extractedSlots = [
+        {
+          id: `slot-${r.id}-1`,
+          course: r.course !== undefined ? r.course : '1&2 PUC',
+          subjects: Array.isArray(r.subjects) ? r.subjects : [],
+          timings: r.timings || {},
+        },
+      ];
+    }
+
+    if (!dateMap.has(dateKey)) {
+      dateMap.set(dateKey, {
+        id: r.id,
+        date: r.date,
+        displayDate: r.displayDate || (r.date ? formatDateToDDMMYYYY(r.date) : '—'),
+        day: r.day || (r.date ? getDayFromDate(r.date) : '—'),
+        slots: extractedSlots,
+        course: extractedSlots[0]?.course,
+        subjects: extractedSlots[0]?.subjects,
+        timings: extractedSlots[0]?.timings,
+      });
+    } else {
+      const existing = dateMap.get(dateKey)!;
+      existing.slots = [...existing.slots, ...extractedSlots];
+    }
+  }
+
+  return sortTimetableRows(Array.from(dateMap.values()));
+}
+
+/**
+ * Ensures an entire ExaminationTimetable has normalized rows
+ */
+export function normalizeTimetable(timetable: ExaminationTimetable): ExaminationTimetable {
+  if (!timetable) return timetable;
+  return {
+    ...timetable,
+    rows: normalizeTimetableRows(timetable.rows || []),
+  };
+}
+
+/**
  * Calculate Date Range string from sorted rows (e.g., '29.09.2026 – 08.10.2026')
  */
 export function computeDateRange(rows: TimetableRow[]): string {
@@ -130,7 +193,8 @@ export function getSavedTimetables(userId?: string): ExaminationTimetable[] {
     const key = getStorageKey(userId);
     const data = localStorage.getItem(key);
     if (!data) return [];
-    return JSON.parse(data) as ExaminationTimetable[];
+    const list = JSON.parse(data) as ExaminationTimetable[];
+    return list.map(normalizeTimetable);
   } catch (err) {
     console.error('Failed to load saved timetables:', err);
     return [];
@@ -147,8 +211,9 @@ export function saveTimetable(timetable: ExaminationTimetable, userId?: string):
     const existing = getSavedTimetables(userId);
     const index = existing.findIndex((t) => t.id === timetable.id);
 
+    const normalized = normalizeTimetable(timetable);
     const updated = {
-      ...timetable,
+      ...normalized,
       updatedAt: new Date().toISOString(),
     };
 
@@ -274,11 +339,13 @@ export async function fetchTimetablesFromCloud(userId?: string): Promise<Examina
       }
     });
 
-    const merged = Array.from(map.values()).sort((a, b) => {
-      const dateA = a.updatedAt || a.createdAt || '';
-      const dateB = b.updatedAt || b.createdAt || '';
-      return dateB.localeCompare(dateA);
-    });
+    const merged = Array.from(map.values())
+      .map(normalizeTimetable)
+      .sort((a, b) => {
+        const dateA = a.updatedAt || a.createdAt || '';
+        const dateB = b.updatedAt || b.createdAt || '';
+        return dateB.localeCompare(dateA);
+      });
 
     // Update local cache
     if (typeof window !== 'undefined') {
@@ -307,11 +374,8 @@ export function createNewTimetable(
   };
 
   const todayIso = new Date().toISOString().split('T')[0];
-  const initialRow: TimetableRow = {
-    id: 'row-1',
-    date: todayIso,
-    displayDate: formatDateToDDMMYYYY(todayIso),
-    day: getDayFromDate(todayIso),
+  const initialSlot: TimetableSlot = {
+    id: 'slot-1',
     course: '1&2 PUC',
     subjects: ['English'],
     timings: {
@@ -320,6 +384,17 @@ export function createNewTimetable(
         endTime: '01:00 PM',
       },
     },
+  };
+
+  const initialRow: TimetableRow = {
+    id: 'row-1',
+    date: todayIso,
+    displayDate: formatDateToDDMMYYYY(todayIso),
+    day: getDayFromDate(todayIso),
+    course: initialSlot.course,
+    subjects: initialSlot.subjects,
+    timings: initialSlot.timings,
+    slots: [initialSlot],
   };
 
   return {

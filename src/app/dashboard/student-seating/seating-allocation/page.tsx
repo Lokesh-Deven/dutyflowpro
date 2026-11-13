@@ -576,8 +576,13 @@ export default function SeatingAllocationWizardPage() {
     const targetTimetable = currentSelectedTimetable;
     if (!targetTimetable) return;
 
-    const row = targetTimetable.rows?.find((r) => r.id === rowId);
+    const [actualRowId, slotId] = rowId.includes('__') ? rowId.split('__') : [rowId, ''];
+    const row = targetTimetable.rows?.find((r) => r.id === actualRowId);
     if (!row) return;
+
+    const slot = (row.slots && slotId)
+      ? row.slots.find((s) => s.id === slotId)
+      : (row.slots?.[0] || row);
 
     // 1. Examination Title from Timetable
     if (targetTimetable.examinationName) {
@@ -589,11 +594,12 @@ export default function SeatingAllocationWizardPage() {
       setExamDate(row.date);
     }
 
-    // 3. Timings from Row
+    // 3. Timings from Slot or Row
     let rowStart = '';
     let rowEnd = '';
-    if (row.timings) {
-      for (const t of Object.values(row.timings)) {
+    const timingsObj = slot?.timings || row.timings;
+    if (timingsObj) {
+      for (const t of Object.values(timingsObj)) {
         if (t?.startTime && t.startTime !== '-' && !rowStart) {
           rowStart = t.startTime;
         }
@@ -606,11 +612,12 @@ export default function SeatingAllocationWizardPage() {
     if (rowStart) setStartTime(rowStart);
     if (rowEnd) setEndTime(rowEnd);
 
-    // 4. Auto-match and pre-select subjects in Step 2 from row.subjects
-    if (row.subjects && row.subjects.length > 0) {
+    // 4. Auto-match and pre-select subjects in Step 2 from slot.subjects or row.subjects
+    const activeSubjects = slot?.subjects || row.subjects || [];
+    if (activeSubjects.length > 0) {
       const matchedIds = subjects
         .filter((subj) =>
-          row.subjects.some(
+          activeSubjects.some(
             (subName) =>
               subName.trim().toLowerCase() === subj.name.trim().toLowerCase() ||
               (subj.code && subName.trim().toLowerCase() === subj.code.trim().toLowerCase())
@@ -944,34 +951,41 @@ export default function SeatingAllocationWizardPage() {
                     <SelectValue placeholder="Select examination date / session to auto-fill" />
                   </SelectTrigger>
                   <SelectContent className="max-h-72">
-                    {currentTimetableRows.map((row) => {
-                      const dateLabel = row.displayDate || row.date;
-                      const dayLabel = row.day ? `(${row.day})` : '';
-                      const courseLabel = row.course ? `[${row.course}] ` : '';
-                      const subjectsLabel = row.subjects && row.subjects.length > 0 ? row.subjects.join(', ') : 'No exam scheduled';
-                      let timingLabel = '';
-                      if (row.timings) {
-                        for (const t of Object.values(row.timings)) {
-                          if (t?.startTime && t.startTime !== '-' && t?.endTime && t.endTime !== '-') {
-                            timingLabel = `${t.startTime} – ${t.endTime}`;
-                            break;
+                    {currentTimetableRows.flatMap((row) => {
+                      const slots = row.slots && row.slots.length > 0
+                        ? row.slots
+                        : [{ id: `${row.id}-s1`, course: row.course, subjects: row.subjects || [], timings: row.timings || {} }];
+
+                      return slots.map((slot, sIdx) => {
+                        const sessionVal = slots.length > 1 ? `${row.id}__${slot.id || sIdx}` : row.id;
+                        const dateLabel = row.displayDate || row.date;
+                        const dayLabel = row.day ? `(${row.day})` : '';
+                        const courseLabel = slot.course ? `[${slot.course}] ` : '';
+                        const subjectsLabel = slot.subjects && slot.subjects.length > 0 ? slot.subjects.join(', ') : 'No exam scheduled';
+                        let timingLabel = '';
+                        if (slot.timings) {
+                          for (const t of Object.values(slot.timings)) {
+                            if (t?.startTime && t.startTime !== '-' && t?.endTime && t.endTime !== '-') {
+                              timingLabel = `${t.startTime} – ${t.endTime}`;
+                              break;
+                            }
                           }
                         }
-                      }
-                      return (
-                        <SelectItem key={row.id} value={row.id} className="text-xs py-2 cursor-pointer">
-                          <div className="flex flex-col gap-0.5 text-left">
-                            <div className="font-semibold text-slate-800">
-                              {dateLabel} {dayLabel} • {courseLabel}{subjectsLabel}
-                            </div>
-                            {timingLabel && (
-                              <div className="text-[10px] text-slate-500 font-medium">
-                                Timings: {timingLabel}
+                        return (
+                          <SelectItem key={sessionVal} value={sessionVal} className="text-xs py-2 cursor-pointer">
+                            <div className="flex flex-col gap-0.5 text-left">
+                              <div className="font-semibold text-slate-800">
+                                {dateLabel} {dayLabel} • {courseLabel}{subjectsLabel}
                               </div>
-                            )}
-                          </div>
-                        </SelectItem>
-                      );
+                              {timingLabel && (
+                                <div className="text-[10px] text-slate-500 font-medium">
+                                  Timings: {timingLabel}
+                                </div>
+                              )}
+                            </div>
+                          </SelectItem>
+                        );
+                      });
                     })}
                   </SelectContent>
                 </Select>
@@ -1020,34 +1034,41 @@ export default function SeatingAllocationWizardPage() {
                         <SelectValue placeholder="Choose Session / Date" />
                       </SelectTrigger>
                       <SelectContent className="max-h-72">
-                        {currentTimetableRows.map((row) => {
-                          const dateLabel = row.displayDate || row.date;
-                          const dayLabel = row.day ? `(${row.day})` : '';
-                          const courseLabel = row.course ? `[${row.course}] ` : '';
-                          const subjectsLabel = row.subjects && row.subjects.length > 0 ? row.subjects.join(', ') : 'No exam scheduled';
-                          let timingLabel = '';
-                          if (row.timings) {
-                            for (const t of Object.values(row.timings)) {
-                              if (t?.startTime && t.startTime !== '-' && t?.endTime && t.endTime !== '-') {
-                                timingLabel = `${t.startTime} – ${t.endTime}`;
-                                break;
+                        {currentTimetableRows.flatMap((row) => {
+                          const slots = row.slots && row.slots.length > 0
+                            ? row.slots
+                            : [{ id: `${row.id}-s1`, course: row.course, subjects: row.subjects || [], timings: row.timings || {} }];
+
+                          return slots.map((slot, sIdx) => {
+                            const sessionVal = slots.length > 1 ? `${row.id}__${slot.id || sIdx}` : row.id;
+                            const dateLabel = row.displayDate || row.date;
+                            const dayLabel = row.day ? `(${row.day})` : '';
+                            const courseLabel = slot.course ? `[${slot.course}] ` : '';
+                            const subjectsLabel = slot.subjects && slot.subjects.length > 0 ? slot.subjects.join(', ') : 'No exam scheduled';
+                            let timingLabel = '';
+                            if (slot.timings) {
+                              for (const t of Object.values(slot.timings)) {
+                                if (t?.startTime && t.startTime !== '-' && t?.endTime && t.endTime !== '-') {
+                                  timingLabel = `${t.startTime} – ${t.endTime}`;
+                                  break;
+                                }
                               }
                             }
-                          }
-                          return (
-                            <SelectItem key={row.id} value={row.id} className="text-xs py-2 cursor-pointer">
-                              <div className="flex flex-col gap-0.5 text-left">
-                                <div className="font-semibold text-slate-800">
-                                  {dateLabel} {dayLabel} • {courseLabel}{subjectsLabel}
-                                </div>
-                                {timingLabel && (
-                                  <div className="text-[10px] text-slate-500 font-medium">
-                                    Timings: {timingLabel}
+                            return (
+                              <SelectItem key={sessionVal} value={sessionVal} className="text-xs py-2 cursor-pointer">
+                                <div className="flex flex-col gap-0.5 text-left">
+                                  <div className="font-semibold text-slate-800">
+                                    {dateLabel} {dayLabel} • {courseLabel}{subjectsLabel}
                                   </div>
-                                )}
-                              </div>
-                            </SelectItem>
-                          );
+                                  {timingLabel && (
+                                    <div className="text-[10px] text-slate-500 font-medium">
+                                      Timings: {timingLabel}
+                                    </div>
+                                  )}
+                                </div>
+                              </SelectItem>
+                            );
+                          });
                         })}
                       </SelectContent>
                     </Select>

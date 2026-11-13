@@ -12,9 +12,10 @@ import { ExaminationTimetable } from '@/lib/examination-timetable-types';
 import { SignatoryInfo } from '@/lib/types';
 import { generateExaminationTimetablePdf } from '@/lib/examination-timetable-pdf';
 import { Download, FileText, CheckCircle2, Lock, Globe, Loader2 } from 'lucide-react';
-import { formatDateToDDMMYYYY } from '@/lib/examination-timetable-service';
+import { formatDateToDDMMYYYY, normalizeTimetableRows } from '@/lib/examination-timetable-service';
 import { useAuth } from '@/lib/auth-context';
 import { ApprovalRestrictionDialog } from '@/components/dashboard/approval-restriction-dialog';
+import { cn } from '@/lib/utils';
 
 interface TimetablePreviewDialogProps {
   open: boolean;
@@ -53,11 +54,7 @@ export function TimetablePreviewDialog({
     ? timetable.classes
     : [{ id: 'class-1', name: 'Class 1' }];
 
-  const sortedRows = [...timetable.rows].sort((a, b) => {
-    if (!a.date) return 1;
-    if (!b.date) return -1;
-    return a.date.localeCompare(b.date);
-  });
+  const normalizedRows = normalizeTimetableRows(timetable.rows || []);
 
   return (
     <>
@@ -143,12 +140,12 @@ export function TimetablePreviewDialog({
                     <th rowSpan={2} className="border border-slate-400/40 p-2 w-28">Date</th>
                     <th rowSpan={2} className="border border-slate-400/40 p-2 w-28">Day</th>
                     <th rowSpan={2} className="border border-slate-400/40 p-2 w-24 text-center">Course</th>
-                    <th rowSpan={2} className="border border-slate-400/40 p-2 text-left px-3">Subject</th>
                     {classes.map((c) => (
                       <th key={c.id} colSpan={2} className="border border-slate-400/40 p-2 text-center bg-[#18234D]">
                         {c.name}
                       </th>
                     ))}
+                    <th rowSpan={2} className="border border-slate-400/40 p-2 text-left px-3">Subject</th>
                   </tr>
                   <tr className="bg-[#243370] text-slate-200 font-semibold text-[10px]">
                     {classes.map((c) => (
@@ -160,38 +157,74 @@ export function TimetablePreviewDialog({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 font-medium">
-                  {sortedRows.length > 0 ? (
-                    sortedRows.map((row, idx) => (
-                      <tr key={row.id} className={idx % 2 === 1 ? "bg-slate-50/70" : "bg-white"}>
-                        <td className="border border-slate-200 p-2 text-slate-500 font-mono text-[11px]">{idx + 1}</td>
-                        <td className="border border-slate-200 p-2 font-bold text-slate-900 font-mono">
-                          {row.displayDate || formatDateToDDMMYYYY(row.date) || '—'}
-                        </td>
-                        <td className="border border-slate-200 p-2 text-slate-700">{row.day || '—'}</td>
-                        <td className="border border-slate-200 p-2 text-center font-bold text-slate-800">
-                          {row.course || '—'}
-                        </td>
-                        <td className="border border-slate-200 p-2 text-left font-bold text-slate-900 px-3">
-                          {row.subjects && row.subjects.length > 0 ? row.subjects.join(' / ') : '—'}
-                        </td>
-                        {classes.map((c) => {
-                          const hasSubjects = Boolean(row.subjects && row.subjects.length > 0);
-                          const timing = row.timings ? row.timings[c.id] : undefined;
-                          const startVal = (!hasSubjects || !timing?.startTime || timing.startTime === '-' || timing.startTime === '—') ? '-' : timing.startTime;
-                          const endVal = (!hasSubjects || !timing?.endTime || timing.endTime === '-' || timing.endTime === '—') ? '-' : timing.endTime;
-                          return (
-                            <React.Fragment key={`${row.id}-${c.id}`}>
-                              <td className="border border-slate-200 p-2 font-mono text-slate-700">
-                                {startVal}
-                              </td>
-                              <td className="border border-slate-200 p-2 font-mono text-slate-700">
-                                {endVal}
-                              </td>
-                            </React.Fragment>
-                          );
-                        })}
-                      </tr>
-                    ))
+                  {normalizedRows.length > 0 ? (
+                    normalizedRows.map((row, dateIdx) => {
+                      const slots = row.slots && row.slots.length > 0
+                        ? row.slots
+                        : [{ id: `${row.id}-s1`, course: row.course, subjects: row.subjects || [], timings: row.timings || {} }];
+                      const slotCount = slots.length;
+                      const isEvenDate = dateIdx % 2 === 0;
+
+                      return slots.map((slot, sIdx) => {
+                        const isFirstSlot = sIdx === 0;
+                        const isLastSlot = sIdx === slotCount - 1;
+                        const hasSubjects = Boolean(slot.subjects && slot.subjects.length > 0);
+
+                        return (
+                          <tr
+                            key={`${row.id}-${slot.id || sIdx}`}
+                            className={cn(
+                              isEvenDate ? "bg-white" : "bg-slate-50/70",
+                              isLastSlot && dateIdx !== normalizedRows.length - 1 && "border-b-2 border-slate-300"
+                            )}
+                          >
+                            {isFirstSlot && (
+                              <>
+                                <td
+                                  rowSpan={slotCount}
+                                  className="border border-slate-200 p-2 text-slate-500 font-mono text-[11px] align-middle text-center bg-inherit"
+                                >
+                                  {dateIdx + 1}
+                                </td>
+                                <td
+                                  rowSpan={slotCount}
+                                  className="border border-slate-200 p-2 font-bold text-slate-900 font-mono align-middle text-center bg-inherit"
+                                >
+                                  {row.displayDate || formatDateToDDMMYYYY(row.date) || '—'}
+                                </td>
+                                <td
+                                  rowSpan={slotCount}
+                                  className="border border-slate-200 p-2 text-slate-700 align-middle text-center bg-inherit"
+                                >
+                                  {row.day || '—'}
+                                </td>
+                              </>
+                            )}
+                            <td className="border border-slate-200 p-2 text-center font-bold text-slate-800">
+                              {slot.course || '—'}
+                            </td>
+                            {classes.map((c) => {
+                              const timing = slot.timings ? slot.timings[c.id] : undefined;
+                              const startVal = (!hasSubjects || !timing?.startTime || timing.startTime === '-' || timing.startTime === '—') ? '-' : timing.startTime;
+                              const endVal = (!hasSubjects || !timing?.endTime || timing.endTime === '-' || timing.endTime === '—') ? '-' : timing.endTime;
+                              return (
+                                <React.Fragment key={`${row.id}-${slot.id || sIdx}-${c.id}`}>
+                                  <td className="border border-slate-200 p-2 font-mono text-slate-700">
+                                    {startVal}
+                                  </td>
+                                  <td className="border border-slate-200 p-2 font-mono text-slate-700">
+                                    {endVal}
+                                  </td>
+                                </React.Fragment>
+                              );
+                            })}
+                            <td className="border border-slate-200 p-2 text-left font-bold text-slate-900 px-3">
+                              {slot.subjects && slot.subjects.length > 0 ? slot.subjects.join(' / ') : '—'}
+                            </td>
+                          </tr>
+                        );
+                      });
+                    })
                   ) : (
                     <tr>
                       <td colSpan={5 + classes.length * 2} className="p-6 text-center text-slate-400 italic">
