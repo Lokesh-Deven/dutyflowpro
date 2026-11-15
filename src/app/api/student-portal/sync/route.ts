@@ -101,7 +101,7 @@ function extractStudentExaminations(
                 registerNumber: seat.student.rollNo || targetRoll,
                 roomNo: String(roomPlan.roomNo),
                 roomId: roomPlan.roomId,
-                benchNumber: `B${bench.benchNumber}`,
+                benchNumber: `${bench.side === 'LEFT' ? 'L' : bench.side === 'MIDDLE' ? 'M' : 'R'}${String(bench.benchNumber).padStart(2, '0')}`,
                 benchSide: bench.side,
                 position: formatPosition(seat.position),
                 positionSlot: seat.position,

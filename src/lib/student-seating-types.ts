@@ -41,6 +41,8 @@ export interface BenchPositionSeat {
   student?: StudentRecord;
   subjectId?: string;
   subjectName?: string;
+  isDisabled?: boolean;
+  isVacant?: boolean;
 }
 
 export interface PhysicalBench {
@@ -63,6 +65,24 @@ export interface MultiSubjectRow {
 
 export type MultiSubjectOrder = MultiSubjectRow;
 
+export type MiddleBenchSeatingPattern =
+  | 'allThree'        // All Three Seats – Side A, Centre, Side B
+  | 'centerOnly'      // Centre Seat Only
+  | 'sideAAndSideB'   // Side A and Side B Only
+  | 'custom';         // Custom Seat Selection
+
+export interface MiddleBenchSeatsEnabled {
+  sideA: boolean;
+  center: boolean;
+  sideB: boolean;
+}
+
+export interface MiddleBenchSeatsConfig {
+  sideA: string;   // subjectId or 'VACANT' / 'NIL'
+  center: string;  // subjectId or 'VACANT' / 'NIL'
+  sideB: string;   // subjectId or 'VACANT' / 'NIL'
+}
+
 export interface ThreeColumnBenchConfig {
   sideA: string;   // subjectId or 'EMPTY' / 'VACANT'
   center: string;  // subjectId or 'EMPTY' / 'VACANT'
@@ -71,9 +91,17 @@ export interface ThreeColumnBenchConfig {
 
 export interface ThreeColumnPatternConfig {
   enabled: boolean;
-  left: ThreeColumnBenchConfig;
-  middle: ThreeColumnBenchConfig;
-  right: ThreeColumnBenchConfig;
+  // Flexible modern configuration
+  leftSubjectId?: string;       // subjectId or 'VACANT' / 'NIL'
+  rightSubjectId?: string;      // subjectId or 'VACANT' / 'NIL'
+  middlePattern?: MiddleBenchSeatingPattern;
+  middleEnabledSeats?: MiddleBenchSeatsEnabled;
+  middleSeats?: MiddleBenchSeatsConfig;
+
+  // Backwards compatibility with previous versions
+  left?: ThreeColumnBenchConfig;
+  middle?: ThreeColumnBenchConfig;
+  right?: ThreeColumnBenchConfig;
 }
 
 export interface MultiSubjectConfig {

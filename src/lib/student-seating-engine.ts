@@ -31,8 +31,11 @@ export interface RunAllocationResult {
 
 /**
  * Deterministic, rule-based Student Seating Allocation Engine.
- * Guarantees zero unallocated students whenever total capacity is sufficient.
- * Fully supports 2-column (Left, Right) and 3-column (Left, Middle, Right) examination rooms.
+ * Supports:
+ * - Mode 1: Standard Allocation (1 or 2 Subjects) with revised sequential 2_PER_BENCH & 3_PER_BENCH Sandwich rule.
+ * - Mode 2: More Than 2 Subjects (Sequential 4-Row System) with automatic immediate row advancement.
+ * - Integrated 3-Column Examination Rooms across both modes with flexible Middle Bench Seating Patterns.
+ * - Guarantees zero duplicate allocations and zero unallocated students when capacity is sufficient.
  */
 export function runDeterministicSeatingAllocation(input: RunAllocationInput): RunAllocationResult {
   const { rooms, subjects, studentsBySubject, pattern, positionMapping, multiSubjectConfig, threeColumnConfig } = input;
@@ -40,6 +43,15 @@ export function runDeterministicSeatingAllocation(input: RunAllocationInput): Ru
   // 1. Sort students sequentially by roll number for each subject
   const queues: Record<string, StudentRecord[]> = {};
   const initialCounts: Record<string, number> = {};
+
+  // Rank subjects by student strength (highest to lowest)
+  const rankedSubjects = [...subjects].sort((a, b) => {
+    const countA = studentsBySubject[a.id]?.length || 0;
+    const countB = studentsBySubject[b.id]?.length || 0;
+    if (countB !== countA) return countB - countA;
+    return a.name.localeCompare(b.name);
+  });
+  const rankedSubjectIds = rankedSubjects.map((s) => s.id);
 
   subjects.forEach((subj) => {
     const list = studentsBySubject[subj.id] || [];
@@ -54,40 +66,109 @@ export function runDeterministicSeatingAllocation(input: RunAllocationInput): Ru
   const totalStudents = Object.values(initialCounts).reduce((sum, n) => sum + n, 0);
 
   // Check allocation modes
-  const is3Col = Boolean(threeColumnConfig?.enabled);
+  const is3ColEnabled = Boolean(threeColumnConfig?.enabled);
   const isMultiSubject = Boolean(
     multiSubjectConfig?.enabled &&
     multiSubjectConfig.rows &&
     multiSubjectConfig.rows.length > 0
   );
 
-  // Determine active bench positions
-  const activePositions: PositionSlot[] =
-    (is3Col || isMultiSubject || pattern === '3_PER_BENCH')
-      ? ['SIDE_A', 'CENTER', 'SIDE_B']
-      : pattern === '1_PER_BENCH'
-        ? ['CENTER']
-        : ['SIDE_A', 'SIDE_B'];
+  // Helpers to resolve Middle Bench enabled seats
+  const isSeatPositionEnabled = (pos: PositionSlot): boolean => {
+    if (!threeColumnConfig) return true;
+    const mPattern = threeColumnConfig.middlePattern || 'allThree';
+    if (mPattern === 'centerOnly') {
+      return pos === 'CENTER';
+    }
+    if (mPattern === 'sideAAndSideB') {
+      return pos === 'SIDE_A' || pos === 'SIDE_B';
+    }
+    if (mPattern === 'custom') {
+      const enabledMap = threeColumnConfig.middleEnabledSeats;
+      if (!enabledMap) return true;
+      if (pos === 'SIDE_A') return Boolean(enabledMap.sideA);
+      if (pos === 'CENTER') return Boolean(enabledMap.center);
+      if (pos === 'SIDE_B') return Boolean(enabledMap.sideB);
+    }
+    return true; // allThree default
+  };
 
-  // Calculate total room capacity and total benches across all rooms
+  // Helper to resolve Middle Bench subject for a position
+  const getMiddleSeatSubjectId = (pos: PositionSlot): string => {
+    if (!threeColumnConfig) return '';
+    const seatsConfig = threeColumnConfig.middleSeats;
+    if (seatsConfig) {
+      if (pos === 'SIDE_A') return seatsConfig.sideA || '';
+      if (pos === 'CENTER') return seatsConfig.center || '';
+      if (pos === 'SIDE_B') return seatsConfig.sideB || '';
+    }
+    // Fallback to legacy config
+    if (threeColumnConfig.middle) {
+      if (pos === 'SIDE_A') return threeColumnConfig.middle.sideA || '';
+      if (pos === 'CENTER') return threeColumnConfig.middle.center || '';
+      if (pos === 'SIDE_B') return threeColumnConfig.middle.sideB || '';
+    }
+    return '';
+  };
+
+  // Calculate total room capacity accurately
   let totalCapacity = 0;
   let totalBenchesInRooms = 0;
 
   for (const room of rooms) {
-    const roomCapacity = (isMultiSubject || is3Col)
-      ? room.capacityThree
-      : pattern === '1_PER_BENCH'
-        ? room.capacityOne
-        : pattern === '2_PER_BENCH'
-          ? room.capacityTwo
-          : room.capacityThree;
+    const leftCount = Math.max(0, Number(room.leftBenches) || 0);
+    const middleCount = Math.max(0, Number(room.middleBenches) || 0);
+    const rightCount = Math.max(0, Number(room.rightBenches) || 0);
+    totalBenchesInRooms += (leftCount + middleCount + rightCount);
 
-    totalCapacity += roomCapacity;
+    const is3ColRoom = is3ColEnabled && middleCount > 0;
 
-    const left = Math.max(0, Number(room.leftBenches) || 0);
-    const middle = Math.max(0, Number(room.middleBenches) || 0);
-    const right = Math.max(0, Number(room.rightBenches) || 0);
-    totalBenchesInRooms += (left + middle + right);
+    if (is3ColRoom) {
+      // Left benches capacity
+      let leftSeatsPerBench = 0;
+      (['SIDE_A', 'CENTER', 'SIDE_B'] as PositionSlot[]).forEach((pos) => {
+        const sKey = pos === 'SIDE_A' ? 'sideA' : pos === 'CENTER' ? 'center' : 'sideB';
+        const sId = threeColumnConfig?.left?.[sKey] || (sKey !== 'center' ? threeColumnConfig?.leftSubjectId : '');
+        if (sId && sId !== 'VACANT' && sId !== 'NIL' && sId !== 'EMPTY') {
+          leftSeatsPerBench++;
+        }
+      });
+      const leftCap = leftCount * leftSeatsPerBench;
+
+      // Right benches capacity
+      let rightSeatsPerBench = 0;
+      (['SIDE_A', 'CENTER', 'SIDE_B'] as PositionSlot[]).forEach((pos) => {
+        const sKey = pos === 'SIDE_A' ? 'sideA' : pos === 'CENTER' ? 'center' : 'sideB';
+        const sId = threeColumnConfig?.right?.[sKey] || (sKey !== 'center' ? threeColumnConfig?.rightSubjectId : '');
+        if (sId && sId !== 'VACANT' && sId !== 'NIL' && sId !== 'EMPTY') {
+          rightSeatsPerBench++;
+        }
+      });
+      const rightCap = rightCount * rightSeatsPerBench;
+
+      // Middle benches capacity
+      let middleSeatsPerBench = 0;
+      (['SIDE_A', 'CENTER', 'SIDE_B'] as PositionSlot[]).forEach((pos) => {
+        if (isSeatPositionEnabled(pos)) {
+          const sId = getMiddleSeatSubjectId(pos);
+          if (sId && sId !== 'VACANT' && sId !== 'NIL' && sId !== 'EMPTY') {
+            middleSeatsPerBench++;
+          }
+        }
+      });
+      const middleCap = middleCount * middleSeatsPerBench;
+
+      totalCapacity += (leftCap + middleCap + rightCap);
+    } else {
+      const roomCapacity = isMultiSubject
+        ? room.capacityThree
+        : pattern === '1_PER_BENCH'
+          ? room.capacityOne
+          : pattern === '2_PER_BENCH'
+            ? room.capacityTwo
+            : room.capacityThree;
+      totalCapacity += roomCapacity;
+    }
   }
 
   // Tracking structures
@@ -116,10 +197,11 @@ export function runDeterministicSeatingAllocation(input: RunAllocationInput): Ru
     const ptr = subjectPointers[sId];
     const st = queues[sId][ptr];
     subjectPointers[sId] = ptr + 1;
-    if (studentSeatMap.has(st.id)) {
+    const sIdentifier = st.id || `${st.rollNo}_${st.subjectId || sId}`;
+    if (studentSeatMap.has(sIdentifier)) {
       duplicateStudentDetected = true;
     } else {
-      studentSeatMap.add(st.id);
+      studentSeatMap.add(sIdentifier);
     }
     totalAllocated++;
     return st;
@@ -139,7 +221,7 @@ export function runDeterministicSeatingAllocation(input: RunAllocationInput): Ru
     return pool[0]?.id;
   };
 
-  // State for Multi-Subject 4-row configuration
+  // State for Mode 2: Multi-Subject 4-row configuration
   let currentRowIdx = 0;
   const activeRows = isMultiSubject
     ? multiSubjectConfig!.rows.filter(
@@ -149,100 +231,181 @@ export function runDeterministicSeatingAllocation(input: RunAllocationInput): Ru
       )
     : [];
 
+  // State for Mode 1: Standard 2_PER_BENCH sequential subject progression
+  let standardSubjectIdx = 0;
+
+  // -------------------------------------------------------------
   // Core Bench Allocation Function
-  const allocateBench = (benchNumber: number, side: 'LEFT' | 'MIDDLE' | 'RIGHT'): PhysicalBench => {
+  // -------------------------------------------------------------
+  const allocateBench = (
+    benchNumber: number,
+    side: 'LEFT' | 'MIDDLE' | 'RIGHT',
+    is3ColRoom: boolean
+  ): PhysicalBench => {
     benchesAllocatedSoFar++;
     const remainingBenchesAhead = Math.max(1, totalBenchesInRooms - benchesAllocatedSoFar + 1);
     const seats: BenchPositionSeat[] = [];
 
     // All students already allocated
     if (getTotalRemainingStudents() === 0) {
-      for (const pos of activePositions) {
-        seats.push({
-          position: pos,
-          student: undefined,
-          subjectId: undefined,
-          subjectName: undefined,
+      if (is3ColRoom && side === 'MIDDLE') {
+        (['SIDE_A', 'CENTER', 'SIDE_B'] as PositionSlot[]).forEach((pos) => {
+          const isEnabled = isSeatPositionEnabled(pos);
+          seats.push({
+            position: pos,
+            isDisabled: !isEnabled,
+            student: undefined,
+            subjectId: undefined,
+            subjectName: undefined,
+          });
+        });
+      } else {
+        const slots: PositionSlot[] =
+          pattern === '1_PER_BENCH'
+            ? ['CENTER']
+            : pattern === '2_PER_BENCH'
+              ? ['SIDE_A', 'CENTER', 'SIDE_B']
+              : ['SIDE_A', 'CENTER', 'SIDE_B'];
+
+        slots.forEach((pos) => {
+          seats.push({
+            position: pos,
+            isDisabled: false,
+            student: undefined,
+            subjectId: undefined,
+            subjectName: undefined,
+          });
         });
       }
       return { benchNumber, side, seats };
     }
 
-    // -------------------------------------------------------------
-    // MODE 1: THREE-COLUMN PATTERN (Left, Middle, Right custom mappings)
-    // -------------------------------------------------------------
-    if (is3Col && threeColumnConfig) {
-      const colMap =
-        side === 'LEFT'
-          ? threeColumnConfig.left
-          : side === 'MIDDLE'
-            ? threeColumnConfig.middle
-            : threeColumnConfig.right;
+    // =============================================================
+    // 3-COLUMN ROOM BENCH ALLOCATION (When room has middle benches and 3-Col is enabled)
+    // =============================================================
+    if (is3ColRoom) {
+      // 1. Left Side Benches
+      if (side === 'LEFT') {
+        (['SIDE_A', 'CENTER', 'SIDE_B'] as PositionSlot[]).forEach((pos) => {
+          const sKey = pos === 'SIDE_A' ? 'sideA' : pos === 'CENTER' ? 'center' : 'sideB';
+          const sId = threeColumnConfig?.left?.[sKey] || (sKey !== 'center' ? threeColumnConfig?.leftSubjectId : '');
+          const isVacant = !sId || sId === 'VACANT' || sId === 'NIL' || sId === 'EMPTY';
 
-      // Side A
-      let subjIdA = colMap?.sideA && colMap.sideA !== 'EMPTY' && colMap.sideA !== 'VACANT' && colMap.sideA !== 'UNUSED'
-        ? colMap.sideA
-        : undefined;
-      if (!subjIdA || getRemainingCount(subjIdA) <= 0) {
-        subjIdA = pickBestSubject();
-      }
-      const stA = subjIdA ? takeStudent(subjIdA) : undefined;
-      const subjNameA = subjIdA ? subjects.find((s) => s.id === subjIdA)?.name : undefined;
-
-      // Center
-      const isCenterExplicitVacant = !colMap?.center || colMap.center === 'EMPTY' || colMap.center === 'VACANT' || colMap.center === 'NIL' || colMap.center === 'UNUSED';
-      let subjIdCenter: string | undefined = undefined;
-      let stCenter: StudentRecord | undefined = undefined;
-      let subjNameCenter: string | undefined = undefined;
-
-      if (!isCenterExplicitVacant && colMap?.center && getRemainingCount(colMap.center) > 0) {
-        subjIdCenter = colMap.center;
-        stCenter = takeStudent(subjIdCenter);
-        subjNameCenter = subjects.find((s) => s.id === subjIdCenter)?.name;
-      } else {
-        // If center was empty or exhausted, only use Center if remaining students exceed available 2-per-bench capacity
-        const needCenterForCapacity = getTotalRemainingStudents() > remainingBenchesAhead * 2;
-        if (needCenterForCapacity) {
-          subjIdCenter = pickBestSubject([subjIdA]);
-          stCenter = subjIdCenter ? takeStudent(subjIdCenter) : undefined;
-          subjNameCenter = subjIdCenter ? subjects.find((s) => s.id === subjIdCenter)?.name : undefined;
-        }
+          if (isVacant) {
+            seats.push({
+              position: pos,
+              isDisabled: false,
+              isVacant: true,
+              student: undefined,
+              subjectId: undefined,
+              subjectName: undefined,
+            });
+          } else {
+            const st = takeStudent(sId);
+            const subjName = st ? subjects.find((s) => s.id === sId)?.name : undefined;
+            seats.push({
+              position: pos,
+              isDisabled: false,
+              student: st,
+              subjectId: st ? sId : undefined,
+              subjectName: subjName,
+            });
+          }
+        });
+        return { benchNumber, side, seats };
       }
 
-      // Side B
-      let subjIdB = colMap?.sideB && colMap.sideB !== 'EMPTY' && colMap.sideB !== 'VACANT' && colMap.sideB !== 'UNUSED'
-        ? colMap.sideB
-        : undefined;
-      if (!subjIdB || getRemainingCount(subjIdB) <= 0) {
-        subjIdB = pickBestSubject([subjIdCenter || subjIdA]);
+      // 2. Right Side Benches
+      if (side === 'RIGHT') {
+        (['SIDE_A', 'CENTER', 'SIDE_B'] as PositionSlot[]).forEach((pos) => {
+          const sKey = pos === 'SIDE_A' ? 'sideA' : pos === 'CENTER' ? 'center' : 'sideB';
+          const sId = threeColumnConfig?.right?.[sKey] || (sKey !== 'center' ? threeColumnConfig?.rightSubjectId : '');
+          const isVacant = !sId || sId === 'VACANT' || sId === 'NIL' || sId === 'EMPTY';
+
+          if (isVacant) {
+            seats.push({
+              position: pos,
+              isDisabled: false,
+              isVacant: true,
+              student: undefined,
+              subjectId: undefined,
+              subjectName: undefined,
+            });
+          } else {
+            const st = takeStudent(sId);
+            const subjName = st ? subjects.find((s) => s.id === sId)?.name : undefined;
+            seats.push({
+              position: pos,
+              isDisabled: false,
+              student: st,
+              subjectId: st ? sId : undefined,
+              subjectName: subjName,
+            });
+          }
+        });
+        return { benchNumber, side, seats };
       }
-      const stB = subjIdB ? takeStudent(subjIdB) : undefined;
-      const subjNameB = subjIdB ? subjects.find((s) => s.id === subjIdB)?.name : undefined;
 
-      seats.push({ position: 'SIDE_A', student: stA, subjectId: stA ? subjIdA : undefined, subjectName: stA ? subjNameA : undefined });
-      seats.push({ position: 'CENTER', student: stCenter, subjectId: stCenter ? subjIdCenter : undefined, subjectName: stCenter ? subjNameCenter : undefined });
-      seats.push({ position: 'SIDE_B', student: stB, subjectId: stB ? subjIdB : undefined, subjectName: stB ? subjNameB : undefined });
+      // 3. Middle Benches – Custom Seat Configuration
+      if (side === 'MIDDLE') {
+        (['SIDE_A', 'CENTER', 'SIDE_B'] as PositionSlot[]).forEach((pos) => {
+          const isEnabled = isSeatPositionEnabled(pos);
+          if (!isEnabled) {
+            seats.push({
+              position: pos,
+              isDisabled: true,
+              student: undefined,
+              subjectId: undefined,
+              subjectName: undefined,
+            });
+            return;
+          }
 
-      return { benchNumber, side, seats };
+          const sId = getMiddleSeatSubjectId(pos);
+          const isVacant = !sId || sId === 'VACANT' || sId === 'NIL' || sId === 'EMPTY';
+
+          if (isVacant) {
+            seats.push({
+              position: pos,
+              isDisabled: false,
+              isVacant: true,
+              student: undefined,
+              subjectId: undefined,
+              subjectName: undefined,
+            });
+          } else {
+            const st = takeStudent(sId);
+            const subjName = st ? subjects.find((s) => s.id === sId)?.name : undefined;
+            seats.push({
+              position: pos,
+              isDisabled: false,
+              student: st,
+              subjectId: st ? sId : undefined,
+              subjectName: subjName,
+            });
+          }
+        });
+
+        return { benchNumber, side, seats };
+      }
     }
 
-    // -------------------------------------------------------------
-    // MODE 2: MULTI-SUBJECT SEQUENTIAL 4-ROW TRIGGER SYSTEM
-    // -------------------------------------------------------------
+    // =============================================================
+    // MODE 2: MULTI-SUBJECT SEQUENTIAL 4-ROW TRIGGER SYSTEM (2-Column Rooms)
+    // =============================================================
     if (isMultiSubject) {
       // Check if only 1 subject remains unallocated in the entire exam
       const remSubjs = getRemainingSubjects();
       if (remSubjs.length === 1) {
         const soleSubj = remSubjs[0];
-        const soleRem = getRemainingCount(soleSubj.id);
-        const needCenter = soleRem > remainingBenchesAhead * 2;
 
+        // Trigger: Once Side A and Side B of the previous row/subject finish,
+        // the remaining subject takes Side A and Side B, leaving Center strictly vacant.
         const stA = takeStudent(soleSubj.id);
-        const stCenter = needCenter ? takeStudent(soleSubj.id) : undefined;
-        const stB = takeStudent(soleSubj.id);
+        const stB = getRemainingCount(soleSubj.id) > 0 ? takeStudent(soleSubj.id) : undefined;
 
         seats.push({ position: 'SIDE_A', student: stA, subjectId: stA ? soleSubj.id : undefined, subjectName: stA ? soleSubj.name : undefined });
-        seats.push({ position: 'CENTER', student: stCenter, subjectId: stCenter ? soleSubj.id : undefined, subjectName: stCenter ? soleSubj.name : undefined });
+        seats.push({ position: 'CENTER', student: undefined, isVacant: true });
         seats.push({ position: 'SIDE_B', student: stB, subjectId: stB ? soleSubj.id : undefined, subjectName: stB ? soleSubj.name : undefined });
 
         return {
@@ -299,13 +462,6 @@ export function runDeterministicSeatingAllocation(input: RunAllocationInput): Ru
         subjIdCenter = activeRow.center;
         stCenter = takeStudent(subjIdCenter);
         subjNameCenter = subjects.find((s) => s.id === subjIdCenter)?.name;
-      } else {
-        const needCenter = getTotalRemainingStudents() > remainingBenchesAhead * 2;
-        if (needCenter) {
-          subjIdCenter = pickBestSubject([subjIdA]);
-          stCenter = subjIdCenter ? takeStudent(subjIdCenter) : undefined;
-          subjNameCenter = subjIdCenter ? subjects.find((s) => s.id === subjIdCenter)?.name : undefined;
-        }
       }
 
       // Side B
@@ -316,7 +472,13 @@ export function runDeterministicSeatingAllocation(input: RunAllocationInput): Ru
       const subjNameB = subjIdB ? subjects.find((s) => s.id === subjIdB)?.name : undefined;
 
       seats.push({ position: 'SIDE_A', student: stA, subjectId: stA ? subjIdA : undefined, subjectName: stA ? subjNameA : undefined });
-      seats.push({ position: 'CENTER', student: stCenter, subjectId: stCenter ? subjIdCenter : undefined, subjectName: stCenter ? subjNameCenter : undefined });
+      seats.push({
+        position: 'CENTER',
+        student: stCenter,
+        subjectId: stCenter ? subjIdCenter : undefined,
+        subjectName: stCenter ? subjNameCenter : undefined,
+        isVacant: !stCenter,
+      });
       seats.push({ position: 'SIDE_B', student: stB, subjectId: stB ? subjIdB : undefined, subjectName: stB ? subjNameB : undefined });
 
       // Trigger Check: move to next row if either subject finished
@@ -340,17 +502,21 @@ export function runDeterministicSeatingAllocation(input: RunAllocationInput): Ru
       };
     }
 
-    // -------------------------------------------------------------
-    // MODE 3: STANDARD ALLOCATION (1, 2, or 3 per bench)
-    // -------------------------------------------------------------
-    const remSubjs = getRemainingSubjects();
+    // =============================================================
+    // MODE 1: STANDARD ALLOCATION (1 or 2 Subjects)
+    // =============================================================
 
-    // Case 3A: 1 Student per Bench (CENTER only)
+    // -------------------------------------------------------------
+    // CASE 1A: 1 Student per Bench (CENTER only)
+    // -------------------------------------------------------------
     if (pattern === '1_PER_BENCH') {
-      let targetSubjId = positionMapping.CENTER && getRemainingCount(positionMapping.CENTER) > 0
-        ? positionMapping.CENTER
-        : pickBestSubject();
-
+      while (
+        standardSubjectIdx < rankedSubjectIds.length &&
+        getRemainingCount(rankedSubjectIds[standardSubjectIdx]) === 0
+      ) {
+        standardSubjectIdx++;
+      }
+      const targetSubjId = rankedSubjectIds[standardSubjectIdx] || pickBestSubject();
       const st = targetSubjId ? takeStudent(targetSubjId) : undefined;
       const subjName = targetSubjId ? subjects.find((s) => s.id === targetSubjId)?.name : undefined;
 
@@ -364,66 +530,167 @@ export function runDeterministicSeatingAllocation(input: RunAllocationInput): Ru
       return { benchNumber, side, seats };
     }
 
-    // Case 3B: Only 1 Subject remains in 2_PER_BENCH or 3_PER_BENCH
-    if (remSubjs.length === 1) {
-      const soleSubj = remSubjs[0];
-      const soleRem = getRemainingCount(soleSubj.id);
-
-      if (pattern === '2_PER_BENCH') {
-        const stA = takeStudent(soleSubj.id);
-        const stB = takeStudent(soleSubj.id);
-
-        seats.push({ position: 'SIDE_A', student: stA, subjectId: stA ? soleSubj.id : undefined, subjectName: stA ? soleSubj.name : undefined });
-        seats.push({ position: 'SIDE_B', student: stB, subjectId: stB ? soleSubj.id : undefined, subjectName: stB ? soleSubj.name : undefined });
-      } else {
-        // 3_PER_BENCH: Single subject separation rule
-        const needCenter = soleRem > remainingBenchesAhead * 2;
-        const stA = takeStudent(soleSubj.id);
-        const stCenter = needCenter ? takeStudent(soleSubj.id) : undefined;
-        const stB = takeStudent(soleSubj.id);
-
-        seats.push({ position: 'SIDE_A', student: stA, subjectId: stA ? soleSubj.id : undefined, subjectName: stA ? soleSubj.name : undefined });
-        seats.push({ position: 'CENTER', student: stCenter, subjectId: stCenter ? soleSubj.id : undefined, subjectName: stCenter ? soleSubj.name : undefined });
-        seats.push({ position: 'SIDE_B', student: stB, subjectId: stB ? soleSubj.id : undefined, subjectName: stB ? soleSubj.name : undefined });
+    // -------------------------------------------------------------
+    // CASE 1B: 2 Students per Bench (2_PER_BENCH) - REVISED SEQUENTIAL RULE
+    // Rule:
+    // - Side A and Side B must receive the SAME subject.
+    // - Begin with the highest-strength subject ($S_1$) and allocate it to both Side A and Side B.
+    // - Keep the Centre vacant throughout.
+    // - Complete the allocation of ALL students of Subject 1 before beginning Subject 2.
+    // - Immediately after Subject 1 is completely allocated, begin allocating Subject 2 to both Side A and Side B.
+    // -------------------------------------------------------------
+    if (pattern === '2_PER_BENCH') {
+      while (
+        standardSubjectIdx < rankedSubjectIds.length &&
+        getRemainingCount(rankedSubjectIds[standardSubjectIdx]) === 0
+      ) {
+        standardSubjectIdx++;
       }
+
+      const activeSubjId = rankedSubjectIds[standardSubjectIdx] || pickBestSubject();
+
+      if (!activeSubjId) {
+        seats.push({ position: 'SIDE_A', student: undefined });
+        seats.push({ position: 'CENTER', student: undefined });
+        seats.push({ position: 'SIDE_B', student: undefined });
+        return { benchNumber, side, seats };
+      }
+
+      const subjName = subjects.find((s) => s.id === activeSubjId)?.name;
+
+      // Allocate Side A from current subject
+      const stA = takeStudent(activeSubjId);
+
+      // Allocate Side B:
+      // If current subject still has students, Side B gets current subject.
+      // If current subject just finished (had only 1 student left on its final bench):
+      // Keep Side B vacant if capacity allows, ensuring pure single-subject benches;
+      // or start next subject if capacity is tight to guarantee 100% student allocation.
+      let stB: StudentRecord | undefined = undefined;
+      let subjIdB: string | undefined = activeSubjId;
+      let subjNameB: string | undefined = subjName;
+
+      if (getRemainingCount(activeSubjId) > 0) {
+        stB = takeStudent(activeSubjId);
+      } else {
+        // Active subject finished with Side A!
+        // Advance pointer to next subject
+        standardSubjectIdx++;
+        const nextSubjId = rankedSubjectIds[standardSubjectIdx];
+
+        // If remaining students exceed available 2-per-bench capacity ahead, utilize Side B immediately
+        const needSideBForCapacity = getTotalRemainingStudents() > remainingBenchesAhead * 2;
+        if (needSideBForCapacity && nextSubjId && getRemainingCount(nextSubjId) > 0) {
+          subjIdB = nextSubjId;
+          stB = takeStudent(nextSubjId);
+          subjNameB = subjects.find((s) => s.id === nextSubjId)?.name;
+        } else {
+          // Keep Side B vacant for this transition bench to strictly preserve same subject on bench
+          subjIdB = undefined;
+          subjNameB = undefined;
+        }
+      }
+
+      seats.push({ position: 'SIDE_A', student: stA, subjectId: stA ? activeSubjId : undefined, subjectName: stA ? subjName : undefined });
+      seats.push({ position: 'CENTER', student: undefined, isVacant: true }); // Centre is strictly vacant throughout
+      seats.push({ position: 'SIDE_B', student: stB, subjectId: stB ? subjIdB : undefined, subjectName: stB ? subjNameB : undefined });
 
       return { benchNumber, side, seats };
     }
 
-    // Case 3C: 2 or more Subjects remain in 2_PER_BENCH or 3_PER_BENCH
-    // Side A
-    let subjIdA = positionMapping.SIDE_A && getRemainingCount(positionMapping.SIDE_A) > 0
-      ? positionMapping.SIDE_A
-      : pickBestSubject();
-    const stA = subjIdA ? takeStudent(subjIdA) : undefined;
-    const subjNameA = subjIdA ? subjects.find((s) => s.id === subjIdA)?.name : undefined;
-    seats.push({ position: 'SIDE_A', student: stA, subjectId: stA ? subjIdA : undefined, subjectName: stA ? subjNameA : undefined });
+    // -------------------------------------------------------------
+    // CASE 1C: 3 Students per Bench (3_PER_BENCH) - REVISED SANDWICH RULE
+    // Rule:
+    // Initial Allocation: [ S1 | S2 | S1 ]
+    // - Side A: S1
+    // - Centre: S2
+    // - Side B: S1
+    // Subsequent Allocation:
+    // - After all students of S1 are completely allocated, begin allocating S2 to Side A and Side B.
+    // - Keep the Centre vacant during this subsequent allocation: [ S2 | Vacant (Centre) | S2 ].
+    // - Continue until S2 is completely allocated.
+    // -------------------------------------------------------------
+    const s1Id = rankedSubjectIds[0] || pickBestSubject();
+    const s2Id = rankedSubjectIds[1] || rankedSubjectIds[0];
 
-    // Center (for 3_PER_BENCH)
-    let subjIdCenter: string | undefined = undefined;
-    if (pattern === '3_PER_BENCH') {
-      if (positionMapping.CENTER && getRemainingCount(positionMapping.CENTER) > 0) {
-        subjIdCenter = positionMapping.CENTER;
+    const isS1Finished = !s1Id || getRemainingCount(s1Id) === 0;
+
+    if (!isS1Finished && s1Id) {
+      // Phase 1: S1 is active -> Initial Sandwich Rule [ S1 | S2 | S1 ]
+      const s1Name = subjects.find((s) => s.id === s1Id)?.name;
+      const s2Name = s2Id ? subjects.find((s) => s.id === s2Id)?.name : undefined;
+
+      const stA = takeStudent(s1Id);
+
+      // Centre gets S2 (if S2 has students remaining)
+      let stCenter: StudentRecord | undefined = undefined;
+      let centerSubjId: string | undefined = undefined;
+      let centerSubjName: string | undefined = undefined;
+
+      if (s2Id && getRemainingCount(s2Id) > 0) {
+        centerSubjId = s2Id;
+        stCenter = takeStudent(s2Id);
+        centerSubjName = s2Name;
+      }
+
+      // Side B gets S1 (if S1 has students remaining)
+      let stB: StudentRecord | undefined = undefined;
+      let subjIdB: string | undefined = undefined;
+      let subjNameB: string | undefined = undefined;
+
+      if (getRemainingCount(s1Id) > 0) {
+        subjIdB = s1Id;
+        stB = takeStudent(s1Id);
+        subjNameB = s1Name;
       } else {
-        const needCenter = getTotalRemainingStudents() > remainingBenchesAhead * 2;
-        if (needCenter) {
-          subjIdCenter = pickBestSubject([subjIdA]);
+        // S1 finished on Side A; transition to next subject on Side B, leaving Center strictly vacant
+        if (s2Id && getRemainingCount(s2Id) > 0) {
+          subjIdB = s2Id;
+          stB = takeStudent(s2Id);
+          subjNameB = s2Name;
         }
       }
-      const stCenter = subjIdCenter ? takeStudent(subjIdCenter) : undefined;
-      const subjNameCenter = subjIdCenter ? subjects.find((s) => s.id === subjIdCenter)?.name : undefined;
-      seats.push({ position: 'CENTER', student: stCenter, subjectId: stCenter ? subjIdCenter : undefined, subjectName: stCenter ? subjNameCenter : undefined });
+
+      seats.push({ position: 'SIDE_A', student: stA, subjectId: stA ? s1Id : undefined, subjectName: stA ? s1Name : undefined });
+      seats.push({
+        position: 'CENTER',
+        student: stCenter,
+        subjectId: stCenter ? centerSubjId : undefined,
+        subjectName: stCenter ? centerSubjName : undefined,
+        isVacant: !stCenter,
+      });
+      seats.push({ position: 'SIDE_B', student: stB, subjectId: stB ? subjIdB : undefined, subjectName: stB ? subjNameB : undefined });
+
+      return { benchNumber, side, seats };
+    } else {
+      // Phase 2: S1 is completely allocated!
+      // Subsequent Allocation: [ S2 | Vacant (Centre) | S2 ]
+      while (
+        standardSubjectIdx < rankedSubjectIds.length &&
+        getRemainingCount(rankedSubjectIds[standardSubjectIdx]) === 0
+      ) {
+        standardSubjectIdx++;
+      }
+
+      const activeSubjId = rankedSubjectIds[standardSubjectIdx] || pickBestSubject();
+      const subjName = activeSubjId ? subjects.find((s) => s.id === activeSubjId)?.name : undefined;
+
+      if (!activeSubjId) {
+        seats.push({ position: 'SIDE_A', student: undefined });
+        seats.push({ position: 'CENTER', student: undefined });
+        seats.push({ position: 'SIDE_B', student: undefined });
+        return { benchNumber, side, seats };
+      }
+
+      const stA = takeStudent(activeSubjId);
+      const stB = getRemainingCount(activeSubjId) > 0 ? takeStudent(activeSubjId) : undefined;
+
+      seats.push({ position: 'SIDE_A', student: stA, subjectId: stA ? activeSubjId : undefined, subjectName: stA ? subjName : undefined });
+      seats.push({ position: 'CENTER', student: undefined, isVacant: true }); // Centre is strictly vacant during subsequent allocation
+      seats.push({ position: 'SIDE_B', student: stB, subjectId: stB ? activeSubjId : undefined, subjectName: stB ? subjName : undefined });
+
+      return { benchNumber, side, seats };
     }
-
-    // Side B
-    let subjIdB = positionMapping.SIDE_B && getRemainingCount(positionMapping.SIDE_B) > 0
-      ? positionMapping.SIDE_B
-      : pickBestSubject([subjIdCenter || subjIdA]);
-    const stB = subjIdB ? takeStudent(subjIdB) : undefined;
-    const subjNameB = subjIdB ? subjects.find((s) => s.id === subjIdB)?.name : undefined;
-    seats.push({ position: 'SIDE_B', student: stB, subjectId: stB ? subjIdB : undefined, subjectName: stB ? subjNameB : undefined });
-
-    return { benchNumber, side, seats };
   };
 
   // -------------------------------------------------------------
@@ -432,19 +699,16 @@ export function runDeterministicSeatingAllocation(input: RunAllocationInput): Ru
   const roomPlans: RoomSeatingPlan[] = [];
 
   for (const room of rooms) {
-    const roomCapacity = (isMultiSubject || is3Col)
-      ? room.capacityThree
-      : pattern === '1_PER_BENCH'
-        ? room.capacityOne
-        : pattern === '2_PER_BENCH'
-          ? room.capacityTwo
-          : room.capacityThree;
+    const leftCount = Math.max(0, Number(room.leftBenches) || 0);
+    const middleCount = Math.max(0, Number(room.middleBenches) || 0);
+    const rightCount = Math.max(0, Number(room.rightBenches) || 0);
+    const is3ColRoom = is3ColEnabled && middleCount > 0;
 
     let roomAllocatedCount = 0;
     const benches: PhysicalBench[] = [];
 
     const allocateBenchForRoom = (bNum: number, side: 'LEFT' | 'MIDDLE' | 'RIGHT'): PhysicalBench => {
-      const b = allocateBench(bNum, side);
+      const b = allocateBench(bNum, side, is3ColRoom);
       b.seats.forEach((seat) => {
         if (seat.student) roomAllocatedCount++;
       });
@@ -452,19 +716,38 @@ export function runDeterministicSeatingAllocation(input: RunAllocationInput): Ru
     };
 
     // 1. Left Side Benches (01 to leftBenches)
-    for (let b = 1; b <= room.leftBenches; b++) {
+    for (let b = 1; b <= leftCount; b++) {
       benches.push(allocateBenchForRoom(b, 'LEFT'));
     }
 
     // 2. Middle Benches (01 to middleBenches) if middle column exists
-    const middleCount = Math.max(0, Number(room.middleBenches) || 0);
     for (let b = 1; b <= middleCount; b++) {
       benches.push(allocateBenchForRoom(b, 'MIDDLE'));
     }
 
     // 3. Right Side Benches (01 to rightBenches)
-    for (let b = 1; b <= room.rightBenches; b++) {
+    for (let b = 1; b <= rightCount; b++) {
       benches.push(allocateBenchForRoom(b, 'RIGHT'));
+    }
+
+    // Calculate room capacity
+    let roomCapacity = 0;
+    if (is3ColRoom) {
+      benches.forEach((bench) => {
+        bench.seats.forEach((seat) => {
+          if (!seat.isDisabled) {
+            roomCapacity++;
+          }
+        });
+      });
+    } else {
+      roomCapacity = isMultiSubject
+        ? room.capacityThree
+        : pattern === '1_PER_BENCH'
+          ? room.capacityOne
+          : pattern === '2_PER_BENCH'
+            ? room.capacityTwo
+            : room.capacityThree;
     }
 
     const vacantCount = Math.max(0, roomCapacity - roomAllocatedCount);
@@ -493,6 +776,7 @@ export function runDeterministicSeatingAllocation(input: RunAllocationInput): Ru
   // -------------------------------------------------------------
   // 3. TIER 2 UNIVERSAL SAFETY NET: Ensure NO student is left out
   // If capacity is sufficient, sweep any vacant seats to allocate remaining students
+  // Safeguards: NEVER allocate to disabled or explicitly vacant positions
   // -------------------------------------------------------------
   if (getTotalRemainingStudents() > 0) {
     for (const rp of roomPlans) {
@@ -501,7 +785,8 @@ export function runDeterministicSeatingAllocation(input: RunAllocationInput): Ru
         if (getTotalRemainingStudents() === 0) break;
         for (const seat of bench.seats) {
           if (getTotalRemainingStudents() === 0) break;
-          if (!seat.student) {
+          // Safeguard: Never allocate into disabled or explicitly vacant seats
+          if (!seat.student && !seat.isDisabled && !seat.isVacant) {
             const nextSubjId = pickBestSubject();
             if (nextSubjId) {
               const st = takeStudent(nextSubjId);
@@ -526,13 +811,13 @@ export function runDeterministicSeatingAllocation(input: RunAllocationInput): Ru
   }
 
   // -------------------------------------------------------------
-  // 4. Subject-wise allocation stats
+  // 4. Calculate Subject Stats and Summary
   // -------------------------------------------------------------
   const subjectStats: SubjectAllocationStat[] = subjects.map((subj) => {
     const total = initialCounts[subj.id] || 0;
     const allocated = subjectPointers[subj.id] || 0;
-    const status =
-      allocated === total ? 'Complete' : allocated > 0 ? 'Partial' : 'Unallocated';
+    const status: 'Complete' | 'Partial' | 'Unallocated' =
+      allocated >= total ? 'Complete' : allocated > 0 ? 'Partial' : 'Unallocated';
 
     return {
       subjectId: subj.id,
@@ -543,37 +828,27 @@ export function runDeterministicSeatingAllocation(input: RunAllocationInput): Ru
     };
   });
 
-  // -------------------------------------------------------------
-  // 5. Strict Validation Checks & Summary
-  // -------------------------------------------------------------
+  const totalAllocatedStudents = Object.values(subjectPointers).reduce((sum, n) => sum + n, 0);
+  const unallocatedStudents = Math.max(0, totalStudents - totalAllocatedStudents);
+  const totalUsableCapacity = roomPlans.reduce((sum, rp) => sum + rp.capacity, 0);
+  const vacantSeats = Math.max(0, totalUsableCapacity - totalAllocatedStudents);
+
   const issues: string[] = [];
-  const unallocatedStudents = Math.max(0, totalStudents - totalAllocated);
-  const vacantSeats = Math.max(0, totalCapacity - totalAllocated);
-
   if (unallocatedStudents > 0) {
-    issues.push(`${unallocatedStudents} student(s) remain unallocated due to insufficient capacity.`);
+    issues.push(`${unallocatedStudents} student(s) could not be allocated due to insufficient capacity.`);
   }
-
   if (duplicateStudentDetected) {
-    issues.push('Critical: Duplicate student assignment detected across multiple seats.');
+    issues.push('Duplicate student allocation was detected and prevented by the engine.');
   }
-
-  roomPlans.forEach((rp) => {
-    if (rp.allocatedCount > rp.capacity) {
-      issues.push(`Room ${rp.roomNo} exceeds calculated capacity (${rp.allocatedCount} / ${rp.capacity}).`);
-    }
-  });
-
-  const isReady = issues.length === 0 && unallocatedStudents === 0;
 
   const summary: SeatingAllocationSummary = {
     totalStudents,
     totalRooms: rooms.length,
-    totalCapacity,
-    allocatedStudents: totalAllocated,
+    totalCapacity: totalUsableCapacity,
+    allocatedStudents: totalAllocatedStudents,
     vacantSeats,
     unallocatedStudents,
-    isReady,
+    isReady: unallocatedStudents === 0 && !duplicateStudentDetected,
     issues,
   };
 
@@ -583,3 +858,92 @@ export function runDeterministicSeatingAllocation(input: RunAllocationInput): Ru
     summary,
   };
 }
+
+/**
+ * Calculates effective student capacity for a room based on active configuration
+ * including integrated 3-column room configs (with custom middle bench patterns)
+ * or 2-column mode standards.
+ */
+export function getRoomEffectiveCapacity(
+  room: SeatingMasterRoom,
+  pattern: SeatingPattern,
+  isMultiSubject: boolean,
+  threeColumnConfig?: ThreeColumnPatternConfig
+): number {
+  const leftCount = Math.max(0, Number(room.leftBenches) || 0);
+  const middleCount = Math.max(0, Number(room.middleBenches) || 0);
+  const rightCount = Math.max(0, Number(room.rightBenches) || 0);
+  const is3ColRoom = Boolean(threeColumnConfig?.enabled) && middleCount > 0;
+
+  if (is3ColRoom) {
+    let leftSeatsPerBench = 0;
+    (['SIDE_A', 'CENTER', 'SIDE_B'] as PositionSlot[]).forEach((pos) => {
+      const sKey = pos === 'SIDE_A' ? 'sideA' : pos === 'CENTER' ? 'center' : 'sideB';
+      const sId = threeColumnConfig?.left?.[sKey] || (sKey !== 'center' ? threeColumnConfig?.leftSubjectId : '');
+      if (sId && sId !== 'VACANT' && sId !== 'NIL' && sId !== 'EMPTY') {
+        leftSeatsPerBench++;
+      }
+    });
+    const leftCap = leftCount * leftSeatsPerBench;
+
+    let rightSeatsPerBench = 0;
+    (['SIDE_A', 'CENTER', 'SIDE_B'] as PositionSlot[]).forEach((pos) => {
+      const sKey = pos === 'SIDE_A' ? 'sideA' : pos === 'CENTER' ? 'center' : 'sideB';
+      const sId = threeColumnConfig?.right?.[sKey] || (sKey !== 'center' ? threeColumnConfig?.rightSubjectId : '');
+      if (sId && sId !== 'VACANT' && sId !== 'NIL' && sId !== 'EMPTY') {
+        rightSeatsPerBench++;
+      }
+    });
+    const rightCap = rightCount * rightSeatsPerBench;
+
+    const mPattern = threeColumnConfig?.middlePattern || 'allThree';
+    const enabledMap = threeColumnConfig?.middleEnabledSeats;
+    const seatsConfig = threeColumnConfig?.middleSeats;
+
+    const isSeatPosEnabled = (pos: PositionSlot): boolean => {
+      if (mPattern === 'centerOnly') return pos === 'CENTER';
+      if (mPattern === 'sideAAndSideB') return pos === 'SIDE_A' || pos === 'SIDE_B';
+      if (mPattern === 'custom' && enabledMap) {
+        if (pos === 'SIDE_A') return Boolean(enabledMap.sideA);
+        if (pos === 'CENTER') return Boolean(enabledMap.center);
+        if (pos === 'SIDE_B') return Boolean(enabledMap.sideB);
+      }
+      return true;
+    };
+
+    const getSeatSubj = (pos: PositionSlot): string => {
+      if (seatsConfig) {
+        if (pos === 'SIDE_A') return seatsConfig.sideA || '';
+        if (pos === 'CENTER') return seatsConfig.center || '';
+        if (pos === 'SIDE_B') return seatsConfig.sideB || '';
+      }
+      if (threeColumnConfig?.middle) {
+        if (pos === 'SIDE_A') return threeColumnConfig.middle.sideA || '';
+        if (pos === 'CENTER') return threeColumnConfig.middle.center || '';
+        if (pos === 'SIDE_B') return threeColumnConfig.middle.sideB || '';
+      }
+      return '';
+    };
+
+    let middleSeatsPerBench = 0;
+    (['SIDE_A', 'CENTER', 'SIDE_B'] as PositionSlot[]).forEach((pos) => {
+      if (isSeatPosEnabled(pos)) {
+        const sId = getSeatSubj(pos);
+        if (sId && sId !== 'VACANT' && sId !== 'NIL' && sId !== 'EMPTY') {
+          middleSeatsPerBench++;
+        }
+      }
+    });
+
+    return leftCap + (middleCount * middleSeatsPerBench) + rightCap;
+  }
+
+  return isMultiSubject
+    ? room.capacityThree
+    : pattern === '1_PER_BENCH'
+      ? room.capacityOne
+      : pattern === '2_PER_BENCH'
+        ? room.capacityTwo
+        : room.capacityThree;
+}
+

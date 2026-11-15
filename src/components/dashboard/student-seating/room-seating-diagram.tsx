@@ -13,6 +13,7 @@ interface RoomSeatingDiagramProps {
   examDate?: string;
   examTime?: string;
   className?: string;
+  allSubjectNames?: string[];
 }
 
 export function RoomSeatingDiagram({
@@ -21,6 +22,7 @@ export function RoomSeatingDiagram({
   examDate,
   examTime,
   className,
+  allSubjectNames,
 }: RoomSeatingDiagramProps) {
   const leftBenches = plan.benches.filter((b) => b.side === 'LEFT');
   const middleBenches = plan.benches.filter((b) => b.side === 'MIDDLE');
@@ -57,12 +59,38 @@ export function RoomSeatingDiagram({
     [roomSubjects]
   );
 
+  const subjectNamesForColors = React.useMemo(() => {
+    if (allSubjectNames && allSubjectNames.length > 0) return allSubjectNames;
+    return uniqueSubjectNames;
+  }, [allSubjectNames, uniqueSubjectNames]);
+
   const renderSeat = (seat: BenchPositionSeat, index: number, totalSeats: number) => {
     const isVacant = !seat.student;
     const posLabel =
       seat.position === 'SIDE_A' ? 'Side A' : seat.position === 'SIDE_B' ? 'Side B' : 'Center';
+
+    if (seat.isDisabled) {
+      return (
+        <div
+          key={index}
+          className="flex-1 p-2 rounded-lg border border-slate-200 bg-slate-100/90 text-center flex flex-col justify-between min-w-[70px] select-none opacity-60"
+        >
+          <div className="flex items-center justify-between text-[10px] font-bold mb-1 gap-1">
+            <span className="uppercase tracking-wider text-[9px] text-slate-400 font-bold shrink-0">
+              {posLabel}
+            </span>
+          </div>
+          <div className="py-3 text-center flex flex-col items-center justify-center my-auto min-h-[46px]">
+            <span className="text-[9px] uppercase tracking-wider text-slate-500 font-bold bg-slate-200/90 px-2 py-0.5 rounded border border-slate-300/80 shadow-3xs">
+              Disabled
+            </span>
+          </div>
+        </div>
+      );
+    }
+
     const subjStyle = seat.subjectName
-      ? getSubjectColor(seat.subjectName, uniqueSubjectNames)
+      ? getSubjectColor(seat.subjectName, subjectNamesForColors)
       : null;
 
     return (
@@ -128,28 +156,33 @@ export function RoomSeatingDiagram({
     );
   };
 
-  const renderBenchCard = (bench: typeof plan.benches[0], keyPrefix: string) => (
-    <div
-      key={`${keyPrefix}-${bench.benchNumber}`}
-      className="flex items-stretch gap-2 bg-white p-2 sm:p-2.5 rounded-lg border border-slate-200/80 shadow-2xs min-w-0"
-    >
-      {/* Bench Number Indicator */}
-      <div className="w-11 sm:w-12 shrink-0 bg-slate-100/80 rounded-md flex flex-col items-center justify-center font-headline font-bold text-xs text-slate-600 border border-slate-200/50 py-1">
-        <span className="text-[9px] uppercase text-slate-400 font-medium">B</span>
-        <span>{String(bench.benchNumber).padStart(2, '0')}</span>
-        {bench.rowLabel && (
-          <span className="mt-1 text-[8px] font-extrabold text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-1 py-0.2 rounded-xs whitespace-nowrap">
-            {bench.rowLabel}
-          </span>
-        )}
-      </div>
+  const renderBenchCard = (bench: typeof plan.benches[0], keyPrefix: string) => {
+    const benchPrefix = bench.side === 'LEFT' ? 'L' : bench.side === 'MIDDLE' ? 'M' : 'R';
+    const benchLabel = `${benchPrefix}${String(bench.benchNumber).padStart(2, '0')}`;
 
-      {/* Bench Physical Seat Slots */}
-      <div className="flex-1 flex gap-1.5 sm:gap-2 min-w-0">
-        {bench.seats.map((seat, sIdx) => renderSeat(seat, sIdx, bench.seats.length))}
+    return (
+      <div
+        key={`${keyPrefix}-${bench.benchNumber}`}
+        className="flex items-stretch gap-2 bg-white p-2 sm:p-2.5 rounded-lg border border-slate-200/80 shadow-2xs min-w-0"
+      >
+        {/* Bench Number Indicator */}
+        <div className="w-11 sm:w-12 shrink-0 bg-slate-100/80 rounded-md flex flex-col items-center justify-center font-headline font-bold text-xs text-slate-700 border border-slate-200/50 py-1">
+          <span className="text-[9px] uppercase text-slate-400 font-semibold tracking-wide">BENCH</span>
+          <span className="font-extrabold tracking-tight">{benchLabel}</span>
+          {bench.rowLabel && (
+            <span className="mt-1 text-[8px] font-extrabold text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-1 py-0.2 rounded-xs whitespace-nowrap">
+              {bench.rowLabel}
+            </span>
+          )}
+        </div>
+
+        {/* Bench Physical Seat Slots */}
+        <div className="flex-1 flex gap-1.5 sm:gap-2 min-w-0">
+          {bench.seats.map((seat, sIdx) => renderSeat(seat, sIdx, bench.seats.length))}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className={cn("bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-4", className)}>
@@ -197,7 +230,7 @@ export function RoomSeatingDiagram({
 
           <div className="flex flex-wrap items-center gap-2">
             {roomSubjects.map((sub) => {
-              const style = getSubjectColor(sub.name, uniqueSubjectNames);
+              const style = getSubjectColor(sub.name, subjectNamesForColors);
               return (
                 <span
                   key={sub.name}

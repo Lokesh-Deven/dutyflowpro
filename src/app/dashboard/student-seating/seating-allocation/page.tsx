@@ -14,8 +14,9 @@ import {
   MultiSubjectRow,
   MultiSubjectConfig,
   ThreeColumnPatternConfig,
+  MiddleBenchSeatingPattern,
 } from '@/lib/student-seating-types';
-import { runDeterministicSeatingAllocation } from '@/lib/student-seating-engine';
+import { runDeterministicSeatingAllocation, getRoomEffectiveCapacity } from '@/lib/student-seating-engine';
 import {
   generateRoomSeatingPlanPdf,
   generateStudentSeatingIndexPdf,
@@ -42,6 +43,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Dialog,
   DialogContent,
@@ -174,17 +176,18 @@ export default function SeatingAllocationWizardPage() {
     SIDE_B: '',
   });
 
-  // Step 4: Mode ('standard' | 'threeColumn' | 'multiSubject')
-  const [step4Mode, setStep4Mode] = useState<'standard' | 'threeColumn' | 'multiSubject'>('standard');
+  // Step 4: Mode ('standard' | 'multiSubject') - Retain ONLY TWO modes
+  const [step4Mode, setStep4Mode] = useState<'standard' | 'multiSubject'>('standard');
   const isMultiSubjectMode = step4Mode === 'multiSubject';
-  const isThreeColumnMode = step4Mode === 'threeColumn';
   const setIsMultiSubjectMode = (val: boolean) => setStep4Mode(val ? 'multiSubject' : 'standard');
 
   const [threeColumnConfig, setThreeColumnConfig] = useState<ThreeColumnPatternConfig>({
     enabled: false,
-    left: { sideA: '', center: '', sideB: '' },
-    middle: { sideA: '', center: '', sideB: '' },
-    right: { sideA: '', center: '', sideB: '' },
+    leftSubjectId: '',
+    rightSubjectId: '',
+    middlePattern: 'allThree',
+    middleEnabledSeats: { sideA: true, center: true, sideB: true },
+    middleSeats: { sideA: '', center: '', sideB: '' },
   });
 
   // Step 4: Multi-Subject 4-Row Sequential System (3 or 4 Subjects)
@@ -210,6 +213,13 @@ export default function SeatingAllocationWizardPage() {
       return nameA.localeCompare(nameB);
     });
   }, [selectedSubjectIds, studentsBySubject, subjects]);
+
+  // Unique names of all subjects in this exam for consistent global color palette mapping
+  const allExamSubjectNames = useMemo(() => {
+    return sortedSelectedSubjectIds
+      .map((id) => subjects.find((s) => s.id === id)?.name)
+      .filter((n): n is string => Boolean(n));
+  }, [sortedSelectedSubjectIds, subjects]);
 
   // Helper to generate safe pattern according to student strength (highest to lowest)
   const generateDefaultRows = useCallback((subIds: string[]): MultiSubjectRow[] => {
@@ -280,30 +290,19 @@ export default function SeatingAllocationWizardPage() {
 
     const s1 = sorted[0] || '';
     const s2 = sorted[1] || sorted[0] || '';
-    const s3 = sorted[2] || sorted[0] || '';
+    const s3 = sorted[2] || sorted[1] || sorted[0] || '';
 
-    if (sorted.length >= 3) {
-      return {
-        enabled: true,
-        left: { sideA: s1, center: s2, sideB: s3 },
-        middle: { sideA: s2, center: s3, sideB: s1 },
-        right: { sideA: s3, center: s1, sideB: s2 },
-      };
-    } else if (sorted.length === 2) {
-      return {
-        enabled: true,
-        left: { sideA: s1, center: s2, sideB: s1 },
-        middle: { sideA: s2, center: s1, sideB: s2 },
-        right: { sideA: s1, center: s2, sideB: s1 },
-      };
-    } else {
-      return {
-        enabled: true,
-        left: { sideA: s1, center: 'VACANT', sideB: s1 },
-        middle: { sideA: s1, center: 'VACANT', sideB: s1 },
-        right: { sideA: s1, center: 'VACANT', sideB: s1 },
-      };
-    }
+    return {
+      enabled: false,
+      leftSubjectId: s1,
+      rightSubjectId: s2,
+      middlePattern: 'allThree',
+      middleEnabledSeats: { sideA: true, center: true, sideB: true },
+      middleSeats: { sideA: s1, center: s2, sideB: s3 },
+      left: { sideA: s1, center: s1, sideB: s1 },
+      middle: { sideA: s1, center: s2, sideB: s3 },
+      right: { sideA: s2, center: s2, sideB: s2 },
+    };
   }, [studentsBySubject, subjects]);
 
   // Handler for "Auto Arrange Safe Pattern" action
@@ -315,9 +314,6 @@ export default function SeatingAllocationWizardPage() {
     if (step4Mode === 'multiSubject') {
       const newRows = generateDefaultRows(sortedSelectedSubjectIds);
       setMultiSubjectRows(newRows);
-    } else if (step4Mode === 'threeColumn') {
-      const new3Col = generateDefault3ColumnConfig(sortedSelectedSubjectIds);
-      setThreeColumnConfig(new3Col);
     } else {
       setPositionMapping({
         SIDE_A: s1,
@@ -325,6 +321,16 @@ export default function SeatingAllocationWizardPage() {
         SIDE_B: pattern === '2_PER_BENCH' ? s2 : s1,
       });
     }
+
+    setThreeColumnConfig((prev) => {
+      const fresh = generateDefault3ColumnConfig(sortedSelectedSubjectIds);
+      return {
+        ...fresh,
+        enabled: prev.enabled,
+        middlePattern: prev.middlePattern || 'allThree',
+        middleEnabledSeats: prev.middleEnabledSeats || { sideA: true, center: true, sideB: true },
+      };
+    });
 
     toast({
       title: "Auto Arrange Safe Pattern Applied",
@@ -357,7 +363,7 @@ export default function SeatingAllocationWizardPage() {
         });
 
         setThreeColumnConfig((prev) => {
-          if (!prev.enabled || !prev.left.sideA) {
+          if (!prev.leftSubjectId && !prev.left?.sideA) {
             return generateDefault3ColumnConfig(sortedSelectedSubjectIds);
           }
           return prev;
@@ -457,14 +463,16 @@ export default function SeatingAllocationWizardPage() {
 
   // Restore saved pattern on mount or exam switch
   useEffect(() => {
-    if (activeAllocation?.threeColumnConfig?.enabled) {
-      setStep4Mode('threeColumn');
-      setThreeColumnConfig(activeAllocation.threeColumnConfig);
-    } else if (activeAllocation?.multiSubjectConfig?.enabled) {
+    if (activeAllocation?.multiSubjectConfig?.enabled) {
       setStep4Mode('multiSubject');
       if (activeAllocation.multiSubjectConfig.rows?.length) {
         setMultiSubjectRows(activeAllocation.multiSubjectConfig.rows);
       }
+    } else {
+      setStep4Mode('standard');
+    }
+    if (activeAllocation?.threeColumnConfig) {
+      setThreeColumnConfig(activeAllocation.threeColumnConfig);
     } else if (selectedSubjectIds.length >= 3) {
       try {
         const storageKey = selectedDutyExamId
@@ -519,16 +527,9 @@ export default function SeatingAllocationWizardPage() {
     return selectedRoomIds.reduce((sum, rId) => {
       const r = masterRooms.find((rm) => rm.id === rId);
       if (!r) return sum;
-      const cap = (isMultiSubjectMode || isThreeColumnMode)
-        ? r.capacityThree
-        : pattern === '1_PER_BENCH'
-          ? r.capacityOne
-          : pattern === '2_PER_BENCH'
-            ? r.capacityTwo
-            : r.capacityThree;
-      return sum + cap;
+      return sum + getRoomEffectiveCapacity(r, pattern, isMultiSubjectMode, threeColumnConfig);
     }, 0);
-  }, [selectedRoomIds, masterRooms, pattern, isMultiSubjectMode, isThreeColumnMode]);
+  }, [selectedRoomIds, masterRooms, pattern, isMultiSubjectMode, threeColumnConfig]);
 
   const isCapacitySufficient = selectedRoomsCapacity >= totalStudentsSelected && totalStudentsSelected > 0;
 
@@ -555,18 +556,18 @@ export default function SeatingAllocationWizardPage() {
       rooms: [dummyRoom],
       subjects: activeSubjs,
       studentsBySubject,
-      pattern: (isMultiSubjectMode || isThreeColumnMode) ? '3_PER_BENCH' : pattern,
+      pattern: isMultiSubjectMode ? '3_PER_BENCH' : pattern,
       positionMapping,
       multiSubjectConfig: isMultiSubjectMode ? {
         enabled: true,
         rows: multiSubjectRows,
       } : undefined,
-      threeColumnConfig: isThreeColumnMode ? threeColumnConfig : undefined,
+      threeColumnConfig: threeColumnConfig?.enabled ? threeColumnConfig : undefined,
     });
 
     const benches = simResult.roomPlans[0]?.benches || [];
     return benches.filter((b) => b.seats.some((s) => !!s.student)).slice(0, 16);
-  }, [isMultiSubjectMode, isThreeColumnMode, subjects, selectedSubjectIds, studentsBySubject, positionMapping, multiSubjectRows, threeColumnConfig, pattern]);
+  }, [isMultiSubjectMode, subjects, selectedSubjectIds, studentsBySubject, positionMapping, multiSubjectRows, threeColumnConfig, pattern]);
 
   // Handle Examination session select from Examination Timetable
   const handleSelectTimetableRow = (rowId: string) => {
@@ -678,10 +679,10 @@ export default function SeatingAllocationWizardPage() {
       rooms: selectedRooms,
       subjects: selectedSubjs,
       studentsBySubject,
-      pattern: (isMultiSubjectMode || isThreeColumnMode) ? '3_PER_BENCH' : pattern,
+      pattern: isMultiSubjectMode ? '3_PER_BENCH' : pattern,
       positionMapping,
       multiSubjectConfig,
-      threeColumnConfig: isThreeColumnMode ? threeColumnConfig : undefined,
+      threeColumnConfig: threeColumnConfig?.enabled ? threeColumnConfig : undefined,
     });
 
     const newRecord: SeatingAllocationRecord = {
@@ -695,10 +696,10 @@ export default function SeatingAllocationWizardPage() {
         endTime,
       },
       subjectIds: selectedSubjectIds,
-      pattern: (isMultiSubjectMode || isThreeColumnMode) ? '3_PER_BENCH' : pattern,
+      pattern: isMultiSubjectMode ? '3_PER_BENCH' : pattern,
       positionMapping,
       multiSubjectConfig,
-      threeColumnConfig: isThreeColumnMode ? threeColumnConfig : undefined,
+      threeColumnConfig: threeColumnConfig?.enabled ? threeColumnConfig : undefined,
       roomIds: selectedRoomIds,
       roomPlans: result.roomPlans,
       subjectStats: result.subjectStats,
@@ -805,6 +806,449 @@ export default function SeatingAllocationWizardPage() {
     } finally {
       setIsDownloadingPdf(false);
     }
+  };
+
+  // 3-Column Examination Room Configuration Segment
+  const renderThreeColumnSegment = () => {
+    const is3ColEnabled = Boolean(threeColumnConfig.enabled);
+    const middlePattern = threeColumnConfig.middlePattern || 'allThree';
+    const middleEnabled = threeColumnConfig.middleEnabledSeats || { sideA: true, center: true, sideB: true };
+    const middleSeats = threeColumnConfig.middleSeats || {
+      sideA: sortedSelectedSubjectIds[0] || '',
+      center: sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0] || '',
+      sideB: sortedSelectedSubjectIds[2] || sortedSelectedSubjectIds[0] || '',
+    };
+
+    return (
+      <div className="mt-6 pt-5 border-t border-slate-200/80 space-y-4">
+        {/* Header and Yes/No Question */}
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <Columns3 className="w-4 h-4 text-indigo-600" />
+                <span className="font-headline font-bold text-xs uppercase tracking-wider text-slate-800">
+                  3-Column Examination Room Configuration
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 font-medium">
+                Are there any 3-column examination rooms?
+              </p>
+            </div>
+
+            <RadioGroup
+              value={is3ColEnabled ? "yes" : "no"}
+              onValueChange={(val) => {
+                const isYes = val === "yes";
+                setThreeColumnConfig((prev) => ({
+                  ...prev,
+                  enabled: isYes,
+                  leftSubjectId: prev.leftSubjectId || sortedSelectedSubjectIds[0] || '',
+                  rightSubjectId: prev.rightSubjectId || sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0] || '',
+                  middlePattern: prev.middlePattern || 'allThree',
+                  middleEnabledSeats: prev.middleEnabledSeats || { sideA: true, center: true, sideB: true },
+                  middleSeats: prev.middleSeats || {
+                    sideA: sortedSelectedSubjectIds[0] || '',
+                    center: sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0] || '',
+                    sideB: sortedSelectedSubjectIds[2] || sortedSelectedSubjectIds[0] || '',
+                  },
+                  left: {
+                    sideA: prev.left?.sideA || prev.leftSubjectId || sortedSelectedSubjectIds[0] || '',
+                    center: prev.left?.center || sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0] || 'VACANT',
+                    sideB: prev.left?.sideB || prev.leftSubjectId || sortedSelectedSubjectIds[0] || '',
+                  },
+                  right: {
+                    sideA: prev.right?.sideA || prev.rightSubjectId || sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0] || '',
+                    center: prev.right?.center || sortedSelectedSubjectIds[0] || 'VACANT',
+                    sideB: prev.right?.sideB || prev.rightSubjectId || sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0] || '',
+                  },
+                  middle: prev.middle || prev.middleSeats || {
+                    sideA: sortedSelectedSubjectIds[0] || '',
+                    center: sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0] || '',
+                    sideB: sortedSelectedSubjectIds[2] || sortedSelectedSubjectIds[0] || '',
+                  },
+                }));
+              }}
+              className="flex items-center gap-4 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shrink-0"
+            >
+              <div className="flex items-center space-x-1.5 cursor-pointer">
+                <RadioGroupItem value="no" id="3col-toggle-no" />
+                <Label htmlFor="3col-toggle-no" className="text-xs font-semibold cursor-pointer">
+                  No
+                </Label>
+              </div>
+              <div className="flex items-center space-x-1.5 cursor-pointer">
+                <RadioGroupItem value="yes" id="3col-toggle-yes" />
+                <Label htmlFor="3col-toggle-yes" className="text-xs font-semibold cursor-pointer text-indigo-700">
+                  Yes
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+        </div>
+
+        {/* Configuration Interface when Yes is selected */}
+        {is3ColEnabled && (
+          <div className="p-4 bg-indigo-50/40 border border-indigo-200/80 rounded-xl space-y-5">
+            <div className="text-[11px] text-slate-600">
+              Configure Left Side Benches, Middle Benches, and Right Side Benches independently for 3-column rooms.
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {/* B. Left Side Benches */}
+              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-3xs space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                  <span className="font-bold text-xs uppercase tracking-wider text-[#1E2A5E]">
+                    Left Side Benches
+                  </span>
+                  <Badge variant="outline" className="text-[10px] font-semibold bg-indigo-50 text-indigo-700 border-indigo-200">
+                    Column 1
+                  </Badge>
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  Select subjects for Side A, Centre, and Side B:
+                </p>
+
+                <div className="space-y-2.5 pt-1">
+                  {(['sideA', 'center', 'sideB'] as const).map((pos) => {
+                    const posLabel = pos === 'sideA' ? 'Side A' : pos === 'center' ? 'Centre' : 'Side B';
+                    const currentVal =
+                      threeColumnConfig.left?.[pos] ||
+                      (pos === 'center'
+                        ? (sortedSelectedSubjectIds.length >= 2 ? sortedSelectedSubjectIds[1] : 'VACANT')
+                        : threeColumnConfig.leftSubjectId || sortedSelectedSubjectIds[0] || '');
+
+                    return (
+                      <div key={pos} className="p-2 rounded-lg border bg-slate-50/70 border-slate-200">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[11px] font-bold text-slate-700">{posLabel}</span>
+                          {currentVal === 'VACANT' && (
+                            <Badge variant="outline" className="text-[9px] font-semibold bg-amber-50 text-amber-700 border-amber-200">
+                              Vacant
+                            </Badge>
+                          )}
+                        </div>
+
+                        <Select
+                          value={currentVal}
+                          onValueChange={(val) =>
+                            setThreeColumnConfig((prev) => ({
+                              ...prev,
+                              left: {
+                                sideA: prev.left?.sideA || prev.leftSubjectId || sortedSelectedSubjectIds[0] || '',
+                                center: prev.left?.center || (sortedSelectedSubjectIds.length >= 2 ? sortedSelectedSubjectIds[1] : 'VACANT'),
+                                sideB: prev.left?.sideB || prev.leftSubjectId || sortedSelectedSubjectIds[0] || '',
+                                [pos]: val,
+                              },
+                              ...(pos === 'sideA' ? { leftSubjectId: val } : {}),
+                            }))
+                          }
+                        >
+                          <SelectTrigger className="bg-white text-xs font-semibold h-8 border-slate-200">
+                            <SelectValue placeholder={`Select for ${posLabel}`} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {sortedSelectedSubjectIds.map((id, index) => {
+                              const s = subjects.find((sb) => sb.id === id);
+                              const count = studentsBySubject[id]?.length || 0;
+                              const col = getSubjectColor(s?.name, allExamSubjectNames);
+                              return (
+                                <SelectItem key={id} value={id} className="text-xs font-medium">
+                                  <span
+                                    className="inline-block w-2.5 h-2.5 rounded-full mr-1.5 align-middle"
+                                    style={{ backgroundColor: col.accentHex }}
+                                  />
+                                  <span className="font-semibold">{s?.name}</span> ({count} students) — #{index + 1}
+                                </SelectItem>
+                              );
+                            })}
+                            <SelectItem value="VACANT" className="text-xs font-bold text-amber-700 bg-amber-50">
+                              ∅ Vacant / Nil
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* D. Middle Benches – Custom Seat Configuration */}
+              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-3xs space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                  <span className="font-bold text-xs uppercase tracking-wider text-[#1E2A5E]">
+                    Middle Benches
+                  </span>
+                  <Badge variant="outline" className="text-[10px] font-semibold bg-purple-50 text-purple-700 border-purple-200">
+                    Column 2
+                  </Badge>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-[11px] font-bold text-slate-700">Middle Bench Seating Pattern</Label>
+                  <Select
+                    value={middlePattern}
+                    onValueChange={(val: MiddleBenchSeatingPattern) => {
+                      setThreeColumnConfig((prev) => {
+                        const newEnabled =
+                          val === 'allThree'
+                            ? { sideA: true, center: true, sideB: true }
+                            : val === 'centerOnly'
+                              ? { sideA: false, center: true, sideB: false }
+                              : val === 'sideAAndSideB'
+                                ? { sideA: true, center: false, sideB: true }
+                                : prev.middleEnabledSeats || { sideA: true, center: true, sideB: true };
+                        return {
+                          ...prev,
+                          middlePattern: val,
+                          middleEnabledSeats: newEnabled,
+                        };
+                      });
+                    }}
+                  >
+                    <SelectTrigger className="bg-slate-50 text-xs font-semibold h-9 border-slate-200">
+                      <SelectValue placeholder="Select Pattern" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="allThree" className="text-xs font-medium">
+                        1. All Three Seats – Side A, Centre, Side B
+                      </SelectItem>
+                      <SelectItem value="centerOnly" className="text-xs font-medium">
+                        2. Centre Seat Only
+                      </SelectItem>
+                      <SelectItem value="sideAAndSideB" className="text-xs font-medium">
+                        3. Side A and Side B Only
+                      </SelectItem>
+                      <SelectItem value="custom" className="text-xs font-medium">
+                        4. Custom Seat Selection
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* If Custom Seat Selection, allow independent checkbox enabling */}
+                {middlePattern === 'custom' && (
+                  <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-200 space-y-1.5">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                      Enable / Disable Positions
+                    </span>
+                    <div className="flex items-center gap-4">
+                      <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 cursor-pointer">
+                        <Checkbox
+                          checked={middleEnabled.sideA}
+                          onCheckedChange={(checked) =>
+                            setThreeColumnConfig((prev) => ({
+                              ...prev,
+                              middleEnabledSeats: {
+                                ...(prev.middleEnabledSeats || { sideA: true, center: true, sideB: true }),
+                                sideA: Boolean(checked),
+                              },
+                            }))
+                          }
+                        />
+                        Side A
+                      </label>
+
+                      <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 cursor-pointer">
+                        <Checkbox
+                          checked={middleEnabled.center}
+                          onCheckedChange={(checked) =>
+                            setThreeColumnConfig((prev) => ({
+                              ...prev,
+                              middleEnabledSeats: {
+                                ...(prev.middleEnabledSeats || { sideA: true, center: true, sideB: true }),
+                                center: Boolean(checked),
+                              },
+                            }))
+                          }
+                        />
+                        Centre
+                      </label>
+
+                      <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 cursor-pointer">
+                        <Checkbox
+                          checked={middleEnabled.sideB}
+                          onCheckedChange={(checked) =>
+                            setThreeColumnConfig((prev) => ({
+                              ...prev,
+                              middleEnabledSeats: {
+                                ...(prev.middleEnabledSeats || { sideA: true, center: true, sideB: true }),
+                                sideB: Boolean(checked),
+                              },
+                            }))
+                          }
+                        />
+                        Side B
+                      </label>
+                    </div>
+                  </div>
+                )}
+
+                {/* Per-Position Subject Dropdowns */}
+                <div className="space-y-2.5 pt-1">
+                  {(['sideA', 'center', 'sideB'] as const).map((pos) => {
+                    const isEnabled =
+                      middlePattern === 'allThree'
+                        ? true
+                        : middlePattern === 'centerOnly'
+                          ? pos === 'center'
+                          : middlePattern === 'sideAAndSideB'
+                            ? pos === 'sideA' || pos === 'sideB'
+                            : Boolean(middleEnabled[pos]);
+
+                    const posLabel = pos === 'sideA' ? 'Side A' : pos === 'center' ? 'Centre' : 'Side B';
+                    const currentVal = middleSeats[pos] || sortedSelectedSubjectIds[pos === 'sideA' ? 0 : pos === 'center' ? 1 : 2] || sortedSelectedSubjectIds[0] || '';
+
+                    return (
+                      <div key={pos} className={`p-2 rounded-lg border ${isEnabled ? "bg-slate-50/70 border-slate-200" : "bg-slate-100/60 border-slate-200 opacity-60"}`}>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[11px] font-bold text-slate-700">{posLabel}</span>
+                          {!isEnabled && (
+                            <Badge variant="outline" className="text-[9px] font-semibold bg-slate-200 text-slate-500 border-slate-300">
+                              Disabled
+                            </Badge>
+                          )}
+                        </div>
+
+                        {isEnabled ? (
+                          <Select
+                            value={currentVal}
+                            onValueChange={(val) =>
+                              setThreeColumnConfig((prev) => ({
+                                ...prev,
+                                middleSeats: {
+                                  ...(prev.middleSeats || {
+                                    sideA: sortedSelectedSubjectIds[0] || '',
+                                    center: sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0] || '',
+                                    sideB: sortedSelectedSubjectIds[2] || sortedSelectedSubjectIds[0] || '',
+                                  }),
+                                  [pos]: val,
+                                },
+                                middle: {
+                                  sideA: prev.middle?.sideA || prev.middleSeats?.sideA || '',
+                                  center: prev.middle?.center || prev.middleSeats?.center || '',
+                                  sideB: prev.middle?.sideB || prev.middleSeats?.sideB || '',
+                                  [pos]: val,
+                                },
+                              }))
+                            }
+                          >
+                            <SelectTrigger className="bg-white text-xs font-semibold h-8 border-slate-200">
+                              <SelectValue placeholder={`Select for ${posLabel}`} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {sortedSelectedSubjectIds.map((id, index) => {
+                                const s = subjects.find((sb) => sb.id === id);
+                                const count = studentsBySubject[id]?.length || 0;
+                                const col = getSubjectColor(s?.name, allExamSubjectNames);
+                                return (
+                                  <SelectItem key={id} value={id} className="text-xs font-medium">
+                                    <span
+                                      className="inline-block w-2.5 h-2.5 rounded-full mr-1.5 align-middle"
+                                      style={{ backgroundColor: col.accentHex }}
+                                    />
+                                    <span className="font-semibold">{s?.name}</span> ({count} students) — #{index + 1}
+                                  </SelectItem>
+                                );
+                              })}
+                              <SelectItem value="VACANT" className="text-xs font-bold text-amber-700 bg-amber-50">
+                                ∅ Vacant / Nil
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <div className="text-[10px] text-slate-400 italic py-1">
+                            Position disabled. No students will be allocated.
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* C. Right Side Benches */}
+              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-3xs space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                  <span className="font-bold text-xs uppercase tracking-wider text-[#1E2A5E]">
+                    Right Side Benches
+                  </span>
+                  <Badge variant="outline" className="text-[10px] font-semibold bg-indigo-50 text-indigo-700 border-indigo-200">
+                    Column 3
+                  </Badge>
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  Select subjects for Side A, Centre, and Side B:
+                </p>
+
+                <div className="space-y-2.5 pt-1">
+                  {(['sideA', 'center', 'sideB'] as const).map((pos) => {
+                    const posLabel = pos === 'sideA' ? 'Side A' : pos === 'center' ? 'Centre' : 'Side B';
+                    const currentVal =
+                      threeColumnConfig.right?.[pos] ||
+                      (pos === 'center'
+                        ? (sortedSelectedSubjectIds[0] || 'VACANT')
+                        : threeColumnConfig.rightSubjectId || sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0] || '');
+
+                    return (
+                      <div key={pos} className="p-2 rounded-lg border bg-slate-50/70 border-slate-200">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[11px] font-bold text-slate-700">{posLabel}</span>
+                          {currentVal === 'VACANT' && (
+                            <Badge variant="outline" className="text-[9px] font-semibold bg-amber-50 text-amber-700 border-amber-200">
+                              Vacant
+                            </Badge>
+                          )}
+                        </div>
+
+                        <Select
+                          value={currentVal}
+                          onValueChange={(val) =>
+                            setThreeColumnConfig((prev) => ({
+                              ...prev,
+                              right: {
+                                sideA: prev.right?.sideA || prev.rightSubjectId || sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0] || '',
+                                center: prev.right?.center || sortedSelectedSubjectIds[0] || 'VACANT',
+                                sideB: prev.right?.sideB || prev.rightSubjectId || sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0] || '',
+                                [pos]: val,
+                              },
+                              ...(pos === 'sideA' ? { rightSubjectId: val } : {}),
+                            }))
+                          }
+                        >
+                          <SelectTrigger className="bg-white text-xs font-semibold h-8 border-slate-200">
+                            <SelectValue placeholder={`Select for ${posLabel}`} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {sortedSelectedSubjectIds.map((id, index) => {
+                              const s = subjects.find((sb) => sb.id === id);
+                              const count = studentsBySubject[id]?.length || 0;
+                              const col = getSubjectColor(s?.name, allExamSubjectNames);
+                              return (
+                                <SelectItem key={id} value={id} className="text-xs font-medium">
+                                  <span
+                                    className="inline-block w-2.5 h-2.5 rounded-full mr-1.5 align-middle"
+                                    style={{ backgroundColor: col.accentHex }}
+                                  />
+                                  <span className="font-semibold">{s?.name}</span> ({count} students) — #{index + 1}
+                                </SelectItem>
+                              );
+                            })}
+                            <SelectItem value="VACANT" className="text-xs font-bold text-amber-700 bg-amber-50">
+                              ∅ Vacant / Nil
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   // Wizard Step Items
@@ -1379,7 +1823,7 @@ export default function SeatingAllocationWizardPage() {
 
       {/* STEP 4 — ASSIGN SUBJECTS TO POSITIONS */}
       {currentStep === 4 && (
-        <div className={`bg-white border border-slate-200 rounded-xl p-6 shadow-xs mx-auto space-y-6 transition-all ${isMultiSubjectMode || isThreeColumnMode ? "max-w-4xl" : "max-w-2xl"}`}>
+        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs mx-auto space-y-6 transition-all max-w-4xl">
           {/* Header & Mode Switcher */}
           <div className="border-b border-slate-100 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
@@ -1389,25 +1833,23 @@ export default function SeatingAllocationWizardPage() {
                 </h2>
                 {isMultiSubjectMode && (
                   <Badge className="bg-indigo-600 text-white text-[10px] font-bold tracking-wider uppercase px-2 py-0.5">
-                    Sequential 4-Row System
+                    Mode 2: Sequential 4-Row System
                   </Badge>
                 )}
-                {isThreeColumnMode && (
-                  <Badge className="bg-purple-600 text-white text-[10px] font-bold tracking-wider uppercase px-2 py-0.5">
-                    3-Column Room Pattern
+                {!isMultiSubjectMode && (
+                  <Badge className="bg-[#1E2A5E] text-white text-[10px] font-bold tracking-wider uppercase px-2 py-0.5">
+                    Mode 1: Standard Allocation
                   </Badge>
                 )}
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
                 {isMultiSubjectMode
                   ? "Configure 4 sequential rows for Side A, Centre, and Side B. The system advances immediately when either subject finishes."
-                  : isThreeColumnMode
-                    ? "Configure seating pattern across Left Side Benches, Middle Benches, and Right Side Benches."
-                    : "Specify which subject occupies each physical seat slot on the bench."}
+                  : "Specify which subject occupies each physical seat slot on the bench with automatic subsequent transitions."}
               </p>
             </div>
 
-            {/* Mode Switcher Buttons */}
+            {/* Mode Switcher Buttons - Retaining ONLY TWO Modes */}
             <div className="flex items-center gap-2">
               <Button
                 type="button"
@@ -1420,25 +1862,6 @@ export default function SeatingAllocationWizardPage() {
                   }`}
               >
                 Standard (1 or 2 Subjects)
-              </Button>
-
-              <Button
-                type="button"
-                size="sm"
-                variant={step4Mode === 'threeColumn' ? "default" : "outline"}
-                onClick={() => {
-                  setStep4Mode('threeColumn');
-                  setThreeColumnConfig((prev) => {
-                    if (prev.enabled && prev.left.sideA) return prev;
-                    return generateDefault3ColumnConfig(sortedSelectedSubjectIds);
-                  });
-                }}
-                className={`text-xs h-8 font-bold ${step4Mode === 'threeColumn'
-                    ? "bg-[#1E2A5E] text-white hover:bg-[#151D42]"
-                    : "text-slate-600 border-slate-200"
-                  }`}
-              >
-                3-Column Room
               </Button>
 
               <Button
@@ -1507,18 +1930,29 @@ export default function SeatingAllocationWizardPage() {
                         ? "bg-purple-600 text-white font-bold"
                         : "bg-slate-200 text-slate-700 font-semibold";
 
+                const subColor = getSubjectColor(s?.name, allExamSubjectNames);
+
                 return (
                   <div
                     key={id}
-                    className="flex items-center justify-between gap-2 bg-white border border-indigo-100 hover:border-indigo-300 p-2.5 rounded-lg shadow-3xs transition-all"
+                    className="flex items-center justify-between gap-2 bg-white border p-2.5 rounded-lg shadow-3xs transition-all"
+                    style={{ borderColor: subColor.borderCss }}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] shrink-0 shadow-3xs ${rankBadgeClass}`}>
+                      <span
+                        className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 shadow-3xs text-white"
+                        style={{ backgroundColor: subColor.accentHex }}
+                      >
                         {index + 1}
                       </span>
                       <div className="min-w-0">
-                        <div className="font-headline font-bold text-xs text-slate-900 truncate" title={s?.name}>
-                          {s?.name || 'Subject'}
+                        <div className="font-headline font-bold text-xs truncate flex items-center gap-1.5" title={s?.name}>
+                          <span
+                            className="px-1.5 py-0.5 rounded text-[10px] font-bold border"
+                            style={{ backgroundColor: subColor.bgCss, color: subColor.textCss, borderColor: subColor.borderCss }}
+                          >
+                            {s?.name || 'Subject'}
+                          </span>
                         </div>
                         <div className="text-[10px] text-slate-500 font-medium">
                           {rankLabel} {s?.code ? `• ${s.code}` : ''}
@@ -1527,7 +1961,8 @@ export default function SeatingAllocationWizardPage() {
                     </div>
                     <Badge
                       variant="secondary"
-                      className="bg-indigo-50 text-indigo-700 font-mono text-[11px] font-bold py-0.5 px-2 shrink-0 border border-indigo-100"
+                      className="font-mono text-[11px] font-bold py-0.5 px-2 shrink-0 border"
+                      style={{ backgroundColor: subColor.bgCss, color: subColor.textCss, borderColor: subColor.borderCss }}
                     >
                       {count} {count === 1 ? 'student' : 'students'}
                     </Badge>
@@ -1598,147 +2033,271 @@ export default function SeatingAllocationWizardPage() {
               )}
 
               {pattern === '2_PER_BENCH' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  <div className="p-4 bg-slate-50/80 rounded-xl border border-slate-200 space-y-2">
-                    <Label className="text-xs font-bold text-slate-800">
-                      SIDE A &rarr; Select Subject (Highest Strength Priority)
-                    </Label>
-                    <Select
-                      value={positionMapping.SIDE_A || sortedSelectedSubjectIds[0] || ""}
-                      onValueChange={(val) =>
-                        setPositionMapping((prev) => ({ ...prev, SIDE_A: val }))
-                      }
-                    >
-                      <SelectTrigger className="bg-white text-xs font-semibold h-9">
-                        <SelectValue placeholder="Select Subject for Side A" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sortedSelectedSubjectIds.map((id, index) => {
-                          const s = subjects.find((sb) => sb.id === id);
-                          const count = studentsBySubject[id]?.length || 0;
-                          return (
-                            <SelectItem key={id} value={id} className="text-xs">
-                              <span className="font-semibold">{s?.name}</span> ({count} students) — #{index + 1}
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="space-y-4">
+                  <div className="p-4 bg-slate-50/80 rounded-xl border border-slate-200 space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-2">
+                      <div>
+                        <span className="font-bold text-xs text-slate-800 uppercase tracking-wider">
+                          2 Students per Bench Allocation Rule
+                        </span>
+                        <p className="text-[11px] text-slate-500">
+                          Side A and Side B must receive the same subject. Centre is kept vacant throughout. Complete all students of Subject 1 before beginning Subject 2.
+                        </p>
+                      </div>
+                      <Badge variant="outline" className="text-[10px] font-bold text-indigo-700 bg-indigo-50 border-indigo-200 self-start sm:self-auto">
+                        Same Subject on Side A & B
+                      </Badge>
+                    </div>
 
-                  <div className="p-4 bg-slate-50/80 rounded-xl border border-slate-200 space-y-2">
-                    <Label className="text-xs font-bold text-slate-800">
-                      SIDE B &rarr; Select Subject (Second-Highest Priority)
-                    </Label>
-                    <Select
-                      value={positionMapping.SIDE_B || sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0] || ""}
-                      onValueChange={(val) =>
-                        setPositionMapping((prev) => ({ ...prev, SIDE_B: val }))
-                      }
-                    >
-                      <SelectTrigger className="bg-white text-xs font-semibold h-9">
-                        <SelectValue placeholder="Select Subject for Side B" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sortedSelectedSubjectIds.map((id, index) => {
-                          const s = subjects.find((sb) => sb.id === id);
-                          const count = studentsBySubject[id]?.length || 0;
-                          return (
-                            <SelectItem key={id} value={id} className="text-xs">
-                              <span className="font-semibold">{s?.name}</span> ({count} students) — #{index + 1}
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+                      {/* Subject 1 */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold text-slate-800 flex items-center justify-between">
+                          <span>Subject 1 (Highest Strength)</span>
+                          <span className="text-[10px] text-slate-500 font-normal">Side A & Side B</span>
+                        </Label>
+                        <Select
+                          value={positionMapping.SIDE_A || sortedSelectedSubjectIds[0] || ""}
+                          onValueChange={(val) =>
+                            setPositionMapping((prev) => ({ ...prev, SIDE_A: val }))
+                          }
+                        >
+                          <SelectTrigger className="bg-white text-xs font-semibold h-9">
+                            <SelectValue placeholder="Select Subject 1" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {sortedSelectedSubjectIds.map((id, index) => {
+                              const s = subjects.find((sb) => sb.id === id);
+                              const count = studentsBySubject[id]?.length || 0;
+                              const col = getSubjectColor(s?.name, allExamSubjectNames);
+                              return (
+                                <SelectItem key={id} value={id} className="text-xs">
+                                  <span
+                                    className="inline-block w-2.5 h-2.5 rounded-full mr-1.5 align-middle"
+                                    style={{ backgroundColor: col.accentHex }}
+                                  />
+                                  <span className="font-semibold">{s?.name}</span> ({count} students) — #{index + 1}
+                                </SelectItem>
+                              );
+                            })}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Subject 2 */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold text-slate-800 flex items-center justify-between">
+                          <span>Subject 2 (Subsequent Allocation)</span>
+                          <span className="text-[10px] text-slate-500 font-normal">Allocated to Side A & B when Subject 1 finishes</span>
+                        </Label>
+                        <Select
+                          value={positionMapping.SIDE_B || sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0] || ""}
+                          onValueChange={(val) =>
+                            setPositionMapping((prev) => ({ ...prev, SIDE_B: val }))
+                          }
+                        >
+                          <SelectTrigger className="bg-white text-xs font-semibold h-9">
+                            <SelectValue placeholder="Select Subject 2" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {sortedSelectedSubjectIds.map((id, index) => {
+                              const s = subjects.find((sb) => sb.id === id);
+                              const count = studentsBySubject[id]?.length || 0;
+                              const col = getSubjectColor(s?.name, allExamSubjectNames);
+                              return (
+                                <SelectItem key={id} value={id} className="text-xs">
+                                  <span
+                                    className="inline-block w-2.5 h-2.5 rounded-full mr-1.5 align-middle"
+                                    style={{ backgroundColor: col.accentHex }}
+                                  />
+                                  <span className="font-semibold">{s?.name}</span> ({count} students) — #{index + 1}
+                                </SelectItem>
+                              );
+                            })}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    {/* Layout Demonstration Visual */}
+                    <div className="mt-3 p-3 bg-white rounded-lg border border-slate-200 text-xs space-y-2">
+                      <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                        Bench Layout Demonstration
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                        <div className="p-2.5 rounded-md bg-slate-50 border border-slate-200 space-y-1">
+                          <span className="text-[10px] font-bold text-indigo-700 block">
+                            Subject 1:
+                          </span>
+                          <div className="flex items-center gap-1 font-mono font-bold text-center text-xs">
+                            <span className="flex-1 py-1.5 px-1 bg-indigo-100 text-indigo-900 rounded border border-indigo-200 truncate">
+                              {subjects.find((s) => s.id === (positionMapping.SIDE_A || sortedSelectedSubjectIds[0]))?.name || 'Subject 1'}
+                            </span>
+                            <span className="flex-1 py-1.5 px-1 bg-slate-200 text-slate-500 rounded text-[10px] border border-slate-300">
+                              Vacant (Centre)
+                            </span>
+                            <span className="flex-1 py-1.5 px-1 bg-indigo-100 text-indigo-900 rounded border border-indigo-200 truncate">
+                              {subjects.find((s) => s.id === (positionMapping.SIDE_A || sortedSelectedSubjectIds[0]))?.name || 'Subject 1'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="p-2.5 rounded-md bg-slate-50 border border-slate-200 space-y-1">
+                          <span className="text-[10px] font-bold text-emerald-700 block">
+                            After Subject 1 is completed:
+                          </span>
+                          <div className="flex items-center gap-1 font-mono font-bold text-center text-xs">
+                            <span className="flex-1 py-1.5 px-1 bg-emerald-100 text-emerald-900 rounded border border-emerald-200 truncate">
+                              {subjects.find((s) => s.id === (positionMapping.SIDE_B || sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0]))?.name || 'Subject 2'}
+                            </span>
+                            <span className="flex-1 py-1.5 px-1 bg-slate-200 text-slate-500 rounded text-[10px] border border-slate-300">
+                              Vacant (Centre)
+                            </span>
+                            <span className="flex-1 py-1.5 px-1 bg-emerald-100 text-emerald-900 rounded border border-emerald-200 truncate">
+                              {subjects.find((s) => s.id === (positionMapping.SIDE_B || sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0]))?.name || 'Subject 2'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
 
               {pattern === '3_PER_BENCH' && (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className="p-3.5 bg-slate-50/80 rounded-xl border border-slate-200 space-y-2">
-                    <Label className="text-xs font-bold text-slate-800">
-                      SIDE A &rarr; Subject
-                    </Label>
-                    <Select
-                      value={positionMapping.SIDE_A || sortedSelectedSubjectIds[0] || ""}
-                      onValueChange={(val) =>
-                        setPositionMapping((prev) => ({ ...prev, SIDE_A: val }))
-                      }
-                    >
-                      <SelectTrigger className="bg-white text-xs font-semibold h-9">
-                        <SelectValue placeholder="Side A" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sortedSelectedSubjectIds.map((id, index) => {
-                          const s = subjects.find((sb) => sb.id === id);
-                          const count = studentsBySubject[id]?.length || 0;
-                          return (
-                            <SelectItem key={id} value={id} className="text-xs">
-                              <span className="font-semibold">{s?.name}</span> ({count}) — #{index + 1}
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="space-y-4">
+                  <div className="p-4 bg-slate-50/80 rounded-xl border border-slate-200 space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-2">
+                      <div>
+                        <span className="font-bold text-xs text-slate-800 uppercase tracking-wider">
+                          3 Students per Bench (Sandwich Rule & Automatic Transition)
+                        </span>
+                        <p className="text-[11px] text-slate-500">
+                          Initial allocation follows the Sandwich Rule [ Subject 1 | Subject 2 | Subject 1 ]. After all students of Subject 1 finish, Subject 2 transitions to Side A & Side B with Centre vacant.
+                        </p>
+                      </div>
+                      <Badge variant="outline" className="text-[10px] font-bold text-purple-700 bg-purple-50 border-purple-200 self-start sm:self-auto">
+                        Sandwich Pattern
+                      </Badge>
+                    </div>
 
-                  <div className="p-3.5 bg-slate-50/80 rounded-xl border border-slate-200 space-y-2">
-                    <Label className="text-xs font-bold text-slate-800">
-                      CENTER &rarr; Subject (2nd Highest)
-                    </Label>
-                    <Select
-                      value={positionMapping.CENTER || sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0] || ""}
-                      onValueChange={(val) =>
-                        setPositionMapping((prev) => ({ ...prev, CENTER: val }))
-                      }
-                    >
-                      <SelectTrigger className="bg-white text-xs font-semibold h-9">
-                        <SelectValue placeholder="Center" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sortedSelectedSubjectIds.map((id, index) => {
-                          const s = subjects.find((sb) => sb.id === id);
-                          const count = studentsBySubject[id]?.length || 0;
-                          return (
-                            <SelectItem key={id} value={id} className="text-xs">
-                              <span className="font-semibold">{s?.name}</span> ({count}) — #{index + 1}
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+                      {/* Subject 1 */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold text-slate-800 flex items-center justify-between">
+                          <span>Subject 1 (Highest Strength)</span>
+                          <span className="text-[10px] text-slate-500 font-normal">Side A & Side B</span>
+                        </Label>
+                        <Select
+                          value={positionMapping.SIDE_A || sortedSelectedSubjectIds[0] || ""}
+                          onValueChange={(val) =>
+                            setPositionMapping((prev) => ({ ...prev, SIDE_A: val, SIDE_B: val }))
+                          }
+                        >
+                          <SelectTrigger className="bg-white text-xs font-semibold h-9">
+                            <SelectValue placeholder="Select Subject 1" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {sortedSelectedSubjectIds.map((id, index) => {
+                              const s = subjects.find((sb) => sb.id === id);
+                              const count = studentsBySubject[id]?.length || 0;
+                              const col = getSubjectColor(s?.name, allExamSubjectNames);
+                              return (
+                                <SelectItem key={id} value={id} className="text-xs">
+                                  <span
+                                    className="inline-block w-2.5 h-2.5 rounded-full mr-1.5 align-middle"
+                                    style={{ backgroundColor: col.accentHex }}
+                                  />
+                                  <span className="font-semibold">{s?.name}</span> ({count} students) — #{index + 1}
+                                </SelectItem>
+                              );
+                            })}
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-                  <div className="p-3.5 bg-slate-50/80 rounded-xl border border-slate-200 space-y-2">
-                    <Label className="text-xs font-bold text-slate-800">
-                      SIDE B &rarr; Subject (Highest Priority)
-                    </Label>
-                    <Select
-                      value={positionMapping.SIDE_B || sortedSelectedSubjectIds[0] || ""}
-                      onValueChange={(val) =>
-                        setPositionMapping((prev) => ({ ...prev, SIDE_B: val }))
-                      }
-                    >
-                      <SelectTrigger className="bg-white text-xs font-semibold h-9">
-                        <SelectValue placeholder="Side B" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sortedSelectedSubjectIds.map((id, index) => {
-                          const s = subjects.find((sb) => sb.id === id);
-                          const count = studentsBySubject[id]?.length || 0;
-                          return (
-                            <SelectItem key={id} value={id} className="text-xs">
-                              <span className="font-semibold">{s?.name}</span> ({count}) — #{index + 1}
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
+                      {/* Subject 2 */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold text-slate-800 flex items-center justify-between">
+                          <span>Subject 2 (Sandwich Position)</span>
+                          <span className="text-[10px] text-slate-500 font-normal">Centre Seat</span>
+                        </Label>
+                        <Select
+                          value={positionMapping.CENTER || sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0] || ""}
+                          onValueChange={(val) =>
+                            setPositionMapping((prev) => ({ ...prev, CENTER: val }))
+                          }
+                        >
+                          <SelectTrigger className="bg-white text-xs font-semibold h-9">
+                            <SelectValue placeholder="Select Subject 2" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {sortedSelectedSubjectIds.map((id, index) => {
+                              const s = subjects.find((sb) => sb.id === id);
+                              const count = studentsBySubject[id]?.length || 0;
+                              const col = getSubjectColor(s?.name, allExamSubjectNames);
+                              return (
+                                <SelectItem key={id} value={id} className="text-xs">
+                                  <span
+                                    className="inline-block w-2.5 h-2.5 rounded-full mr-1.5 align-middle"
+                                    style={{ backgroundColor: col.accentHex }}
+                                  />
+                                  <span className="font-semibold">{s?.name}</span> ({count} students) — #{index + 1}
+                                </SelectItem>
+                              );
+                            })}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    {/* Layout Demonstration Visual */}
+                    <div className="mt-3 p-3 bg-white rounded-lg border border-slate-200 text-xs space-y-2">
+                      <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                        Bench Layout Demonstration
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                        <div className="p-2.5 rounded-md bg-slate-50 border border-slate-200 space-y-1">
+                          <span className="text-[10px] font-bold text-purple-700 block">
+                            Initial (Sandwich Rule):
+                          </span>
+                          <div className="flex items-center gap-1 font-mono font-bold text-center text-xs">
+                            <span className="flex-1 py-1.5 px-1 bg-indigo-100 text-indigo-900 rounded border border-indigo-200 truncate">
+                              {subjects.find((s) => s.id === (positionMapping.SIDE_A || sortedSelectedSubjectIds[0]))?.name || 'Subject 1'}
+                            </span>
+                            <span className="flex-1 py-1.5 px-1 bg-purple-100 text-purple-900 rounded border border-purple-200 truncate">
+                              {subjects.find((s) => s.id === (positionMapping.CENTER || sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0]))?.name || 'Subject 2'}
+                            </span>
+                            <span className="flex-1 py-1.5 px-1 bg-indigo-100 text-indigo-900 rounded border border-indigo-200 truncate">
+                              {subjects.find((s) => s.id === (positionMapping.SIDE_A || sortedSelectedSubjectIds[0]))?.name || 'Subject 1'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="p-2.5 rounded-md bg-slate-50 border border-slate-200 space-y-1">
+                          <span className="text-[10px] font-bold text-emerald-700 block">
+                            After Subject 1 is completed:
+                          </span>
+                          <div className="flex items-center gap-1 font-mono font-bold text-center text-xs">
+                            <span className="flex-1 py-1.5 px-1 bg-purple-100 text-purple-900 rounded border border-purple-200 truncate">
+                              {subjects.find((s) => s.id === (positionMapping.CENTER || sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0]))?.name || 'Subject 2'}
+                            </span>
+                            <span className="flex-1 py-1.5 px-1 bg-slate-200 text-slate-500 rounded text-[10px] border border-slate-300">
+                              Vacant (Centre)
+                            </span>
+                            <span className="flex-1 py-1.5 px-1 bg-purple-100 text-purple-900 rounded border border-purple-200 truncate">
+                              {subjects.find((s) => s.id === (positionMapping.CENTER || sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0]))?.name || 'Subject 2'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
+
+              {/* Integrated 3-Column Examination Room Configuration for Mode 1 */}
+              {renderThreeColumnSegment()}
 
               {/* Callout to Multi-Subject System */}
               <div className="p-4 bg-indigo-50/80 border border-indigo-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
@@ -1767,344 +2326,7 @@ export default function SeatingAllocationWizardPage() {
             </div>
           )}
 
-          {/* MODE C: 3-COLUMN ROOM PATTERN (Left | Middle | Right) */}
-          {step4Mode === 'threeColumn' && (
-            <div className="space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1 border-b border-slate-100">
-                <div>
-                  <h3 className="font-headline font-bold text-xs uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
-                    <Columns3 className="w-3.5 h-3.5 text-indigo-600" />
-                    3-Column Examination Room Pattern
-                  </h3>
-                  <p className="text-[11px] text-slate-500">
-                    Assign subjects for Left Side Benches, Middle Benches, and Right Side Benches.
-                  </p>
-                </div>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleAutoArrangeSafePattern}
-                  className="text-[11px] font-bold h-8 gap-1.5 text-indigo-700 border-indigo-300 bg-indigo-50/70 hover:bg-indigo-100/80 shadow-3xs self-start sm:self-auto"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-                  Auto Arrange Safe Pattern
-                </Button>
-              </div>
-
-              {/* 3 Column Sections: Left | Middle | Right */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                {/* 1. Left Side Benches */}
-                <div className="p-4 bg-slate-50/80 rounded-xl border border-slate-200 space-y-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-slate-200">
-                    <span className="font-bold text-xs uppercase tracking-wider text-[#1E2A5E]">
-                      Left Side Benches
-                    </span>
-                    <Badge variant="outline" className="text-[10px] font-semibold bg-white text-indigo-700 border-indigo-200">
-                      Column 1
-                    </Badge>
-                  </div>
-                  {/* Side A */}
-                  <div className="space-y-1">
-                    <Label className="text-[11px] font-bold text-slate-700">Side A &rarr; Subject</Label>
-                    <Select
-                      value={threeColumnConfig.left.sideA || sortedSelectedSubjectIds[0] || ""}
-                      onValueChange={(val) =>
-                        setThreeColumnConfig((prev) => ({
-                          ...prev,
-                          enabled: true,
-                          left: { ...prev.left, sideA: val },
-                        }))
-                      }
-                    >
-                      <SelectTrigger className="bg-white text-xs font-semibold h-9">
-                        <SelectValue placeholder="Side A" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sortedSelectedSubjectIds.map((id, index) => {
-                          const s = subjects.find((sb) => sb.id === id);
-                          const count = studentsBySubject[id]?.length || 0;
-                          return (
-                            <SelectItem key={id} value={id} className="text-xs">
-                              <span className="font-semibold">{s?.name}</span> ({count}) — #{index + 1}
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {/* Center */}
-                  <div className="space-y-1">
-                    <Label className="text-[11px] font-bold text-slate-700">Center &rarr; Subject</Label>
-                    <Select
-                      value={threeColumnConfig.left.center || sortedSelectedSubjectIds[1] || "VACANT"}
-                      onValueChange={(val) =>
-                        setThreeColumnConfig((prev) => ({
-                          ...prev,
-                          enabled: true,
-                          left: { ...prev.left, center: val },
-                        }))
-                      }
-                    >
-                      <SelectTrigger className="bg-white text-xs font-semibold h-9">
-                        <SelectValue placeholder="Center" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sortedSelectedSubjectIds.map((id, index) => {
-                          const s = subjects.find((sb) => sb.id === id);
-                          const count = studentsBySubject[id]?.length || 0;
-                          return (
-                            <SelectItem key={id} value={id} className="text-xs">
-                              <span className="font-semibold">{s?.name}</span> ({count}) — #{index + 1}
-                            </SelectItem>
-                          );
-                        })}
-                        <SelectItem value="VACANT" className="text-xs font-bold text-amber-700 bg-amber-50">
-                          ∅ Vacant / NIL
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {/* Side B */}
-                  <div className="space-y-1">
-                    <Label className="text-[11px] font-bold text-slate-700">Side B &rarr; Subject</Label>
-                    <Select
-                      value={threeColumnConfig.left.sideB || sortedSelectedSubjectIds[0] || ""}
-                      onValueChange={(val) =>
-                        setThreeColumnConfig((prev) => ({
-                          ...prev,
-                          enabled: true,
-                          left: { ...prev.left, sideB: val },
-                        }))
-                      }
-                    >
-                      <SelectTrigger className="bg-white text-xs font-semibold h-9">
-                        <SelectValue placeholder="Side B" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sortedSelectedSubjectIds.map((id, index) => {
-                          const s = subjects.find((sb) => sb.id === id);
-                          const count = studentsBySubject[id]?.length || 0;
-                          return (
-                            <SelectItem key={id} value={id} className="text-xs">
-                              <span className="font-semibold">{s?.name}</span> ({count}) — #{index + 1}
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* 2. Middle Benches */}
-                <div className="p-4 bg-indigo-50/40 rounded-xl border border-indigo-200/80 space-y-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-indigo-200">
-                    <span className="font-bold text-xs uppercase tracking-wider text-indigo-900">
-                      Middle Benches
-                    </span>
-                    <Badge variant="outline" className="text-[10px] font-semibold bg-white text-purple-700 border-purple-200">
-                      Column 2
-                    </Badge>
-                  </div>
-                  {/* Side A */}
-                  <div className="space-y-1">
-                    <Label className="text-[11px] font-bold text-slate-700">Side A &rarr; Subject</Label>
-                    <Select
-                      value={threeColumnConfig.middle.sideA || sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0] || ""}
-                      onValueChange={(val) =>
-                        setThreeColumnConfig((prev) => ({
-                          ...prev,
-                          enabled: true,
-                          middle: { ...prev.middle, sideA: val },
-                        }))
-                      }
-                    >
-                      <SelectTrigger className="bg-white text-xs font-semibold h-9">
-                        <SelectValue placeholder="Side A" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sortedSelectedSubjectIds.map((id, index) => {
-                          const s = subjects.find((sb) => sb.id === id);
-                          const count = studentsBySubject[id]?.length || 0;
-                          return (
-                            <SelectItem key={id} value={id} className="text-xs">
-                              <span className="font-semibold">{s?.name}</span> ({count}) — #{index + 1}
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {/* Center */}
-                  <div className="space-y-1">
-                    <Label className="text-[11px] font-bold text-slate-700">Center &rarr; Subject</Label>
-                    <Select
-                      value={threeColumnConfig.middle.center || sortedSelectedSubjectIds[0] || "VACANT"}
-                      onValueChange={(val) =>
-                        setThreeColumnConfig((prev) => ({
-                          ...prev,
-                          enabled: true,
-                          middle: { ...prev.middle, center: val },
-                        }))
-                      }
-                    >
-                      <SelectTrigger className="bg-white text-xs font-semibold h-9">
-                        <SelectValue placeholder="Center" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sortedSelectedSubjectIds.map((id, index) => {
-                          const s = subjects.find((sb) => sb.id === id);
-                          const count = studentsBySubject[id]?.length || 0;
-                          return (
-                            <SelectItem key={id} value={id} className="text-xs">
-                              <span className="font-semibold">{s?.name}</span> ({count}) — #{index + 1}
-                            </SelectItem>
-                          );
-                        })}
-                        <SelectItem value="VACANT" className="text-xs font-bold text-amber-700 bg-amber-50">
-                          ∅ Vacant / NIL
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {/* Side B */}
-                  <div className="space-y-1">
-                    <Label className="text-[11px] font-bold text-slate-700">Side B &rarr; Subject</Label>
-                    <Select
-                      value={threeColumnConfig.middle.sideB || sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0] || ""}
-                      onValueChange={(val) =>
-                        setThreeColumnConfig((prev) => ({
-                          ...prev,
-                          enabled: true,
-                          middle: { ...prev.middle, sideB: val },
-                        }))
-                      }
-                    >
-                      <SelectTrigger className="bg-white text-xs font-semibold h-9">
-                        <SelectValue placeholder="Side B" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sortedSelectedSubjectIds.map((id, index) => {
-                          const s = subjects.find((sb) => sb.id === id);
-                          const count = studentsBySubject[id]?.length || 0;
-                          return (
-                            <SelectItem key={id} value={id} className="text-xs">
-                              <span className="font-semibold">{s?.name}</span> ({count}) — #{index + 1}
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* 3. Right Side Benches */}
-                <div className="p-4 bg-slate-50/80 rounded-xl border border-slate-200 space-y-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-slate-200">
-                    <span className="font-bold text-xs uppercase tracking-wider text-[#1E2A5E]">
-                      Right Side Benches
-                    </span>
-                    <Badge variant="outline" className="text-[10px] font-semibold bg-white text-indigo-700 border-indigo-200">
-                      Column 3
-                    </Badge>
-                  </div>
-                  {/* Side A */}
-                  <div className="space-y-1">
-                    <Label className="text-[11px] font-bold text-slate-700">Side A &rarr; Subject</Label>
-                    <Select
-                      value={threeColumnConfig.right.sideA || sortedSelectedSubjectIds[0] || ""}
-                      onValueChange={(val) =>
-                        setThreeColumnConfig((prev) => ({
-                          ...prev,
-                          enabled: true,
-                          right: { ...prev.right, sideA: val },
-                        }))
-                      }
-                    >
-                      <SelectTrigger className="bg-white text-xs font-semibold h-9">
-                        <SelectValue placeholder="Side A" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sortedSelectedSubjectIds.map((id, index) => {
-                          const s = subjects.find((sb) => sb.id === id);
-                          const count = studentsBySubject[id]?.length || 0;
-                          return (
-                            <SelectItem key={id} value={id} className="text-xs">
-                              <span className="font-semibold">{s?.name}</span> ({count}) — #{index + 1}
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {/* Center */}
-                  <div className="space-y-1">
-                    <Label className="text-[11px] font-bold text-slate-700">Center &rarr; Subject</Label>
-                    <Select
-                      value={threeColumnConfig.right.center || sortedSelectedSubjectIds[1] || "VACANT"}
-                      onValueChange={(val) =>
-                        setThreeColumnConfig((prev) => ({
-                          ...prev,
-                          enabled: true,
-                          right: { ...prev.right, center: val },
-                        }))
-                      }
-                    >
-                      <SelectTrigger className="bg-white text-xs font-semibold h-9">
-                        <SelectValue placeholder="Center" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sortedSelectedSubjectIds.map((id, index) => {
-                          const s = subjects.find((sb) => sb.id === id);
-                          const count = studentsBySubject[id]?.length || 0;
-                          return (
-                            <SelectItem key={id} value={id} className="text-xs">
-                              <span className="font-semibold">{s?.name}</span> ({count}) — #{index + 1}
-                            </SelectItem>
-                          );
-                        })}
-                        <SelectItem value="VACANT" className="text-xs font-bold text-amber-700 bg-amber-50">
-                          ∅ Vacant / NIL
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {/* Side B */}
-                  <div className="space-y-1">
-                    <Label className="text-[11px] font-bold text-slate-700">Side B &rarr; Subject</Label>
-                    <Select
-                      value={threeColumnConfig.right.sideB || sortedSelectedSubjectIds[0] || ""}
-                      onValueChange={(val) =>
-                        setThreeColumnConfig((prev) => ({
-                          ...prev,
-                          enabled: true,
-                          right: { ...prev.right, sideB: val },
-                        }))
-                      }
-                    >
-                      <SelectTrigger className="bg-white text-xs font-semibold h-9">
-                        <SelectValue placeholder="Side B" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sortedSelectedSubjectIds.map((id, index) => {
-                          const s = subjects.find((sb) => sb.id === id);
-                          const count = studentsBySubject[id]?.length || 0;
-                          return (
-                            <SelectItem key={id} value={id} className="text-xs">
-                              <span className="font-semibold">{s?.name}</span> ({count}) — #{index + 1}
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* MODE B: SEQUENTIAL 4-ROW ALLOCATION SYSTEM (3 OR 4 SUBJECTS) */}
+          {/* MODE 2: SEQUENTIAL 4-ROW ALLOCATION SYSTEM (3 OR 4 SUBJECTS) */}
           {step4Mode === 'multiSubject' && (
             <div className="space-y-6">
               {selectedSubjectIds.length < 3 && (
@@ -2454,7 +2676,7 @@ export default function SeatingAllocationWizardPage() {
                             return (
                               <tr key={`sim-bench-${b.side}-${b.benchNumber}-${idx}`} className="hover:bg-white/5">
                                 <td className="py-1 px-2 font-mono text-amber-300 font-bold">
-                                  {b.side === 'LEFT' ? 'L' : 'R'}-{String(b.benchNumber).padStart(2, '0')}
+                                  {b.side === 'LEFT' ? 'L' : b.side === 'MIDDLE' ? 'M' : 'R'}{String(b.benchNumber).padStart(2, '0')}
                                 </td>
                                 <td className="py-1 px-2">{formatSeat(seatA)}</td>
                                 <td className="py-1 px-2">{formatSeat(seatC)}</td>
@@ -2473,6 +2695,9 @@ export default function SeatingAllocationWizardPage() {
                   </div>
                 )}
               </div>
+
+              {/* Integrated 3-Column Examination Room Configuration for Mode 2 */}
+              {renderThreeColumnSegment()}
             </div>
           )}
 
@@ -2500,39 +2725,57 @@ export default function SeatingAllocationWizardPage() {
                     });
                     return;
                   }
-                } else if (isThreeColumnMode) {
-                  setThreeColumnConfig((prev) => {
-                    const next = { ...prev, enabled: true };
-                    const s1 = sortedSelectedSubjectIds[0] || selectedSubjectIds[0];
-                    const s2 = sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0] || selectedSubjectIds[0];
-                    if (!next.left.sideA) next.left.sideA = s1;
-                    if (!next.left.center) next.left.center = s2;
-                    if (!next.left.sideB) next.left.sideB = s1;
-                    if (!next.middle.sideA) next.middle.sideA = s2;
-                    if (!next.middle.center) next.middle.center = s1;
-                    if (!next.middle.sideB) next.middle.sideB = s2;
-                    if (!next.right.sideA) next.right.sideA = s1;
-                    if (!next.right.center) next.right.center = s2;
-                    if (!next.right.sideB) next.right.sideB = s1;
-                    return next;
-                  });
-                } else {
-                  // Ensure default position fallback if untouched
-                  const updated = { ...positionMapping };
-                  if (pattern === '1_PER_BENCH' && !updated.CENTER) {
-                    updated.CENTER = sortedSelectedSubjectIds[0] || selectedSubjectIds[0];
-                  }
-                  if (pattern === '2_PER_BENCH') {
-                    if (!updated.SIDE_A) updated.SIDE_A = sortedSelectedSubjectIds[0] || selectedSubjectIds[0];
-                    if (!updated.SIDE_B) updated.SIDE_B = sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0] || selectedSubjectIds[0];
-                  }
-                  if (pattern === '3_PER_BENCH') {
-                    if (!updated.SIDE_A) updated.SIDE_A = sortedSelectedSubjectIds[0] || selectedSubjectIds[0];
-                    if (!updated.CENTER) updated.CENTER = sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0] || selectedSubjectIds[0];
-                    if (!updated.SIDE_B) updated.SIDE_B = sortedSelectedSubjectIds[0] || selectedSubjectIds[0];
-                  }
-                  setPositionMapping(updated);
                 }
+
+                // Ensure default position fallback if untouched
+                const updated = { ...positionMapping };
+                const s1 = sortedSelectedSubjectIds[0] || selectedSubjectIds[0] || '';
+                const s2 = sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0] || selectedSubjectIds[0] || '';
+                if (pattern === '1_PER_BENCH' && !updated.CENTER) {
+                  updated.CENTER = s1;
+                }
+                if (pattern === '2_PER_BENCH') {
+                  if (!updated.SIDE_A) updated.SIDE_A = s1;
+                  if (!updated.SIDE_B) updated.SIDE_B = s2;
+                }
+                if (pattern === '3_PER_BENCH') {
+                  if (!updated.SIDE_A) updated.SIDE_A = s1;
+                  if (!updated.CENTER) updated.CENTER = s2;
+                  if (!updated.SIDE_B) updated.SIDE_B = s1;
+                }
+                setPositionMapping(updated);
+
+                // Ensure 3-column configuration has valid defaults if enabled
+                if (threeColumnConfig.enabled) {
+                  setThreeColumnConfig((prev) => ({
+                    ...prev,
+                    leftSubjectId: prev.leftSubjectId || s1,
+                    rightSubjectId: prev.rightSubjectId || s2,
+                    middlePattern: prev.middlePattern || 'allThree',
+                    middleEnabledSeats: prev.middleEnabledSeats || { sideA: true, center: true, sideB: true },
+                    middleSeats: prev.middleSeats || {
+                      sideA: s1,
+                      center: s2,
+                      sideB: sortedSelectedSubjectIds[2] || s1,
+                    },
+                    left: {
+                      sideA: prev.left?.sideA || prev.leftSubjectId || s1,
+                      center: prev.left?.center || (sortedSelectedSubjectIds.length >= 2 ? s2 : 'VACANT'),
+                      sideB: prev.left?.sideB || prev.leftSubjectId || s1,
+                    },
+                    right: {
+                      sideA: prev.right?.sideA || prev.rightSubjectId || s2,
+                      center: prev.right?.center || s1,
+                      sideB: prev.right?.sideB || prev.rightSubjectId || s2,
+                    },
+                    middle: prev.middle || prev.middleSeats || {
+                      sideA: s1,
+                      center: s2,
+                      sideB: sortedSelectedSubjectIds[2] || s1,
+                    },
+                  }));
+                }
+
                 setCurrentStep(5);
               }}
               className="bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs h-9 px-5 gap-1.5 shadow-xs"
@@ -2586,13 +2829,7 @@ export default function SeatingAllocationWizardPage() {
                   const picked: string[] = [];
                   for (const r of masterRooms) {
                     if (needed <= 0) break;
-                    const cap = (isMultiSubjectMode || isThreeColumnMode)
-                      ? r.capacityThree
-                      : pattern === '1_PER_BENCH'
-                        ? r.capacityOne
-                        : pattern === '2_PER_BENCH'
-                          ? r.capacityTwo
-                          : r.capacityThree;
+                    const cap = getRoomEffectiveCapacity(r, pattern, isMultiSubjectMode, threeColumnConfig);
                     picked.push(r.id);
                     needed -= cap;
                   }
@@ -2631,7 +2868,7 @@ export default function SeatingAllocationWizardPage() {
                   <th className="py-3 px-4">Room No.</th>
                   <th className="py-3 px-3 text-center">Benches</th>
                   <th className="py-3 px-3 text-center font-bold text-[#1E2A5E]">
-                    Current Capacity ({isMultiSubjectMode ? '3/Bench (Multi-Subject)' : isThreeColumnMode ? '3/Bench (3-Column Room)' : pattern === '1_PER_BENCH' ? '1/Bench' : pattern === '2_PER_BENCH' ? '2/Bench' : '3/Bench'})
+                    Current Capacity ({isMultiSubjectMode ? '3/Bench (Multi-Subject)' : pattern === '1_PER_BENCH' ? '1/Bench' : pattern === '2_PER_BENCH' ? '2/Bench' : '3/Bench'}{threeColumnConfig.enabled ? ' • 3-Col Configured' : ''})
                   </th>
                   <th className="py-3 px-3 text-center">Status</th>
                 </tr>
@@ -2639,13 +2876,7 @@ export default function SeatingAllocationWizardPage() {
               <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
                 {masterRooms.map((room, index) => {
                   const isChecked = selectedRoomIds.includes(room.id);
-                  const effectiveCap = (isMultiSubjectMode || isThreeColumnMode)
-                    ? room.capacityThree
-                    : pattern === '1_PER_BENCH'
-                      ? room.capacityOne
-                      : pattern === '2_PER_BENCH'
-                        ? room.capacityTwo
-                        : room.capacityThree;
+                  const effectiveCap = getRoomEffectiveCapacity(room, pattern, isMultiSubjectMode, threeColumnConfig);
 
                   return (
                     <tr
@@ -2904,37 +3135,153 @@ export default function SeatingAllocationWizardPage() {
                   </div>
                   <div>
                     <span className="font-headline font-bold text-xs text-[#1E2A5E] uppercase tracking-wider">
-                      3-Column Room Pattern Applied
+                      3-Column Room Configuration Applied
                     </span>
                     <p className="text-[11px] text-slate-600">
-                      Covers Left Side Benches, Middle Benches, and Right Side Benches across all examination rooms.
+                      Covers Left Side Benches, Middle Benches ({activeAllocation.threeColumnConfig.middlePattern || 'All Three Seats'}), and Right Side Benches for 3-column rooms.
                     </p>
                   </div>
                 </div>
                 <Badge variant="outline" className="bg-white text-purple-700 border-purple-200 text-[10px] font-bold self-start sm:self-auto">
-                  3 Column Layout
+                  3 Column Layout Active
                 </Badge>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {[
-                  { title: 'Left Side Benches', col: activeAllocation.threeColumnConfig.left },
-                  { title: 'Middle Benches', col: activeAllocation.threeColumnConfig.middle },
-                  { title: 'Right Side Benches', col: activeAllocation.threeColumnConfig.right },
-                ].map(({ title, col }) => {
-                  const sA = subjects.find((s) => s.id === col.sideA)?.name || '—';
-                  const sC = col.center === 'VACANT' || col.center === 'EMPTY' || !col.center ? 'VACANT' : subjects.find((s) => s.id === col.center)?.name || '—';
-                  const sB = subjects.find((s) => s.id === col.sideB)?.name || '—';
+                {/* Left */}
+                {(() => {
+                  const threeCol = activeAllocation.threeColumnConfig;
+                  const getSeatBadge = (sId?: string) => {
+                    if (!sId || sId === 'VACANT' || sId === 'NIL' || sId === 'EMPTY') {
+                      return <span className="text-amber-600 font-semibold italic text-[10px]">Vacant</span>;
+                    }
+                    const sName = subjects.find((s) => s.id === sId)?.name || '—';
+                    const col = getSubjectColor(sName, activeAllocation.subjectStats.map((s) => s.subjectName));
+                    return (
+                      <span
+                        className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold border"
+                        style={{ backgroundColor: col.bgCss, color: col.textCss, borderColor: col.borderCss }}
+                      >
+                        {sName}
+                      </span>
+                    );
+                  };
+
+                  const leftA = threeCol?.left?.sideA || threeCol?.leftSubjectId;
+                  const leftC = threeCol?.left?.center || 'VACANT';
+                  const leftB = threeCol?.left?.sideB || threeCol?.leftSubjectId;
+
                   return (
-                    <div key={title} className="bg-white p-3 rounded-lg border border-purple-100 shadow-3xs text-xs space-y-1">
-                      <div className="font-bold text-[#1E2A5E] text-xs">{title}</div>
-                      <div className="text-[11px] font-semibold text-slate-700">
-                        {sA} &bull; <span className={sC === 'VACANT' ? 'text-amber-600 font-bold' : ''}>{sC}</span> &bull; {sB}
+                    <div className="bg-white p-3 rounded-lg border border-purple-100 shadow-3xs text-xs space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-[#1E2A5E] text-xs">Left Side Benches (Col 1)</span>
+                        <Badge variant="outline" className="text-[9px] text-purple-700 border-purple-200">
+                          3 Positions
+                        </Badge>
                       </div>
-                      <div className="text-[9px] text-slate-400">Side A &bull; Center &bull; Side B</div>
+                      <div className="text-[11px] font-semibold text-slate-700 flex items-center gap-1.5 flex-wrap">
+                        {getSeatBadge(leftA)} &bull; {getSeatBadge(leftC)} &bull; {getSeatBadge(leftB)}
+                      </div>
+                      <div className="text-[9px] text-slate-400">Side A &bull; Centre &bull; Side B</div>
                     </div>
                   );
-                })}
+                })()}
+
+                {/* Middle */}
+                {(() => {
+                  const threeCol = activeAllocation.threeColumnConfig;
+                  if (!threeCol) return null;
+                  const patternLabel =
+                    threeCol.middlePattern === 'centerOnly'
+                      ? 'Centre Seat Only'
+                      : threeCol.middlePattern === 'sideAAndSideB'
+                        ? 'Side A & Side B Only'
+                        : threeCol.middlePattern === 'custom'
+                          ? 'Custom Seat Selection'
+                          : 'All Three Seats';
+
+                  const getSeatLabel = (pos: 'sideA' | 'center' | 'sideB') => {
+                    const isSeatEnabled =
+                      threeCol.middlePattern === 'allThree'
+                        ? true
+                        : threeCol.middlePattern === 'centerOnly'
+                          ? pos === 'center'
+                          : threeCol.middlePattern === 'sideAAndSideB'
+                            ? pos === 'sideA' || pos === 'sideB'
+                            : Boolean(threeCol.middleEnabledSeats?.[pos]);
+
+                    if (!isSeatEnabled) return <span className="text-slate-400 italic text-[10px]">Disabled</span>;
+
+                    const sId = threeCol.middleSeats?.[pos] || threeCol.middle?.[pos];
+                    if (!sId || sId === 'VACANT' || sId === 'NIL' || sId === 'EMPTY') {
+                      return <span className="text-amber-600 font-semibold italic text-[10px]">Vacant</span>;
+                    }
+                    const sName = subjects.find((s) => s.id === sId)?.name || '—';
+                    const col = getSubjectColor(sName, activeAllocation.subjectStats.map((s) => s.subjectName));
+                    return (
+                      <span
+                        className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold border"
+                        style={{ backgroundColor: col.bgCss, color: col.textCss, borderColor: col.borderCss }}
+                      >
+                        {sName}
+                      </span>
+                    );
+                  };
+
+                  return (
+                    <div className="bg-white p-3 rounded-lg border border-purple-100 shadow-3xs text-xs space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-[#1E2A5E] text-xs">Middle Benches (Col 2)</span>
+                        <Badge variant="outline" className="text-[9px] text-purple-700 border-purple-200">
+                          {patternLabel}
+                        </Badge>
+                      </div>
+                      <div className="text-[11px] font-semibold text-slate-700 flex items-center gap-1.5 flex-wrap">
+                        {getSeatLabel('sideA')} &bull; {getSeatLabel('center')} &bull; {getSeatLabel('sideB')}
+                      </div>
+                      <div className="text-[9px] text-slate-400">Side A &bull; Centre &bull; Side B</div>
+                    </div>
+                  );
+                })()}
+
+                {/* Right */}
+                {(() => {
+                  const threeCol = activeAllocation.threeColumnConfig;
+                  const getSeatBadge = (sId?: string) => {
+                    if (!sId || sId === 'VACANT' || sId === 'NIL' || sId === 'EMPTY') {
+                      return <span className="text-amber-600 font-semibold italic text-[10px]">Vacant</span>;
+                    }
+                    const sName = subjects.find((s) => s.id === sId)?.name || '—';
+                    const col = getSubjectColor(sName, activeAllocation.subjectStats.map((s) => s.subjectName));
+                    return (
+                      <span
+                        className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold border"
+                        style={{ backgroundColor: col.bgCss, color: col.textCss, borderColor: col.borderCss }}
+                      >
+                        {sName}
+                      </span>
+                    );
+                  };
+
+                  const rightA = threeCol?.right?.sideA || threeCol?.rightSubjectId;
+                  const rightC = threeCol?.right?.center || 'VACANT';
+                  const rightB = threeCol?.right?.sideB || threeCol?.rightSubjectId;
+
+                  return (
+                    <div className="bg-white p-3 rounded-lg border border-purple-100 shadow-3xs text-xs space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-[#1E2A5E] text-xs">Right Side Benches (Col 3)</span>
+                        <Badge variant="outline" className="text-[9px] text-purple-700 border-purple-200">
+                          3 Positions
+                        </Badge>
+                      </div>
+                      <div className="text-[11px] font-semibold text-slate-700 flex items-center gap-1.5 flex-wrap">
+                        {getSeatBadge(rightA)} &bull; {getSeatBadge(rightC)} &bull; {getSeatBadge(rightB)}
+                      </div>
+                      <div className="text-[9px] text-slate-400">Side A &bull; Centre &bull; Side B</div>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           )}
@@ -2993,7 +3340,8 @@ export default function SeatingAllocationWizardPage() {
                   <tr key={stat.subjectId} className="hover:bg-slate-50">
                     <td className="py-2.5 px-4 font-bold text-slate-900">
                       {(() => {
-                        const sc = getSubjectColor(stat.subjectName);
+                        const allSubjNames = activeAllocation.subjectStats.map((s) => s.subjectName);
+                        const sc = getSubjectColor(stat.subjectName, allSubjNames);
                         return (
                           <span
                             className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold border shadow-3xs"
@@ -3113,6 +3461,7 @@ export default function SeatingAllocationWizardPage() {
                   examName={activeAllocation.examination.examName}
                   examDate={activeAllocation.examination.date}
                   examTime={`${activeAllocation.examination.startTime} – ${activeAllocation.examination.endTime}`}
+                  allSubjectNames={activeAllocation.subjectStats.map((s) => s.subjectName)}
                 />
               )}
 

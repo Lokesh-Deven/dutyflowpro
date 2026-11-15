@@ -8,6 +8,7 @@ import {
   TimetableClassColumn,
   TimetableRow,
   TimetableSlot,
+  ExaminationStatus,
 } from '@/lib/examination-timetable-types';
 import {
   createNewTimetable,
@@ -16,6 +17,12 @@ import {
   saveTimetable,
   deleteTimetable,
   toggleLockTimetable,
+  activateTimetable,
+  deactivateTimetable,
+  getActiveTimetableId,
+  getActiveTimetable,
+  getTimetableEffectiveStatus,
+  setTimetableStatus,
   formatDateToDDMMYYYY,
   getDayFromDate,
   sortTimetableRows,
@@ -66,6 +73,10 @@ import {
   Globe,
   CheckCircle2,
   Loader2,
+  PlayCircle,
+  PauseCircle,
+  Archive,
+  ArchiveRestore,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -93,11 +104,22 @@ export default function ExaminationTimetablePage() {
 
   // Saved Timetables List
   const [savedTimetables, setSavedTimetables] = useState<ExaminationTimetable[]>([]);
+  // Active operational timetable ID across modules (only one active at a time)
+  const [activeTimetableId, setActiveTimetableId] = useState<string | null>(null);
 
   // Dialog States
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isLockConfirmOpen, setIsLockConfirmOpen] = useState(false);
   const [isUnlockConfirmOpen, setIsUnlockConfirmOpen] = useState(false);
+  const [confirmModal, setConfirmModal] = useState<{
+    open: boolean;
+    type: 'activate' | 'deactivate';
+    target: ExaminationTimetable | null;
+  }>({
+    open: false,
+    type: 'activate',
+    target: null,
+  });
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -112,6 +134,9 @@ export default function ExaminationTimetablePage() {
     let isMounted = true;
     const initialList = getSavedTimetables(userId);
     setSavedTimetables(initialList);
+    const curActiveId = getActiveTimetableId(userId);
+    setActiveTimetableId(curActiveId);
+
     if (initialList.length > 0) {
       setTimetable(normalizeTimetable(initialList[0]));
     } else {
@@ -122,6 +147,8 @@ export default function ExaminationTimetablePage() {
       fetchTimetablesFromCloud(userId).then((cloudList) => {
         if (!isMounted) return;
         setSavedTimetables(cloudList);
+        const cloudActiveId = getActiveTimetableId(userId);
+        setActiveTimetableId(cloudActiveId);
         if (cloudList.length > 0) {
           setTimetable((prev) => {
             const match = cloudList.find((t) => t.id === prev.id);
@@ -137,6 +164,29 @@ export default function ExaminationTimetablePage() {
       isMounted = false;
     };
   }, [userId, defaultInstitutionName]);
+
+  // Synchronize active examination changes in real-time across tabs and modules
+  useEffect(() => {
+    const handleActiveChanged = (e: any) => {
+      const detail = e.detail;
+      if (detail && detail.activeTimetableId !== undefined) {
+        setActiveTimetableId(detail.activeTimetableId);
+        setSavedTimetables(getSavedTimetables(userId));
+        if (detail.timetable && timetable.id === detail.timetable.id) {
+          setTimetable(detail.timetable);
+        }
+      } else {
+        const cur = getActiveTimetableId(userId);
+        setActiveTimetableId(cur);
+        setSavedTimetables(getSavedTimetables(userId));
+      }
+    };
+
+    window.addEventListener('dutyflow:active-timetable-changed', handleActiveChanged);
+    return () => {
+      window.removeEventListener('dutyflow:active-timetable-changed', handleActiveChanged);
+    };
+  }, [userId, timetable.id]);
 
   // Cross-device auto-refresh on window focus or visibility change
   useEffect(() => {
@@ -825,6 +875,103 @@ export default function ExaminationTimetablePage() {
     }
   };
 
+  const isCurrentActive = Boolean(
+    timetable.isActive || (activeTimetableId && timetable.id === activeTimetableId)
+  );
+  const currentEffectiveStatus: ExaminationStatus = getTimetableEffectiveStatus(
+    timetable,
+    activeTimetableId
+  );
+
+  const handleRequestActivate = (targetTt: ExaminationTimetable) => {
+    if (!isApproved) {
+      setIsRestrictionDialogOpen(true);
+      return;
+    }
+    setConfirmModal({
+      open: true,
+      type: 'activate',
+      target: targetTt,
+    });
+  };
+
+  const handleRequestDeactivate = (targetTt: ExaminationTimetable) => {
+    if (!isApproved) {
+      setIsRestrictionDialogOpen(true);
+      return;
+    }
+    setConfirmModal({
+      open: true,
+      type: 'deactivate',
+      target: targetTt,
+    });
+  };
+
+  const handleConfirmAction = async () => {
+    const { type, target } = confirmModal;
+    if (!target) return;
+    setConfirmModal({ open: false, type: 'activate', target: null });
+
+    if (type === 'activate') {
+      const res = await activateTimetable(target.id, userId, userId, profile?.institution_code);
+      if (res.success && res.activeTimetable) {
+        setActiveTimetableId(res.activeTimetable.id);
+        const refreshedList = getSavedTimetables(userId);
+        setSavedTimetables(refreshedList);
+        if (timetable.id === target.id) {
+          setTimetable(res.activeTimetable);
+        }
+        setHasUnsavedChanges(false);
+        toast({
+          title: "Examination Activated",
+          description: `"${res.activeTimetable.examinationName}" is now active and operational across all modules and portals.`,
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Activation Failed",
+          description: res.error || "Could not activate examination timetable.",
+        });
+      }
+    } else {
+      const res = await deactivateTimetable(target.id, userId, userId);
+      if (res.success && res.deactivatedTimetable) {
+        setActiveTimetableId(null);
+        const refreshedList = getSavedTimetables(userId);
+        setSavedTimetables(refreshedList);
+        if (timetable.id === target.id) {
+          setTimetable(res.deactivatedTimetable);
+        }
+        setHasUnsavedChanges(false);
+        toast({
+          title: "Examination Deactivated",
+          description: `"${res.deactivatedTimetable.examinationName}" has been deactivated across all modules and portals. Existing allocations and duties remain safely preserved.`,
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Deactivation Failed",
+          description: res.error || "Could not deactivate examination timetable.",
+        });
+      }
+    }
+  };
+
+  const handleToggleArchive = (id: string, currentStatus: ExaminationStatus) => {
+    const nextStatus: ExaminationStatus = currentStatus === 'Archived' ? 'Draft' : 'Archived';
+    const updated = setTimetableStatus(id, nextStatus, userId);
+    if (updated) {
+      setSavedTimetables(getSavedTimetables(userId));
+      if (timetable.id === id) setTimetable(updated);
+      toast({
+        title: nextStatus === 'Archived' ? "Timetable Archived" : "Timetable Restored",
+        description: nextStatus === 'Archived'
+          ? "This timetable has been archived."
+          : "Timetable has been restored to Draft.",
+      });
+    }
+  };
+
   return (
     <div className="space-y-8 pb-20 max-w-7xl mx-auto">
       {/* Top Banner Header */}
@@ -835,102 +982,14 @@ export default function ExaminationTimetablePage() {
               <CalendarClock className="w-6 h-6 text-indigo-700" />
             </div>
             <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="font-headline text-2xl font-black tracking-tight text-slate-800">
-                  Examination Timetable
-                </h1>
-                {timetable.isPublished ? (
-                  <Badge className="bg-emerald-50 text-emerald-800 border-emerald-300 font-bold text-xs px-2.5 py-0.5 gap-1.5 rounded-full">
-                    <Globe className="w-3.5 h-3.5 text-emerald-600" />
-                    Published on Student Portal
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="text-slate-500 border-slate-300 text-xs px-2 py-0.5 rounded-full font-medium">
-                    Unpublished on Portal
-                  </Badge>
-                )}
-                {timetable.isLocked ? (
-                  <Badge className="bg-amber-500/15 text-amber-800 border-amber-300 font-bold text-xs px-2.5 py-0.5 gap-1 rounded-full">
-                    <Lock className="w-3 h-3" />
-                    Locked
-                  </Badge>
-                ) : hasUnsavedChanges ? (
-                  <Badge className="bg-rose-50 text-rose-700 border-rose-200 font-semibold text-xs px-2 py-0.5 rounded-full animate-pulse">
-                    Unsaved Changes
-                  </Badge>
-                ) : (
-                  <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 font-semibold text-xs px-2 py-0.5 rounded-full">
-                    Saved
-                  </Badge>
-                )}
-              </div>
+              <h1 className="font-headline text-2xl font-black tracking-tight text-slate-800">
+                Examination Timetable
+              </h1>
+              <p className="text-xs text-slate-500 font-medium">
+                Configure examination sessions, paper schedules, and manage publishing
+              </p>
             </div>
           </div>
-        </div>
-
-        {/* Global Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleNewTimetable}
-            className="text-xs h-9 px-3 gap-1 font-semibold border-slate-200 hover:bg-slate-50"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            New Timetable
-          </Button>
-
-          <Button
-            type="button"
-            onClick={handleDownloadPdf}
-            className="bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs h-9 px-4 gap-1.5 shadow-sm"
-          >
-            <Download className="w-3.5 h-3.5" />
-            Generate & Download PDF
-          </Button>
-
-          <Button
-            type="button"
-            onClick={() => handlePublishToStudentPortal()}
-            disabled={isPublishing}
-            className={cn(
-              "font-bold text-xs h-9 px-4 gap-1.5 shadow-sm transition-all",
-              timetable.isPublished
-                ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                : "bg-indigo-600 hover:bg-indigo-700 text-white"
-            )}
-          >
-            {isPublishing ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : timetable.isPublished ? (
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-100" />
-            ) : (
-              <Globe className="w-3.5 h-3.5" />
-            )}
-            <span>{timetable.isPublished ? "Update on Student Portal" : "Publish on Student Portal"}</span>
-          </Button>
-
-          {timetable.isLocked ? (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsUnlockConfirmOpen(true)}
-              className="text-xs h-9 px-3 gap-1 font-bold text-amber-700 border-amber-300 bg-amber-50 hover:bg-amber-100"
-            >
-              <Unlock className="w-3.5 h-3.5" />
-              Unlock
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsLockConfirmOpen(true)}
-              className="text-xs h-9 px-3 gap-1 font-bold text-slate-700 border-slate-300 hover:bg-slate-50"
-            >
-              <Lock className="w-3.5 h-3.5 text-slate-500" />
-              Lock Timetable
-            </Button>
-          )}
         </div>
       </div>
 
@@ -1049,7 +1108,7 @@ export default function ExaminationTimetablePage() {
                   Day
                 </th>
                 <th rowSpan={2} className="py-2.5 px-3 text-center w-36 border-r border-slate-200">
-                  Course
+                  Class
                 </th>
 
                 {/* Class Columns */}
@@ -1294,11 +1353,93 @@ export default function ExaminationTimetablePage() {
             Add Examination Date
           </Button>
         </div>
+
+        {/* Action Bar (Directly beneath Add Examination Date) */}
+        <div className="pt-4 border-t border-slate-200/90 flex flex-wrap items-center gap-3">
+          {/* 1. Preview Timetable */}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setIsPreviewOpen(true)}
+            className="text-xs h-9 px-4 gap-2 font-bold text-slate-700 border-slate-300 hover:bg-slate-100 hover:text-indigo-900 rounded-xl shadow-2xs cursor-pointer transition-all"
+          >
+            <Eye className="w-4 h-4 text-indigo-600" />
+            Preview Timetable
+          </Button>
+
+          {/* 2. Lock Timetable */}
+          {timetable.isLocked ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsUnlockConfirmOpen(true)}
+              className="text-xs h-9 px-4 gap-1.5 font-bold text-amber-700 border-amber-300 bg-amber-50 hover:bg-amber-100 rounded-xl shadow-2xs transition-all"
+            >
+              <Unlock className="w-4 h-4 text-amber-600" />
+              Unlock Timetable
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsLockConfirmOpen(true)}
+              className="text-xs h-9 px-4 gap-1.5 font-bold text-slate-700 border-slate-300 hover:bg-slate-100 rounded-xl shadow-2xs transition-all"
+            >
+              <Lock className="w-4 h-4 text-slate-500" />
+              Lock Timetable
+            </Button>
+          )}
+
+          {/* 3. Download PDF */}
+          <Button
+            type="button"
+            onClick={handleDownloadPdf}
+            className="bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs h-9 px-4 gap-1.5 rounded-xl shadow-xs transition-all cursor-pointer"
+          >
+            <Download className="w-4 h-4" />
+            Download PDF
+          </Button>
+
+          {/* 4. Publish/Update on Student Portal */}
+          <Button
+            type="button"
+            onClick={() => handlePublishToStudentPortal()}
+            disabled={isPublishing}
+            className={cn(
+              "text-xs h-9 px-4 gap-2 font-bold rounded-xl shadow-xs transition-all cursor-pointer",
+              timetable.isPublished
+                ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                : "bg-indigo-600 hover:bg-indigo-700 text-white"
+            )}
+          >
+            {isPublishing ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : timetable.isPublished ? (
+              <CheckCircle2 className="w-4 h-4" />
+            ) : (
+              <Globe className="w-4 h-4" />
+            )}
+            <span>{timetable.isPublished ? "Update on Student Portal" : "Publish on Student Portal"}</span>
+          </Button>
+
+          {/* 5. Save Timetable */}
+          <Button
+            type="button"
+            onClick={handleSave}
+            disabled={isSaving || timetable.isLocked}
+            className="bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs h-9 px-5 gap-2 rounded-xl shadow-xs hover:shadow cursor-pointer transition-all disabled:opacity-50"
+          >
+            <Save className="w-4 h-4" />
+            {hasUnsavedChanges && (
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse mr-0.5" />
+            )}
+            {isSaving ? "Saving..." : "Save Timetable"}
+          </Button>
+        </div>
       </div>
 
-      {/* Metrics & Main Actions Bar (Total Sessions, Total Subjects | Preview & Save Timetable) */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        {/* Left: Total Sessions & Total Subjects Progress Cards */}
+      {/* Metrics Summary Cards (Total Sessions & Total Subjects) */}
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs">
         <div className="flex flex-wrap items-center gap-3">
           {/* Total Sessions Card */}
           <div className="bg-gradient-to-br from-indigo-50/90 to-blue-50/40 border border-indigo-100 rounded-xl p-3 shadow-sm min-w-[210px] flex-1 sm:flex-initial">
@@ -1374,75 +1515,31 @@ export default function ExaminationTimetablePage() {
             </div>
           </div>
         </div>
-
-        {/* Right: Preview Timetable, Publish & Save Timetable Buttons */}
-        <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-end lg:self-center">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setIsPreviewOpen(true)}
-            className="text-xs h-10 px-4 gap-2 font-bold text-slate-700 border-slate-300 hover:bg-slate-100 hover:text-indigo-900 rounded-xl shadow-2xs cursor-pointer transition-all"
-          >
-            <Eye className="w-4 h-4 text-indigo-600" />
-            Preview Timetable
-          </Button>
-
-          <Button
-            type="button"
-            onClick={() => handlePublishToStudentPortal()}
-            disabled={isPublishing}
-            className={cn(
-              "text-xs h-10 px-4 gap-2 font-bold rounded-xl shadow-xs transition-all",
-              timetable.isPublished
-                ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                : "bg-indigo-600 hover:bg-indigo-700 text-white"
-            )}
-          >
-            {isPublishing ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : timetable.isPublished ? (
-              <CheckCircle2 className="w-4 h-4" />
-            ) : (
-              <Globe className="w-4 h-4" />
-            )}
-            <span>{timetable.isPublished ? "Update on Student Portal" : "Publish on Student Portal"}</span>
-          </Button>
-
-          <Button
-            type="button"
-            onClick={handleSave}
-            disabled={isSaving || timetable.isLocked}
-            className="bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs h-10 px-5 gap-2 rounded-xl shadow-xs hover:shadow cursor-pointer transition-all disabled:opacity-50"
-          >
-            <Save className="w-4 h-4" />
-            {hasUnsavedChanges && (
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse mr-0.5" />
-            )}
-            {isSaving ? "Saving..." : "Save Timetable"}
-          </Button>
-        </div>
       </div>
 
       {/* 3. Saved Timetables Section */}
       <div className="bg-slate-50/60 border border-slate-200 rounded-xl p-5 space-y-4">
         <SavedTimetablesList
           timetables={savedTimetables}
-          activeTimetableId={timetable.id}
+          activeTimetableId={activeTimetableId}
           onOpenTimetable={handleOpenSavedTimetable}
           onPreviewTimetable={(tt) => {
             setTimetable(tt);
             setIsPreviewOpen(true);
           }}
           onPublishTimetable={handlePublishToStudentPortal}
+          onActivateTimetable={handleRequestActivate}
+          onDeactivateTimetable={handleRequestDeactivate}
+          onToggleArchive={handleToggleArchive}
           onToggleLock={(id, lock) => {
             const updated = toggleLockTimetable(id, lock, userId);
             if (updated) {
               setSavedTimetables(getSavedTimetables(userId));
               if (timetable.id === id) setTimetable(updated);
               toast({
-                title: lock ? "Timetable Locked" : "Timetable Unlocked",
+                title: lock ? "Timetable Finalised & Locked" : "Timetable Unlocked",
                 description: lock
-                  ? "Timetable is protected from accidental modifications."
+                  ? "Timetable is finalised and protected from accidental modifications."
                   : "Editing has been re-enabled.",
               });
             }
@@ -1451,6 +1548,90 @@ export default function ExaminationTimetablePage() {
           signatory={signatory}
         />
       </div>
+
+      {/* Activation / Deactivation Confirmation Alert Dialog (Requirement 6) */}
+      <AlertDialog
+        open={confirmModal.open}
+        onOpenChange={(open) => !open && setConfirmModal((prev) => ({ ...prev, open: false }))}
+      >
+        <AlertDialogContent className="bg-white border border-slate-200 sm:max-w-md">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-2 mb-1">
+              {confirmModal.type === 'activate' ? (
+                <div className="w-9 h-9 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                  <PlayCircle className="w-5 h-5" />
+                </div>
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center">
+                  <PauseCircle className="w-5 h-5" />
+                </div>
+              )}
+              <AlertDialogTitle className="text-base font-bold text-slate-900">
+                {confirmModal.type === 'activate'
+                  ? 'Activate Examination?'
+                  : 'Deactivate Examination?'}
+              </AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="text-xs text-slate-600 space-y-2.5 pt-1 text-left">
+              {confirmModal.type === 'activate' ? (
+                <>
+                  <p>
+                    Are you sure you want to activate{' '}
+                    <strong>&ldquo;{confirmModal.target?.examinationName || 'this timetable'}&rdquo;</strong>?
+                  </p>
+                  <p className="text-slate-500 font-medium">
+                    Activating this timetable makes its examination sessions operational across:
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 text-slate-700 pl-1 font-semibold text-[11px]">
+                    <li><strong>Seating Allocation:</strong> Active sessions available for scheduling</li>
+                    <li><strong>Student Attendance:</strong> Hall attendance live tracking enabled</li>
+                    <li><strong>Student Portal:</strong> Official timetable visible to students</li>
+                    <li><strong>Invigilator Portal:</strong> Daily hall duties operational</li>
+                  </ul>
+                  {activeTimetableId && activeTimetableId !== confirmModal.target?.id && (
+                    <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-amber-900 text-xs mt-2 flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                      <span>
+                        <strong>Note:</strong> The currently active examination will be automatically deactivated. Only one examination timetable can be active at a time.
+                      </span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <p>
+                    Are you sure you want to deactivate{' '}
+                    <strong>&ldquo;{confirmModal.target?.examinationName || 'this timetable'}&rdquo;</strong>?
+                  </p>
+                  <p className="text-slate-500 font-medium">
+                    This will disable this examination across Seating Allocation, Student Attendance, Student Portal, and Invigilator Portal.
+                  </p>
+                  <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-900 text-xs mt-2 flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <span>
+                      <strong>Data Safety Guarantee:</strong> Deactivating will <strong>not</strong> delete existing seating allocations, attendance records, or invigilator duties. All past records remain safely preserved.
+                    </span>
+                  </div>
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-3">
+            <AlertDialogCancel className="text-xs h-9">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmAction}
+              className={cn(
+                "text-xs h-9 font-bold text-white shadow-xs cursor-pointer",
+                confirmModal.type === 'activate'
+                  ? "bg-emerald-600 hover:bg-emerald-700"
+                  : "bg-amber-600 hover:bg-amber-700"
+              )}
+            >
+              {confirmModal.type === 'activate' ? 'Activate Examination' : 'Deactivate Examination'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Lock Confirmation Alert Dialog */}
       <AlertDialog open={isLockConfirmOpen} onOpenChange={setIsLockConfirmOpen}>

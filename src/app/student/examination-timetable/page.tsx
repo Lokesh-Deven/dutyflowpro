@@ -79,12 +79,18 @@ export default function StudentExaminationTimetablePage() {
           session.institutionId,
           session.institutionCode
         );
-        setTimetables(data || []);
+        // Requirement 1, 4, 8: Only the active examination timetable appears operational on the portal
+        const activeOnly = (data || []).filter(
+          (d) => d.isActive !== false && d.timetable?.isActive !== false
+        );
+        setTimetables(activeOnly);
 
         if (showToast) {
           toast({
             title: 'Timetables Refreshed',
-            description: `Loaded ${data.length} published examination timetable(s).`,
+            description: activeOnly.length > 0
+              ? `Loaded active examination timetable.`
+              : `No active examination timetable currently operational.`,
           });
         }
       } catch (err) {
@@ -110,11 +116,15 @@ export default function StudentExaminationTimetablePage() {
 
     window.addEventListener('focus', handleRefresh);
     window.addEventListener('online', handleRefresh);
+    window.addEventListener('dutyflow:active-timetable-changed', handleRefresh);
+    window.addEventListener('dutyflow:published-timetables-change', handleRefresh);
     document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {
       window.removeEventListener('focus', handleRefresh);
       window.removeEventListener('online', handleRefresh);
+      window.removeEventListener('dutyflow:active-timetable-changed', handleRefresh);
+      window.removeEventListener('dutyflow:published-timetables-change', handleRefresh);
       document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, [session, loadTimetables]);

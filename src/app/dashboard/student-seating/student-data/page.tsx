@@ -141,70 +141,72 @@ export default function StudentDataPage() {
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-indigo-50 text-indigo-700 rounded-lg">
-              <Users className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="font-headline text-2xl font-black tracking-tight text-slate-800">
-                Student Data
-              </h1>
-              <p className="text-xs text-slate-500 font-medium">
-                Upload student rosters subject-wise with automated Excel validation.
-              </p>
+      {/* Header Banner - Sticky Top Panel */}
+      <div className="sticky top-16 z-20 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-3 bg-[#f4f6fa]/95 dark:bg-[#0b0f19]/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 shadow-2xs transition-all">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 bg-indigo-50 text-indigo-700 rounded-lg">
+                <Users className="w-6 h-6" />
+              </div>
+              <div>
+                <h1 className="font-headline text-2xl font-black tracking-tight text-slate-800 dark:text-slate-100">
+                  Student Data
+                </h1>
+                <p className="text-xs text-slate-500 font-medium">
+                  Upload student rosters subject-wise with automated Excel validation.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="flex items-center gap-2.5">
-          <Button
-            variant="outline"
-            onClick={() => {
-              if (typeof window !== 'undefined') {
-                const code = profile?.institution_code || '001';
-                const url = `${window.location.origin}/student/login?code=${encodeURIComponent(code)}`;
-                navigator.clipboard.writeText(url);
-                toast({
-                  title: `Student Portal Link Copied! (Inst ${code})`,
-                  description: "Share this URL with students: " + url,
-                });
-              }
-            }}
-            className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 font-bold text-xs h-9 px-3 gap-1.5 shadow-2xs"
-            title="Copy Student Login URL to share with students"
-          >
-            <GraduationCap className="w-4 h-4 text-indigo-600" />
-            <span className="hidden sm:inline">Student Portal</span> Link
-          </Button>
-
-          {subjects.length > 0 && (
+          <div className="flex items-center gap-2.5">
             <Button
               variant="outline"
-              onClick={() => setIsClearConfirmOpen(true)}
-              className="border-rose-200 text-rose-600 hover:bg-rose-50 hover:border-rose-300 font-bold text-xs h-9 px-3 gap-1.5 shadow-2xs"
-              title="Clear all subjects and student data"
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  const code = profile?.institution_code || '001';
+                  const url = `${window.location.origin}/student/login?code=${encodeURIComponent(code)}`;
+                  navigator.clipboard.writeText(url);
+                  toast({
+                    title: `Student Portal Link Copied! (Inst ${code})`,
+                    description: "Share this URL with students: " + url,
+                  });
+                }
+              }}
+              className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 font-bold text-xs h-9 px-3 gap-1.5 shadow-2xs"
+              title="Copy Student Login URL to share with students"
             >
-              <Trash2 className="w-4 h-4" />
-              <span className="hidden sm:inline">Clear Space</span>
+              <GraduationCap className="w-4 h-4 text-indigo-600" />
+              <span className="hidden sm:inline">Student Portal</span> Link
             </Button>
-          )}
 
-          <Button
-            onClick={() => {
-              setIsDropdownOpen(false);
-              setNewSubjName('');
-              setNewSubjCode('');
-              setNewSubjExpected('');
-              setIsAddSubjectOpen(true);
-            }}
-            className="bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs h-9 px-4 gap-1.5 shadow-xs"
-          >
-            <Plus className="w-4 h-4" />
-            Add Subject
-          </Button>
+            {subjects.length > 0 && (
+              <Button
+                variant="outline"
+                onClick={() => setIsClearConfirmOpen(true)}
+                className="border-rose-200 text-rose-600 hover:bg-rose-50 hover:border-rose-300 font-bold text-xs h-9 px-3 gap-1.5 shadow-2xs"
+                title="Clear all subjects and student data"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span className="hidden sm:inline">Clear Space</span>
+              </Button>
+            )}
+
+            <Button
+              onClick={() => {
+                setIsDropdownOpen(false);
+                setNewSubjName('');
+                setNewSubjCode('');
+                setNewSubjExpected('');
+                setIsAddSubjectOpen(true);
+              }}
+              className="bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs h-9 px-4 gap-1.5 shadow-xs"
+            >
+              <Plus className="w-4 h-4" />
+              Add Subject
+            </Button>
+          </div>
         </div>
       </div>
 

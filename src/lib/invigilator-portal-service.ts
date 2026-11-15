@@ -693,7 +693,7 @@ export function getRoomStudentsForDuty(
                         registerNumber: seat.student.rollNo,
                         studentName: seat.student.name || 'Candidate',
                         section: seat.student.section || 'A',
-                        benchNumber: `B${bench.benchNumber}`,
+                        benchNumber: `${bench.side === 'LEFT' ? 'L' : bench.side === 'MIDDLE' ? 'M' : 'R'}${String(bench.benchNumber).padStart(2, '0')}`,
                         position: pos,
                         status: 'Not Marked',
                       });

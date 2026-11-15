@@ -1,10 +1,13 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import {
   getAllAttendanceSubmissions,
   getInvigilatorDuties,
 } from '@/lib/invigilator-portal-service';
+import { getActiveTimetable } from '@/lib/examination-timetable-service';
+import { ExaminationTimetable } from '@/lib/examination-timetable-types';
 import { RoomAttendanceSubmission } from '@/lib/invigilator-portal-types';
 import { useAuth } from '@/lib/auth-context';
 import { ApprovalRestrictionDialog } from '@/components/dashboard/approval-restriction-dialog';
@@ -35,9 +38,10 @@ import {
 } from 'lucide-react';
 
 export default function AdminRoomAttendancePage() {
-  const { isApproved } = useAuth();
+  const { user, isApproved } = useAuth();
   const { toast } = useToast();
   const [submissions, setSubmissions] = useState<RoomAttendanceSubmission[]>([]);
+  const [activeTimetable, setActiveTimetable] = useState<ExaminationTimetable | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSub, setSelectedSub] = useState<RoomAttendanceSubmission | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -46,6 +50,8 @@ export default function AdminRoomAttendancePage() {
   const loadSubmissions = () => {
     setIsRefreshing(true);
     const list = getAllAttendanceSubmissions();
+    const active = getActiveTimetable(user?.id);
+    setActiveTimetable(active);
 
     // If no submissions in localStorage yet, include sample demo Room 108 submission for instant administrative preview
     if (list.length === 0) {
@@ -53,7 +59,7 @@ export default function AdminRoomAttendancePage() {
         id: 'sub-demo-108',
         dutyId: 'demo-duty-108-english',
         examinationId: 'exam-eng-midterm',
-        examName: 'Midterm Examination 2026',
+        examName: active?.examinationName || 'Midterm Examination 2026',
         subjectName: 'English',
         date: '2026-09-28',
         sessionTime: '10:00 AM – 11:30 AM',
@@ -85,9 +91,18 @@ export default function AdminRoomAttendancePage() {
     loadSubmissions();
 
     const handleUpdate = () => loadSubmissions();
+    const handleActiveChange = () => {
+      const active = getActiveTimetable(user?.id);
+      setActiveTimetable(active);
+    };
+
     window.addEventListener('dutyflow:attendance-updated', handleUpdate);
-    return () => window.removeEventListener('dutyflow:attendance-updated', handleUpdate);
-  }, []);
+    window.addEventListener('dutyflow:active-timetable-changed', handleActiveChange);
+    return () => {
+      window.removeEventListener('dutyflow:attendance-updated', handleUpdate);
+      window.removeEventListener('dutyflow:active-timetable-changed', handleActiveChange);
+    };
+  }, [user?.id]);
 
   // Summary Metrics
   const metrics = useMemo(() => {
@@ -203,11 +218,24 @@ export default function AdminRoomAttendancePage() {
               <ClipboardCheck className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="font-headline text-2xl font-black tracking-tight text-slate-800">
-                Room Attendance Monitoring
-              </h1>
-              <p className="text-xs text-slate-500 font-medium">
-                Live attendance submitted by faculty invigilators across examination halls
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="font-headline text-2xl font-black tracking-tight text-slate-800">
+                  Room Attendance Monitoring
+                </h1>
+                {activeTimetable ? (
+                  <Badge className="bg-emerald-50 text-emerald-800 border-emerald-300 font-bold text-xs px-2.5 py-0.5 gap-1.5 rounded-full shadow-2xs">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Active: {activeTimetable.examinationName}
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-amber-800 bg-amber-50/80 border-amber-300 font-medium text-xs px-2.5 py-0.5 gap-1.5 rounded-full">
+                    <AlertTriangle className="w-3 h-3 text-amber-600" />
+                    No Active Examination Operational
+                  </Badge>
+                )}
+              </div>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
+                Live attendance submitted by faculty invigilators across examination halls. Existing records remain safely preserved.
               </p>
             </div>
           </div>

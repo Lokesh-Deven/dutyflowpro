@@ -89,6 +89,7 @@ export async function generateRoomSeatingPlanPdf({
     doc.roundedRect(leftMargin, metaY, contentWidth, metaHeight, 1.5, 1.5, 'FD');
 
     const formattedDate = formatAppDateWithDay(allocation.examination.date, allocation.examination.date || '—');
+    const allExamSubjectNames = allocation.subjectStats.map((s) => s.subjectName);
 
     // Find unique subjects seated in this room with students, or fallback
     let roomSubjectNames = Array.from(
@@ -136,7 +137,7 @@ export async function generateRoomSeatingPlanPdf({
     if (roomSubjectNames.length > 0 && roomSubjectNames.length <= 4) {
       let curX = leftValX;
       roomSubjectNames.forEach((sName) => {
-        const sc = getSubjectColor(sName, roomSubjectNames);
+        const sc = getSubjectColor(sName, allExamSubjectNames);
         const truncS = sName.length > 20 ? sName.substring(0, 19) + '.' : sName;
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(6.5);
@@ -243,14 +244,16 @@ export async function generateRoomSeatingPlanPdf({
       doc.roundedRect(x, y, w, h - 1.2, 1, 1, 'FD');
 
       // Bench number badge on left
-      const badgeWidth = 9;
+      const badgeWidth = 9.5;
       doc.setFillColor(241, 245, 249);
       doc.rect(x, y, badgeWidth, h - 1.2, 'F');
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7.5);
+      doc.setFontSize(6.8);
       doc.setTextColor(71, 85, 105);
+      const benchPrefix = bench.side === 'LEFT' ? 'L' : bench.side === 'MIDDLE' ? 'M' : 'R';
+      const benchLabel = `${benchPrefix}${String(bench.benchNumber).padStart(2, '0')}`;
       doc.text(
-        String(bench.benchNumber).padStart(2, '0'),
+        benchLabel,
         x + badgeWidth / 2,
         y + (h - 1.2) / 2 + 1,
         { align: 'center' }
@@ -272,7 +275,14 @@ export async function generateRoomSeatingPlanPdf({
         const midX = sx + seatSlotWidth / 2;
         const isVacant = !seat.student;
 
-        if (isVacant) {
+        if (seat.isDisabled) {
+          doc.setFillColor(241, 245, 249);
+          doc.rect(sx, sy, seatSlotWidth, h - 1.2, 'F');
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(5.5);
+          doc.setTextColor(148, 163, 184);
+          doc.text("DISABLED", midX, sy + (h - 1.2) / 2 + 1, { align: 'center' });
+        } else if (isVacant) {
           doc.setFont('helvetica', 'italic');
           doc.setFontSize(6.5);
           doc.setTextColor(148, 163, 184);
@@ -302,7 +312,7 @@ export async function generateRoomSeatingPlanPdf({
 
           // Highlighted Subject Name with light background color pill
           if (seat.subjectName && h >= 10.5) {
-            const subjColor = getSubjectColor(seat.subjectName, roomSubjectNames);
+            const subjColor = getSubjectColor(seat.subjectName, allExamSubjectNames);
             const truncSub = seat.subjectName.length > 17 ? seat.subjectName.substring(0, 16) + '.' : seat.subjectName;
 
             doc.setFont('helvetica', 'bold');
@@ -533,7 +543,7 @@ export async function generateStudentSeatingIndexPdf({
             section: seat.student.section,
             subjectName: seat.subjectName || '—',
             roomNo: plan.roomNo,
-            benchNumber: `${bench.side === 'LEFT' ? 'L' : bench.side === 'MIDDLE' ? 'M' : 'R'}-${String(bench.benchNumber).padStart(2, '0')}`,
+            benchNumber: `${bench.side === 'LEFT' ? 'L' : bench.side === 'MIDDLE' ? 'M' : 'R'}${String(bench.benchNumber).padStart(2, '0')}`,
             position: posLabel,
           });
         }

@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState } from 'react';
-import { ExaminationTimetable } from '@/lib/examination-timetable-types';
+import { ExaminationTimetable, ExaminationStatus } from '@/lib/examination-timetable-types';
 import { SignatoryInfo } from '@/lib/types';
-import { computeDateRange } from '@/lib/examination-timetable-service';
+import { computeDateRange, getTimetableEffectiveStatus } from '@/lib/examination-timetable-service';
 import { generateExaminationTimetablePdf } from '@/lib/examination-timetable-pdf';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -29,6 +29,11 @@ import {
   Layers,
   Sparkles,
   Globe,
+  PlayCircle,
+  PauseCircle,
+  CheckCircle2,
+  Archive,
+  ArchiveRestore,
 } from 'lucide-react';
 
 interface SavedTimetablesListProps {
@@ -39,6 +44,9 @@ interface SavedTimetablesListProps {
   onToggleLock: (id: string, lock: boolean) => void;
   onDeleteTimetable: (id: string) => void;
   onPublishTimetable?: (timetable: ExaminationTimetable) => void;
+  onActivateTimetable?: (timetable: ExaminationTimetable) => void;
+  onDeactivateTimetable?: (timetable: ExaminationTimetable) => void;
+  onToggleArchive?: (id: string, currentStatus: ExaminationStatus) => void;
   signatory?: SignatoryInfo;
 }
 
@@ -50,6 +58,9 @@ export function SavedTimetablesList({
   onToggleLock,
   onDeleteTimetable,
   onPublishTimetable,
+  onActivateTimetable,
+  onDeactivateTimetable,
+  onToggleArchive,
   signatory,
 }: SavedTimetablesListProps) {
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
@@ -83,7 +94,8 @@ export function SavedTimetablesList({
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {timetables.map((item) => {
-          const isActive = item.id === activeTimetableId;
+          const isCurrentlyActive = Boolean(item.isActive || (activeTimetableId && item.id === activeTimetableId));
+          const effectiveStatus = getTimetableEffectiveStatus(item, activeTimetableId);
           const dateRange = computeDateRange(item.rows || []);
           const totalRows = item.rows?.length || 0;
           const classesCount = item.classes?.length || 1;
@@ -91,16 +103,16 @@ export function SavedTimetablesList({
           return (
             <div
               key={item.id}
-              className={`bg-white rounded-xl border p-4.5 space-y-3 transition-all flex flex-col justify-between ${
-                isActive
-                  ? 'border-indigo-500 shadow-md ring-1 ring-indigo-500/30'
+              className={`bg-white rounded-xl border p-4.5 space-y-3.5 transition-all flex flex-col justify-between ${
+                isCurrentlyActive
+                  ? 'border-emerald-500 shadow-md ring-2 ring-emerald-500/30'
                   : 'border-slate-200 hover:border-slate-300 shadow-xs'
               }`}
             >
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 <div className="flex items-start justify-between gap-2">
-                  <div className="space-y-0.5">
-                    <h4 className="font-headline font-bold text-xs text-slate-900 line-clamp-1" title={item.examinationName}>
+                  <div className="space-y-0.5 flex-1 min-w-0">
+                    <h4 className="font-headline font-bold text-xs text-slate-900 truncate" title={item.examinationName}>
                       {item.examinationName || 'Untitled Examination'}
                     </h4>
                     <p className="text-[11px] text-slate-500 truncate" title={item.institutionName}>
@@ -108,24 +120,36 @@ export function SavedTimetablesList({
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-1 shrink-0">
-                    {item.isPublished && (
-                      <Badge className="bg-emerald-50 text-emerald-800 border-emerald-300 text-[10px] px-1.5 py-0.5 font-bold gap-1">
-                        <Globe className="w-3 h-3 text-emerald-600" />
-                        Published
+                  {/* Status Badges: Draft, Finalised, Active, Archived */}
+                  <div className="flex items-center gap-1 shrink-0 flex-wrap justify-end">
+                    {effectiveStatus === 'Active' ? (
+                      <Badge className="bg-emerald-50 text-emerald-800 border-emerald-300 text-[10px] px-2 py-0.5 font-bold gap-1 shadow-2xs">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        Active
                       </Badge>
-                    )}
-                    {item.isLocked ? (
-                      <Badge className="bg-amber-100 text-amber-800 border-amber-300 text-[10px] px-1.5 py-0.5 font-bold gap-1">
-                        <Lock className="w-3 h-3" />
-                        Locked
+                    ) : effectiveStatus === 'Finalised' ? (
+                      <Badge className="bg-indigo-50 text-indigo-800 border-indigo-200 text-[10px] px-2 py-0.5 font-bold gap-1 shadow-2xs">
+                        <CheckCircle2 className="w-3 h-3 text-indigo-600" />
+                        Finalised
                       </Badge>
-                    ) : !item.isPublished ? (
-                      <Badge className="bg-slate-100 text-slate-600 border-slate-200 text-[10px] px-1.5 py-0.5 font-semibold gap-1">
-                        <Sparkles className="w-3 h-3" />
+                    ) : effectiveStatus === 'Archived' ? (
+                      <Badge className="bg-zinc-100 text-zinc-600 border-zinc-300 text-[10px] px-2 py-0.5 font-semibold gap-1">
+                        <Archive className="w-3 h-3 text-zinc-500" />
+                        Archived
+                      </Badge>
+                    ) : (
+                      <Badge className="bg-slate-100 text-slate-600 border-slate-200 text-[10px] px-2 py-0.5 font-medium gap-1">
+                        <Sparkles className="w-3 h-3 text-slate-400" />
                         Draft
                       </Badge>
-                    ) : null}
+                    )}
+
+                    {item.isPublished && (
+                      <Badge className="bg-sky-50 text-sky-800 border-sky-300 text-[10px] px-1.5 py-0.5 font-bold gap-1" title="Published to Student Portal">
+                        <Globe className="w-3 h-3 text-sky-600" />
+                        Portal
+                      </Badge>
+                    )}
                   </div>
                 </div>
 
@@ -142,71 +166,118 @@ export function SavedTimetablesList({
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-1.5">
-                <div className="flex items-center gap-1">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onOpenTimetable(item)}
-                    className="h-7 text-xs px-2.5 font-bold text-[#1E2A5E] border-slate-200 hover:bg-slate-50"
-                  >
-                    Open
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => onPreviewTimetable(item)}
-                    className="h-7 w-7 p-0 text-slate-600 hover:text-indigo-600"
-                    title="Preview Timetable"
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => generateExaminationTimetablePdf({ timetable: item, signatory })}
-                    className="h-7 w-7 p-0 text-slate-600 hover:text-emerald-600"
-                    title="Download PDF"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                  </Button>
-                  {onPublishTimetable && (
+              {/* Action Buttons Area */}
+              <div className="pt-2.5 border-t border-slate-100 space-y-2">
+                {/* Primary Activation / Deactivation Button: Never display both simultaneously */}
+                <div className="w-full">
+                  {isCurrentlyActive ? (
                     <Button
+                      type="button"
                       size="sm"
-                      variant="ghost"
-                      onClick={() => onPublishTimetable(item)}
-                      className="h-7 w-7 p-0 text-slate-600 hover:text-indigo-600"
-                      title={item.isPublished ? "Update on Student Portal" : "Publish on Student Portal"}
+                      variant="outline"
+                      onClick={() => onDeactivateTimetable?.(item)}
+                      className="w-full h-8 text-xs font-bold text-amber-800 border-amber-300 bg-amber-50/90 hover:bg-amber-100 hover:text-amber-900 gap-1.5 rounded-lg shadow-2xs cursor-pointer transition-all"
+                      title="Deactivate this examination across all modules"
                     >
-                      <Globe className="w-3.5 h-3.5 text-indigo-600" />
+                      <PauseCircle className="w-4 h-4 text-amber-600" />
+                      <span>Deactivate Examination</span>
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => onActivateTimetable?.(item)}
+                      className="w-full h-8 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 gap-1.5 rounded-lg shadow-2xs cursor-pointer transition-all"
+                      title="Activate this examination across Seating Allocation, Attendance, and Portals"
+                    >
+                      <PlayCircle className="w-4 h-4 text-emerald-100" />
+                      <span>Activate Examination</span>
                     </Button>
                   )}
                 </div>
 
-                <div className="flex items-center gap-1">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => onToggleLock(item.id, !item.isLocked)}
-                    className={`h-7 w-7 p-0 ${
-                      item.isLocked
-                        ? 'text-amber-600 hover:text-amber-700 hover:bg-amber-50'
-                        : 'text-slate-400 hover:text-amber-600 hover:bg-slate-100'
-                    }`}
-                    title={item.isLocked ? "Unlock Timetable" : "Lock Timetable"}
-                  >
-                    {item.isLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setDeleteTargetId(item.id)}
-                    className="h-7 w-7 p-0 text-slate-400 hover:text-rose-600 hover:bg-rose-50"
-                    title="Delete Timetable"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
+                {/* Secondary Utility Controls */}
+                <div className="flex items-center justify-between gap-1.5 pt-1">
+                  <div className="flex items-center gap-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onOpenTimetable(item)}
+                      className="h-7 text-xs px-2.5 font-bold text-[#1E2A5E] border-slate-200 hover:bg-slate-50"
+                      title="Open in editor"
+                    >
+                      Open
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => onPreviewTimetable(item)}
+                      className="h-7 w-7 p-0 text-slate-600 hover:text-indigo-600"
+                      title="Preview Timetable"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => generateExaminationTimetablePdf({ timetable: item, signatory })}
+                      className="h-7 w-7 p-0 text-slate-600 hover:text-emerald-600"
+                      title="Download PDF"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                    </Button>
+                    {onPublishTimetable && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => onPublishTimetable(item)}
+                        className="h-7 w-7 p-0 text-slate-600 hover:text-indigo-600"
+                        title={item.isPublished ? "Update on Student Portal" : "Publish on Student Portal"}
+                      >
+                        <Globe className="w-3.5 h-3.5 text-indigo-600" />
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-0.5">
+                    {onToggleArchive && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => onToggleArchive(item.id, effectiveStatus)}
+                        className="h-7 w-7 p-0 text-slate-400 hover:text-zinc-700 hover:bg-slate-100"
+                        title={effectiveStatus === 'Archived' ? "Unarchive Timetable" : "Archive Timetable"}
+                      >
+                        {effectiveStatus === 'Archived' ? (
+                          <ArchiveRestore className="w-3.5 h-3.5 text-zinc-600" />
+                        ) : (
+                          <Archive className="w-3.5 h-3.5" />
+                        )}
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => onToggleLock(item.id, !item.isLocked)}
+                      className={`h-7 w-7 p-0 ${
+                        item.isLocked
+                          ? 'text-amber-600 hover:text-amber-700 hover:bg-amber-50'
+                          : 'text-slate-400 hover:text-amber-600 hover:bg-slate-100'
+                      }`}
+                      title={item.isLocked ? "Unlock Timetable (re-enable editing)" : "Finalise & Lock Timetable"}
+                    >
+                      {item.isLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setDeleteTargetId(item.id)}
+                      className="h-7 w-7 p-0 text-slate-400 hover:text-rose-600 hover:bg-rose-50"
+                      title="Delete Timetable"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>

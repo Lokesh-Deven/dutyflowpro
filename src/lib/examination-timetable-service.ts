@@ -5,6 +5,7 @@ import {
   TimetableSlot,
   TimetableClassTiming,
   PublishedTimetableRecord,
+  ExaminationStatus,
 } from './examination-timetable-types';
 import { STANDARD_STUDENT_SUBJECTS } from './student-seating-service';
 import {
@@ -17,6 +18,7 @@ import {
 } from './storage-service';
 
 const STORAGE_PREFIX = 'dutyflow_examination_timetables_';
+const ACTIVE_TIMETABLE_STORAGE_PREFIX = 'dutyflow_active_timetable_id_';
 
 /**
  * Generate 12-hour clock times at 15-minute intervals (7:00 AM to 7:00 PM)
@@ -185,7 +187,62 @@ function getStorageKey(userId?: string): string {
 }
 
 /**
- * Fetch all saved examination timetables from localStorage
+ * Storage key for the single active examination timetable ID
+ */
+export function getActiveTimetableStorageKey(userId?: string): string {
+  return `${ACTIVE_TIMETABLE_STORAGE_PREFIX}${userId || 'guest'}`;
+}
+
+/**
+ * Get currently active examination timetable ID (if any)
+ */
+export function getActiveTimetableId(userId?: string): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const key = getActiveTimetableStorageKey(userId);
+    const directId = localStorage.getItem(key);
+    if (directId && directId !== 'null' && directId !== 'undefined') {
+      return directId;
+    }
+    // Fallback: check if any saved timetable is marked isActive
+    const listKey = getStorageKey(userId);
+    const raw = localStorage.getItem(listKey);
+    if (raw) {
+      const list = JSON.parse(raw) as ExaminationTimetable[];
+      const activeItem = list.find((t) => t.isActive || t.status === 'Active');
+      if (activeItem) {
+        localStorage.setItem(key, activeItem.id);
+        return activeItem.id;
+      }
+    }
+    return null;
+  } catch (_) {
+    return null;
+  }
+}
+
+/**
+ * Determine the effective examination status among: 'Draft' | 'Finalised' | 'Active' | 'Archived'
+ */
+export function getTimetableEffectiveStatus(
+  timetable: ExaminationTimetable,
+  activeTimetableId?: string | null
+): ExaminationStatus {
+  const isCurrentlyActive = timetable.isActive || (Boolean(activeTimetableId) && timetable.id === activeTimetableId);
+  if (isCurrentlyActive) {
+    return 'Active';
+  }
+  if (timetable.status === 'Archived') {
+    return 'Archived';
+  }
+  if (timetable.isLocked || timetable.status === 'Finalised') {
+    return 'Finalised';
+  }
+  return 'Draft';
+}
+
+/**
+ * Fetch all saved examination timetables from localStorage with accurate active state and status
  */
 export function getSavedTimetables(userId?: string): ExaminationTimetable[] {
   if (typeof window === 'undefined') return [];
@@ -194,10 +251,279 @@ export function getSavedTimetables(userId?: string): ExaminationTimetable[] {
     const data = localStorage.getItem(key);
     if (!data) return [];
     const list = JSON.parse(data) as ExaminationTimetable[];
-    return list.map(normalizeTimetable);
+    const activeId = getActiveTimetableId(userId);
+
+    return list.map((item) => {
+      const normalized = normalizeTimetable(item);
+      const isActive = Boolean(activeId && normalized.id === activeId);
+      const status = getTimetableEffectiveStatus(normalized, activeId);
+      return {
+        ...normalized,
+        isActive,
+        status,
+      };
+    });
   } catch (err) {
     console.error('Failed to load saved timetables:', err);
     return [];
+  }
+}
+
+/**
+ * Get the currently active ExaminationTimetable object (or null if none active)
+ */
+export function getActiveTimetable(userId?: string): ExaminationTimetable | null {
+  const activeId = getActiveTimetableId(userId);
+  if (!activeId) return null;
+  const timetables = getSavedTimetables(userId);
+  return timetables.find((t) => t.id === activeId) || null;
+}
+
+/**
+ * Activates an examination timetable.
+ * Requirement 1: Makes it operational across Seating Allocation, Student Attendance, Student Portal and Invigilator Portal.
+ * Requirement 2: Only one examination timetable can be active at a time.
+ * Requirement 3: Automatically deactivates the previously active timetable.
+ */
+export async function activateTimetable(
+  id: string,
+  userId?: string,
+  institutionId?: string,
+  institutionCode?: string
+): Promise<{ success: boolean; activeTimetable?: ExaminationTimetable; error?: string }> {
+  if (typeof window === 'undefined') return { success: false, error: 'Window is not defined' };
+  try {
+    const listKey = getStorageKey(userId);
+    const activeKey = getActiveTimetableStorageKey(userId);
+    const existing = getSavedTimetables(userId);
+    const target = existing.find((t) => t.id === id);
+    if (!target) return { success: false, error: 'Timetable not found' };
+
+    const now = new Date().toISOString();
+
+    // 1. Single active invariant: Target becomes Active, all others become inactive / Finalised if they were Active
+    const nextList: ExaminationTimetable[] = existing.map((t) => {
+      if (t.id === id) {
+        return {
+          ...t,
+          isActive: true,
+          status: 'Active' as ExaminationStatus,
+          isLocked: true, // Finalised/Locked upon activation to guarantee examination integrity
+          isPublished: true,
+          publishedAt: t.publishedAt || now,
+          updatedAt: now,
+        };
+      } else if (t.isActive || t.status === 'Active') {
+        return {
+          ...t,
+          isActive: false,
+          status: 'Finalised' as ExaminationStatus,
+          updatedAt: now,
+        };
+      }
+      return t;
+    });
+
+    const activeTimetable = nextList.find((t) => t.id === id)!;
+
+    // 2. Persist to localStorage
+    localStorage.setItem(listKey, JSON.stringify(nextList));
+    localStorage.setItem(activeKey, id);
+
+    // 3. Operationalize on Student Portal:
+    // Only the single active timetable is published and visible on the Student Portal!
+    const instId = institutionId || userId || 'guest';
+    const rows = activeTimetable.rows || [];
+    const totalDays = rows.filter((r) => r.subjects && r.subjects.length > 0).length;
+    const totalSubjects = rows.reduce((acc, r) => acc + (r.subjects ? r.subjects.length : 0), 0);
+    const classesCount = activeTimetable.classes?.length || 0;
+
+    const publishedRecord: PublishedTimetableRecord = {
+      id: activeTimetable.id,
+      institutionId: instId,
+      institutionCode,
+      institutionName: activeTimetable.institutionName,
+      examinationName: activeTimetable.examinationName,
+      timetable: activeTimetable,
+      dateRange: computeDateRange(rows),
+      totalDays,
+      totalSubjects,
+      classesCount,
+      isActive: true,
+      status: 'Active',
+      publishedAt: activeTimetable.publishedAt || now,
+      updatedAt: now,
+    };
+    saveLocalPublishedTimetables(instId, [publishedRecord]);
+
+    // Also notify cloud API
+    try {
+      fetch('/api/published-timetables', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          timetable: activeTimetable,
+          institutionId: instId,
+          institutionCode,
+          institutionName: activeTimetable.institutionName,
+        }),
+      }).catch(() => {});
+    } catch (_) {}
+
+    // 4. Cloud workspace synchronization
+    if (userId && isUUID(userId)) {
+      syncUserWorkspaceToDatabase(userId, {
+        timetables: nextList,
+        activeTimetableId: id,
+      }).catch(() => {});
+      syncExaminationTimetableToDatabase(activeTimetable, userId).catch(() => {});
+    }
+
+    // 5. Broadcast to all active modules and portals immediately
+    window.dispatchEvent(
+      new CustomEvent('dutyflow:active-timetable-changed', {
+        detail: { activeTimetableId: id, timetable: activeTimetable },
+      })
+    );
+    window.dispatchEvent(new Event('dutyflow:published-timetables-change'));
+
+    return { success: true, activeTimetable };
+  } catch (err: any) {
+    console.error('Error activating timetable:', err);
+    return { success: false, error: err?.message || 'Failed to activate timetable.' };
+  }
+}
+
+/**
+ * Deactivates an examination timetable.
+ * Requirement 4: Disables the selected examination across all modules and portals.
+ * Requirement 7: Does NOT delete existing seating allocations, attendance records or invigilator duties.
+ */
+export async function deactivateTimetable(
+  id: string,
+  userId?: string,
+  institutionId?: string
+): Promise<{ success: boolean; deactivatedTimetable?: ExaminationTimetable; error?: string }> {
+  if (typeof window === 'undefined') return { success: false, error: 'Window is not defined' };
+  try {
+    const listKey = getStorageKey(userId);
+    const activeKey = getActiveTimetableStorageKey(userId);
+    const existing = getSavedTimetables(userId);
+    const target = existing.find((t) => t.id === id);
+    if (!target) return { success: false, error: 'Timetable not found' };
+
+    const now = new Date().toISOString();
+
+    const nextList: ExaminationTimetable[] = existing.map((t) => {
+      if (t.id === id) {
+        return {
+          ...t,
+          isActive: false,
+          status: 'Finalised' as ExaminationStatus, // Retains Finalised status
+          updatedAt: now,
+        };
+      }
+      return t;
+    });
+
+    const deactivatedTimetable = nextList.find((t) => t.id === id)!;
+
+    // 2. Persist to localStorage
+    localStorage.setItem(listKey, JSON.stringify(nextList));
+    localStorage.removeItem(activeKey);
+
+    // 3. Clear published operational timetable from Student Portal (disables it on portal)
+    const instId = institutionId || userId || 'guest';
+    saveLocalPublishedTimetables(instId, []);
+
+    try {
+      fetch(`/api/published-timetables?id=${id}&institutionId=${instId}`, {
+        method: 'DELETE',
+      }).catch(() => {});
+    } catch (_) {}
+
+    // 4. Cloud workspace synchronization
+    if (userId && isUUID(userId)) {
+      syncUserWorkspaceToDatabase(userId, {
+        timetables: nextList,
+        activeTimetableId: null,
+      }).catch(() => {});
+      syncExaminationTimetableToDatabase(deactivatedTimetable, userId).catch(() => {});
+    }
+
+    // 5. Broadcast deactivation to all modules immediately
+    window.dispatchEvent(
+      new CustomEvent('dutyflow:active-timetable-changed', {
+        detail: { activeTimetableId: null, timetable: null },
+      })
+    );
+    window.dispatchEvent(new Event('dutyflow:published-timetables-change'));
+
+    return { success: true, deactivatedTimetable };
+  } catch (err: any) {
+    console.error('Error deactivating timetable:', err);
+    return { success: false, error: err?.message || 'Failed to deactivate timetable.' };
+  }
+}
+
+/**
+ * Update the status of a timetable: 'Draft' | 'Finalised' | 'Active' | 'Archived'
+ */
+export function setTimetableStatus(
+  id: string,
+  status: ExaminationStatus,
+  userId?: string
+): ExaminationTimetable | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const listKey = getStorageKey(userId);
+    const existing = getSavedTimetables(userId);
+    const index = existing.findIndex((t) => t.id === id);
+    if (index < 0) return null;
+
+    const current = existing[index];
+    const now = new Date().toISOString();
+
+    const updated: ExaminationTimetable = {
+      ...current,
+      status,
+      isActive: status === 'Active',
+      isLocked: status === 'Finalised' || status === 'Active' ? true : current.isLocked,
+      updatedAt: now,
+    };
+
+    existing[index] = updated;
+    localStorage.setItem(listKey, JSON.stringify(existing));
+
+    if (status === 'Active') {
+      const activeKey = getActiveTimetableStorageKey(userId);
+      localStorage.setItem(activeKey, id);
+    } else if (current.isActive) {
+      const activeKey = getActiveTimetableStorageKey(userId);
+      localStorage.removeItem(activeKey);
+    }
+
+    if (userId && isUUID(userId)) {
+      syncExaminationTimetableToDatabase(updated, userId).catch(() => {});
+      syncUserWorkspaceToDatabase(userId, {
+        timetables: existing,
+        activeTimetableId: status === 'Active' ? id : null,
+      }).catch(() => {});
+    }
+
+    window.dispatchEvent(
+      new CustomEvent('dutyflow:active-timetable-changed', {
+        detail: {
+          activeTimetableId: status === 'Active' ? id : null,
+          timetable: status === 'Active' ? updated : null,
+        },
+      })
+    );
+
+    return updated;
+  } catch (err) {
+    console.error('Failed to set timetable status:', err);
+    return null;
   }
 }
 
@@ -212,8 +538,14 @@ export function saveTimetable(timetable: ExaminationTimetable, userId?: string):
     const index = existing.findIndex((t) => t.id === timetable.id);
 
     const normalized = normalizeTimetable(timetable);
-    const updated = {
+    const activeId = getActiveTimetableId(userId);
+    const isActive = Boolean(timetable.isActive || (activeId && timetable.id === activeId));
+    const status = timetable.status || getTimetableEffectiveStatus(normalized, activeId);
+
+    const updated: ExaminationTimetable = {
       ...normalized,
+      isActive,
+      status,
       updatedAt: new Date().toISOString(),
     };
 
@@ -234,7 +566,7 @@ export function saveTimetable(timetable: ExaminationTimetable, userId?: string):
       });
       syncUserWorkspaceToDatabase(userId, {
         timetables: nextList,
-        activeTimetableId: updated.id,
+        activeTimetableId: isActive ? updated.id : (activeId || null),
       }).catch(() => {});
     }
   } catch (err) {
@@ -253,6 +585,17 @@ export function deleteTimetable(id: string, userId?: string): void {
     const nextList = existing.filter((t) => t.id !== id);
     localStorage.setItem(key, JSON.stringify(nextList));
 
+    const activeId = getActiveTimetableId(userId);
+    if (activeId === id) {
+      const activeKey = getActiveTimetableStorageKey(userId);
+      localStorage.removeItem(activeKey);
+      window.dispatchEvent(
+        new CustomEvent('dutyflow:active-timetable-changed', {
+          detail: { activeTimetableId: null, timetable: null },
+        })
+      );
+    }
+
     // Delete from Supabase database
     if (userId && isUUID(userId)) {
       deleteExaminationTimetableFromDatabase(id, userId).catch((err) => {
@@ -260,6 +603,7 @@ export function deleteTimetable(id: string, userId?: string): void {
       });
       syncUserWorkspaceToDatabase(userId, {
         timetables: nextList,
+        activeTimetableId: activeId === id ? null : undefined,
       }).catch(() => {});
     }
   } catch (err) {
@@ -339,8 +683,25 @@ export async function fetchTimetablesFromCloud(userId?: string): Promise<Examina
       }
     });
 
+    // Sync activeTimetableId from cloud workspace if present
+    const activeKey = getActiveTimetableStorageKey(userId);
+    let activeId = localStorage.getItem(activeKey);
+    if (!activeId && ws?.activeTimetableId) {
+      activeId = ws.activeTimetableId;
+      localStorage.setItem(activeKey, activeId);
+    }
+
     const merged = Array.from(map.values())
       .map(normalizeTimetable)
+      .map((item) => {
+        const isActive = Boolean(activeId && item.id === activeId);
+        const status = getTimetableEffectiveStatus(item, activeId);
+        return {
+          ...item,
+          isActive,
+          status,
+        };
+      })
       .sort((a, b) => {
         const dateA = a.updatedAt || a.createdAt || '';
         const dateB = b.updatedAt || b.createdAt || '';

@@ -26,6 +26,8 @@ export interface TimetableRow {
   timings?: Record<string, TimetableClassTiming>; // backwards-compatible mirror of slots[0]?.timings
 }
 
+export type ExaminationStatus = 'Draft' | 'Finalised' | 'Active' | 'Archived';
+
 export interface ExaminationTimetable {
   id: string;
   userId?: string;
@@ -35,6 +37,8 @@ export interface ExaminationTimetable {
   classes: TimetableClassColumn[];
   rows: TimetableRow[];
   isLocked: boolean;
+  isActive?: boolean;
+  status?: ExaminationStatus;
   isPublished?: boolean;
   publishedAt?: string | null;
   createdAt: string;
@@ -50,6 +54,8 @@ export interface SavedTimetableSummary {
   totalSubjects: number;
   classesCount: number;
   isLocked: boolean;
+  isActive?: boolean;
+  status?: ExaminationStatus;
   isPublished?: boolean;
   publishedAt?: string | null;
   updatedAt: string;
@@ -66,6 +72,8 @@ export interface PublishedTimetableRecord {
   totalDays: number;
   totalSubjects: number;
   classesCount: number;
+  isActive?: boolean;
+  status?: ExaminationStatus;
   publishedAt: string;
   updatedAt: string;
 }

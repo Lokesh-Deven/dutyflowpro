@@ -140,7 +140,7 @@ export function buildExaminationTimetablePdfDoc({
       },
     },
     {
-      content: 'Course',
+      content: 'Class',
       rowSpan: 2,
       styles: {
         halign: 'center',

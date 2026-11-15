@@ -206,64 +206,66 @@ export default function MasterRoomsPage() {
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-indigo-50 text-indigo-700 rounded-lg">
-              <DoorOpen className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="font-headline text-2xl font-black tracking-tight text-slate-800">
-                  Examination Rooms
-                </h1>
-                {isRoomsLocked ? (
-                  <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-300/40 text-[10px] px-2 py-0.5 font-semibold rounded-full gap-1">
-                    <Lock className="w-3 h-3 text-amber-600" /> Saved Rooms Locked
-                  </Badge>
-                ) : hasUnsavedChanges ? (
-                  <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-300/40 text-[10px] px-2 py-0.5 font-semibold rounded-full animate-pulse">
-                    Unsaved Room Additions
-                  </Badge>
-                ) : lastSavedAt ? (
-                  <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-300/40 text-[10px] px-2 py-0.5 font-semibold rounded-full hidden sm:inline-flex">
-                    <CheckCheck className="w-3 h-3 mr-1 text-emerald-600" /> Saved at {lastSavedAt}
-                  </Badge>
-                ) : null}
+      {/* Header Banner - Sticky Top Panel */}
+      <div className="sticky top-16 z-20 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-3 bg-[#f4f6fa]/95 dark:bg-[#0b0f19]/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 shadow-2xs transition-all">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 bg-indigo-50 text-indigo-700 rounded-lg">
+                <DoorOpen className="w-6 h-6" />
               </div>
-              <p className="text-xs text-slate-500 font-medium">
-                Create and manage examination rooms.
-              </p>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="font-headline text-2xl font-black tracking-tight text-slate-800 dark:text-slate-100">
+                    Examination Rooms
+                  </h1>
+                  {isRoomsLocked ? (
+                    <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-300/40 text-[10px] px-2 py-0.5 font-semibold rounded-full gap-1">
+                      <Lock className="w-3 h-3 text-amber-600" /> Saved Rooms Locked
+                    </Badge>
+                  ) : hasUnsavedChanges ? (
+                    <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-300/40 text-[10px] px-2 py-0.5 font-semibold rounded-full animate-pulse">
+                      Unsaved Room Additions
+                    </Badge>
+                  ) : lastSavedAt ? (
+                    <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-300/40 text-[10px] px-2 py-0.5 font-semibold rounded-full hidden sm:inline-flex">
+                      <CheckCheck className="w-3 h-3 mr-1 text-emerald-600" /> Saved at {lastSavedAt}
+                    </Badge>
+                  ) : null}
+                </div>
+                <p className="text-xs text-slate-500 font-medium">
+                  Create and manage examination rooms.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div>
-          <Button
-            onClick={() => {
-              if (isRoomsLocked) {
-                toast({
-                  title: "Rooms Locked",
-                  description: "Unlock saved rooms first to add new examination rooms.",
-                });
-                return;
-              }
-              setEditingRoom(null);
-              setIsAddOpen(true);
-            }}
-            disabled={isRoomsLocked}
-            className={cn(
-              "text-white font-bold text-xs h-9 px-4 gap-1.5 shadow-xs transition-colors",
-              isRoomsLocked
-                ? "bg-slate-400 cursor-not-allowed opacity-75"
-                : "bg-[#1E2A5E] hover:bg-[#151D42]"
-            )}
-            title={isRoomsLocked ? "Unlock rooms to add new ones" : "Add Room"}
-          >
-            {isRoomsLocked ? <Lock className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-            Add Room
-          </Button>
+          <div>
+            <Button
+              onClick={() => {
+                if (isRoomsLocked) {
+                  toast({
+                    title: "Rooms Locked",
+                    description: "Unlock saved rooms first to add new examination rooms.",
+                  });
+                  return;
+                }
+                setEditingRoom(null);
+                setIsAddOpen(true);
+              }}
+              disabled={isRoomsLocked}
+              className={cn(
+                "text-white font-bold text-xs h-9 px-4 gap-1.5 shadow-xs transition-colors",
+                isRoomsLocked
+                  ? "bg-slate-400 cursor-not-allowed opacity-75"
+                  : "bg-[#1E2A5E] hover:bg-[#151D42]"
+              )}
+              title={isRoomsLocked ? "Unlock rooms to add new ones" : "Add Room"}
+            >
+              {isRoomsLocked ? <Lock className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+              Add Room
+            </Button>
+          </div>
         </div>
       </div>
 
