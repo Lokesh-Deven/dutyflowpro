@@ -2676,7 +2676,7 @@ export default function SeatingAllocationWizardPage() {
                             return (
                               <tr key={`sim-bench-${b.side}-${b.benchNumber}-${idx}`} className="hover:bg-white/5">
                                 <td className="py-1 px-2 font-mono text-amber-300 font-bold">
-                                  {b.side === 'LEFT' ? 'L' : b.side === 'MIDDLE' ? 'M' : 'R'}{String(b.benchNumber).padStart(2, '0')}
+                                  {b.side === 'LEFT' ? 'L' : b.side === 'MIDDLE' ? 'M' : 'R'}{b.benchNumber}
                                 </td>
                                 <td className="py-1 px-2">{formatSeat(seatA)}</td>
                                 <td className="py-1 px-2">{formatSeat(seatC)}</td>

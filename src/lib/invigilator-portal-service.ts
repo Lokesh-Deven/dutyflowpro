@@ -10,6 +10,7 @@ import {
 import { SeatingAllocationRecord } from './student-seating-types';
 import { DirectoryInvigilator, Invigilator, SavedAllotment } from './types';
 import { resolveInstitutionByCode, formatInstitutionCode } from './institution-service';
+import { isRoomPublished } from './room-attendance-publishing-service';
 
 const SESSION_KEY = 'dutyflow_active_invigilator_session';
 const PINS_KEY = 'dutyflow_invigilator_pins';
@@ -468,6 +469,12 @@ export function getInvigilatorDuties(
 
         if (matchesId || matchesName) {
           const roomNo = String(duty.room);
+
+          // Exclusivity rule: Only published rooms appear on invigilator portal
+          if (!isRoomPublished(roomNo, examId, institutionId)) {
+            continue;
+          }
+
           const dutyId = `duty-${allotment.id}-${examId}-${roomNo}`;
           const existingSub = subMap.get(dutyId);
 
@@ -516,7 +523,7 @@ export function getInvigilatorDuties(
     const sub1 = subMap.get(duty1Id);
     const hasDuty1 = duties.some((d) => d.dutyId === duty1Id || (d.roomNo === '108' && d.subjectName === 'English'));
 
-    if (!hasDuty1) {
+    if (!hasDuty1 && isRoomPublished('108', 'exam-eng-midterm', institutionId)) {
       duties.unshift({
         dutyId: duty1Id,
         examinationId: 'exam-eng-midterm',
@@ -549,7 +556,7 @@ export function getInvigilatorDuties(
     const sub2 = subMap.get(duty2Id);
     const hasDuty2 = duties.some((d) => d.dutyId === duty2Id || (d.roomNo === '204' && d.subjectName === 'Physics'));
 
-    if (!hasDuty2) {
+    if (!hasDuty2 && isRoomPublished('204', 'exam-phy-midterm', institutionId)) {
       duties.push({
         dutyId: duty2Id,
         examinationId: 'exam-phy-midterm',
@@ -693,7 +700,7 @@ export function getRoomStudentsForDuty(
                         registerNumber: seat.student.rollNo,
                         studentName: seat.student.name || 'Candidate',
                         section: seat.student.section || 'A',
-                        benchNumber: `${bench.side === 'LEFT' ? 'L' : bench.side === 'MIDDLE' ? 'M' : 'R'}${String(bench.benchNumber).padStart(2, '0')}`,
+                        benchNumber: `${bench.side === 'LEFT' ? 'L' : bench.side === 'MIDDLE' ? 'M' : 'R'}${bench.benchNumber}`,
                         position: pos,
                         status: 'Not Marked',
                       });
@@ -943,6 +950,7 @@ export async function submitRoomAttendance(
     submittedAt: timeFormatted,
     submittedTimestamp: now.toISOString(),
     isLocked: true,
+    source: 'Invigilator',
     records: finalRecords,
   };
 

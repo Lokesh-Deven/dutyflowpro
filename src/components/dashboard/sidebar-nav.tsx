@@ -30,6 +30,7 @@ import {
   CalendarClock,
   UserCheck,
   ClipboardList,
+  Smartphone,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth-context';
@@ -66,10 +67,16 @@ export const invigilationDutySubmenu = [
   { href: '/dashboard/room-allocations', label: 'Room Allocations', icon: DoorOpen },
 ];
 
+export const roomAttendanceSubmenu = [
+  { href: '/dashboard/room-attendance/invigilator', label: 'Invigilator Attendance', icon: UserCheck },
+  { href: '/dashboard/room-attendance/admin', label: 'Admin Attendance', icon: Smartphone },
+  { href: '/dashboard/room-attendance/manual', label: 'Manual Attendance', icon: FileSpreadsheet },
+  { href: '/dashboard/room-attendance/status', label: 'Attendance Status', icon: BarChart2 },
+];
+
 export const navItems = [
   { href: '/dashboard/examination-timetable', label: 'Examination Timetable', icon: CalendarClock },
   { href: '/dashboard/question-paper-distribution', label: 'Question Paper Distribution', icon: ClipboardCheck },
-  { href: '/dashboard/room-attendance', label: 'Room Attendance', icon: UserCheck },
   { href: '/dashboard/schedule', label: 'Day-wise Schedule', icon: CalendarDays },
   { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart2 },
   { href: '/dashboard/instructions', label: 'Add Instructions', icon: ListChecks },
@@ -108,6 +115,7 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
   const [isColorPaletteDialogOpen, setIsColorPaletteDialogOpen] = useState(false);
   const [isStudentSeatingOpen, setIsStudentSeatingOpen] = useState(true);
   const [isInvigilationDutyOpen, setIsInvigilationDutyOpen] = useState(true);
+  const [isRoomAttendanceOpen, setIsRoomAttendanceOpen] = useState(true);
   const { clearCurrentAllotment, pdfPaletteId } = useAllotment();
   const activePalette = getPdfPalette(pdfPaletteId);
 
@@ -307,6 +315,98 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
     );
   };
 
+  const renderRoomAttendance = () => {
+    const isRoomAttendanceActive = pathname.startsWith('/dashboard/room-attendance');
+
+    if (isCollapsed) {
+      return (
+        <DropdownMenu key="room-attendance-dropdown">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className={cn(
+                    "flex items-center justify-center w-11 h-11 mx-auto rounded-xl text-sm font-semibold transition-all duration-200 group relative cursor-pointer",
+                    isRoomAttendanceActive
+                      ? "bg-[#6342e8] text-white shadow-lg shadow-purple-900/40"
+                      : "text-[#b4b1db] hover:text-white hover:bg-white/[0.07]"
+                  )}
+                >
+                  <UserCheck className={cn("w-5 h-5 shrink-0 transition-transform group-hover:scale-110", isRoomAttendanceActive ? "text-white" : "text-[#9d99ce]")} />
+                </button>
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="bg-[#1e1957] text-white border-[#31297e] font-semibold text-xs">
+              Room Attendance
+            </TooltipContent>
+          </Tooltip>
+          <DropdownMenuContent side="right" align="start" className="bg-[#1e1957] text-white border-[#31297e] w-52 p-1.5 shadow-xl">
+            <DropdownMenuLabel className="text-xs text-indigo-300 font-bold px-2 py-1">Room Attendance</DropdownMenuLabel>
+            <DropdownMenuSeparator className="bg-white/10" />
+            {roomAttendanceSubmenu.map((sub, idx) => (
+              <DropdownMenuItem key={sub.href} asChild className="focus:bg-[#6342e8] focus:text-white text-xs font-semibold py-2 cursor-pointer">
+                <Link href={sub.href} onClick={() => handleNavClick(sub.label)} className="flex items-center gap-2">
+                  <sub.icon className="w-3.5 h-3.5 text-indigo-300" />
+                  <span>{idx + 1}. {sub.label}</span>
+                </Link>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    }
+
+    return (
+      <div key="room-attendance-collapsible" className="space-y-1">
+        <button
+          type="button"
+          onClick={() => setIsRoomAttendanceOpen((prev) => !prev)}
+          className={cn(
+            "w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 group relative cursor-pointer",
+            isRoomAttendanceActive
+              ? "bg-[#6342e8]/25 text-white border border-[#6342e8]/40"
+              : "text-[#b4b1db] hover:text-white hover:bg-white/[0.07]"
+          )}
+        >
+          <div className="flex items-center gap-3">
+            <UserCheck className={cn("w-4 h-4 shrink-0 transition-transform group-hover:scale-110", isRoomAttendanceActive ? "text-white" : "text-[#9d99ce]")} />
+            <span className="truncate">Room Attendance</span>
+          </div>
+          <ChevronDown className={cn("w-3.5 h-3.5 transition-transform text-[#9d99ce]", isRoomAttendanceOpen && "rotate-180")} />
+        </button>
+
+        {isRoomAttendanceOpen && (
+          <div className="pl-4 pr-1 py-1 space-y-1 border-l-2 border-[#6342e8]/40 ml-5 animate-in fade-in-50 duration-150">
+            {roomAttendanceSubmenu.map((sub, idx) => {
+              const isSubActive =
+                pathname === sub.href ||
+                (sub.href === '/dashboard/room-attendance/manual' && pathname === '/dashboard/room-attendance-manual') ||
+                (sub.href === '/dashboard/room-attendance/status' && pathname === '/dashboard/room-attendance');
+
+              return (
+                <Link
+                  key={sub.href}
+                  href={sub.href}
+                  onClick={() => handleNavClick(sub.label)}
+                  className={cn(
+                    "flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-150",
+                    isSubActive
+                      ? "bg-[#6342e8] text-white shadow-xs"
+                      : "text-[#b4b1db] hover:text-white hover:bg-white/[0.06]"
+                  )}
+                >
+                  <sub.icon className={cn("w-3.5 h-3.5 shrink-0", isSubActive ? "text-white" : "text-[#9d99ce]")} />
+                  <span className="truncate">{idx + 1}. {sub.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <aside
       className={cn(
@@ -397,6 +497,16 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
                   {renderStudentSeating()}
                   {/* Invigilation Duty Module */}
                   {renderInvigilationDuty()}
+                </React.Fragment>
+              );
+            }
+
+            if (item.href === '/dashboard/question-paper-distribution') {
+              return (
+                <React.Fragment key={item.href}>
+                  {navLink}
+                  {/* Room Attendance Module */}
+                  {renderRoomAttendance()}
                 </React.Fragment>
               );
             }

@@ -251,7 +251,7 @@ export async function generateRoomSeatingPlanPdf({
       doc.setFontSize(6.8);
       doc.setTextColor(71, 85, 105);
       const benchPrefix = bench.side === 'LEFT' ? 'L' : bench.side === 'MIDDLE' ? 'M' : 'R';
-      const benchLabel = `${benchPrefix}${String(bench.benchNumber).padStart(2, '0')}`;
+      const benchLabel = `${benchPrefix}${bench.benchNumber}`;
       doc.text(
         benchLabel,
         x + badgeWidth / 2,
@@ -543,7 +543,7 @@ export async function generateStudentSeatingIndexPdf({
             section: seat.student.section,
             subjectName: seat.subjectName || '—',
             roomNo: plan.roomNo,
-            benchNumber: `${bench.side === 'LEFT' ? 'L' : bench.side === 'MIDDLE' ? 'M' : 'R'}${String(bench.benchNumber).padStart(2, '0')}`,
+            benchNumber: `${bench.side === 'LEFT' ? 'L' : bench.side === 'MIDDLE' ? 'M' : 'R'}${bench.benchNumber}`,
             position: posLabel,
           });
         }

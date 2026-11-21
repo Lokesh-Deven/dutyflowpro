@@ -158,7 +158,7 @@ export function RoomSeatingDiagram({
 
   const renderBenchCard = (bench: typeof plan.benches[0], keyPrefix: string) => {
     const benchPrefix = bench.side === 'LEFT' ? 'L' : bench.side === 'MIDDLE' ? 'M' : 'R';
-    const benchLabel = `${benchPrefix}${String(bench.benchNumber).padStart(2, '0')}`;
+    const benchLabel = `${benchPrefix}${bench.benchNumber}`;
 
     return (
       <div
@@ -359,7 +359,7 @@ export function RoomSeatingDiagram({
                   <ArrowDown className="w-3.5 h-3.5 text-indigo-600" />
                   Left Side Benches ({leftBenches.length})
                 </span>
-                <span className="text-[11px] text-slate-400 font-medium">Benches 01 &rarr; {String(leftBenches.length).padStart(2, '0')}</span>
+                <span className="text-[11px] text-slate-400 font-medium">Benches 1 &rarr; {leftBenches.length}</span>
               </div>
 
               <div className="space-y-2.5">
@@ -374,7 +374,7 @@ export function RoomSeatingDiagram({
                   <ArrowDown className="w-3.5 h-3.5 text-indigo-600" />
                   Middle Benches ({middleBenches.length})
                 </span>
-                <span className="text-[11px] text-indigo-600/70 font-medium">Benches 01 &rarr; {String(middleBenches.length).padStart(2, '0')}</span>
+                <span className="text-[11px] text-indigo-600/70 font-medium">Benches 1 &rarr; {middleBenches.length}</span>
               </div>
 
               <div className="space-y-2.5">
@@ -389,7 +389,7 @@ export function RoomSeatingDiagram({
                   <ArrowDown className="w-3.5 h-3.5 text-indigo-600" />
                   Right Side Benches ({rightBenches.length})
                 </span>
-                <span className="text-[11px] text-slate-400 font-medium">Benches 01 &rarr; {String(rightBenches.length).padStart(2, '0')}</span>
+                <span className="text-[11px] text-slate-400 font-medium">Benches 1 &rarr; {rightBenches.length}</span>
               </div>
 
               <div className="space-y-2.5">
@@ -407,7 +407,7 @@ export function RoomSeatingDiagram({
                 <ArrowDown className="w-3.5 h-3.5 text-indigo-600" />
                 Left Side Benches ({leftBenches.length})
               </span>
-              <span className="text-[11px] text-slate-400 font-medium">Benches 01 &rarr; {String(leftBenches.length).padStart(2, '0')}</span>
+              <span className="text-[11px] text-slate-400 font-medium">Benches 1 &rarr; {leftBenches.length}</span>
             </div>
 
             <div className="space-y-2.5">
@@ -422,7 +422,7 @@ export function RoomSeatingDiagram({
                 <ArrowDown className="w-3.5 h-3.5 text-indigo-600" />
                 Right Side Benches ({rightBenches.length})
               </span>
-              <span className="text-[11px] text-slate-400 font-medium">Benches 01 &rarr; {String(rightBenches.length).padStart(2, '0')}</span>
+              <span className="text-[11px] text-slate-400 font-medium">Benches 1 &rarr; {rightBenches.length}</span>
             </div>
 
             <div className="space-y-2.5">

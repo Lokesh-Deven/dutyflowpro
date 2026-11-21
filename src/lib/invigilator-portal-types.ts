@@ -25,6 +25,8 @@ export interface StudentAttendanceRecord {
   benchNumber?: string;
   position?: 'Left' | 'Center' | 'Right' | 'Unassigned';
   status: AttendanceStatus;
+  ansScriptNo?: string;
+  subject?: string;
   markedAt?: string;
 }
 
@@ -74,6 +76,7 @@ export interface RoomAttendanceSubmission {
   isLocked: boolean;
   correctionRequested?: boolean;
   correctionReason?: string;
+  source?: 'Invigilator' | 'Admin' | 'Manual';
   records: StudentAttendanceRecord[];
 }
 
