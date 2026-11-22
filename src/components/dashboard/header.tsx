@@ -2,10 +2,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { UserNav } from './user-nav';
-import { HeaderNav } from './header-nav';
 import { ThemeToggle } from '../theme-toggle';
-import { Menu, Bell } from 'lucide-react';
+import { Menu, Bell, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/lib/auth-context';
+import { useAllotment } from '@/lib/allotment-context';
 import {
   Popover,
   PopoverContent,
@@ -20,6 +21,7 @@ import {
 interface HeaderProps {
   onToggleSidebar?: () => void;
   isSidebarCollapsed?: boolean;
+  institutionName?: string;
 }
 
 const ClientThemeToggle = () => {
@@ -35,19 +37,39 @@ const ClientThemeToggle = () => {
   return <ThemeToggle />;
 };
 
-export default function Header({ onToggleSidebar, isSidebarCollapsed = false }: HeaderProps) {
+const DEFAULT_INSTITUTION_NAME = "Seshadripuram Independent Pre-University College";
+
+export default function Header({
+  onToggleSidebar,
+  isSidebarCollapsed = false,
+  institutionName: propInstitutionName,
+}: HeaderProps) {
+  const { user, profile } = useAuth();
+  const { examinations, activeAllotment } = useAllotment();
+
+  // Resolve active institution name from prop, auth profile, exam state, or default fallback
+  const resolvedInstitutionName =
+    propInstitutionName?.trim() ||
+    (profile?.institution_name && profile.institution_name !== 'Guest Profile' && profile.institution_name !== 'Institution'
+      ? profile.institution_name
+      : null) ||
+    (user?.user_metadata?.institution_name as string) ||
+    examinations?.[0]?.college?.trim() ||
+    activeAllotment?.examinations?.[0]?.college?.trim() ||
+    DEFAULT_INSTITUTION_NAME;
+
   return (
     <header className="sticky top-0 z-30 w-full bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800">
-      <div className="h-16 px-4 sm:px-6 flex items-center justify-between gap-4">
-        {/* Left Section: Mobile/Desktop Sidebar Hamburger Toggle + Quick Nav */}
-        <div className="flex items-center gap-3 md:gap-5">
+      <div className="h-16 px-4 sm:px-6 flex items-center justify-between gap-3 sm:gap-4 min-w-0">
+        {/* Left Section: Sidebar Toggle Button + Active Institution Display */}
+        <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0 flex-1 mr-2">
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={onToggleSidebar}
-                className="h-9 w-9 rounded-xl border border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="h-9 w-9 shrink-0 rounded-xl border border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                 aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
               >
                 <Menu className="h-4 w-4" />
@@ -58,20 +80,30 @@ export default function Header({ onToggleSidebar, isSidebarCollapsed = false }: 
             </TooltipContent>
           </Tooltip>
 
-          <div className="hidden md:flex items-center">
-            <HeaderNav />
+          {/* Active Institution Name & Icon */}
+          <div
+            className="flex items-center gap-2 sm:gap-2.5 min-w-0 group"
+            title={resolvedInstitutionName}
+          >
+            <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-[#6342e8] dark:text-indigo-400 shrink-0 border border-indigo-100 dark:border-indigo-900/40 shadow-2xs">
+              <Building2 className="w-3.5 h-3.5" />
+            </div>
+
+            <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 truncate min-w-0 tracking-tight select-none">
+              {resolvedInstitutionName}
+            </span>
           </div>
         </div>
 
-        {/* Right Section: Notification, Theme Toggle & Profile */}
-        <div className="flex items-center gap-2.5">
+        {/* Right Section: Notification Bell, Theme/Settings Toggle & Profile Avatar */}
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
           {/* Notification Bell with indicator */}
           <Popover>
             <PopoverTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className="relative h-9 w-9 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                className="relative h-9 w-9 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
               >
                 <Bell className="h-4 w-4" />
                 <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-[#6342e8] ring-2 ring-white dark:ring-slate-900" />
@@ -88,12 +120,12 @@ export default function Header({ onToggleSidebar, isSidebarCollapsed = false }: 
             </PopoverContent>
           </Popover>
 
-          {/* Theme Toggle */}
+          {/* Theme / Appearance Toggle */}
           <div className="p-0.5 rounded-full">
             <ClientThemeToggle />
           </div>
 
-          {/* User Nav */}
+          {/* User Profile Avatar with Settings & Logout Menu */}
           <UserNav />
         </div>
       </div>

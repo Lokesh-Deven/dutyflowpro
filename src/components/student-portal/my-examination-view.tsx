@@ -39,6 +39,7 @@ import {
   Info,
   CheckCircle2,
   AlertCircle,
+  Trophy,
 } from 'lucide-react';
 
 export function MyExaminationView() {
@@ -227,6 +228,13 @@ export function MyExaminationView() {
             >
               <CalendarRange className="w-3.5 h-3.5" />
               <span className="hidden xs:inline">Calendar</span>
+            </Link>
+            <Link
+              href="/student/results"
+              className="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 hover:text-indigo-700 transition-colors flex items-center gap-1.5"
+            >
+              <Trophy className="w-3.5 h-3.5 text-amber-500" />
+              <span>Results</span>
             </Link>
           </div>
 

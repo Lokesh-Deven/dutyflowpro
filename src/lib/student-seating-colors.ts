@@ -304,3 +304,142 @@ export function getExaminationSubjectColorMap(
   });
   return map;
 }
+
+export interface ClassBadgeStyle {
+  badgeClass: string;
+  dotColor: string;
+  bgHex: string;
+  textHex: string;
+  borderHex: string;
+}
+
+/**
+ * Returns a distinct, consistent, soft background highlight (pill/badge style)
+ * with high text-to-background contrast for class labels (e.g. 1PUC, 2PUC, etc.).
+ */
+export function getClassBadgeStyle(classCode?: string | null): ClassBadgeStyle {
+  if (!classCode || !classCode.trim()) {
+    return {
+      badgeClass: 'bg-slate-50 text-slate-700 border-slate-200/80',
+      dotColor: 'bg-slate-400',
+      bgHex: '#F8FAFC',
+      textHex: '#334155',
+      borderHex: '#E2E8F0',
+    };
+  }
+
+  const clean = classCode.trim().toUpperCase().replace(/\s+/g, '');
+
+  // 1. Explicit 1 PUC mappings -> Soft Sky/Blue
+  if (
+    clean.includes('1PUC') ||
+    clean.includes('IPUC') ||
+    clean === '1' ||
+    clean.includes('11TH') ||
+    clean.includes('CLASS11') ||
+    clean.includes('GRADE11')
+  ) {
+    return {
+      badgeClass: 'bg-sky-50 text-sky-800 border-sky-200/90 shadow-2xs font-bold',
+      dotColor: 'bg-sky-500',
+      bgHex: '#F0F9FF',
+      textHex: '#075985',
+      borderHex: '#BAE6FD',
+    };
+  }
+
+  // 2. Explicit 2 PUC mappings -> Soft Emerald
+  if (
+    clean.includes('2PUC') ||
+    clean.includes('IIPUC') ||
+    clean === '2' ||
+    clean.includes('12TH') ||
+    clean.includes('CLASS12') ||
+    clean.includes('GRADE12')
+  ) {
+    return {
+      badgeClass: 'bg-emerald-50 text-emerald-800 border-emerald-200/90 shadow-2xs font-bold',
+      dotColor: 'bg-emerald-500',
+      bgHex: '#ECFDF5',
+      textHex: '#065F46',
+      borderHex: '#A7F3D0',
+    };
+  }
+
+  // 3. Combined / Both (e.g., 1&2 PUC) -> Soft Purple/Violet
+  if (clean.includes('1&2') || clean.includes('1AND2') || clean.includes('BOTH')) {
+    return {
+      badgeClass: 'bg-purple-50 text-purple-800 border-purple-200/90 shadow-2xs font-bold',
+      dotColor: 'bg-purple-500',
+      bgHex: '#FAF5FF',
+      textHex: '#6B21A8',
+      borderHex: '#E9D5FF',
+    };
+  }
+
+  // 4. Curated high-contrast deterministic pastel palette for any additional or custom classes
+  const PALETTES: ClassBadgeStyle[] = [
+    {
+      badgeClass: 'bg-amber-50 text-amber-900 border-amber-200/90 shadow-2xs font-bold',
+      dotColor: 'bg-amber-500',
+      bgHex: '#FFFBEB',
+      textHex: '#78350F',
+      borderHex: '#FDE68A',
+    },
+    {
+      badgeClass: 'bg-violet-50 text-violet-800 border-violet-200/90 shadow-2xs font-bold',
+      dotColor: 'bg-violet-500',
+      bgHex: '#F5F3FF',
+      textHex: '#5B21B6',
+      borderHex: '#DDD6FE',
+    },
+    {
+      badgeClass: 'bg-teal-50 text-teal-800 border-teal-200/90 shadow-2xs font-bold',
+      dotColor: 'bg-teal-500',
+      bgHex: '#F0FDFA',
+      textHex: '#115E59',
+      borderHex: '#99F6E4',
+    },
+    {
+      badgeClass: 'bg-rose-50 text-rose-800 border-rose-200/90 shadow-2xs font-bold',
+      dotColor: 'bg-rose-500',
+      bgHex: '#FFF1F2',
+      textHex: '#9F1239',
+      borderHex: '#FECDD3',
+    },
+    {
+      badgeClass: 'bg-indigo-50 text-indigo-800 border-indigo-200/90 shadow-2xs font-bold',
+      dotColor: 'bg-indigo-500',
+      bgHex: '#EEF2FF',
+      textHex: '#3730A3',
+      borderHex: '#C7D2FE',
+    },
+    {
+      badgeClass: 'bg-cyan-50 text-cyan-800 border-cyan-200/90 shadow-2xs font-bold',
+      dotColor: 'bg-cyan-500',
+      bgHex: '#ECFEFF',
+      textHex: '#155E75',
+      borderHex: '#A5F3FC',
+    },
+    {
+      badgeClass: 'bg-fuchsia-50 text-fuchsia-800 border-fuchsia-200/90 shadow-2xs font-bold',
+      dotColor: 'bg-fuchsia-500',
+      bgHex: '#FDF4FF',
+      textHex: '#86198F',
+      borderHex: '#F5D0FE',
+    },
+    {
+      badgeClass: 'bg-orange-50 text-orange-900 border-orange-200/90 shadow-2xs font-bold',
+      dotColor: 'bg-orange-500',
+      bgHex: '#FFF7ED',
+      textHex: '#7C2D12',
+      borderHex: '#FED7AA',
+    },
+  ];
+
+  let hash = 0;
+  for (let i = 0; i < clean.length; i++) {
+    hash = (hash * 31 + clean.charCodeAt(i)) >>> 0;
+  }
+  return PALETTES[hash % PALETTES.length];
+}

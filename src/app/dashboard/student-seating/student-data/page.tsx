@@ -5,6 +5,7 @@ import { useStudentSeating } from '@/lib/student-seating-context';
 import { useAuth } from '@/lib/auth-context';
 import { StudentSubject, StudentRecord } from '@/lib/student-seating-types';
 import { STANDARD_STUDENT_SUBJECTS, STANDARD_SUBJECT_CODES } from '@/lib/student-seating-service';
+import { getClassBadgeStyle } from '@/lib/student-seating-colors';
 import { StudentUploadDialog } from '@/components/dashboard/student-seating/student-upload-dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -128,12 +129,60 @@ export default function StudentDataPage() {
     });
   };
 
-  const totalUploadedStudents = useMemo(() => {
-    return subjects.reduce((sum, subj) => {
+  // Calculate unique student count across all subjects (deduplicating by roll number / name / ID)
+  const { totalUniqueStudents, totalEnrollments } = useMemo(() => {
+    const uniqueKeys = new Set<string>();
+    let enrollments = 0;
+
+    for (const subj of subjects) {
       const list = getSubjectStudents(subj.id);
-      return sum + list.length;
-    }, 0);
+      enrollments += list.length;
+
+      for (const student of list) {
+        const roll = student.rollNo?.trim().toUpperCase();
+        const name = student.name?.trim().toLowerCase();
+        const section = student.section?.trim().toUpperCase();
+
+        // Primary deduplication: normalized roll number (and section if applicable)
+        let key = '';
+        if (roll) {
+          key = section ? `ROLL:${section}_${roll}` : `ROLL:${roll}`;
+        } else if (name) {
+          key = section ? `NAME:${section}_${name}` : `NAME:${name}`;
+        } else if (student.id) {
+          key = `ID:${student.id}`;
+        }
+
+        if (key) {
+          uniqueKeys.add(key);
+        }
+      }
+    }
+
+    // Fallback Logic:
+    // If unique ID deduplication isn't feasible or records lacked IDs,
+    // use the total student count from the mandatory English subject list as the baseline reference,
+    // since every student is enrolled in English once.
+    let uniqueCount = uniqueKeys.size;
+    const englishSubj = subjects.find((s) => {
+      const lower = s.name.trim().toLowerCase();
+      return lower === 'english' || lower.includes('english');
+    });
+
+    if (englishSubj) {
+      const englishList = getSubjectStudents(englishSubj.id);
+      if (uniqueCount === 0 || englishList.length > uniqueCount) {
+        uniqueCount = englishList.length;
+      }
+    }
+
+    return {
+      totalUniqueStudents: uniqueCount,
+      totalEnrollments: enrollments,
+    };
   }, [subjects, getSubjectStudents]);
+
+  const totalUploadedStudents = totalUniqueStudents;
 
   const uploadedSubjectsCount = useMemo(() => {
     return subjects.filter((subj) => getSubjectStudents(subj.id).length > 0).length;
@@ -246,11 +295,16 @@ export default function StudentDataPage() {
         <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs flex items-center justify-between">
           <div>
             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-              Total Students Enrolled
+              Total Unique Students
             </div>
             <div className="font-headline font-black text-2xl text-indigo-700 mt-0.5">
-              {totalUploadedStudents.toLocaleString()}
+              {totalUniqueStudents.toLocaleString()}
             </div>
+            {totalEnrollments > 0 && totalEnrollments !== totalUniqueStudents && (
+              <div className="text-[11px] text-slate-400 font-medium mt-0.5">
+                {totalEnrollments.toLocaleString()} total subject enrollments
+              </div>
+            )}
           </div>
           <div className="p-2.5 bg-indigo-50 rounded-lg border border-indigo-100 text-indigo-600">
             <Users className="w-5 h-5" />
@@ -303,11 +357,24 @@ export default function StudentDataPage() {
                       <h3 className="font-headline font-bold text-base text-slate-900 leading-tight">
                         {subj.name}
                       </h3>
-                      {subj.code && (
-                        <span className="text-[11px] text-slate-500 font-medium">
-                          Class: {subj.code}
-                        </span>
-                      )}
+                      {subj.code ? (
+                        <div className="mt-1 flex items-center">
+                          <span
+                            className={cn(
+                              "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border text-[11px] font-bold tracking-tight shadow-2xs",
+                              getClassBadgeStyle(subj.code).badgeClass
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                "w-1.5 h-1.5 rounded-full shrink-0",
+                                getClassBadgeStyle(subj.code).dotColor
+                              )}
+                            />
+                            <span>Class: {subj.code}</span>
+                          </span>
+                        </div>
+                      ) : null}
                     </div>
 
                     <Badge
@@ -508,6 +575,21 @@ export default function StudentDataPage() {
                   onChange={(e) => setNewSubjCode(e.target.value)}
                   className="text-xs font-medium"
                 />
+                {newSubjCode.trim() && (
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border text-[10px] font-bold shadow-2xs",
+                        getClassBadgeStyle(newSubjCode).badgeClass
+                      )}
+                    >
+                      <span
+                        className={cn("w-1.5 h-1.5 rounded-full shrink-0", getClassBadgeStyle(newSubjCode).dotColor)}
+                      />
+                      <span>Class: {newSubjCode.trim()}</span>
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-1.5">
@@ -578,9 +660,24 @@ export default function StudentDataPage() {
                   <Users className="w-5 h-5" />
                 </div>
                 <div>
-                  <DialogTitle className="font-headline text-lg font-bold text-slate-900">
-                    {viewingSubject?.name} &bull; Students ({viewingSubject ? getSubjectStudents(viewingSubject.id).length : 0})
-                  </DialogTitle>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <DialogTitle className="font-headline text-lg font-bold text-slate-900">
+                      {viewingSubject?.name} &bull; Students ({viewingSubject ? getSubjectStudents(viewingSubject.id).length : 0})
+                    </DialogTitle>
+                    {viewingSubject?.code && (
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border text-[11px] font-bold tracking-tight shadow-2xs",
+                          getClassBadgeStyle(viewingSubject.code).badgeClass
+                        )}
+                      >
+                        <span
+                          className={cn("w-1.5 h-1.5 rounded-full shrink-0", getClassBadgeStyle(viewingSubject.code).dotColor)}
+                        />
+                        <span>Class: {viewingSubject.code}</span>
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-slate-500">
                     Uploaded student roster for {viewingSubject?.name}
                   </p>

@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useStudentSeating } from '@/lib/student-seating-context';
 import { useAllotment } from '@/lib/allotment-context';
 import { useAuth } from '@/lib/auth-context';
@@ -77,7 +78,7 @@ import {
   Columns3,
 } from 'lucide-react';
 
-export default function SeatingAllocationWizardPage() {
+function SeatingAllocationWizardContent() {
   const {
     rooms: masterRooms,
     subjects,
@@ -99,8 +100,37 @@ export default function SeatingAllocationWizardPage() {
     (user?.user_metadata?.institution_name as string) ||
     'Institution Name';
 
-  // Wizard Step State (1..6)
-  const [currentStep, setCurrentStep] = useState<number>(activeAllocation ? 6 : 1);
+  // Navigation mode check: Only open step 6 if specifically requested to view history
+  const searchParams = useSearchParams();
+  const isViewHistory = searchParams?.get('view') === 'history';
+
+  // Wizard Step State (1..6) - Defaults directly to 1 (New Allocation setup)
+  const [currentStep, setCurrentStep] = useState<number>(() => {
+    return isViewHistory && activeAllocation ? 6 : 1;
+  });
+
+  // Keep view synchronized with query params & reset active allocation for fresh setup
+  useEffect(() => {
+    if (isViewHistory && activeAllocation) {
+      setCurrentStep(6);
+    } else if (!isViewHistory) {
+      setActiveAllocation(null);
+      setCurrentStep(1);
+    }
+  }, [isViewHistory]);
+
+  // Listen to navigation reset event from sidebar or other buttons
+  useEffect(() => {
+    const handleReset = () => {
+      setActiveAllocation(null);
+      setCurrentStep(1);
+      if (typeof window !== 'undefined') {
+        window.history.replaceState({}, '', '/dashboard/student-seating/seating-allocation');
+      }
+    };
+    window.addEventListener('dutyflow:reset-seating-allocation', handleReset);
+    return () => window.removeEventListener('dutyflow:reset-seating-allocation', handleReset);
+  }, [setActiveAllocation]);
 
   // Step 1: Examination Details
   const [selectedDutyExamId, setSelectedDutyExamId] = useState<string>('');
@@ -1284,14 +1314,16 @@ export default function SeatingAllocationWizardPage() {
         {currentStep === 6 && (
           <Button
             size="sm"
-            variant="outline"
             onClick={() => {
               setActiveAllocation(null);
               setCurrentStep(1);
+              if (typeof window !== 'undefined') {
+                window.history.replaceState({}, '', '/dashboard/student-seating/seating-allocation');
+              }
             }}
-            className="text-xs h-9 gap-1.5 font-bold text-[#1E2A5E]"
+            className="bg-[#6342e8] hover:bg-[#5130d8] text-white font-bold text-xs h-9 px-4 gap-2 shadow-md shadow-purple-900/20 ring-2 ring-purple-300/40 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
           >
-            <RotateCcw className="w-3.5 h-3.5" />
+            <Plus className="w-4 h-4" />
             New Allocation
           </Button>
         )}
@@ -3300,6 +3332,21 @@ export default function SeatingAllocationWizardPage() {
             <div className="flex flex-wrap items-center gap-2">
               <Button
                 size="sm"
+                onClick={() => {
+                  setActiveAllocation(null);
+                  setCurrentStep(1);
+                  if (typeof window !== 'undefined') {
+                    window.history.replaceState({}, '', '/dashboard/student-seating/seating-allocation');
+                  }
+                }}
+                className="h-9 text-xs font-bold px-4 gap-2 bg-[#6342e8] hover:bg-[#5130d8] text-white shadow-md shadow-purple-900/20 ring-2 ring-purple-300/40 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                New Allocation
+              </Button>
+
+              <Button
+                size="sm"
                 variant="outline"
                 onClick={handleDownloadIndexPdf}
                 disabled={isDownloadingPdf}
@@ -3498,5 +3545,13 @@ export default function SeatingAllocationWizardPage() {
         featureName="Student Seating Allocation & Diagrams"
       />
     </div>
+  );
+}
+
+export default function SeatingAllocationWizardPage() {
+  return (
+    <React.Suspense fallback={<div className="p-8 text-center text-sm text-slate-500">Loading seating allocation...</div>}>
+      <SeatingAllocationWizardContent />
+    </React.Suspense>
   );
 }

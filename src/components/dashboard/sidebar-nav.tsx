@@ -31,10 +31,13 @@ import {
   UserCheck,
   ClipboardList,
   Smartphone,
+  Ticket,
+  Trophy,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth-context';
 import { useAllotment } from '@/lib/allotment-context';
+import { useStudentSeating } from '@/lib/student-seating-context';
 import { ColorPaletteDialog } from './color-palette-dialog';
 import { getPdfPalette } from '@/lib/pdf-palette';
 import {
@@ -57,7 +60,7 @@ export const studentSeatingSubmenu = [
   { href: '/dashboard/student-seating/master-rooms', label: 'Examination Rooms', icon: DoorOpen },
   { href: '/dashboard/student-seating/student-data', label: 'Student Data', icon: Users },
   { href: '/dashboard/student-seating/seating-allocation', label: 'Seating Allocation', icon: LayoutGrid },
-  { href: '/dashboard/student-seating/allocation-history', label: 'Allocation History', icon: History },
+  { href: '/dashboard/student-seating/allocation-history', label: 'Allocation Status', icon: History },
 ];
 
 export const invigilationDutySubmenu = [
@@ -76,6 +79,8 @@ export const roomAttendanceSubmenu = [
 
 export const navItems = [
   { href: '/dashboard/examination-timetable', label: 'Examination Timetable', icon: CalendarClock },
+  { href: '/dashboard/hall-tickets', label: 'Generate Hall Tickets', icon: Ticket },
+  { href: '/dashboard/marks-upload', label: 'Marks & Results', icon: Trophy },
   { href: '/dashboard/question-paper-distribution', label: 'Question Paper Distribution', icon: ClipboardCheck },
   { href: '/dashboard/schedule', label: 'Day-wise Schedule', icon: CalendarDays },
   { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart2 },
@@ -117,11 +122,18 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
   const [isInvigilationDutyOpen, setIsInvigilationDutyOpen] = useState(true);
   const [isRoomAttendanceOpen, setIsRoomAttendanceOpen] = useState(true);
   const { clearCurrentAllotment, pdfPaletteId } = useAllotment();
+  const { setActiveAllocation } = useStudentSeating();
   const activePalette = getPdfPalette(pdfPaletteId);
 
   const handleNavClick = (itemLabel?: string | React.MouseEvent) => {
     if (typeof itemLabel === 'string' && (itemLabel === 'Duty Allotment' || itemLabel === 'New Allotment')) {
       clearCurrentAllotment();
+    }
+    if (typeof itemLabel === 'string' && (itemLabel === 'Seating Allocation' || itemLabel === 'New Allocation')) {
+      setActiveAllocation(null);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('dutyflow:reset-seating-allocation'));
+      }
     }
     if (onItemClick) {
       onItemClick();
@@ -194,7 +206,9 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
         {isStudentSeatingOpen && (
           <div className="pl-4 pr-1 py-1 space-y-1 border-l-2 border-[#6342e8]/40 ml-5 animate-in fade-in-50 duration-150">
             {studentSeatingSubmenu.map((sub) => {
-              const isSubActive = pathname === sub.href;
+              const isSubActive =
+                pathname === sub.href ||
+                (sub.href === '/dashboard/student-seating/allocation-history' && pathname === '/dashboard/student-seating/allocation-status');
               return (
                 <Link
                   key={sub.href}
