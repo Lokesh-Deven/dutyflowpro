@@ -81,19 +81,19 @@ export function SubjectSelectorPopover({
           className={cn(
             "w-full flex items-center justify-between text-left px-3 py-2 text-xs rounded-lg border transition-all duration-150 min-h-[36px]",
             disabled
-              ? "bg-slate-100/70 border-slate-200 text-slate-500 cursor-not-allowed"
+              ? "bg-slate-100/70 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed"
               : selectedSubjects.length > 0
-                ? "bg-indigo-50/40 border-indigo-200 hover:border-indigo-400 text-slate-900 font-semibold"
-                : "bg-white border-slate-200 hover:border-slate-300 text-slate-400"
+                ? "bg-indigo-50/40 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-900/60 hover:border-indigo-400 text-slate-900 dark:text-white font-semibold"
+                : "bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-400 dark:text-slate-500"
           )}
         >
           <span className="truncate pr-2 font-medium">
             {selectedSubjects.length > 0 ? (
-              <span className="text-slate-900 font-bold">
+              <span className="text-slate-900 dark:text-white font-bold">
                 {displayText}
               </span>
             ) : (
-              <span className="text-slate-400 italic">Select Subject(s)...</span>
+              <span className="text-slate-400 dark:text-slate-500 italic">Select Subject(s)...</span>
             )}
           </span>
           <div className="flex items-center gap-1.5 shrink-0">
@@ -102,16 +102,16 @@ export function SubjectSelectorPopover({
                 {selectedSubjects.length}
               </Badge>
             )}
-            <ChevronDown className={cn("w-3.5 h-3.5 text-slate-400 transition-transform", isOpen && "rotate-180")} />
+            <ChevronDown className={cn("w-3.5 h-3.5 text-slate-400 dark:text-slate-500 transition-transform", isOpen && "rotate-180")} />
           </div>
         </button>
       </PopoverTrigger>
 
-      <PopoverContent className="w-80 p-0 bg-white border border-slate-200 shadow-xl rounded-xl z-50 text-xs" align="start">
+      <PopoverContent className="w-80 p-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white shadow-xl rounded-xl z-50 text-xs" align="start">
         {/* Header Search */}
-        <div className="p-2.5 border-b border-slate-100 space-y-2">
+        <div className="p-2.5 border-b border-slate-100 dark:border-slate-800 space-y-2">
           <div className="flex items-center justify-between">
-            <span className="font-headline font-bold text-xs text-slate-800">
+            <span className="font-headline font-bold text-xs text-slate-800 dark:text-slate-200">
               Select Examination Subject(s)
             </span>
             <div className="flex items-center gap-1">
@@ -119,7 +119,7 @@ export function SubjectSelectorPopover({
                 <button
                   type="button"
                   onClick={() => onChange([])}
-                  className="text-[10px] text-slate-500 hover:text-rose-600 font-medium px-1.5 py-0.5 rounded hover:bg-slate-100 transition-colors"
+                  className="text-[10px] text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 font-medium px-1.5 py-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 >
                   Clear ({selectedSubjects.length})
                 </button>
@@ -128,18 +128,18 @@ export function SubjectSelectorPopover({
           </div>
 
           <div className="relative">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
             <Input
               placeholder="Search subjects..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-8 pl-8 pr-7 text-xs bg-slate-50 focus:bg-white"
+              className="h-8 pl-8 pr-7 text-xs bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:text-white focus:bg-white dark:focus:bg-slate-800"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -148,7 +148,7 @@ export function SubjectSelectorPopover({
         </div>
 
         {/* Subjects Checkbox List */}
-        <div className="max-h-56 overflow-y-auto p-1.5 space-y-0.5 divide-y divide-slate-50">
+        <div className="max-h-56 overflow-y-auto p-1.5 space-y-0.5 divide-y divide-slate-50 dark:divide-slate-800/60">
           {filteredSubjects.length > 0 ? (
             filteredSubjects.map((subj) => {
               const isChecked = selectedSubjects.includes(subj);
@@ -159,41 +159,41 @@ export function SubjectSelectorPopover({
                   className={cn(
                     "flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors text-xs select-none",
                     isChecked
-                      ? "bg-indigo-50/80 text-indigo-950 font-bold"
-                      : "hover:bg-slate-50 text-slate-700 font-medium"
+                      ? "bg-indigo-50/80 dark:bg-indigo-950/60 text-indigo-950 dark:text-indigo-200 font-bold"
+                      : "hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300 font-medium"
                   )}
                 >
                   <Checkbox
                     checked={isChecked}
                     onCheckedChange={() => {}}
-                    className="data-[state=checked]:bg-[#1E2A5E] shrink-0"
+                    className="data-[state=checked]:bg-[#1E2A5E] dark:data-[state=checked]:bg-indigo-600 shrink-0"
                   />
                   <span className="truncate flex-1">{subj}</span>
-                  {isChecked && <Check className="w-3.5 h-3.5 text-indigo-600 shrink-0" />}
+                  {isChecked && <Check className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />}
                 </div>
               );
             })
           ) : (
-            <div className="py-4 text-center text-slate-400 text-xs">
+            <div className="py-4 text-center text-slate-400 dark:text-slate-500 text-xs">
               No subjects found for &ldquo;{searchQuery}&rdquo;
             </div>
           )}
         </div>
 
         {/* Add Custom Subject Form */}
-        <div className="p-2.5 border-t border-slate-100 bg-slate-50/50 rounded-b-xl">
+        <div className="p-2.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 rounded-b-xl">
           <form onSubmit={handleAddNewSubject} className="flex items-center gap-1.5">
             <Input
               placeholder="Type custom subject name..."
               value={customSubjectInput}
               onChange={(e) => setCustomSubjectInput(e.target.value)}
-              className="h-7 text-xs bg-white flex-1"
+              className="h-7 text-xs bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white flex-1"
             />
             <Button
               type="submit"
               size="sm"
               disabled={!customSubjectInput.trim()}
-              className="h-7 px-2.5 text-xs bg-[#1E2A5E] hover:bg-[#151D42] text-white shrink-0 font-bold"
+              className="h-7 px-2.5 text-xs bg-[#1E2A5E] hover:bg-[#151D42] dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white shrink-0 font-bold"
             >
               <Plus className="w-3.5 h-3.5 mr-1" />
               Add

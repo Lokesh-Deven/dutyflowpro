@@ -167,15 +167,15 @@ export function SessionRoomSelector({
   };
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl shadow-xs p-5 space-y-5">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl shadow-xs p-5 space-y-5">
       {/* Session Metadata Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
         <div>
           <div className="flex items-center gap-2">
-            <h3 className="font-headline text-lg font-bold text-slate-800">
+            <h3 className="font-headline text-lg font-bold text-slate-800 dark:text-white">
               {examination.subject}
             </h3>
-            <Badge variant="outline" className="text-xs bg-slate-50 font-medium text-slate-600">
+            <Badge variant="outline" className="text-xs bg-slate-50 dark:bg-slate-800 font-medium text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700">
               {examination.college || "Examination"}
             </Badge>
             {isLocked && (
@@ -185,7 +185,7 @@ export function SessionRoomSelector({
             )}
           </div>
 
-          <div className="flex flex-wrap items-center gap-y-1 gap-x-4 text-xs text-slate-500 mt-1.5 font-medium">
+          <div className="flex flex-wrap items-center gap-y-1 gap-x-4 text-xs text-slate-500 dark:text-slate-400 mt-1.5 font-medium">
             <span className="flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5 text-indigo-500" />
               {formatAppDate(examination.date)}
@@ -199,17 +199,17 @@ export function SessionRoomSelector({
 
         {/* Requirements Badges */}
         <div className="flex items-center gap-3">
-          <div className="bg-blue-50/80 border border-blue-100 rounded-lg px-3 py-1.5 text-center">
-            <div className="text-[10px] uppercase font-bold text-blue-600 tracking-wider">Required Invigilators</div>
-            <div className="text-lg font-black text-[#1E2A5E]">{requiredInvigilators}</div>
+          <div className="bg-blue-50/80 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/60 rounded-lg px-3 py-1.5 text-center">
+            <div className="text-[10px] uppercase font-bold text-blue-600 dark:text-blue-400 tracking-wider">Required Invigilators</div>
+            <div className="text-lg font-black text-[#1E2A5E] dark:text-white">{requiredInvigilators}</div>
           </div>
-          <div className="bg-purple-50/80 border border-purple-100 rounded-lg px-3 py-1.5 text-center">
-            <div className="text-[10px] uppercase font-bold text-purple-600 tracking-wider">Required Relievers</div>
-            <div className="text-lg font-black text-purple-900">{requiredRelievers}</div>
+          <div className="bg-purple-50/80 dark:bg-purple-950/40 border border-purple-100 dark:border-purple-900/60 rounded-lg px-3 py-1.5 text-center">
+            <div className="text-[10px] uppercase font-bold text-purple-600 dark:text-purple-400 tracking-wider">Required Relievers</div>
+            <div className="text-lg font-black text-purple-900 dark:text-purple-300">{requiredRelievers}</div>
           </div>
-          <div className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-center">
-            <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Total Required</div>
-            <div className="text-lg font-black text-slate-700">{totalStaffRequired}</div>
+          <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 text-center">
+            <div className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 tracking-wider">Total Required</div>
+            <div className="text-lg font-black text-slate-700 dark:text-slate-200">{totalStaffRequired}</div>
           </div>
         </div>
       </div>
@@ -217,12 +217,12 @@ export function SessionRoomSelector({
       {/* Real-time Room Count Validation Banner */}
       <div>
         {isExactMatch ? (
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg text-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 rounded-lg text-xs">
             <div className="flex items-center gap-3">
               <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
               <div>
                 <span className="font-bold">✓ {selectedCount} rooms selected for {requiredInvigilators} invigilators.</span>
-                <p className="text-emerald-700 text-[11px] mt-0.5">
+                <p className="text-emerald-700 dark:text-emerald-300 text-[11px] mt-0.5">
                   Room count matches requirement. Click &ldquo;Allocate Roles &amp; Rooms&rdquo; below to assign duties.
                 </p>
               </div>
@@ -240,25 +240,25 @@ export function SessionRoomSelector({
             )}
           </div>
         ) : isShortage ? (
-          <div className="flex items-center gap-3 p-3.5 bg-red-50 border border-red-200 text-red-800 rounded-lg text-xs">
+          <div className="flex items-center gap-3 p-3.5 bg-red-50 dark:bg-rose-950/40 border border-red-200 dark:border-rose-800 text-red-800 dark:text-rose-200 rounded-lg text-xs">
             <AlertTriangle className="w-5 h-5 text-red-600 shrink-0" />
             <div>
               <span className="font-bold">
                 ⚠ {requiredInvigilators} invigilators are required, but only {selectedCount} room{selectedCount === 1 ? '' : 's'} {selectedCount === 1 ? 'has' : 'have'} been selected.
               </span>
-              <p className="text-red-700 text-[11px] mt-0.5">
+              <p className="text-red-700 dark:text-rose-300 text-[11px] mt-0.5">
                 Please select {requiredInvigilators - selectedCount} more room{requiredInvigilators - selectedCount === 1 ? '' : 's'} to continue with allocation.
               </p>
             </div>
           </div>
         ) : (
-          <div className="flex items-center gap-3 p-3.5 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg text-xs">
+          <div className="flex items-center gap-3 p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 rounded-lg text-xs">
             <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
             <div>
               <span className="font-bold">
                 ⚠ {selectedCount} rooms have been selected, but only {requiredInvigilators} invigilators are required.
               </span>
-              <p className="text-amber-700 text-[11px] mt-0.5">
+              <p className="text-amber-700 dark:text-amber-300 text-[11px] mt-0.5">
                 Please deselect {selectedCount - requiredInvigilators} excess room{selectedCount - requiredInvigilators === 1 ? '' : 's'} before allocation.
               </p>
             </div>
@@ -270,8 +270,8 @@ export function SessionRoomSelector({
       <div>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <DoorOpen className="w-4 h-4 text-[#1E2A5E]" />
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+            <DoorOpen className="w-4 h-4 text-[#1E2A5E] dark:text-indigo-400" />
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
               Select Examination Rooms for this Session
             </h4>
             <span className="text-xs text-slate-400 font-medium">
@@ -287,7 +287,7 @@ export function SessionRoomSelector({
                 size="sm"
                 onClick={handleSelectFirstN}
                 disabled={isLocked}
-                className="h-7 text-[11px] px-2.5 text-slate-600 hover:text-slate-900 border-slate-200"
+                className="h-7 text-[11px] px-2.5 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border-slate-200 dark:border-slate-700"
               >
                 Auto-Select {requiredInvigilators}
               </Button>
@@ -299,7 +299,7 @@ export function SessionRoomSelector({
                 size="sm"
                 onClick={handleClear}
                 disabled={isLocked}
-                className="h-7 text-[11px] px-2 text-slate-500 hover:text-red-600"
+                className="h-7 text-[11px] px-2 text-slate-500 dark:text-slate-400 hover:text-red-600"
               >
                 Clear
               </Button>
@@ -309,7 +309,7 @@ export function SessionRoomSelector({
               variant="outline"
               size="sm"
               onClick={onOpenMasterRooms}
-              className="h-7 text-[11px] px-2.5 gap-1 text-indigo-600 border-indigo-200 hover:bg-indigo-50"
+              className="h-7 text-[11px] px-2.5 gap-1 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-slate-700 hover:bg-indigo-50 dark:hover:bg-slate-800"
             >
               <PlusCircle className="w-3.5 h-3.5" />
               Manage Master Rooms
@@ -318,15 +318,15 @@ export function SessionRoomSelector({
         </div>
 
         {masterRooms.length === 0 ? (
-          <div className="p-8 text-center border-2 border-dashed border-slate-200 rounded-lg bg-slate-50">
+          <div className="p-8 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-lg bg-slate-50 dark:bg-slate-800/40">
             <DoorOpen className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-            <p className="text-xs font-semibold text-slate-700">No rooms in Master Room List</p>
-            <p className="text-[11px] text-slate-500 mt-1 max-w-sm mx-auto">
+            <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">No rooms in Master Room List</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
               Please configure your examination rooms first so they can be chosen for this session.
             </p>
             <Button
               onClick={onOpenMasterRooms}
-              className="mt-3 bg-[#1E2A5E] hover:bg-[#151D42] text-white text-xs h-8 px-3"
+              className="mt-3 bg-[#1E2A5E] hover:bg-[#151D42] dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white text-xs h-8 px-3"
             >
               Configure Master Rooms
             </Button>
@@ -340,15 +340,15 @@ export function SessionRoomSelector({
                   key={room.id}
                   className={`flex items-center gap-2.5 p-3 rounded-lg border text-xs font-semibold cursor-pointer transition-all ${
                     isChecked
-                      ? 'bg-indigo-50/80 border-indigo-300 text-[#1E2A5E] shadow-xs'
-                      : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                      ? 'bg-indigo-50/80 dark:bg-indigo-950/60 border-indigo-300 dark:border-indigo-800 text-[#1E2A5E] dark:text-indigo-200 shadow-xs'
+                      : 'bg-white dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800'
                   } ${isLocked ? 'opacity-75 cursor-not-allowed' : ''}`}
                 >
                   <Checkbox
                     checked={isChecked}
                     onCheckedChange={() => handleToggleRoom(room.name)}
                     disabled={isLocked}
-                    className="data-[state=checked]:bg-[#1E2A5E] data-[state=checked]:border-[#1E2A5E]"
+                    className="data-[state=checked]:bg-[#1E2A5E] dark:data-[state=checked]:bg-indigo-600 data-[state=checked]:border-[#1E2A5E]"
                   />
                   <span className="truncate">{room.name}</span>
                 </label>
@@ -359,10 +359,10 @@ export function SessionRoomSelector({
       </div>
 
       {/* Action Footer */}
-      <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
-        <div className="text-xs text-slate-500">
+      <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
+        <div className="text-xs text-slate-500 dark:text-slate-400">
           {isDirty ? (
-            <span className="text-amber-600 font-medium">Unsaved room selection changes</span>
+            <span className="text-amber-600 dark:text-amber-400 font-medium">Unsaved room selection changes</span>
           ) : (
             <span>Saved for this examination session</span>
           )}
@@ -373,7 +373,7 @@ export function SessionRoomSelector({
             <Button
               type="button"
               onClick={handleAllocateDuties}
-              className="bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs h-9 px-4 gap-1.5 shadow-xs"
+              className="bg-[#1E2A5E] hover:bg-[#151D42] dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white font-bold text-xs h-9 px-4 gap-1.5 shadow-xs"
             >
               <Sparkles className="w-3.5 h-3.5" />
               {currentAllocation?.status === 'Generated' ? 'Re-allocate Roles & Rooms' : 'Allocate Roles & Rooms'}
@@ -387,8 +387,8 @@ export function SessionRoomSelector({
             disabled={isLocked || (!isDirty && selectedRooms.length === 0)}
             className={`text-xs font-bold h-9 px-4 gap-1.5 shadow-xs ${
               isExactMatch
-                ? "border-slate-300 text-slate-700 hover:bg-slate-50"
-                : "bg-[#1E2A5E] hover:bg-[#151D42] text-white"
+                ? "border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                : "bg-[#1E2A5E] hover:bg-[#151D42] dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white"
             }`}
           >
             <Save className="w-3.5 h-3.5" />
@@ -401,7 +401,7 @@ export function SessionRoomSelector({
               onClick={onProceedToAllocation}
               disabled={!isExactMatch}
               variant="outline"
-              className="text-xs font-bold h-9 px-4 border-[#1E2A5E] text-[#1E2A5E] hover:bg-indigo-50 disabled:opacity-50"
+              className="text-xs font-bold h-9 px-4 border-[#1E2A5E] dark:border-indigo-500 text-[#1E2A5E] dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-slate-800 disabled:opacity-50"
             >
               Continue to Allocation &rarr;
             </Button>

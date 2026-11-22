@@ -55,11 +55,11 @@ export function TimePickerInput({
           title={isInvalid ? errorMessage : "Type or click arrow to select time or hyphen (-)"}
           className={cn(
             "h-8 text-xs font-mono font-semibold pl-2 pr-7 rounded-md transition-colors",
-            isHyphen && "text-slate-700 font-bold text-center text-sm",
+            isHyphen && "text-slate-700 dark:text-slate-200 font-bold text-center text-sm",
             isInvalid
-              ? "border-rose-400 bg-rose-50/50 text-rose-900 focus-visible:ring-rose-400"
-              : "border-slate-200 bg-white hover:border-slate-300 focus:border-indigo-500",
-            disabled && "bg-slate-100 text-slate-400 cursor-not-allowed",
+              ? "border-rose-400 dark:border-rose-700 bg-rose-50/50 dark:bg-rose-950/40 text-rose-900 dark:text-rose-200 focus-visible:ring-rose-400"
+              : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 dark:text-white hover:border-slate-300 dark:hover:border-slate-600 focus:border-indigo-500",
+            disabled && "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed",
             className
           )}
         />
@@ -70,7 +70,7 @@ export function TimePickerInput({
               type="button"
               disabled={disabled}
               className={cn(
-                "absolute right-0 top-0 bottom-0 px-2 flex items-center justify-center text-slate-400 hover:text-indigo-600 rounded-r-md transition-colors cursor-pointer",
+                "absolute right-0 top-0 bottom-0 px-2 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-r-md transition-colors cursor-pointer",
                 disabled && "opacity-40 cursor-not-allowed hover:text-slate-400"
               )}
               title="Click to select time or '-' (No Exam)"
@@ -78,27 +78,27 @@ export function TimePickerInput({
               <ChevronDown
                 className={cn(
                   "w-3.5 h-3.5 transition-transform duration-150",
-                  isOpen && "rotate-180 text-indigo-600"
+                  isOpen && "rotate-180 text-indigo-600 dark:text-indigo-400"
                 )}
               />
             </button>
           </PopoverTrigger>
 
           <PopoverContent
-            className="w-48 p-0 bg-white border border-slate-200 shadow-xl rounded-xl z-50 text-xs"
+            className="w-48 p-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white shadow-xl rounded-xl z-50 text-xs"
             align="end"
           >
             {/* Header */}
-            <div className="p-2 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
-              <span className="font-headline font-bold text-[11px] text-slate-700 flex items-center gap-1">
-                <Clock className="w-3 h-3 text-indigo-600" />
+            <div className="p-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 flex items-center justify-between">
+              <span className="font-headline font-bold text-[11px] text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                <Clock className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
                 Select Time
               </span>
-              <span className="text-[10px] text-slate-400 font-medium">15 min intervals</span>
+              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">15 min intervals</span>
             </div>
 
             {/* Hyphen (-) Option for "No Exam" */}
-            <div className="p-1 border-b border-slate-100 bg-slate-50/40">
+            <div className="p-1 border-b border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-800/40">
               <button
                 type="button"
                 onClick={() => {
@@ -108,8 +108,8 @@ export function TimePickerInput({
                 className={cn(
                   "w-full text-left px-2.5 py-1.5 rounded font-mono text-xs transition-colors flex items-center justify-between cursor-pointer",
                   isHyphen
-                    ? "bg-[#1E2A5E] text-white font-bold shadow-2xs"
-                    : "hover:bg-slate-100 text-slate-800 font-semibold"
+                    ? "bg-[#1E2A5E] dark:bg-indigo-600 text-white font-bold shadow-2xs"
+                    : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold"
                 )}
               >
                 <div className="flex items-center gap-2">
@@ -117,7 +117,7 @@ export function TimePickerInput({
                   <span
                     className={cn(
                       "text-[10px]",
-                      isHyphen ? "text-slate-200" : "text-slate-500 font-normal"
+                      isHyphen ? "text-slate-200" : "text-slate-500 dark:text-slate-400 font-normal"
                     )}
                   >
                     (No Exam)
@@ -143,8 +143,8 @@ export function TimePickerInput({
                     className={cn(
                       "w-full text-left px-2.5 py-1.5 rounded font-mono text-xs transition-colors flex items-center justify-between cursor-pointer",
                       isSelected
-                        ? "bg-[#1E2A5E] text-white font-bold shadow-2xs"
-                        : "hover:bg-indigo-50/80 text-slate-700 hover:text-indigo-950 font-medium"
+                        ? "bg-[#1E2A5E] dark:bg-indigo-600 text-white font-bold shadow-2xs"
+                        : "hover:bg-indigo-50/80 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-indigo-950 dark:hover:text-white font-medium"
                     )}
                   >
                     <span>{time}</span>

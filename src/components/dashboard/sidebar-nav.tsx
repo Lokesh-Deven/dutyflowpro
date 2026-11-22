@@ -65,8 +65,8 @@ export const studentSeatingSubmenu = [
 
 export const invigilationDutySubmenu = [
   { href: '/dashboard/directory', label: 'Invigilator Directory', icon: BookUser },
-  { href: '/dashboard/examinations', label: 'Duty Allotment', icon: PlusSquare },
-  { href: '/dashboard/saved', label: 'Saved Allotments', icon: Bookmark },
+  { href: '/dashboard/examinations', label: 'Duty Allocation', icon: PlusSquare },
+  { href: '/dashboard/saved', label: 'Saved Allocations', icon: Bookmark },
   { href: '/dashboard/room-allocations', label: 'Room Allocations', icon: DoorOpen },
 ];
 
@@ -79,14 +79,15 @@ export const roomAttendanceSubmenu = [
 
 export const navItems = [
   { href: '/dashboard/examination-timetable', label: 'Examination Timetable', icon: CalendarClock },
-  { href: '/dashboard/hall-tickets', label: 'Generate Hall Tickets', icon: Ticket },
-  { href: '/dashboard/marks-upload', label: 'Marks & Results', icon: Trophy },
   { href: '/dashboard/question-paper-distribution', label: 'Question Paper Distribution', icon: ClipboardCheck },
   { href: '/dashboard/schedule', label: 'Day-wise Schedule', icon: CalendarDays },
   { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart2 },
   { href: '/dashboard/instructions', label: 'Add Instructions', icon: ListChecks },
   { href: '/dashboard/signatory', label: 'Add Signatory', icon: Signature },
   { href: '/dashboard/templates', label: 'Download Templates', icon: FileSpreadsheet },
+  { href: '/dashboard/hall-tickets', label: 'Generate Hall Tickets', icon: Ticket },
+  { href: '/dashboard/marks-upload', label: 'Marks & Results', icon: Trophy },
+  { href: '/dashboard/examination-calendar', label: 'Examination Calendar', icon: CalendarRange },
 ];
 
 export const newAllotmentSteps = [
@@ -126,7 +127,7 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
   const activePalette = getPdfPalette(pdfPaletteId);
 
   const handleNavClick = (itemLabel?: string | React.MouseEvent) => {
-    if (typeof itemLabel === 'string' && (itemLabel === 'Duty Allotment' || itemLabel === 'New Allotment')) {
+    if (typeof itemLabel === 'string' && (itemLabel === 'Duty Allocation' || itemLabel === 'Duty Allotment' || itemLabel === 'New Allotment' || itemLabel === 'New Allocation')) {
       clearCurrentAllotment();
     }
     if (typeof itemLabel === 'string' && (itemLabel === 'Seating Allocation' || itemLabel === 'New Allocation')) {
@@ -421,16 +422,64 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
     );
   };
 
+  const renderColorPalettes = () => {
+    return isCollapsed ? (
+      <Tooltip key="color-palettes">
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            onClick={() => {
+              setIsColorPaletteDialogOpen(true);
+              if (onItemClick) onItemClick();
+            }}
+            className="flex items-center justify-center w-11 h-11 mx-auto rounded-xl text-sm font-semibold transition-all duration-200 text-[#b4b1db] hover:text-white hover:bg-white/[0.07] group relative cursor-pointer"
+          >
+            <Palette className="w-5 h-5 shrink-0 transition-transform group-hover:scale-110 text-[#9d99ce]" />
+            <span
+              className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full ring-2 ring-[#151241]"
+              style={{ backgroundColor: activePalette.hex.accent }}
+            />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="right" className="bg-[#1e1957] text-white border-[#31297e] font-semibold text-xs">
+          Color Palettes
+        </TooltipContent>
+      </Tooltip>
+    ) : (
+      <button
+        key="color-palettes"
+        type="button"
+        onClick={() => {
+          setIsColorPaletteDialogOpen(true);
+          if (onItemClick) onItemClick();
+        }}
+        className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 text-[#b4b1db] hover:text-white hover:bg-white/[0.07] group cursor-pointer"
+      >
+        <div className="flex items-center gap-3">
+          <Palette className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110 text-[#9d99ce]" />
+          <span className="truncate">Color Palettes</span>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <span
+            className="w-2.5 h-2.5 rounded-full ring-1 ring-white/20 shadow-xs"
+            style={{ backgroundColor: activePalette.hex.accent }}
+            title={activePalette.name}
+          />
+        </div>
+      </button>
+    );
+  };
+
   return (
     <aside
       className={cn(
-        "bg-[#151241] text-white flex flex-col justify-between h-full border-r border-[#241d5e] select-none transition-all duration-300",
+        "bg-[#151241] text-white flex flex-col h-full border-r border-[#241d5e] select-none transition-all duration-300 overflow-hidden",
         isCollapsed ? "w-20" : "w-64",
         className
       )}
     >
-      {/* Top Branding */}
-      <div className={cn("pb-6 transition-all duration-300", isCollapsed ? "p-3" : "p-5")}>
+      {/* Top Branding (Fixed/Pinned Header) */}
+      <div className={cn("shrink-0 border-b border-white/[0.06] transition-all duration-300", isCollapsed ? "p-3 flex items-center justify-center" : "px-5 py-5")}>
         {isCollapsed ? (
           <Tooltip>
             <TooltipTrigger asChild>
@@ -460,9 +509,16 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
             </span>
           </Link>
         )}
+      </div>
 
-        {/* Main Navigation Links */}
-        <nav className={cn("space-y-1.5", isCollapsed ? "mt-6" : "mt-8")}>
+      {/* Main Navigation Links (Vertically Scrollable Middle Area) */}
+      <div
+        className={cn(
+          "flex-1 min-h-0 overflow-y-auto overscroll-contain sidebar-scrollbar transition-all duration-300",
+          isCollapsed ? "py-3 px-2" : "py-4 px-3"
+        )}
+      >
+        <nav className="space-y-1.5">
           {navItems.map((item) => {
             const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href) && !pathname.startsWith('/dashboard/student-seating'));
 
@@ -525,99 +581,23 @@ export function SidebarNav({ isCollapsed = false, onItemClick, className }: Side
               );
             }
 
+            if (item.href === '/dashboard/templates') {
+              return (
+                <React.Fragment key={item.href}>
+                  {navLink}
+                  {/* Color Palettes Button below Templates */}
+                  {renderColorPalettes()}
+                </React.Fragment>
+              );
+            }
+
             return navLink;
           })}
-
-          {/* Color Palettes Button below Templates */}
-          {isCollapsed ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsColorPaletteDialogOpen(true);
-                    if (onItemClick) onItemClick();
-                  }}
-                  className="flex items-center justify-center w-11 h-11 mx-auto rounded-xl text-sm font-semibold transition-all duration-200 text-[#b4b1db] hover:text-white hover:bg-white/[0.07] group relative cursor-pointer"
-                >
-                  <Palette className="w-5 h-5 shrink-0 transition-transform group-hover:scale-110 text-[#9d99ce]" />
-                  <span
-                    className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full ring-2 ring-[#151241]"
-                    style={{ backgroundColor: activePalette.hex.accent }}
-                  />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="right" className="bg-[#1e1957] text-white border-[#31297e] font-semibold text-xs">
-                Color Palettes
-              </TooltipContent>
-            </Tooltip>
-          ) : (
-            <button
-              type="button"
-              onClick={() => {
-                setIsColorPaletteDialogOpen(true);
-                if (onItemClick) onItemClick();
-              }}
-              className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 text-[#b4b1db] hover:text-white hover:bg-white/[0.07] group cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <Palette className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110 text-[#9d99ce]" />
-                <span className="truncate">Color Palettes</span>
-              </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <span
-                  className="w-2.5 h-2.5 rounded-full ring-1 ring-white/20 shadow-xs"
-                  style={{ backgroundColor: activePalette.hex.accent }}
-                  title={activePalette.name}
-                />
-              </div>
-            </button>
-          )}
-
-          {/* Examination Calendar Button immediately below Color Palettes */}
-          {(() => {
-            const isCalendarActive = pathname === '/dashboard/examination-calendar';
-            return isCollapsed ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Link
-                    href="/dashboard/examination-calendar"
-                    onClick={() => handleNavClick('Examination Calendar')}
-                    className={cn(
-                      "flex items-center justify-center w-11 h-11 mx-auto rounded-xl text-sm font-semibold transition-all duration-200 group relative",
-                      isCalendarActive
-                        ? "bg-[#6342e8] text-white shadow-lg shadow-purple-900/40"
-                        : "text-[#b4b1db] hover:text-white hover:bg-white/[0.07]"
-                    )}
-                  >
-                    <CalendarRange className={cn("w-5 h-5 shrink-0 transition-transform group-hover:scale-110", isCalendarActive ? "text-white" : "text-[#9d99ce]")} />
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="bg-[#1e1957] text-white border-[#31297e] font-semibold text-xs">
-                  Examination Calendar
-                </TooltipContent>
-              </Tooltip>
-            ) : (
-              <Link
-                href="/dashboard/examination-calendar"
-                onClick={() => handleNavClick('Examination Calendar')}
-                className={cn(
-                  "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 group relative cursor-pointer",
-                  isCalendarActive
-                    ? "bg-[#6342e8] text-white shadow-lg shadow-purple-900/30"
-                    : "text-[#b4b1db] hover:text-white hover:bg-white/[0.07]"
-                )}
-              >
-                <CalendarRange className={cn("w-4 h-4 shrink-0 transition-transform group-hover:scale-110", isCalendarActive ? "text-white" : "text-[#9d99ce]")} />
-                <span className="truncate">Examination Calendar</span>
-              </Link>
-            );
-          })()}
         </nav>
       </div>
 
-      {/* Bottom Section */}
-      <div className={cn("space-y-3 border-t border-white/[0.08] transition-all duration-300", isCollapsed ? "p-2.5" : "p-4")}>
+      {/* Bottom Section (Fixed/Pinned Footer) */}
+      <div className={cn("shrink-0 space-y-3 border-t border-white/[0.08] bg-[#151241] transition-all duration-300", isCollapsed ? "p-2.5" : "p-4")}>
         {/* Settings & Help Links */}
         <div className="space-y-1">
           {isCollapsed ? (

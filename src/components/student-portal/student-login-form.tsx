@@ -96,25 +96,25 @@ export function StudentLoginForm() {
     <div className="w-full max-w-md mx-auto">
       {/* Brand Header */}
       <div className="text-center mb-6 space-y-2">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-bold tracking-wide mb-1 shadow-2xs">
-          <GraduationCap className="w-4 h-4 text-indigo-600" />
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 text-xs font-bold tracking-wide mb-1 shadow-2xs">
+          <GraduationCap className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
           <span>DutyFlow Student Access</span>
         </div>
 
-        <h1 className="font-headline text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
+        <h1 className="font-headline text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
           Student Portal
         </h1>
-        <p className="text-xs sm:text-sm text-slate-500 font-medium max-w-sm mx-auto">
+        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium max-w-sm mx-auto">
           Access your personalized examination schedule, hall allotment, and bench seating.
         </p>
       </div>
 
       {/* Main Card */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl shadow-xl shadow-slate-200/40 p-6 sm:p-8 space-y-5">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-xl shadow-slate-200/40 dark:shadow-none p-6 sm:p-8 space-y-5">
         {/* Error Alert */}
         {errorMessage && (
-          <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2.5 animate-in fade-in">
-            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
+          <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs flex items-start gap-2.5 animate-in fade-in">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600 dark:text-rose-400" />
             <div className="leading-relaxed font-medium">{errorMessage}</div>
           </div>
         )}
@@ -125,12 +125,12 @@ export function StudentLoginForm() {
             <div className="flex items-center justify-between">
               <Label
                 htmlFor="inst-code"
-                className="text-xs font-bold text-slate-700 flex items-center gap-1.5"
+                className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5"
               >
-                <Hash className="w-3.5 h-3.5 text-indigo-600" />
+                <Hash className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                 Institution Code <span className="text-rose-500">*</span>
               </Label>
-              <span className="text-[10px] text-slate-400 font-medium">3-digit college code</span>
+              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">3-digit college code</span>
             </div>
 
             <div className="relative">
@@ -142,7 +142,7 @@ export function StudentLoginForm() {
                 maxLength={3}
                 value={institutionCode}
                 onChange={(e) => setInstitutionCode(e.target.value.replace(/\D/g, '').slice(0, 3))}
-                className="h-11 rounded-xl text-base font-mono font-bold tracking-widest text-slate-900 placeholder:text-slate-400 bg-slate-50/60 focus:bg-white border-slate-200 focus-visible:border-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-100 transition-all uppercase"
+                className="h-11 rounded-xl text-base font-mono font-bold tracking-widest text-slate-900 dark:text-white placeholder:text-slate-400 bg-slate-50/60 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:border-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-100 dark:focus-visible:ring-indigo-950 transition-all uppercase"
                 required
               />
             </div>
@@ -153,11 +153,11 @@ export function StudentLoginForm() {
             <div className="flex items-center justify-between">
               <Label
                 htmlFor="reg-number"
-                className="text-xs font-bold text-slate-700 flex items-center gap-1.5"
+                className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5"
               >
                 Register Number / Roll No. <span className="text-rose-500">*</span>
               </Label>
-              <span className="text-[10px] text-slate-400 font-medium">As in college roster</span>
+              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">As in college roster</span>
             </div>
 
             <div className="relative">
@@ -168,7 +168,7 @@ export function StudentLoginForm() {
                 placeholder="e.g. 101 or 123456"
                 value={registerNumber}
                 onChange={(e) => setRegisterNumber(e.target.value.toUpperCase())}
-                className="h-11 rounded-xl text-sm font-semibold tracking-wider text-slate-900 placeholder:text-slate-400 bg-slate-50/60 focus:bg-white border-slate-200 focus-visible:border-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-100 transition-all uppercase"
+                className="h-11 rounded-xl text-sm font-semibold tracking-wider text-slate-900 dark:text-white placeholder:text-slate-400 bg-slate-50/60 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:border-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-100 dark:focus-visible:ring-indigo-950 transition-all uppercase"
                 required
               />
             </div>
@@ -179,11 +179,11 @@ export function StudentLoginForm() {
             <div className="flex items-center justify-between">
               <Label
                 htmlFor="student-pin"
-                className="text-xs font-bold text-slate-700 flex items-center gap-1.5"
+                className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5"
               >
                 PIN / Password <span className="text-rose-500">*</span>
               </Label>
-              <span className="text-[10px] text-slate-400 font-medium">4–6 digits</span>
+              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">4–6 digits</span>
             </div>
 
             <div className="relative">
@@ -194,13 +194,13 @@ export function StudentLoginForm() {
                 placeholder="Enter password or PIN"
                 value={pin}
                 onChange={(e) => setPin(e.target.value)}
-                className="h-11 rounded-xl text-sm font-semibold text-slate-900 placeholder:text-slate-400 bg-slate-50/60 focus:bg-white border-slate-200 focus-visible:border-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-100 transition-all pr-10"
+                className="h-11 rounded-xl text-sm font-semibold text-slate-900 dark:text-white placeholder:text-slate-400 bg-slate-50/60 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:border-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-100 dark:focus-visible:ring-indigo-950 transition-all pr-10"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPin(!showPin)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 focus:outline-hidden p-1 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 focus:outline-hidden p-1 transition-colors"
                 aria-label={showPin ? 'Hide PIN' : 'Show PIN'}
               >
                 {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -209,12 +209,12 @@ export function StudentLoginForm() {
           </div>
 
           {/* First Time Helper Box */}
-          <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl space-y-1 text-left">
-            <div className="flex items-center gap-1.5 text-indigo-700 font-bold text-[11px]">
+          <div className="p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/80 rounded-xl space-y-1 text-left">
+            <div className="flex items-center gap-1.5 text-indigo-700 dark:text-indigo-400 font-bold text-[11px]">
               <Info className="w-3.5 h-3.5 shrink-0" />
               <span>First Time Logging In?</span>
             </div>
-            <p className="text-[11px] text-slate-500 leading-relaxed">
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
               Use your <strong>Register Number</strong> or <strong>last 4 digits</strong> as your initial PIN. You can change your PIN inside the portal.
             </p>
           </div>
@@ -229,9 +229,9 @@ export function StudentLoginForm() {
                 setPin('4582');
                 setErrorMessage(null);
               }}
-              className="text-[11px] text-indigo-600 hover:text-indigo-800 font-semibold hover:underline inline-flex items-center gap-1.5 transition-colors"
+              className="text-[11px] text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-semibold hover:underline inline-flex items-center gap-1.5 transition-colors"
             >
-              <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+              <Sparkles className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
               <span>Fill Demo Credentials: Inst 001 • Roll 101 • PIN 4582</span>
             </button>
           </div>
@@ -257,8 +257,8 @@ export function StudentLoginForm() {
         </form>
 
         {/* Security Assurance */}
-        <div className="pt-2 border-t border-slate-100 flex items-center justify-center gap-1.5 text-[11px] text-slate-400">
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-center gap-1.5 text-[11px] text-slate-400 dark:text-slate-500">
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
           <span>Strictly private to your Register Number</span>
         </div>
       </div>
@@ -267,7 +267,7 @@ export function StudentLoginForm() {
       <div className="mt-6 text-center">
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-indigo-700 transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-indigo-700 dark:hover:text-indigo-400 transition-colors"
         >
           <Building2 className="w-3.5 h-3.5" />
           <span>Institution Admin / Invigilator Sign In &rarr;</span>

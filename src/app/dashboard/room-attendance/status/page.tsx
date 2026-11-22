@@ -318,22 +318,22 @@ export default function AttendanceStatusPage() {
       <RoomAttendanceTabs />
 
       {/* Header Banner */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-indigo-50 text-indigo-700 rounded-xl">
-              <BarChart2 className="w-5 h-5 text-indigo-700" />
+            <div className="p-2 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 rounded-xl">
+              <BarChart2 className="w-5 h-5 text-indigo-700 dark:text-indigo-400" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="font-headline text-2xl font-black tracking-tight text-slate-800">
+                <h1 className="font-headline text-2xl font-black tracking-tight text-slate-800 dark:text-white">
                   Attendance Status
                 </h1>
-                <Badge className="bg-indigo-50 text-indigo-800 border-indigo-200 text-xs font-bold px-2.5 py-0.5 rounded-full">
+                <Badge className="bg-indigo-50 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800 text-xs font-bold px-2.5 py-0.5 rounded-full">
                   Single Source of Truth
                 </Badge>
               </div>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
                 Central real-time monitoring across Invigilator, Admin floor walk, and Manual workflows
               </p>
             </div>
@@ -348,7 +348,7 @@ export default function AttendanceStatusPage() {
             size="sm"
             onClick={loadSubmissions}
             disabled={isRefreshing}
-            className="text-xs h-9 px-3 gap-1.5 font-bold text-slate-700"
+            className="text-xs h-9 px-3 gap-1.5 font-bold text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             <RefreshCw className={cn("w-3.5 h-3.5", isRefreshing && "animate-spin")} />
             <span>Refresh</span>
@@ -359,7 +359,7 @@ export default function AttendanceStatusPage() {
             variant="outline"
             size="sm"
             onClick={handleDownloadCsv}
-            className="text-xs h-9 px-3 gap-1.5 font-bold text-slate-700 border-slate-300"
+            className="text-xs h-9 px-3 gap-1.5 font-bold text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             <Download className="w-3.5 h-3.5" />
             <span>CSV</span>
@@ -381,80 +381,80 @@ export default function AttendanceStatusPage() {
       {/* Automatic Summary Metrics Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
         {/* Total Rooms */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-1">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-2xs space-y-1">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center justify-between">
             <span>Total Rooms</span>
-            <DoorOpen className="w-4 h-4 text-indigo-600" />
+            <DoorOpen className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
           </div>
-          <div className="text-2xl font-black font-mono text-slate-900">
+          <div className="text-2xl font-black font-mono text-slate-900 dark:text-white">
             {summaryMetrics.totalRooms}
           </div>
-          <div className="text-[11px] text-slate-500 font-medium">
-            <strong className="text-emerald-700 font-bold">{summaryMetrics.completedRooms}</strong> Completed • {summaryMetrics.pendingRooms} Pending
+          <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+            <strong className="text-emerald-700 dark:text-emerald-400 font-bold">{summaryMetrics.completedRooms}</strong> Completed • {summaryMetrics.pendingRooms} Pending
           </div>
         </div>
 
         {/* Invigilators Allocated */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-1">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-2xs space-y-1">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center justify-between">
             <span>Invigilators</span>
-            <Users className="w-4 h-4 text-sky-600" />
+            <Users className="w-4 h-4 text-sky-600 dark:text-sky-400" />
           </div>
-          <div className="text-2xl font-black font-mono text-slate-900">
+          <div className="text-2xl font-black font-mono text-slate-900 dark:text-white">
             {summaryMetrics.invigilatorsAllocated}
           </div>
-          <div className="text-[11px] text-slate-500 font-medium">
+          <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
             Allocated Faculty Duties
           </div>
         </div>
 
         {/* Total Student Strength */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-1">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-2xs space-y-1">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center justify-between">
             <span>Total Strength</span>
-            <Users className="w-4 h-4 text-purple-600" />
+            <Users className="w-4 h-4 text-purple-600 dark:text-purple-400" />
           </div>
-          <div className="text-2xl font-black font-mono text-slate-900">
+          <div className="text-2xl font-black font-mono text-slate-900 dark:text-white">
             {summaryMetrics.totalStrength}
           </div>
-          <div className="text-[11px] text-slate-500 font-medium">
+          <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
             Candidates Scheduled
           </div>
         </div>
 
         {/* Number of Present Students */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-1">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-2xs space-y-1">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center justify-between">
             <span>Total Present</span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           </div>
-          <div className="text-2xl font-black font-mono text-emerald-950">
+          <div className="text-2xl font-black font-mono text-emerald-950 dark:text-emerald-200">
             {summaryMetrics.totalPresent}
           </div>
-          <div className="text-[11px] text-emerald-700 font-bold">
+          <div className="text-[11px] text-emerald-700 dark:text-emerald-400 font-bold">
             {summaryMetrics.attendancePercentage}% Attendance Rate
           </div>
         </div>
 
         {/* Number of Absent Students */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-1 col-span-2 sm:col-span-1">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-rose-700 flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-2xs space-y-1 col-span-2 sm:col-span-1">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-rose-700 dark:text-rose-400 flex items-center justify-between">
             <span>Total Absent</span>
-            <XCircle className="w-4 h-4 text-rose-600" />
+            <XCircle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
           </div>
-          <div className="text-2xl font-black font-mono text-rose-950">
+          <div className="text-2xl font-black font-mono text-rose-950 dark:text-rose-200">
             {summaryMetrics.totalAbsent}
           </div>
-          <div className="text-[11px] text-rose-700 font-bold">
+          <div className="text-[11px] text-rose-700 dark:text-rose-400 font-bold">
             {summaryMetrics.totalAbsent > 0 ? `${summaryMetrics.totalAbsent} Candidates Absent` : '100% Present'}
           </div>
         </div>
       </div>
 
       {/* Central Rooms Status Table Card */}
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs overflow-hidden">
         {/* Table Toolbar */}
-        <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50">
+        <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-800/40">
           <div className="relative w-72">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <Input
@@ -462,11 +462,11 @@ export default function AttendanceStatusPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Filter by Room, Invigilator, Source..."
-              className="pl-9 text-xs h-9"
+              className="pl-9 text-xs h-9 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
             />
           </div>
 
-          <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
+          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
             <span>{examDate} ({examTimings})</span>
           </div>
         </div>
@@ -474,7 +474,7 @@ export default function AttendanceStatusPage() {
         {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left border-collapse">
-            <thead className="bg-slate-50 border-b border-slate-200 text-[11px] uppercase font-bold text-slate-500">
+            <thead className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-[11px] uppercase font-bold text-slate-500 dark:text-slate-400">
               <tr>
                 <th className="py-3 px-4 text-center w-12">#</th>
                 <th className="py-3 px-4">Room No</th>
@@ -488,10 +488,10 @@ export default function AttendanceStatusPage() {
                 <th className="py-3 px-4 text-right">Roster</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70">
               {filteredRooms.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="py-10 text-center text-slate-400 font-medium">
+                  <td colSpan={10} className="py-10 text-center text-slate-400 dark:text-slate-500 font-medium">
                     No examination rooms found matching your search.
                   </td>
                 </tr>
@@ -500,8 +500,8 @@ export default function AttendanceStatusPage() {
                   const sub = subMap.get(item.roomNo);
 
                   return (
-                    <tr key={item.roomNo} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="py-3.5 px-4 text-center font-bold text-slate-400">
+                    <tr key={item.roomNo} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+                      <td className="py-3.5 px-4 text-center font-bold text-slate-400 dark:text-slate-500">
                         {idx + 1}
                       </td>
 
@@ -511,30 +511,30 @@ export default function AttendanceStatusPage() {
                           <div className="w-8 h-8 rounded-lg bg-[#1E2A5E] text-white flex items-center justify-center font-mono font-bold text-xs shrink-0">
                             {item.roomNo}
                           </div>
-                          <span className="font-headline font-bold text-slate-900 text-sm">
+                          <span className="font-headline font-bold text-slate-900 dark:text-white text-sm">
                             Room {item.roomNo}
                           </span>
                         </div>
                       </td>
 
                       {/* Invigilator */}
-                      <td className="py-3.5 px-4 font-bold text-slate-800">
+                      <td className="py-3.5 px-4 font-bold text-slate-800 dark:text-slate-200">
                         {item.invigilator}
                       </td>
 
                       {/* Subject */}
-                      <td className="py-3.5 px-4 font-medium text-slate-600">
+                      <td className="py-3.5 px-4 font-medium text-slate-600 dark:text-slate-400">
                         {item.subject}
                       </td>
 
                       {/* Total Strength */}
-                      <td className="py-3.5 px-3 text-center font-mono font-bold text-slate-900">
+                      <td className="py-3.5 px-3 text-center font-mono font-bold text-slate-900 dark:text-white">
                         {item.totalStudents}
                       </td>
 
                       {/* Present */}
                       <td className="py-3.5 px-3 text-center">
-                        <span className="font-mono font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full text-xs">
+                        <span className="font-mono font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-full text-xs">
                           {item.status === 'Completed' ? item.presentCount : '—'}
                         </span>
                       </td>
@@ -545,8 +545,8 @@ export default function AttendanceStatusPage() {
                           className={cn(
                             "font-mono font-bold px-2 py-0.5 rounded-full text-xs",
                             item.absentCount > 0
-                              ? "text-rose-800 bg-rose-50 border border-rose-200"
-                              : "text-slate-500 bg-slate-100"
+                              ? "text-rose-800 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800"
+                              : "text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800"
                           )}
                         >
                           {item.status === 'Completed' ? item.absentCount : '—'}
@@ -556,22 +556,22 @@ export default function AttendanceStatusPage() {
                       {/* Collection Source Indicator */}
                       <td className="py-3.5 px-4 text-center">
                         {item.source === 'Invigilator' ? (
-                          <Badge className="bg-blue-50 text-blue-800 border-blue-200 text-[10px] font-bold gap-1">
-                            <UserCheck className="w-3 h-3 text-blue-600" />
+                          <Badge className="bg-blue-50 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800 text-[10px] font-bold gap-1">
+                            <UserCheck className="w-3 h-3 text-blue-600 dark:text-blue-400" />
                             Submitted via Invigilator
                           </Badge>
                         ) : item.source === 'Admin' ? (
-                          <Badge className="bg-emerald-50 text-emerald-800 border-emerald-300 text-[10px] font-bold gap-1">
-                            <Smartphone className="w-3 h-3 text-emerald-600" />
+                          <Badge className="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 text-[10px] font-bold gap-1">
+                            <Smartphone className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                             Submitted via Admin
                           </Badge>
                         ) : item.source === 'Manual' ? (
-                          <Badge className="bg-purple-50 text-purple-800 border-purple-200 text-[10px] font-bold gap-1">
-                            <FileSpreadsheet className="w-3 h-3 text-purple-600" />
+                          <Badge className="bg-purple-50 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 border-purple-200 dark:border-purple-800 text-[10px] font-bold gap-1">
+                            <FileSpreadsheet className="w-3 h-3 text-purple-600 dark:text-purple-400" />
                             Submitted via Manual
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="text-slate-400 border-slate-300 text-[10px]">
+                          <Badge variant="outline" className="text-slate-400 dark:text-slate-500 border-slate-300 dark:border-slate-700 text-[10px]">
                             Pending Collection
                           </Badge>
                         )}
@@ -580,12 +580,12 @@ export default function AttendanceStatusPage() {
                       {/* Status */}
                       <td className="py-3.5 px-4 text-center">
                         {item.status === 'Completed' ? (
-                          <Badge className="bg-emerald-50 text-emerald-800 border-emerald-200 font-bold text-[10px] gap-1">
-                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          <Badge className="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 font-bold text-[10px] gap-1">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                             Completed
                           </Badge>
                         ) : (
-                          <span className="text-[11px] text-amber-600 font-semibold bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full">
+                          <span className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 px-2.5 py-0.5 rounded-full">
                             Pending
                           </span>
                         )}
@@ -599,13 +599,13 @@ export default function AttendanceStatusPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => setSelectedSub(sub)}
-                            className="text-xs h-8 px-2.5 gap-1 font-bold text-indigo-700 hover:bg-indigo-50 border-indigo-200"
+                            className="text-xs h-8 px-2.5 gap-1 font-bold text-indigo-700 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 border-indigo-200 dark:border-indigo-800"
                           >
                             <Eye className="w-3.5 h-3.5" />
                             <span>View Roster</span>
                           </Button>
                         ) : (
-                          <span className="text-slate-400 text-[11px] italic">No submission</span>
+                          <span className="text-slate-400 dark:text-slate-500 text-[11px] italic">No submission</span>
                         )}
                       </td>
                     </tr>
@@ -619,7 +619,7 @@ export default function AttendanceStatusPage() {
 
       {/* View Student Roster Dialog */}
       <Dialog open={Boolean(selectedSub)} onOpenChange={(open) => !open && setSelectedSub(null)}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white">
           {selectedSub && (
             <>
               <DialogHeader>
@@ -629,28 +629,28 @@ export default function AttendanceStatusPage() {
                       {selectedSub.roomNo}
                     </div>
                     <div>
-                      <DialogTitle className="text-lg font-black text-slate-800">
+                      <DialogTitle className="text-lg font-black text-slate-800 dark:text-white">
                         Room {selectedSub.roomNo} Student Attendance Roster
                       </DialogTitle>
-                      <DialogDescription className="text-xs text-slate-500">
+                      <DialogDescription className="text-xs text-slate-500 dark:text-slate-400">
                         Submitted via {selectedSub.source || 'Invigilator'} ({selectedSub.invigilatorName}) at {selectedSub.submittedAt}
                       </DialogDescription>
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5 text-xs font-bold">
-                    <Badge className="bg-emerald-50 text-emerald-800 border-emerald-300">
+                    <Badge className="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800">
                       {selectedSub.presentCount} Present
                     </Badge>
-                    <Badge className="bg-rose-50 text-rose-800 border-rose-300">
+                    <Badge className="bg-rose-50 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border-rose-300 dark:border-rose-800">
                       {selectedSub.absentCount} Absent
                     </Badge>
                   </div>
                 </div>
               </DialogHeader>
 
-              <div className="border border-slate-200 rounded-xl overflow-hidden mt-2">
+              <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden mt-2">
                 <table className="w-full text-xs text-left border-collapse">
-                  <thead className="bg-slate-50 text-[10px] uppercase font-bold text-slate-500 border-b border-slate-200">
+                  <thead className="bg-slate-50 dark:bg-slate-800/60 text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
                     <tr>
                       <th className="py-2 px-3 text-center w-10">#</th>
                       <th className="py-2 px-3 font-mono">Roll No</th>
@@ -660,21 +660,21 @@ export default function AttendanceStatusPage() {
                       <th className="py-2 px-3 text-center w-20">Status</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70">
                     {selectedSub.records?.map((rec, idx) => (
-                      <tr key={rec.registerNumber} className="hover:bg-slate-50/50">
-                        <td className="py-2 px-3 text-center text-slate-400 font-bold">{idx + 1}</td>
-                        <td className="py-2 px-3 font-mono font-bold text-slate-900">{rec.registerNumber}</td>
-                        <td className="py-2 px-3 font-bold text-slate-800">{rec.studentName}</td>
-                        <td className="py-2 px-2 text-center font-semibold text-slate-600">{rec.section}</td>
-                        <td className="py-2 px-2 text-center font-semibold text-slate-600">{rec.benchNumber || '—'}</td>
+                      <tr key={rec.registerNumber} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                        <td className="py-2 px-3 text-center text-slate-400 dark:text-slate-500 font-bold">{idx + 1}</td>
+                        <td className="py-2 px-3 font-mono font-bold text-slate-900 dark:text-white">{rec.registerNumber}</td>
+                        <td className="py-2 px-3 font-bold text-slate-800 dark:text-slate-200">{rec.studentName}</td>
+                        <td className="py-2 px-2 text-center font-semibold text-slate-600 dark:text-slate-400">{rec.section}</td>
+                        <td className="py-2 px-2 text-center font-semibold text-slate-600 dark:text-slate-400">{rec.benchNumber || '—'}</td>
                         <td className="py-2 px-3 text-center">
                           {rec.status === 'Present' ? (
-                            <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                            <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-full">
                               Present
                             </span>
                           ) : (
-                            <span className="text-[10px] font-bold text-rose-800 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full">
+                            <span className="text-[10px] font-bold text-rose-800 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 px-2 py-0.5 rounded-full">
                               Absent
                             </span>
                           )}

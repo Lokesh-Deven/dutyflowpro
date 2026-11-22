@@ -170,9 +170,9 @@ export function MyExaminationView() {
       {/* ========================================================================= */}
       {/* 1. TOP HEADER BAR: Institution & Portal Navigation */}
       {/* ========================================================================= */}
-      <header className="flex items-center justify-between gap-3 pb-3 border-b border-slate-200/80 print:hidden">
+      <header className="flex items-center justify-between gap-3 pb-3 border-b border-slate-200/80 dark:border-slate-800 print:hidden">
         <div className="flex items-center gap-2.5">
-          <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-slate-200 bg-white shrink-0">
+          <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
             <Image
               src="/Dutyflow Logo.png"
               alt="DutyFlow Logo"
@@ -183,25 +183,25 @@ export function MyExaminationView() {
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="font-headline font-black text-sm sm:text-base tracking-tight text-slate-900">
-                Duty<span className="text-indigo-600">Flow</span>
+              <span className="font-headline font-black text-sm sm:text-base tracking-tight text-slate-900 dark:text-white">
+                Duty<span className="text-indigo-600 dark:text-indigo-400">Flow</span>
               </span>
               <Badge
                 variant="outline"
-                className="bg-indigo-50 text-indigo-700 border-indigo-200 text-[10px] font-bold py-0 h-4"
+                className="bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800 text-[10px] font-bold py-0 h-4"
               >
                 Student
               </Badge>
               {session.institutionCode && (
                 <Badge
                   variant="outline"
-                  className="bg-purple-50 text-[#6342e8] border-purple-200 font-mono text-[10px] font-bold py-0 h-4"
+                  className="bg-purple-50 dark:bg-purple-950/60 text-[#6342e8] dark:text-purple-300 border-purple-200 dark:border-purple-800 font-mono text-[10px] font-bold py-0 h-4"
                 >
                   Code: {session.institutionCode}
                 </Badge>
               )}
             </div>
-            <p className="text-[11px] text-slate-500 font-medium truncate max-w-[200px] sm:max-w-xs">
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate max-w-[200px] sm:max-w-xs">
               {session.institutionName || 'Examination Center'}
             </p>
           </div>
@@ -210,28 +210,28 @@ export function MyExaminationView() {
         {/* Action Controls & Navigation Switcher */}
         <div className="flex items-center gap-1.5 sm:gap-2">
           {/* Navigation Switcher */}
-          <div className="bg-slate-100 p-1 rounded-xl flex items-center border border-slate-200/80">
-            <div className="px-2.5 py-1 rounded-lg text-xs font-bold bg-white text-indigo-700 shadow-xs flex items-center gap-1.5">
-              <BookOpen className="w-3.5 h-3.5 text-indigo-600" />
+          <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl flex items-center border border-slate-200/80 dark:border-slate-700">
+            <div className="px-2.5 py-1 rounded-lg text-xs font-bold bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 shadow-xs flex items-center gap-1.5">
+              <BookOpen className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
               <span className="hidden xs:inline">My Slip</span>
             </div>
             <Link
               href="/student/examination-timetable"
-              className="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors flex items-center gap-1.5"
+              className="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex items-center gap-1.5"
             >
               <CalendarClock className="w-3.5 h-3.5" />
               <span>Timetable</span>
             </Link>
             <Link
               href="/student/examination-calendar"
-              className="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors flex items-center gap-1.5"
+              className="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex items-center gap-1.5"
             >
               <CalendarRange className="w-3.5 h-3.5" />
               <span className="hidden xs:inline">Calendar</span>
             </Link>
             <Link
               href="/student/results"
-              className="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 hover:text-indigo-700 transition-colors flex items-center gap-1.5"
+              className="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-indigo-700 dark:hover:text-indigo-400 transition-colors flex items-center gap-1.5"
             >
               <Trophy className="w-3.5 h-3.5 text-amber-500" />
               <span>Results</span>
@@ -244,9 +244,9 @@ export function MyExaminationView() {
             disabled={isSyncing}
             onClick={handleManualRefresh}
             title="Refresh examination schedule from cloud"
-            className="h-8 px-2 text-xs font-semibold text-slate-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg flex items-center gap-1.5"
+            className="h-8 px-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-indigo-700 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-slate-800 rounded-lg flex items-center gap-1.5"
           >
-            <RefreshCw className={cn("w-3.5 h-3.5 text-indigo-600", isSyncing && "animate-spin")} />
+            <RefreshCw className={cn("w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400", isSyncing && "animate-spin")} />
             <span className="hidden sm:inline">Refresh Data</span>
           </Button>
 
@@ -254,7 +254,7 @@ export function MyExaminationView() {
             size="sm"
             variant="outline"
             onClick={handlePrintSlip}
-            className="h-8 text-xs font-semibold px-2.5 gap-1.5 text-slate-700 border-slate-200 hover:bg-slate-100 rounded-lg hidden sm:inline-flex"
+            className="h-8 text-xs font-semibold px-2.5 gap-1.5 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg hidden sm:inline-flex"
           >
             <Printer className="w-3.5 h-3.5" />
             <span>Print Slip</span>
@@ -265,7 +265,7 @@ export function MyExaminationView() {
             variant="ghost"
             onClick={() => setIsPinModalOpen(true)}
             title="Change PIN"
-            className="h-8 text-xs font-semibold px-2 gap-1 text-slate-600 hover:text-slate-900 rounded-lg hidden sm:inline-flex"
+            className="h-8 text-xs font-semibold px-2 gap-1 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg hidden sm:inline-flex"
           >
             <KeyRound className="w-3.5 h-3.5" />
             <span>PIN</span>
@@ -275,7 +275,7 @@ export function MyExaminationView() {
             size="sm"
             variant="ghost"
             onClick={handleLogout}
-            className="h-8 text-xs font-bold px-2.5 gap-1.5 text-rose-600 hover:bg-rose-50 hover:text-rose-700 rounded-lg"
+            className="h-8 text-xs font-bold px-2.5 gap-1.5 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-700 dark:hover:text-rose-300 rounded-lg"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span className="hidden xs:inline">Log Out</span>
@@ -286,14 +286,14 @@ export function MyExaminationView() {
       {/* ========================================================================= */}
       {/* 2. STUDENT IDENTITY CARD */}
       {/* ========================================================================= */}
-      <section className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs relative overflow-hidden">
+      <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs relative overflow-hidden">
         {/* Decorative corner glow */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none" />
+        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 dark:bg-indigo-950/40 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none" />
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
           <div className="flex items-center gap-3.5">
             {/* Monogram Avatar adhering strictly to Invigilator/Avatar Monogram Rule */}
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-[#1E2A5E] to-[#2D3E82] text-white flex items-center justify-center shrink-0 shadow-md shadow-indigo-950/15 border-2 border-white">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-[#1E2A5E] to-[#2D3E82] text-white flex items-center justify-center shrink-0 shadow-md shadow-indigo-950/15 border-2 border-white dark:border-slate-800">
               <span className="font-headline font-black text-2xl sm:text-3xl leading-none select-none">
                 {studentInitial}
               </span>
@@ -301,38 +301,38 @@ export function MyExaminationView() {
 
             <div className="space-y-0.5">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="font-headline text-lg sm:text-xl font-black text-slate-900 leading-tight">
+                <h1 className="font-headline text-lg sm:text-xl font-black text-slate-900 dark:text-white leading-tight">
                   {session.studentName}
                 </h1>
-                <Badge className="bg-emerald-50 text-emerald-800 border-emerald-200 font-bold text-[10px] px-2 py-0 h-4">
+                <Badge className="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 font-bold text-[10px] px-2 py-0 h-4">
                   Verified Candidate
                 </Badge>
               </div>
 
-              <div className="flex items-center gap-2 text-xs text-slate-600 font-medium flex-wrap pt-0.5">
-                <span className="font-mono font-bold text-indigo-700 bg-indigo-50/80 px-2 py-0.5 rounded-md border border-indigo-100">
+              <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 font-medium flex-wrap pt-0.5">
+                <span className="font-mono font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50/80 dark:bg-indigo-950/60 px-2 py-0.5 rounded-md border border-indigo-100 dark:border-indigo-800">
                   Reg No: {session.registerNumber}
                 </span>
                 {session.section && (
-                  <span className="text-slate-500">
-                    Section: <strong className="text-slate-800">{session.section}</strong>
+                  <span className="text-slate-500 dark:text-slate-400">
+                    Section: <strong className="text-slate-800 dark:text-slate-200">{session.section}</strong>
                   </span>
                 )}
                 {session.courseStream && (
-                  <span className="text-slate-500">
-                    Course: <strong className="text-slate-800">{session.courseStream}</strong>
+                  <span className="text-slate-500 dark:text-slate-400">
+                    Course: <strong className="text-slate-800 dark:text-slate-200">{session.courseStream}</strong>
                   </span>
                 )}
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:self-center border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100">
+          <div className="flex items-center gap-2 sm:self-center border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100 dark:border-slate-800">
             <button
               onClick={() => setIsPinModalOpen(true)}
-              className="sm:hidden text-xs font-semibold text-slate-600 hover:text-indigo-700 inline-flex items-center gap-1 py-1"
+              className="sm:hidden text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-indigo-700 dark:hover:text-indigo-400 inline-flex items-center gap-1 py-1"
             >
-              <KeyRound className="w-3.5 h-3.5 text-indigo-600" />
+              <KeyRound className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
               <span>Change PIN</span>
             </button>
           </div>
@@ -344,9 +344,9 @@ export function MyExaminationView() {
       {/* ========================================================================= */}
       {examinations.length > 1 && (
         <section className="space-y-1.5 print:hidden">
-          <div className="flex items-center justify-between text-xs font-bold text-slate-500 px-1">
+          <div className="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400 px-1">
             <span>Your Scheduled Examinations ({examinations.length})</span>
-            <span className="text-[10px] font-medium text-indigo-600">Tap to view seat details</span>
+            <span className="text-[10px] font-medium text-indigo-600 dark:text-indigo-400">Tap to view seat details</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -359,25 +359,25 @@ export function MyExaminationView() {
                   onClick={() => setSelectedExamId(exam.id)}
                   className={`text-left p-3 rounded-xl border transition-all text-xs flex items-center justify-between gap-2 ${
                     isSelected
-                      ? 'bg-indigo-50/90 border-indigo-300 shadow-xs'
-                      : 'bg-white border-slate-200 hover:border-indigo-200'
+                      ? 'bg-indigo-50/90 dark:bg-indigo-950/60 border-indigo-300 dark:border-indigo-700 shadow-xs'
+                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-indigo-200 dark:hover:border-indigo-700'
                   }`}
                 >
                   <div className="space-y-0.5 truncate">
-                    <div className="font-bold text-slate-900 truncate">
+                    <div className="font-bold text-slate-900 dark:text-white truncate">
                       {exam.subjectName}
                     </div>
-                    <div className="text-[11px] text-slate-500 flex items-center gap-1.5">
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                       <span>{exam.formattedDate || 'Date TBA'}</span>
                       {exam.timeSlot && <span>&bull; {exam.timeSlot}</span>}
                     </div>
                   </div>
 
                   <div className="text-right shrink-0">
-                    <span className="font-black text-indigo-700 block">
+                    <span className="font-black text-indigo-700 dark:text-indigo-400 block">
                       Room {exam.roomNo}
                     </span>
-                    <span className="text-[10px] text-slate-400 font-semibold block">
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold block">
                       {exam.benchNumber}
                     </span>
                   </div>
@@ -396,10 +396,10 @@ export function MyExaminationView() {
           {/* Section Title with Status */}
           <div className="flex items-center justify-between px-1">
             <div>
-              <h2 className="font-headline text-lg sm:text-xl font-black text-slate-900">
+              <h2 className="font-headline text-lg sm:text-xl font-black text-slate-900 dark:text-white">
                 My Examination
               </h2>
-              <p className="text-xs text-slate-500 font-medium">
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                 {activeExam.examName || 'Examination Schedule'}
               </p>
             </div>
@@ -408,11 +408,11 @@ export function MyExaminationView() {
               variant="outline"
               className={
                 activeExam.status === 'Confirmed'
-                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200 text-xs font-bold py-1 px-3 gap-1 shadow-2xs'
-                  : 'bg-amber-50 text-amber-800 border-amber-200 text-xs font-bold py-1 px-3 gap-1'
+                  ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 text-xs font-bold py-1 px-3 gap-1 shadow-2xs'
+                  : 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800 text-xs font-bold py-1 px-3 gap-1'
               }
             >
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
               <span>{activeExam.status === 'Confirmed' ? 'Seating Confirmed' : 'Seating In Progress'}</span>
             </Badge>
           </div>
@@ -420,125 +420,125 @@ export function MyExaminationView() {
           {/* 4 GRAND MOBILE INFORMATION CARDS */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             {/* 1. SUBJECT CARD */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs hover:border-indigo-200 transition-all flex flex-col justify-between space-y-3">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs hover:border-indigo-200 dark:hover:border-indigo-800 transition-all flex flex-col justify-between space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-black uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">
+                <span className="text-[11px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-md border border-indigo-100 dark:border-indigo-800">
                   Subject
                 </span>
-                <div className="p-2 bg-slate-50 text-indigo-700 rounded-xl border border-slate-100">
+                <div className="p-2 bg-slate-50 dark:bg-slate-800 text-indigo-700 dark:text-indigo-400 rounded-xl border border-slate-100 dark:border-slate-800">
                   <BookOpen className="w-5 h-5" />
                 </div>
               </div>
 
               <div>
-                <div className="font-headline font-black text-2xl sm:text-3xl text-slate-900 leading-tight">
+                <div className="font-headline font-black text-2xl sm:text-3xl text-slate-900 dark:text-white leading-tight">
                   {activeExam.subjectName}
                 </div>
-                <p className="text-xs text-slate-500 font-semibold mt-1">
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold mt-1">
                   {activeExam.courseStream || 'Standard Curriculum'}{' '}
                   {activeExam.subjectCode ? `(${activeExam.subjectCode})` : ''}
                 </p>
               </div>
 
-              <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-400 font-medium">
-                Section: <strong className="text-slate-700">{activeExam.section || session.section || 'A'}</strong>
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-400 dark:text-slate-500 font-medium">
+                Section: <strong className="text-slate-700 dark:text-slate-300">{activeExam.section || session.section || 'A'}</strong>
               </div>
             </div>
 
             {/* 2. DATE & TIME CARD */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs hover:border-indigo-200 transition-all flex flex-col justify-between space-y-3">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs hover:border-indigo-200 dark:hover:border-indigo-800 transition-all flex flex-col justify-between space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-black uppercase tracking-wider text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100">
+                <span className="text-[11px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-md border border-amber-100 dark:border-amber-800">
                   Date & Time
                 </span>
-                <div className="p-2 bg-slate-50 text-amber-600 rounded-xl border border-slate-100">
+                <div className="p-2 bg-slate-50 dark:bg-slate-800 text-amber-600 dark:text-amber-400 rounded-xl border border-slate-100 dark:border-slate-800">
                   <Calendar className="w-5 h-5" />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <div className="font-headline font-black text-xl sm:text-2xl text-slate-900 leading-tight">
+                <div className="font-headline font-black text-xl sm:text-2xl text-slate-900 dark:text-white leading-tight">
                   {activeExam.formattedDate}
                 </div>
                 {activeExam.dayOfWeek && (
-                  <p className="text-xs font-bold text-indigo-700 uppercase tracking-wide">
+                  <p className="text-xs font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wide">
                     {activeExam.dayOfWeek}
                   </p>
                 )}
-                <div className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-700 pt-1">
-                  <Clock className="w-4 h-4 text-amber-600 shrink-0" />
+                <div className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 pt-1">
+                  <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
                   <span>{activeExam.timeSlot}</span>
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-400 font-medium">
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-400 dark:text-slate-500 font-medium">
                 Please report 15 minutes before the session starts
               </div>
             </div>
 
             {/* 3. EXAMINATION ROOM CARD */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs hover:border-indigo-200 transition-all flex flex-col justify-between space-y-3">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs hover:border-indigo-200 dark:hover:border-indigo-800 transition-all flex flex-col justify-between space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-black uppercase tracking-wider text-rose-700 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-100">
+                <span className="text-[11px] font-black uppercase tracking-wider text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 px-2 py-0.5 rounded-md border border-rose-100 dark:border-rose-800">
                   Examination Room
                 </span>
-                <div className="p-2 bg-slate-50 text-rose-600 rounded-xl border border-slate-100">
+                <div className="p-2 bg-slate-50 dark:bg-slate-800 text-rose-600 dark:text-rose-400 rounded-xl border border-slate-100 dark:border-slate-800">
                   <MapPin className="w-5 h-5" />
                 </div>
               </div>
 
               <div>
-                <div className="font-headline font-black text-3xl sm:text-4xl text-slate-900 leading-tight">
+                <div className="font-headline font-black text-3xl sm:text-4xl text-slate-900 dark:text-white leading-tight">
                   {activeExam.roomNo}
                 </div>
-                <p className="text-xs text-slate-500 font-semibold mt-1">
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold mt-1">
                   Hall / Classroom No. {activeExam.roomNo}
                 </p>
               </div>
 
-              <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-500 font-medium flex items-center justify-between">
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 font-medium flex items-center justify-between">
                 <span>Check room notice board at entrance</span>
-                <span className="font-bold text-indigo-700 text-xs">Hall {activeExam.roomNo}</span>
+                <span className="font-bold text-indigo-700 dark:text-indigo-400 text-xs">Hall {activeExam.roomNo}</span>
               </div>
             </div>
 
             {/* 4. SEATING / BENCH CARD */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs hover:border-indigo-200 transition-all flex flex-col justify-between space-y-3">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs hover:border-indigo-200 dark:hover:border-indigo-800 transition-all flex flex-col justify-between space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
+                <span className="text-[11px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-100 dark:border-emerald-800">
                   Seating / Bench
                 </span>
-                <div className="p-2 bg-slate-50 text-emerald-600 rounded-xl border border-slate-100">
+                <div className="p-2 bg-slate-50 dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 rounded-xl border border-slate-100 dark:border-slate-800">
                   <Armchair className="w-5 h-5" />
                 </div>
               </div>
 
               <div>
                 <div className="flex items-baseline gap-2">
-                  <span className="font-headline font-black text-3xl sm:text-4xl text-slate-900">
+                  <span className="font-headline font-black text-3xl sm:text-4xl text-slate-900 dark:text-white">
                     {activeExam.benchNumber}
                   </span>
                   {activeExam.position && activeExam.position !== 'Unassigned' && (
-                    <Badge className="bg-indigo-50 text-indigo-800 border-indigo-200 font-bold text-xs px-2.5 py-0.5">
+                    <Badge className="bg-indigo-50 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800 font-bold text-xs px-2.5 py-0.5">
                       {activeExam.position} Position
                     </Badge>
                   )}
                 </div>
 
-                <div className="text-xs text-slate-500 font-semibold mt-1">
+                <div className="text-xs text-slate-500 dark:text-slate-400 font-semibold mt-1">
                   {activeExam.rowLabel ? `${activeExam.rowLabel} &bull; ` : ''}
                   {activeExam.benchSide ? `${activeExam.benchSide} Side Column` : 'Allocated Bench'}
                 </div>
               </div>
 
               {/* Visual Seat Indicator (Left - Center - Right) */}
-              <div className="pt-2 border-t border-slate-100">
-                <div className="bg-slate-50 p-2 rounded-xl border border-slate-100 flex items-center justify-around gap-1 text-center">
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                <div className="bg-slate-50 dark:bg-slate-800/60 p-2 rounded-xl border border-slate-100 dark:border-slate-800 flex items-center justify-around gap-1 text-center">
                   <div
                     className={`flex-1 py-1 px-1.5 rounded-lg text-[10px] font-bold transition-all ${
                       activeExam.position === 'Left'
                         ? 'bg-emerald-600 text-white shadow-xs'
-                        : 'bg-white border border-slate-200 text-slate-400'
+                        : 'bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500'
                     }`}
                   >
                     Left
@@ -547,7 +547,7 @@ export function MyExaminationView() {
                     className={`flex-1 py-1 px-1.5 rounded-lg text-[10px] font-bold transition-all ${
                       activeExam.position === 'Center'
                         ? 'bg-emerald-600 text-white shadow-xs'
-                        : 'bg-white border border-slate-200 text-slate-400'
+                        : 'bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500'
                     }`}
                   >
                     Center
@@ -556,7 +556,7 @@ export function MyExaminationView() {
                     className={`flex-1 py-1 px-1.5 rounded-lg text-[10px] font-bold transition-all ${
                       activeExam.position === 'Right'
                         ? 'bg-emerald-600 text-white shadow-xs'
-                        : 'bg-white border border-slate-200 text-slate-400'
+                        : 'bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500'
                     }`}
                   >
                     Right
@@ -567,15 +567,15 @@ export function MyExaminationView() {
           </div>
         </section>
       ) : (
-        <section className="p-8 bg-white border border-slate-200 rounded-2xl text-center space-y-3">
-          <div className="w-12 h-12 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
+        <section className="p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-center space-y-3">
+          <div className="w-12 h-12 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto">
             <Clock className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="font-headline font-bold text-base text-slate-900">
+            <h3 className="font-headline font-bold text-base text-slate-900 dark:text-white">
               No Examination Scheduled Yet
             </h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1">
               Your room and seating allotment will appear automatically once finalized by the examination center.
             </p>
           </div>
@@ -594,13 +594,13 @@ export function MyExaminationView() {
       {/* ========================================================================= */}
       {/* 5. IMPORTANT EXAM INSTRUCTIONS FOR CANDIDATES */}
       {/* ========================================================================= */}
-      <section className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs space-y-2.5">
-        <div className="flex items-center gap-2 text-slate-900 font-headline font-bold text-sm">
-          <Info className="w-4 h-4 text-indigo-600 shrink-0" />
+      <section className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs space-y-2.5">
+        <div className="flex items-center gap-2 text-slate-900 dark:text-white font-headline font-bold text-sm">
+          <Info className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
           <span>Candidate Examination Guidelines</span>
         </div>
 
-        <ul className="text-xs text-slate-600 space-y-1.5 font-medium pl-6 list-disc">
+        <ul className="text-xs text-slate-600 dark:text-slate-300 space-y-1.5 font-medium pl-6 list-disc">
           <li>
             Carry your official <strong>College ID Card</strong> and <strong>Hall Ticket</strong> to the examination hall.
           </li>
@@ -620,30 +620,30 @@ export function MyExaminationView() {
       {/* 6. CHANGE PIN MODAL */}
       {/* ========================================================================= */}
       <Dialog open={isPinModalOpen} onOpenChange={setIsPinModalOpen}>
-        <DialogContent className="sm:max-w-md bg-white border border-slate-200">
+        <DialogContent className="sm:max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white">
           <DialogHeader>
             <div className="flex items-center gap-2.5 mb-1">
-              <div className="p-2 bg-indigo-50 text-indigo-700 rounded-lg">
+              <div className="p-2 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 rounded-lg">
                 <KeyRound className="w-5 h-5" />
               </div>
-              <DialogTitle className="font-headline text-lg font-bold text-slate-900">
+              <DialogTitle className="font-headline text-lg font-bold text-slate-900 dark:text-white">
                 Change Secret PIN
               </DialogTitle>
             </div>
-            <p className="text-xs text-slate-500">
-              Update your personal PIN for Register Number <strong className="text-slate-800">{session.registerNumber}</strong>.
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Update your personal PIN for Register Number <strong className="text-slate-800 dark:text-slate-200">{session.registerNumber}</strong>.
             </p>
           </DialogHeader>
 
           {pinError && (
-            <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
+            <div className="p-2.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-medium">
               {pinError}
             </div>
           )}
 
           <form onSubmit={handlePinSubmit} className="space-y-3.5 py-2">
             <div className="space-y-1.5">
-              <Label htmlFor="curr-pin" className="text-xs font-bold text-slate-700">
+              <Label htmlFor="curr-pin" className="text-xs font-bold text-slate-700 dark:text-slate-300">
                 Current PIN / Password
               </Label>
               <Input
@@ -652,13 +652,13 @@ export function MyExaminationView() {
                 placeholder="Enter current PIN"
                 value={currentPin}
                 onChange={(e) => setCurrentPin(e.target.value)}
-                className="text-xs font-semibold h-9"
+                className="text-xs font-semibold h-9 bg-slate-50/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
                 required
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="new-pin" className="text-xs font-bold text-slate-700">
+              <Label htmlFor="new-pin" className="text-xs font-bold text-slate-700 dark:text-slate-300">
                 New PIN (minimum 4 digits)
               </Label>
               <Input
@@ -667,13 +667,13 @@ export function MyExaminationView() {
                 placeholder="e.g. 5678"
                 value={newPin}
                 onChange={(e) => setNewPin(e.target.value)}
-                className="text-xs font-semibold h-9"
+                className="text-xs font-semibold h-9 bg-slate-50/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
                 required
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="confirm-pin" className="text-xs font-bold text-slate-700">
+              <Label htmlFor="confirm-pin" className="text-xs font-bold text-slate-700 dark:text-slate-300">
                 Confirm New PIN
               </Label>
               <Input
@@ -682,7 +682,7 @@ export function MyExaminationView() {
                 placeholder="Re-enter new PIN"
                 value={confirmPin}
                 onChange={(e) => setConfirmPin(e.target.value)}
-                className="text-xs font-semibold h-9"
+                className="text-xs font-semibold h-9 bg-slate-50/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
                 required
               />
             </div>
@@ -693,7 +693,7 @@ export function MyExaminationView() {
                 variant="outline"
                 size="sm"
                 onClick={() => setIsPinModalOpen(false)}
-                className="text-xs h-9"
+                className="text-xs h-9 border-slate-200 dark:border-slate-700"
               >
                 Cancel
               </Button>

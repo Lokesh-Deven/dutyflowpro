@@ -1107,7 +1107,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
               <AlertDialogHeader>
                 <AlertDialogTitle className="text-lg font-bold text-slate-900 dark:text-white">Save Allotment Sheet</AlertDialogTitle>
                 <AlertDialogDescription className="text-xs text-slate-500">
-                  Save this current configuration to resume editing or download reports later from the &quot;Saved Allotments&quot; page.
+                  Save this current configuration to resume editing or download reports later from the &quot;Saved Allocations&quot; page.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <div className="py-2">
@@ -1146,7 +1146,7 @@ export function AllotmentSheet({ invigilators, examinations, allotmentResult: in
                   Allotment Already Exists
                 </AlertDialogTitle>
                 <AlertDialogDescription className="text-center text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                  An allotment titled <strong className="font-semibold text-slate-900 dark:text-white">&quot;{duplicateTarget?.name}&quot;</strong> already exists in your <span className="font-semibold text-[#6342e8]">Saved Allotments</span>.
+                  An allotment titled <strong className="font-semibold text-slate-900 dark:text-white">&quot;{duplicateTarget?.name}&quot;</strong> already exists in your <span className="font-semibold text-[#6342e8]">Saved Allocations</span>.
                   <br /><br />
                   Would you like to replace the existing allotment, or save this as a new allotment?
                 </AlertDialogDescription>

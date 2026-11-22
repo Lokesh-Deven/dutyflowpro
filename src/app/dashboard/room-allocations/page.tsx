@@ -299,14 +299,14 @@ export default function RoomAllocationsPage() {
   return (
     <div className="space-y-6 pb-12">
       {/* Top Banner & Action Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-indigo-50 text-indigo-700 rounded-lg">
+            <div className="p-2 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 rounded-lg">
               <DoorOpen className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="font-headline text-2xl font-black tracking-tight text-slate-800">
+              <h1 className="font-headline text-2xl font-black tracking-tight text-slate-800 dark:text-white">
                 Room Allocations
               </h1>
             </div>
@@ -316,7 +316,7 @@ export default function RoomAllocationsPage() {
         <div className="flex items-center gap-2.5">
           <Button
             onClick={() => setIsMasterRoomsOpen(true)}
-            className="bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs h-9 px-4 gap-2 shadow-xs"
+            className="bg-[#1E2A5E] hover:bg-[#151D42] dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white font-bold text-xs h-9 px-4 gap-2 shadow-xs"
           >
             <DoorOpen className="w-4 h-4" />
             Master Rooms ({masterRooms.length})
@@ -326,35 +326,35 @@ export default function RoomAllocationsPage() {
 
       {/* Dependency Check: If no active allotment is loaded */}
       {!activeAllotment || sortedExaminations.length === 0 ? (
-        <div className="bg-white border border-slate-200 rounded-xl p-8 max-w-2xl mx-auto text-center space-y-4 shadow-xs">
-          <div className="h-14 w-14 bg-indigo-50 text-[#1E2A5E] rounded-full flex items-center justify-center mx-auto">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-8 max-w-2xl mx-auto text-center space-y-4 shadow-xs">
+          <div className="h-14 w-14 bg-indigo-50 dark:bg-indigo-950/60 text-[#1E2A5E] dark:text-indigo-400 rounded-full flex items-center justify-center mx-auto">
             <AlertCircle className="w-7 h-7" />
           </div>
 
           <div className="space-y-1.5">
-            <h2 className="font-headline text-xl font-bold text-slate-800">
+            <h2 className="font-headline text-xl font-bold text-slate-800 dark:text-white">
               No Active Master Allotment Loaded
             </h2>
-            <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
               Room Allocations operates on examination dates, subjects, timings, and staff requirements from your Master Allotment.
             </p>
           </div>
 
-          {/* Quick Picker for Saved Allotments */}
+          {/* Quick Picker for Saved Allocations */}
           {savedAllotments.length > 0 ? (
             <div className="pt-2">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-3">
-                Select a Saved Allotment to Begin
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-3">
+                Select a Saved Allocation to Begin
               </h3>
               <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
                 {savedAllotments.map((sa) => (
                   <div
                     key={sa.id}
-                    className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-slate-50/50 hover:bg-indigo-50/50 hover:border-indigo-200 transition-all text-left"
+                    className="flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 hover:border-indigo-200 dark:hover:border-indigo-800 transition-all text-left"
                   >
                     <div>
-                      <div className="font-bold text-xs text-slate-800">{sa.name}</div>
-                      <div className="text-[11px] text-slate-500 mt-0.5">
+                      <div className="font-bold text-xs text-slate-800 dark:text-white">{sa.name}</div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                         {sa.examinations?.length || 0} Sessions &bull; {sa.invigilators?.length || 0} Staff
                       </div>
                     </div>
@@ -366,7 +366,7 @@ export default function RoomAllocationsPage() {
                           setSelectedExamId(sa.examinations[0].id);
                         }
                       }}
-                      className="h-7 text-xs bg-[#1E2A5E] hover:bg-[#151D42] text-white px-3 font-semibold"
+                      className="h-7 text-xs bg-[#1E2A5E] hover:bg-[#151D42] dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white px-3 font-semibold"
                     >
                       Open
                     </Button>
@@ -377,7 +377,7 @@ export default function RoomAllocationsPage() {
           ) : (
             <div className="pt-3">
               <Link href="/dashboard/examinations">
-                <Button className="bg-[#1E2A5E] hover:bg-[#151D42] text-white text-xs font-bold px-5 h-9 gap-1.5">
+                <Button className="bg-[#1E2A5E] hover:bg-[#151D42] dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white text-xs font-bold px-5 h-9 gap-1.5">
                   Generate Master Allotment
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Button>
@@ -389,10 +389,10 @@ export default function RoomAllocationsPage() {
         /* Main Active Allotment Workspace */
         <div className="space-y-5">
           {/* Active Master Allotment Selector Sub-bar & Global Actions */}
-          <div className="bg-indigo-50/80 border border-indigo-100 rounded-xl p-3 sm:p-4 flex flex-col xl:flex-row xl:items-center justify-between gap-4 shadow-xs">
+          <div className="bg-indigo-50/80 dark:bg-slate-900 border border-indigo-100 dark:border-slate-800 rounded-xl p-3 sm:p-4 flex flex-col xl:flex-row xl:items-center justify-between gap-4 shadow-xs">
             {/* 1. Select Master Allotment Dropdown */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-              <label htmlFor="master-allotment-select" className="font-bold text-xs text-[#1E2A5E] shrink-0">
+              <label htmlFor="master-allotment-select" className="font-bold text-xs text-[#1E2A5E] dark:text-indigo-300 shrink-0">
                 Select Master Allotment:
               </label>
               <Select
@@ -409,7 +409,7 @@ export default function RoomAllocationsPage() {
               >
                 <SelectTrigger
                   id="master-allotment-select"
-                  className="h-9 text-xs font-semibold w-full sm:w-[280px] bg-white border-indigo-200 text-slate-800 shadow-2xs"
+                  className="h-9 text-xs font-semibold w-full sm:w-[280px] bg-white dark:bg-slate-800 border-indigo-200 dark:border-slate-700 text-slate-800 dark:text-white shadow-2xs"
                 >
                   <SelectValue placeholder="Select Master Allotment" />
                 </SelectTrigger>
@@ -427,7 +427,7 @@ export default function RoomAllocationsPage() {
 
               <Badge
                 variant="outline"
-                className="bg-white text-[10px] text-indigo-700 border-indigo-200 font-semibold shrink-0 py-0.5 px-2"
+                className="bg-white dark:bg-slate-800 text-[10px] text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-slate-700 font-semibold shrink-0 py-0.5 px-2"
               >
                 {sortedExaminations.length} Sessions
               </Badge>
@@ -440,9 +440,9 @@ export default function RoomAllocationsPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => setIsMasterAllocationsOpen(true)}
-                className="h-8 text-xs font-bold px-3 gap-1.5 bg-white text-[#1E2A5E] border-indigo-200 hover:bg-indigo-50 shadow-2xs"
+                className="h-8 text-xs font-bold px-3 gap-1.5 bg-white dark:bg-slate-800 text-[#1E2A5E] dark:text-indigo-300 border-indigo-200 dark:border-slate-700 hover:bg-indigo-50 dark:hover:bg-slate-700 shadow-2xs"
               >
-                <Eye className="w-3.5 h-3.5 text-indigo-600" />
+                <Eye className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                 View Master Room Allocations
               </Button>
 
@@ -453,7 +453,7 @@ export default function RoomAllocationsPage() {
                 className={`h-8 text-xs font-bold px-3 gap-1.5 shadow-2xs ${
                   isAllLocked
                     ? "bg-amber-600 hover:bg-amber-700 text-white"
-                    : "bg-[#1E2A5E] hover:bg-[#151D42] text-white"
+                    : "bg-[#1E2A5E] hover:bg-[#151D42] dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white"
                 }`}
               >
                 {isAllLocked ? (
@@ -475,7 +475,7 @@ export default function RoomAllocationsPage() {
                 size="sm"
                 onClick={() => setIsClearAllConfirmOpen(true)}
                 disabled={!hasAnyRoomAllocations}
-                className="h-8 text-xs font-bold px-3 gap-1.5 text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300 shadow-2xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="h-8 text-xs font-bold px-3 gap-1.5 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900/60 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-700 hover:border-rose-300 shadow-2xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 Clear All Allocations
@@ -486,7 +486,7 @@ export default function RoomAllocationsPage() {
           {/* Session Cards (Horizontal Calendar / List) */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                 Examination Dates & Sessions ({sortedExaminations.length})
               </h3>
               <span className="text-[11px] text-slate-400">
@@ -510,8 +510,8 @@ export default function RoomAllocationsPage() {
                     onClick={() => setSelectedExamId(exam.id)}
                     className={`text-left p-3.5 rounded-xl border transition-all cursor-pointer relative overflow-hidden ${
                       isSelected
-                        ? 'bg-white border-[#1E2A5E] ring-2 ring-[#1E2A5E]/20 shadow-md'
-                        : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/70 shadow-2xs'
+                        ? 'bg-white dark:bg-slate-900 border-[#1E2A5E] dark:border-indigo-500 ring-2 ring-[#1E2A5E]/20 dark:ring-indigo-500/20 shadow-md'
+                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50/70 dark:hover:bg-slate-800/40 shadow-2xs'
                     }`}
                   >
                     {/* Top status indicator bar */}
@@ -523,12 +523,12 @@ export default function RoomAllocationsPage() {
                           ? 'bg-emerald-500'
                           : selectedCount === requiredInvigilators && selectedCount > 0
                           ? 'bg-blue-500'
-                          : 'bg-slate-200'
+                          : 'bg-slate-200 dark:bg-slate-700'
                       }`}
                     />
 
                     <div className="flex items-start justify-between gap-2 pt-1">
-                      <span className="text-[11px] font-bold text-indigo-700 flex items-center gap-1">
+                      <span className="text-[11px] font-bold text-indigo-700 dark:text-indigo-400 flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
                         {formatAppDate(exam.date)}
                       </span>
@@ -542,24 +542,24 @@ export default function RoomAllocationsPage() {
                           Allocated
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="h-4 text-[9px] text-slate-500 px-1.5">
+                        <Badge variant="outline" className="h-4 text-[9px] text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 px-1.5">
                           {selectedCount}/{requiredInvigilators} Rooms
                         </Badge>
                       )}
                     </div>
 
-                    <div className="mt-2 font-headline font-bold text-sm text-slate-800 truncate">
+                    <div className="mt-2 font-headline font-bold text-sm text-slate-800 dark:text-white truncate">
                       {exam.subject}
                     </div>
 
-                    <div className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
                       <Clock className="w-3 h-3 text-slate-400" />
                       {exam.startTime} – {exam.endTime}
                     </div>
 
-                    <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-medium text-slate-600">
-                      <span>Invig: <strong className="text-slate-900">{exam.rooms}</strong></span>
-                      <span>Relievers: <strong className="text-slate-900">{exam.relievers}</strong></span>
+                    <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] font-medium text-slate-600 dark:text-slate-400">
+                      <span>Invig: <strong className="text-slate-900 dark:text-white">{exam.rooms}</strong></span>
+                      <span>Relievers: <strong className="text-slate-900 dark:text-white">{exam.relievers}</strong></span>
                     </div>
                   </button>
                 );
@@ -610,23 +610,23 @@ export default function RoomAllocationsPage() {
 
       {/* Confirmation Dialog for Clear All Allocations */}
       <AlertDialog open={isClearAllConfirmOpen} onOpenChange={setIsClearAllConfirmOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-base font-bold text-slate-800 flex items-center gap-2">
-              <RotateCcw className="w-4 h-4 text-rose-600" />
+            <AlertDialogTitle className="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2">
+              <RotateCcw className="w-4 h-4 text-rose-600 dark:text-rose-400" />
               Clear All Room Allocations?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-xs text-slate-500 leading-relaxed space-y-2">
+            <AlertDialogDescription className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed space-y-2">
               <span>
                 This will reset all selected rooms and invigilator/reliever duties across all {sortedExaminations.length} session(s) in &ldquo;{activeAllotment?.name}&rdquo;.
               </span>
-              <span className="block text-rose-600 font-semibold pt-1">
+              <span className="block text-rose-600 dark:text-rose-400 font-semibold pt-1">
                 Your master rooms, examinations, and invigilator pool will remain completely safe. You can restart the whole allocation process fresh.
               </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="text-xs font-semibold h-8">
+            <AlertDialogCancel className="text-xs font-semibold h-8 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction

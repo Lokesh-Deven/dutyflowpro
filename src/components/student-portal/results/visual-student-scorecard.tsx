@@ -75,10 +75,10 @@ export function VisualStudentScorecard({
 
   if (!currentRecord) {
     return (
-      <div className="bg-white border border-slate-200 rounded-3xl p-12 text-center space-y-3">
-        <GraduationCap className="w-12 h-12 text-slate-300 mx-auto" />
-        <h3 className="text-base font-bold text-slate-700">No Result Record Available</h3>
-        <p className="text-xs text-slate-400">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-12 text-center space-y-3">
+        <GraduationCap className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto" />
+        <h3 className="text-base font-bold text-slate-700 dark:text-slate-300">No Result Record Available</h3>
+        <p className="text-xs text-slate-400 dark:text-slate-500">
           We could not find examination records for this student.
         </p>
       </div>
@@ -120,31 +120,31 @@ export function VisualStudentScorecard({
     switch (cls) {
       case 'Distinction':
         return {
-          bg: 'bg-emerald-50 text-emerald-800 border-emerald-300 shadow-emerald-500/10',
+          bg: 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 shadow-emerald-500/10',
           dot: 'bg-emerald-500',
           icon: Sparkles,
         };
       case 'First Class':
         return {
-          bg: 'bg-indigo-50 text-indigo-800 border-indigo-300 shadow-indigo-500/10',
+          bg: 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300 border-indigo-300 dark:border-indigo-800 shadow-indigo-500/10',
           dot: 'bg-indigo-500',
           icon: Trophy,
         };
       case 'Second Class':
         return {
-          bg: 'bg-amber-50 text-amber-800 border-amber-300 shadow-amber-500/10',
+          bg: 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800 shadow-amber-500/10',
           dot: 'bg-amber-500',
           icon: Target,
         };
       case 'Pass':
         return {
-          bg: 'bg-teal-50 text-teal-800 border-teal-300',
+          bg: 'bg-teal-50 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 border-teal-300 dark:border-teal-800',
           dot: 'bg-teal-500',
           icon: CheckCircle2,
         };
       default:
         return {
-          bg: 'bg-rose-50 text-rose-800 border-rose-300',
+          bg: 'bg-rose-50 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border-rose-300 dark:border-rose-800',
           dot: 'bg-rose-500',
           icon: AlertTriangle,
         };
@@ -190,15 +190,15 @@ export function VisualStudentScorecard({
       )}
 
       {/* 2. Top Header Summary Hero Card */}
-      <div className="bg-gradient-to-br from-white via-slate-50 to-indigo-50/40 border border-slate-200/90 rounded-3xl p-6 sm:p-7 shadow-sm space-y-6">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-200/80">
+      <div className="bg-gradient-to-br from-white via-slate-50 to-indigo-50/40 dark:from-slate-900 dark:via-slate-900 dark:to-indigo-950/30 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-sm space-y-6">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-200/80 dark:border-slate-800">
           {/* Student Biodata */}
           <div className="flex items-start sm:items-center gap-4">
             {currentRecord.photoUrl ? (
               <img
                 src={currentRecord.photoUrl}
                 alt={currentRecord.studentName}
-                className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-indigo-200 shadow-md shrink-0"
+                className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-indigo-200 dark:border-indigo-800 shadow-md shrink-0"
               />
             ) : (
               <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-indigo-600 text-white font-black text-2xl sm:text-3xl flex items-center justify-center shadow-lg shadow-indigo-600/20 shrink-0">
@@ -208,7 +208,7 @@ export function VisualStudentScorecard({
 
             <div className="space-y-1.5">
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight font-headline">
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight font-headline">
                   {currentRecord.studentName}
                 </h2>
                 <span
@@ -224,13 +224,13 @@ export function VisualStudentScorecard({
                 >
                   {currentRecord.className}
                 </span>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                   {currentRecord.combination}
                 </span>
               </div>
 
-              <div className="flex items-center gap-3 text-xs text-slate-500 font-medium flex-wrap">
-                <span className="font-mono font-bold text-slate-800">
+              <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 font-medium flex-wrap">
+                <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
                   Reg No: {currentRecord.registerNumber}
                 </span>
                 <span>•</span>
@@ -249,10 +249,10 @@ export function VisualStudentScorecard({
                 )}
               </div>
 
-              <div className="text-xs text-indigo-700 font-bold flex items-center gap-1 pt-0.5">
+              <div className="text-xs text-indigo-700 dark:text-indigo-400 font-bold flex items-center gap-1 pt-0.5">
                 <BookOpen className="w-3.5 h-3.5" />
                 <span>{currentRecord.examTitle}</span>
-                <span className="text-slate-400 font-normal">({currentRecord.academicYear})</span>
+                <span className="text-slate-400 dark:text-slate-500 font-normal">({currentRecord.academicYear})</span>
               </div>
             </div>
           </div>
@@ -265,7 +265,7 @@ export function VisualStudentScorecard({
                 variant="outline"
                 size="sm"
                 onClick={onBackToSearch}
-                className="h-10 text-xs font-bold border-slate-200 text-slate-700"
+                className="h-10 text-xs font-bold border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
               >
                 Search Another Student
               </Button>
@@ -295,17 +295,17 @@ export function VisualStudentScorecard({
         {/* 4 Metric Summary Cards Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {/* Card 1: Grand Total */}
-          <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          <div className="bg-white dark:bg-slate-800/80 border border-slate-200/90 dark:border-slate-700/80 rounded-2xl p-4 shadow-2xs space-y-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">
               Grand Total Scored
             </span>
-            <div className="text-2xl sm:text-3xl font-black text-slate-900 font-mono">
+            <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-mono">
               {currentRecord.grandTotal}
-              <span className="text-xs sm:text-sm font-semibold text-slate-400 ml-1">
+              <span className="text-xs sm:text-sm font-semibold text-slate-400 dark:text-slate-500 ml-1">
                 / {currentRecord.maxGrandTotal}
               </span>
             </div>
-            <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden mt-1">
+            <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden mt-1">
               <div
                 className="bg-indigo-600 h-1.5 rounded-full"
                 style={{ width: `${Math.min(100, currentRecord.percentage)}%` }}
@@ -314,21 +314,21 @@ export function VisualStudentScorecard({
           </div>
 
           {/* Card 2: Percentage */}
-          <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          <div className="bg-white dark:bg-slate-800/80 border border-slate-200/90 dark:border-slate-700/80 rounded-2xl p-4 shadow-2xs space-y-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">
               Aggregate Percentage
             </span>
-            <div className="text-2xl sm:text-3xl font-black text-indigo-600 font-mono">
+            <div className="text-2xl sm:text-3xl font-black text-indigo-600 dark:text-indigo-400 font-mono">
               {currentRecord.percentage}%
             </div>
-            <div className="text-[11px] font-semibold text-slate-500">
+            <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
               {currentRecord.percentage >= classAverage ? (
-                <span className="text-emerald-600 font-bold flex items-center gap-0.5">
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-0.5">
                   <ArrowUpRight className="w-3.5 h-3.5" />
                   +{(currentRecord.percentage - classAverage).toFixed(1)}% vs class avg
                 </span>
               ) : (
-                <span className="text-amber-600 font-bold">
+                <span className="text-amber-600 dark:text-amber-400 font-bold">
                   {(classAverage - currentRecord.percentage).toFixed(1)}% below class avg
                 </span>
               )}
@@ -336,8 +336,8 @@ export function VisualStudentScorecard({
           </div>
 
           {/* Card 3: Result Classification */}
-          <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          <div className="bg-white dark:bg-slate-800/80 border border-slate-200/90 dark:border-slate-700/80 rounded-2xl p-4 shadow-2xs space-y-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">
               Result Classification
             </span>
             <div className="pt-0.5">
@@ -351,21 +351,21 @@ export function VisualStudentScorecard({
                 <span>{currentRecord.resultClassification}</span>
               </span>
             </div>
-            <div className="text-[11px] text-slate-500 pt-0.5">
+            <div className="text-[11px] text-slate-500 dark:text-slate-400 pt-0.5">
               {currentRecord.status === 'Pass' ? 'All Subjects Cleared' : 'Backlog subject detected'}
             </div>
           </div>
 
           {/* Card 4: Rank / Milestone */}
-          <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          <div className="bg-white dark:bg-slate-800/80 border border-slate-200/90 dark:border-slate-700/80 rounded-2xl p-4 shadow-2xs space-y-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">
               Performance Rank
             </span>
-            <div className="text-2xl sm:text-3xl font-black text-slate-900 flex items-center gap-1.5 font-mono">
+            <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white flex items-center gap-1.5 font-mono">
               <Trophy className="w-5 h-5 text-amber-500" />
               <span>#{currentRecord.rank || 1}</span>
             </div>
-            <div className="text-[11px] text-slate-500 font-semibold truncate">
+            <div className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold truncate">
               {records.length > 1 ? `Tracked across ${records.length} exams` : 'Latest examination session'}
             </div>
           </div>
@@ -376,20 +376,20 @@ export function VisualStudentScorecard({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Strongest Subject */}
         {insights.strongestSubject && (
-          <div className="bg-emerald-50/60 border border-emerald-200/80 rounded-2xl p-4 space-y-1">
+          <div className="bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/60 rounded-2xl p-4 space-y-1">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 flex items-center gap-1">
-                <Award className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+                <Award className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                 Strongest Subject
               </span>
-              <span className="text-[10px] font-bold bg-emerald-200/70 text-emerald-900 px-2 py-0.5 rounded-full">
+              <span className="text-[10px] font-bold bg-emerald-200/70 dark:bg-emerald-900/60 text-emerald-900 dark:text-emerald-200 px-2 py-0.5 rounded-full">
                 {insights.strongestSubject.grade} Grade
               </span>
             </div>
-            <div className="text-base font-black text-emerald-950">
+            <div className="text-base font-black text-emerald-950 dark:text-emerald-100">
               {insights.strongestSubject.name} ({insights.strongestSubject.marks}/{insights.strongestSubject.maxMarks})
             </div>
-            <p className="text-xs text-emerald-800 leading-relaxed">
+            <p className="text-xs text-emerald-800 dark:text-emerald-300 leading-relaxed">
               Highest scoring subject with {insights.strongestSubject.percentage}% mastery. Excellent theoretical and practical retention.
             </p>
           </div>
@@ -397,20 +397,20 @@ export function VisualStudentScorecard({
 
         {/* Growth Focus Subject */}
         {insights.needsFocusSubject && (
-          <div className="bg-amber-50/60 border border-amber-200/80 rounded-2xl p-4 space-y-1">
+          <div className="bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/60 rounded-2xl p-4 space-y-1">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 flex items-center gap-1">
-                <Target className="w-3.5 h-3.5 text-amber-600" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                <Target className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                 Growth Opportunity
               </span>
-              <span className="text-[10px] font-bold bg-amber-200/70 text-amber-900 px-2 py-0.5 rounded-full">
+              <span className="text-[10px] font-bold bg-amber-200/70 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 px-2 py-0.5 rounded-full">
                 {insights.needsFocusSubject.grade} Grade
               </span>
             </div>
-            <div className="text-base font-black text-amber-950">
+            <div className="text-base font-black text-amber-950 dark:text-amber-100">
               {insights.needsFocusSubject.name} ({insights.needsFocusSubject.marks}/{insights.needsFocusSubject.maxMarks})
             </div>
-            <p className="text-xs text-amber-800 leading-relaxed">
+            <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
               {insights.needsFocusSubject.marksNeededToPass
                 ? `Needs ${insights.needsFocusSubject.marksNeededToPass} marks to achieve pass benchmark. Priority revision recommended.`
                 : 'Extra practice in key numericals/case studies will elevate this score to Distinction level.'}
@@ -419,32 +419,32 @@ export function VisualStudentScorecard({
         )}
 
         {/* Milestone Message */}
-        <div className="bg-indigo-50/60 border border-indigo-200/80 rounded-2xl p-4 space-y-1">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 flex items-center gap-1">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+        <div className="bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200/80 dark:border-indigo-800/60 rounded-2xl p-4 space-y-1">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-400 flex items-center gap-1">
+            <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
             Milestone Target
           </span>
-          <div className="text-sm font-black text-indigo-950">
+          <div className="text-sm font-black text-indigo-950 dark:text-indigo-100">
             {currentRecord.resultClassification === 'Distinction'
               ? 'Distinction Achieved!'
               : 'Targeting Next Milestone'}
           </div>
-          <p className="text-xs text-indigo-800 leading-relaxed">
+          <p className="text-xs text-indigo-800 dark:text-indigo-300 leading-relaxed">
             {insights.milestoneMessage}
           </p>
         </div>
       </div>
 
       {/* 4. Detailed Subject-Wise Marks Table */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-xs">
-        <div className="p-4 bg-slate-50/80 border-b border-slate-200/80 flex items-center justify-between flex-wrap gap-2">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
+        <div className="p-4 bg-slate-50/80 dark:bg-slate-800/60 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
-            <BookOpen className="w-4 h-4 text-indigo-600" />
-            <h3 className="text-sm font-bold text-slate-800">
+            <BookOpen className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
               Detailed Subject-Wise Performance Breakdown
             </h3>
           </div>
-          <span className="text-xs font-semibold text-slate-500">
+          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
             {currentRecord.subjects.length} Subjects Evaluated
           </span>
         </div>
@@ -452,7 +452,7 @@ export function VisualStudentScorecard({
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="bg-slate-100/70 text-slate-500 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200">
+              <tr className="bg-slate-100/70 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200 dark:border-slate-800">
                 <th className="py-3 px-4 w-10 text-center">#</th>
                 <th className="py-3 px-4">Subject Title</th>
                 <th className="py-3 px-4">Category</th>
@@ -464,7 +464,7 @@ export function VisualStudentScorecard({
                 <th className="py-3 px-4 text-center">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70">
               {currentRecord.subjects.map((sub, idx) => {
                 const isFail = sub.status === 'Fail';
 
@@ -472,26 +472,26 @@ export function VisualStudentScorecard({
                   <tr
                     key={sub.subjectName}
                     className={cn(
-                      "transition-colors hover:bg-slate-50/60",
-                      sub.isTopScoring && "bg-amber-50/30",
-                      isFail && "bg-rose-50/40"
+                      "transition-colors hover:bg-slate-50/60 dark:hover:bg-slate-800/40",
+                      sub.isTopScoring && "bg-amber-50/30 dark:bg-amber-950/20",
+                      isFail && "bg-rose-50/40 dark:bg-rose-950/30"
                     )}
                   >
-                    <td className="py-3 px-4 text-center font-bold text-slate-400">
+                    <td className="py-3 px-4 text-center font-bold text-slate-400 dark:text-slate-500">
                       {idx + 1}
                     </td>
 
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-slate-900 text-xs">
+                        <span className="font-bold text-slate-900 dark:text-white text-xs">
                           {sub.subjectName}
                         </span>
                         {sub.isTopScoring && (
                           <span
                             title="Top Scoring Subject"
-                            className="inline-flex items-center gap-1 text-[10px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full border border-amber-200"
+                            className="inline-flex items-center gap-1 text-[10px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 px-1.5 py-0.5 rounded-full border border-amber-200 dark:border-amber-800"
                           >
-                            <Trophy className="w-2.5 h-2.5 text-amber-600" />
+                            <Trophy className="w-2.5 h-2.5 text-amber-600 dark:text-amber-400" />
                             Top
                           </span>
                         )}
@@ -499,29 +499,29 @@ export function VisualStudentScorecard({
                     </td>
 
                     <td className="py-3 px-4">
-                      <span className="text-[11px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
+                      <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
                         {sub.category}
                       </span>
                     </td>
 
-                    <td className="py-3 px-4 text-center font-mono font-medium text-slate-600">
+                    <td className="py-3 px-4 text-center font-mono font-medium text-slate-600 dark:text-slate-400">
                       {sub.maxMarks}
                     </td>
 
-                    <td className="py-3 px-4 text-center font-mono font-medium text-slate-600">
+                    <td className="py-3 px-4 text-center font-mono font-medium text-slate-600 dark:text-slate-400">
                       {sub.passMarks}
                     </td>
 
-                    <td className="py-3 px-4 text-center font-mono font-black text-sm text-slate-900">
+                    <td className="py-3 px-4 text-center font-mono font-black text-sm text-slate-900 dark:text-white">
                       {sub.marksScored}
                     </td>
 
                     <td className="py-3 px-4">
                       <div className="space-y-1">
                         <div className="flex items-center justify-between text-[11px] font-mono">
-                          <span className="font-bold text-slate-800">{sub.percentage}%</span>
+                          <span className="font-bold text-slate-800 dark:text-slate-200">{sub.percentage}%</span>
                         </div>
-                        <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                        <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
                           <div
                             className={cn(
                               "h-1.5 rounded-full",
@@ -544,10 +544,10 @@ export function VisualStudentScorecard({
                         className={cn(
                           "inline-block font-mono font-bold text-xs px-2 py-0.5 rounded-md",
                           sub.grade === 'A+' || sub.grade === 'A'
-                            ? "bg-purple-100 text-purple-900 font-black"
+                            ? "bg-purple-100 dark:bg-purple-950/60 text-purple-900 dark:text-purple-300 font-black"
                             : isFail
-                            ? "bg-rose-100 text-rose-800 font-black"
-                            : "bg-slate-100 text-slate-800"
+                            ? "bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 font-black"
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-300"
                         )}
                       >
                         {sub.grade}
@@ -556,13 +556,13 @@ export function VisualStudentScorecard({
 
                     <td className="py-3 px-4 text-center">
                       {isFail ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-black text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
-                          <AlertTriangle className="w-3 h-3 text-rose-600" />
+                        <span className="inline-flex items-center gap-1 text-[10px] font-black text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/60 px-2 py-0.5 rounded-full border border-rose-200 dark:border-rose-800">
+                          <AlertTriangle className="w-3 h-3 text-rose-600 dark:text-rose-400" />
                           BACKLOG
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        <span className="inline-flex items-center gap-1 text-[10px] font-black text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                           PASS
                         </span>
                       )}
@@ -574,20 +574,20 @@ export function VisualStudentScorecard({
 
             {/* Total Footer Row */}
             <tfoot>
-              <tr className="bg-slate-100/90 font-bold border-t-2 border-slate-200 text-xs">
-                <td colSpan={3} className="py-3 px-4 text-slate-900 font-black">
+              <tr className="bg-slate-100/90 dark:bg-slate-800/80 font-bold border-t-2 border-slate-200 dark:border-slate-700 text-xs">
+                <td colSpan={3} className="py-3 px-4 text-slate-900 dark:text-white font-black">
                   GRAND TOTAL & OVERALL RESULT
                 </td>
-                <td className="py-3 px-4 text-center font-mono text-slate-700">
+                <td className="py-3 px-4 text-center font-mono text-slate-700 dark:text-slate-300">
                   {currentRecord.maxGrandTotal}
                 </td>
-                <td className="py-3 px-4 text-center font-mono text-slate-700">
+                <td className="py-3 px-4 text-center font-mono text-slate-700 dark:text-slate-300">
                   {Math.round(currentRecord.maxGrandTotal * 0.35)}
                 </td>
-                <td className="py-3 px-4 text-center font-mono font-black text-base text-indigo-700">
+                <td className="py-3 px-4 text-center font-mono font-black text-base text-indigo-700 dark:text-indigo-400">
                   {currentRecord.grandTotal}
                 </td>
-                <td className="py-3 px-4 font-mono font-black text-slate-900">
+                <td className="py-3 px-4 font-mono font-black text-slate-900 dark:text-white">
                   {currentRecord.percentage}% Aggregate
                 </td>
                 <td className="py-3 px-4 text-center font-bold">
@@ -610,28 +610,28 @@ export function VisualStudentScorecard({
       </div>
 
       {/* 5. Meaningful Visual Insights & Charts Section */}
-      <div className="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-xs space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-6 shadow-xs space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
           <div>
-            <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-indigo-600" />
+            <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
               Visual Scorecard Analytics & Performance Insights
             </h3>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-400 dark:text-slate-400 mt-0.5">
               Comparative analysis across subjects, language vs core stream balance, and multi-exam trajectory
             </p>
           </div>
 
           {/* Chart View Switcher */}
-          <div className="bg-slate-100 p-1 rounded-xl flex items-center border border-slate-200/80 text-xs font-bold">
+          <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl flex items-center border border-slate-200/80 dark:border-slate-700 text-xs font-bold">
             <button
               type="button"
               onClick={() => setActiveChartTab('bar')}
               className={cn(
                 "px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5",
                 activeChartTab === 'bar'
-                  ? "bg-white text-indigo-700 shadow-xs"
-                  : "text-slate-600 hover:text-slate-900"
+                  ? "bg-white dark:bg-slate-700 text-indigo-700 dark:text-indigo-300 shadow-xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               )}
             >
               <BarChart3 className="w-3.5 h-3.5" />
@@ -644,8 +644,8 @@ export function VisualStudentScorecard({
               className={cn(
                 "px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5",
                 activeChartTab === 'radar'
-                  ? "bg-white text-indigo-700 shadow-xs"
-                  : "text-slate-600 hover:text-slate-900"
+                  ? "bg-white dark:bg-slate-700 text-indigo-700 dark:text-indigo-300 shadow-xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               )}
             >
               <Radar className="w-3.5 h-3.5" />
@@ -659,8 +659,8 @@ export function VisualStudentScorecard({
                 className={cn(
                   "px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5",
                   activeChartTab === 'trend'
-                    ? "bg-white text-indigo-700 shadow-xs"
-                    : "text-slate-600 hover:text-slate-900"
+                    ? "bg-white dark:bg-slate-700 text-indigo-700 dark:text-indigo-300 shadow-xs"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 )}
               >
                 <TrendingUp className="w-3.5 h-3.5" />
@@ -674,9 +674,9 @@ export function VisualStudentScorecard({
         <div className="pt-2">
           {activeChartTab === 'bar' && (
             <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs text-slate-500 font-semibold px-2">
+              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-semibold px-2">
                 <span>Scores compared with Pass Threshold (35%) and Class Average benchmark</span>
-                <span className="text-[11px] font-mono text-indigo-600 font-bold">
+                <span className="text-[11px] font-mono text-indigo-600 dark:text-indigo-400 font-bold">
                   Class Mean: {classAverage}%
                 </span>
               </div>
@@ -686,7 +686,7 @@ export function VisualStudentScorecard({
 
           {activeChartTab === 'radar' && (
             <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs text-slate-500 font-semibold px-2">
+              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-semibold px-2">
                 <span>
                   Language Mastery ({insights.languageAvg}%) vs Core Stream Subjects ({insights.coreAvg}%)
                 </span>
@@ -697,9 +697,9 @@ export function VisualStudentScorecard({
 
           {activeChartTab === 'trend' && (
             <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs text-slate-500 font-semibold px-2">
+              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-semibold px-2">
                 <span>Progression across Unit Test, Mid-Term, and Preparatory examinations</span>
-                <span className="text-[11px] font-bold text-indigo-700">
+                <span className="text-[11px] font-bold text-indigo-700 dark:text-indigo-400">
                   Trajectory: {(insights.trendTrajectory || 'FIRST-EXAM').toUpperCase()}
                 </span>
               </div>

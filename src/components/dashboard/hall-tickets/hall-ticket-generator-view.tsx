@@ -408,7 +408,7 @@ export function HallTicketGeneratorView({
       </div>
 
       {/* 2. Top Filter, Search & Bulk Operations Toolbar */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xs space-y-4">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 shadow-xs space-y-4">
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
           {/* Search Box */}
           <div className="relative flex-1">
@@ -417,13 +417,13 @@ export function HallTicketGeneratorView({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search students by name, register number, SATS ID, or father's name..."
-              className="pl-9 h-10 text-xs font-semibold bg-slate-50/70 border-slate-200 rounded-xl"
+              className="pl-9 h-10 text-xs font-semibold bg-slate-50/70 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 font-bold"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold"
               >
                 Clear
               </button>
@@ -546,11 +546,11 @@ export function HallTicketGeneratorView({
       </div>
 
       {/* 3. Students Roster Table with Live Schedule Details */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-xs">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
         {/* Table Subheader with Selection Status */}
-        <div className="p-3.5 px-4 bg-slate-50/80 border-b border-slate-200/80 flex items-center justify-between flex-wrap gap-2">
+        <div className="p-3.5 px-4 bg-slate-50/80 dark:bg-slate-800/60 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-3">
-            <label className="flex items-center gap-2 cursor-pointer select-none text-xs font-bold text-slate-700">
+            <label className="flex items-center gap-2 cursor-pointer select-none text-xs font-bold text-slate-700 dark:text-slate-200">
               <input
                 type="checkbox"
                 checked={
@@ -558,7 +558,7 @@ export function HallTicketGeneratorView({
                   filteredStudents.every((s) => selectedStudentIds.has(s.id))
                 }
                 onChange={handleToggleSelectAll}
-                className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300 cursor-pointer"
+                className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300 dark:border-slate-700 cursor-pointer"
               />
               <span>
                 Select All Filtered ({filteredStudents.length})
@@ -566,22 +566,22 @@ export function HallTicketGeneratorView({
             </label>
 
             {selectedStudentIds.size > 0 && (
-              <span className="text-xs font-semibold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-100">
+              <span className="text-xs font-semibold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 px-2.5 py-0.5 rounded-full border border-indigo-100 dark:border-indigo-800">
                 {selectedStudentIds.size} student{selectedStudentIds.size > 1 ? 's' : ''} selected
               </span>
             )}
           </div>
 
-          <div className="text-xs font-medium text-slate-500">
-            Showing <strong className="text-slate-800">{filteredStudents.length}</strong> of {students.length} students
+          <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+            Showing <strong className="text-slate-800 dark:text-slate-100">{filteredStudents.length}</strong> of {students.length} students
           </div>
         </div>
 
         {filteredStudents.length === 0 ? (
           <div className="p-12 text-center space-y-3">
-            <Users className="w-10 h-10 text-slate-300 mx-auto" />
-            <div className="text-sm font-bold text-slate-700">No Students Found</div>
-            <p className="text-xs text-slate-400 max-w-sm mx-auto">
+            <Users className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto" />
+            <div className="text-sm font-bold text-slate-700 dark:text-slate-200">No Students Found</div>
+            <p className="text-xs text-slate-400 dark:text-slate-500 max-w-sm mx-auto">
               No students matched the active filters or search terms. Try clearing your filters or switch to the Student Master Directory to add profiles.
             </p>
           </div>
@@ -589,7 +589,7 @@ export function HallTicketGeneratorView({
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-slate-100/70 text-slate-500 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200">
+                <tr className="bg-slate-100/70 dark:bg-slate-800/70 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200 dark:border-slate-800">
                   <th className="py-3 px-3 w-10 text-center">#</th>
                   <th className="py-3 px-3">Student Name</th>
                   <th className="py-3 px-3">Register / Roll No</th>
@@ -599,7 +599,7 @@ export function HallTicketGeneratorView({
                   <th className="py-3 px-3 text-right">Hall Ticket Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70 text-slate-700 dark:text-slate-200 font-medium">
                 {filteredStudents.map((student) => {
                   const isChecked = selectedStudentIds.has(student.id);
                   const classBadge = getClassBadgeStyle(student.className);
@@ -745,15 +745,15 @@ export function HallTicketGeneratorView({
       {/* 4. Live Admit Card Preview Modal */}
       {previewStudent && (
         <Dialog open={!!previewStudent} onOpenChange={(open) => !open && setPreviewStudent(null)}>
-          <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto p-6 sm:p-8">
-            <DialogHeader className="border-b border-slate-100 pb-4">
+          <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto p-6 sm:p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white">
+            <DialogHeader className="border-b border-slate-100 dark:border-slate-800 pb-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <DialogTitle className="text-lg font-black text-slate-900 flex items-center gap-2">
-                    <Ticket className="w-5 h-5 text-indigo-600" />
+                  <DialogTitle className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                    <Ticket className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                     Official Hall Ticket / Admit Card Preview
                   </DialogTitle>
-                  <DialogDescription className="text-xs text-slate-500 mt-0.5">
+                  <DialogDescription className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     Rendered A4 Board Examination Admit Card preview for {previewStudent.name} ({previewStudent.registerNumber})
                   </DialogDescription>
                 </div>
@@ -925,12 +925,12 @@ export function HallTicketGeneratorView({
               </div>
             </div>
 
-            <DialogFooter className="mt-4 pt-3 border-t border-slate-100">
+            <DialogFooter className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setPreviewStudent(null)}
-                className="text-xs font-bold"
+                className="text-xs font-bold border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
               >
                 Close Preview
               </Button>

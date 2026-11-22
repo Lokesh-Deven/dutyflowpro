@@ -23,14 +23,14 @@ interface TodayDutiesViewProps {
 export function TodayDutiesView({ duties, onSelectDuty }: TodayDutiesViewProps) {
   if (duties.length === 0) {
     return (
-      <div className="p-8 text-center bg-white rounded-2xl border border-slate-200 shadow-xs">
-        <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center mx-auto mb-3">
+      <div className="p-8 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+        <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto mb-3">
           <Calendar className="w-6 h-6" />
         </div>
-        <h3 className="font-headline font-bold text-base text-slate-800">
+        <h3 className="font-headline font-bold text-base text-slate-800 dark:text-white">
           No Duties Assigned For Today
         </h3>
-        <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
           You currently have no active examination duties scheduled for today. Check Duties History to review past sessions.
         </p>
       </div>
@@ -41,10 +41,10 @@ export function TodayDutiesView({ duties, onSelectDuty }: TodayDutiesViewProps) 
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-headline font-black text-xl text-slate-900 tracking-tight">
+          <h2 className="font-headline font-black text-xl text-slate-900 dark:text-white tracking-tight">
             Today&apos;s Duties
           </h2>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             {duties.length} session{duties.length > 1 ? 's' : ''} assigned for today in chronological order
           </p>
         </div>
@@ -57,21 +57,21 @@ export function TodayDutiesView({ duties, onSelectDuty }: TodayDutiesViewProps) 
           return (
             <div
               key={duty.dutyId}
-              className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md hover:border-indigo-300 transition-all flex flex-col justify-between"
+              className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700 transition-all flex flex-col justify-between"
             >
               <div>
                 {/* Header Strip */}
                 <div className="flex items-center justify-between gap-2 mb-3">
-                  <span className="font-headline font-black text-sm text-indigo-900 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-lg">
+                  <span className="font-headline font-black text-sm text-indigo-900 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-800 px-2.5 py-1 rounded-lg">
                     Duty {idx + 1}
                   </span>
                   {isSubmitted ? (
-                    <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 font-bold text-xs gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <Badge className="bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 font-bold text-xs gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                       Submitted {duty.submittedAt ? `(${duty.submittedAt})` : ''}
                     </Badge>
                   ) : (
-                    <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-300 font-bold text-xs">
+                    <Badge variant="outline" className="bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800 font-bold text-xs">
                       Attendance Pending
                     </Badge>
                   )}
@@ -79,44 +79,44 @@ export function TodayDutiesView({ duties, onSelectDuty }: TodayDutiesViewProps) 
 
                 {/* Duty Details */}
                 <div className="space-y-2 mb-4">
-                  <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                  <div className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                     {duty.examName}
                   </div>
-                  <h3 className="font-headline font-black text-xl text-slate-900">
+                  <h3 className="font-headline font-black text-xl text-slate-900 dark:text-white">
                     {duty.subjectName}
                   </h3>
 
-                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 text-xs">
-                    <div className="flex items-center gap-1.5 text-slate-700">
-                      <Calendar className="w-4 h-4 text-indigo-600 shrink-0" />
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+                    <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                      <Calendar className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
                       <span className="font-semibold">{duty.formattedDate}</span>
                     </div>
 
-                    <div className="flex items-center gap-1.5 text-slate-700">
-                      <Clock className="w-4 h-4 text-indigo-600 shrink-0" />
+                    <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                      <Clock className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
                       <span className="font-semibold">{duty.sessionTime}</span>
                     </div>
 
-                    <div className="flex items-center gap-1.5 text-slate-700">
-                      <DoorOpen className="w-4 h-4 text-indigo-600 shrink-0" />
-                      <span>Room <strong className="text-slate-900 font-bold">{duty.roomNo}</strong></span>
+                    <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                      <DoorOpen className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                      <span>Room <strong className="text-slate-900 dark:text-white font-bold">{duty.roomNo}</strong></span>
                     </div>
 
-                    <div className="flex items-center gap-1.5 text-slate-700">
-                      <Users className="w-4 h-4 text-indigo-600 shrink-0" />
-                      <span>Strength: <strong className="text-slate-900 font-bold">{duty.totalStudents}</strong></span>
+                    <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                      <Users className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                      <span>Strength: <strong className="text-slate-900 dark:text-white font-bold">{duty.totalStudents}</strong></span>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Action Button */}
-              <div className="pt-3 border-t border-slate-100">
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
                 <Button
                   onClick={() => onSelectDuty(duty)}
                   className={`w-full font-bold text-xs h-10 rounded-xl transition-all shadow-xs gap-2 ${
                     isSubmitted
-                      ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300'
+                      ? 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700'
                       : 'bg-[#1E2A5E] hover:bg-[#151D42] text-white'
                   }`}
                 >

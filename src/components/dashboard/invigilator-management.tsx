@@ -806,14 +806,14 @@ export function InvigilatorManagement() {
                         className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-semibold rounded-xl"
                     >
                         <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to Examinations
+                        Back to Duty Allocation
                     </Button>
                     <Button
                         onClick={handleGenerate}
                         size="lg"
                         className="bg-[#6342e8] hover:bg-[#5232d6] text-white font-semibold shadow-xs rounded-xl px-6 transition-all flex items-center gap-2"
                     >
-                        <span>Generate Duty Allotment</span>
+                        <span>Generate Duty Allocation</span>
                         <Sparkles className="h-4 w-4 text-[#f59e0b]" />
                     </Button>
                 </CardFooter>

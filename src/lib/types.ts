@@ -32,6 +32,7 @@ export type Examination = {
   relievers: number;
   college: string;
   examName: string;
+  roomsAllocated?: number;
 };
 
 export interface AllotmentResult {

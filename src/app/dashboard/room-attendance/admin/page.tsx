@@ -302,27 +302,27 @@ export default function AdminAttendancePage() {
         /* ================= Active Room Mobile Floor Walk Roster ================= */
         <div className="space-y-4 animate-in fade-in-50 duration-200">
           {/* Header Bar */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs flex items-center justify-between gap-3">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => setActiveRoomNo(null)}
-                className="h-9 w-9 p-0 rounded-xl"
+                className="h-9 w-9 p-0 rounded-xl border-slate-200 dark:border-slate-700"
               >
-                <ArrowLeft className="w-4 h-4 text-slate-700" />
+                <ArrowLeft className="w-4 h-4 text-slate-700 dark:text-slate-300" />
               </Button>
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="font-headline text-xl font-black text-slate-800">
+                  <h2 className="font-headline text-xl font-black text-slate-800 dark:text-white">
                     Room {activeRoomNo}
                   </h2>
-                  <Badge className="bg-emerald-50 text-emerald-800 border-emerald-300 font-bold text-[10px]">
+                  <Badge className="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 font-bold text-[10px]">
                     Admin Floor Walk
                   </Badge>
                 </div>
-                <p className="text-xs text-slate-500 font-medium">
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                   {orderedCandidates.length} Candidates • Tap card to toggle Present / Absent
                 </p>
               </div>
@@ -333,7 +333,7 @@ export default function AdminAttendancePage() {
               variant="outline"
               size="sm"
               onClick={handleMarkAllPresent}
-              className="text-xs h-8 px-2.5 gap-1.5 font-bold text-emerald-700 border-emerald-300 hover:bg-emerald-50 shrink-0"
+              className="text-xs h-8 px-2.5 gap-1.5 font-bold text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/60 shrink-0"
             >
               <CheckCheck className="w-3.5 h-3.5" />
               <span>Mark All Present</span>
@@ -341,8 +341,8 @@ export default function AdminAttendancePage() {
           </div>
 
           {/* Sequential Order Instruction Notice */}
-          <div className="bg-indigo-50/70 border border-indigo-200 rounded-xl p-3 text-xs text-indigo-950 flex items-center gap-2">
-            <span className="font-bold text-indigo-700">Sequential Bench Order:</span>
+          <div className="bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/60 rounded-xl p-3 text-xs text-indigo-950 dark:text-indigo-200 flex items-center gap-2">
+            <span className="font-bold text-indigo-700 dark:text-indigo-400">Sequential Bench Order:</span>
             <span>1. Left Benches (L) &rarr; 2. Middle Benches (M) &rarr; 3. Right Benches (R)</span>
           </div>
 
@@ -358,8 +358,8 @@ export default function AdminAttendancePage() {
                   className={cn(
                     "p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer select-none flex items-center justify-between gap-3 shadow-2xs active:scale-[0.99]",
                     isAbsent
-                      ? "bg-rose-50 border-rose-300 ring-2 ring-rose-300 shadow-sm"
-                      : "bg-white border-slate-200 hover:border-emerald-300"
+                      ? "bg-rose-50 dark:bg-rose-950/50 border-rose-300 dark:border-rose-800 ring-2 ring-rose-300 dark:ring-rose-800 shadow-sm"
+                      : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-emerald-300 dark:hover:border-emerald-600"
                   )}
                 >
                   <div className="flex items-center gap-3 min-w-0">
@@ -368,11 +368,11 @@ export default function AdminAttendancePage() {
                       className={cn(
                         "w-12 h-12 rounded-xl flex flex-col items-center justify-center font-bold font-mono text-xs shrink-0 border",
                         isAbsent
-                          ? "bg-rose-100 text-rose-800 border-rose-300"
-                          : "bg-indigo-50 text-indigo-800 border-indigo-200"
+                          ? "bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300 border-rose-300 dark:border-rose-800"
+                          : "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
                       )}
                     >
-                      <span className="text-[9px] uppercase font-bold text-slate-500">
+                      <span className="text-[9px] uppercase font-bold text-slate-500 dark:text-slate-400">
                         {candidate.benchSide === 'LEFT' ? 'Left' : candidate.benchSide === 'MIDDLE' ? 'Mid' : 'Right'}
                       </span>
                       <span className="text-sm font-black">{candidate.benchLabel}</span>
@@ -381,17 +381,17 @@ export default function AdminAttendancePage() {
                     {/* Candidate Info */}
                     <div className="space-y-0.5 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono font-black text-sm text-slate-900">
+                        <span className="font-mono font-black text-sm text-slate-900 dark:text-white">
                           {candidate.rollNo}
                         </span>
-                        <span className="text-[10px] text-slate-500 font-semibold border px-1.5 py-0.2 rounded-xs">
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold border border-slate-200 dark:border-slate-700 px-1.5 py-0.2 rounded-xs">
                           {candidate.position}
                         </span>
                       </div>
-                      <div className="text-xs font-bold text-slate-800 truncate">
+                      <div className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
                         {candidate.name}
                       </div>
-                      <div className="text-[11px] text-slate-500 font-medium truncate">
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">
                         {candidate.subject} • Sec {candidate.section}
                       </div>
                     </div>
@@ -406,7 +406,7 @@ export default function AdminAttendancePage() {
                         handleToggle(candidate.rollNo);
                       }}
                       className={cn(
-                        "h-10 px-4 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs",
+                        "h-10 px-4 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer",
                         isAbsent
                           ? "bg-rose-600 text-white hover:bg-rose-700"
                           : "bg-emerald-600 text-white hover:bg-emerald-700"
@@ -431,13 +431,13 @@ export default function AdminAttendancePage() {
           </div>
 
           {/* Sticky Floor-Walk Bottom Action Bar */}
-          <div className="fixed bottom-4 left-4 right-4 max-w-xl mx-auto z-40 bg-white/95 backdrop-blur-md border border-slate-300 rounded-2xl p-3.5 shadow-2xl flex items-center justify-between gap-3">
+          <div className="fixed bottom-4 left-4 right-4 max-w-xl mx-auto z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-300 dark:border-slate-700 rounded-2xl p-3.5 shadow-2xl flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-xs font-bold">
-              <span className="text-slate-700">Room {activeRoomNo}:</span>
-              <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+              <span className="text-slate-700 dark:text-slate-300">Room {activeRoomNo}:</span>
+              <span className="text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-full">
                 {activeStats.present} Present
               </span>
-              <span className="text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full">
+              <span className="text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 px-2 py-0.5 rounded-full">
                 {activeStats.absent} Absent
               </span>
             </div>
@@ -456,38 +456,38 @@ export default function AdminAttendancePage() {
         /* ================= Examination Room Selection Panels ================= */
         <div className="space-y-6">
           {/* Header Description */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <div className="p-2 bg-emerald-50 text-emerald-700 rounded-xl">
-                  <Smartphone className="w-5 h-5 text-emerald-700" />
+                <div className="p-2 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 rounded-xl">
+                  <Smartphone className="w-5 h-5 text-emerald-700 dark:text-emerald-400" />
                 </div>
                 <div>
-                  <h1 className="font-headline text-2xl font-black tracking-tight text-slate-800">
+                  <h1 className="font-headline text-2xl font-black tracking-tight text-slate-800 dark:text-white">
                     Admin Attendance (Mobile Floor Walk)
                   </h1>
-                  <p className="text-xs text-slate-500 font-medium">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                     Tap an unpublished room to walk floor-to-floor and record attendance digitally on mobile
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 text-xs text-slate-500 font-semibold bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl">
-              <Calendar className="w-3.5 h-3.5 text-indigo-600" />
+            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-xl">
+              <Calendar className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
               <span>{examDate}</span>
-              <span className="text-slate-300">|</span>
-              <Clock className="w-3.5 h-3.5 text-indigo-600" />
+              <span className="text-slate-300 dark:text-slate-600">|</span>
+              <Clock className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
               <span>{examTimings}</span>
             </div>
           </div>
 
           {/* Lock Rule Banner */}
-          <div className="bg-amber-50/80 border border-amber-200 rounded-2xl p-4 text-xs text-amber-950 flex items-start gap-3">
-            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+          <div className="bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-2xl p-4 text-xs text-amber-950 dark:text-amber-200 flex items-start gap-3">
+            <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
             <div className="space-y-0.5">
-              <div className="font-bold text-amber-900">Exclusivity Access Rules:</div>
-              <p className="text-amber-800/90 text-[11px] leading-relaxed">
+              <div className="font-bold text-amber-900 dark:text-amber-300">Exclusivity Access Rules:</div>
+              <p className="text-amber-800/90 dark:text-amber-400/90 text-[11px] leading-relaxed">
                 Only <strong>Unpublished</strong> rooms are open for Admin Attendance floor walk. If a room is marked <strong>Published to Invigilator</strong>, it is locked to prevent duplicate simultaneous entry. To edit it as admin, unpublish it in <strong>1. Invigilator Attendance</strong> first.
               </p>
             </div>
@@ -516,8 +516,8 @@ export default function AdminAttendancePage() {
                   className={cn(
                     "rounded-2xl border p-5 transition-all select-none flex flex-col justify-between gap-4 shadow-2xs relative",
                     isLocked
-                      ? "bg-slate-100/90 border-slate-300 opacity-80 cursor-not-allowed"
-                      : "bg-white border-slate-200 hover:border-indigo-400 hover:shadow-md cursor-pointer group"
+                      ? "bg-slate-100/90 dark:bg-slate-800/60 border-slate-300 dark:border-slate-700 opacity-80 cursor-not-allowed"
+                      : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-indigo-400 dark:hover:border-indigo-500 hover:shadow-md cursor-pointer group"
                   )}
                 >
                   {/* Top: Room Number & Lock Badge */}
@@ -527,56 +527,56 @@ export default function AdminAttendancePage() {
                         className={cn(
                           "w-10 h-10 rounded-xl flex items-center justify-center font-black font-mono text-base",
                           isLocked
-                            ? "bg-slate-200 text-slate-600"
+                            ? "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
                             : "bg-[#1E2A5E] text-white shadow-xs group-hover:scale-105 transition-transform"
                         )}
                       >
                         {room.roomNo}
                       </div>
                       <div>
-                        <div className="font-black font-headline text-base text-slate-800">
+                        <div className="font-black font-headline text-base text-slate-800 dark:text-white">
                           Room {room.roomNo}
                         </div>
-                        <div className="text-[11px] text-slate-400 font-medium">
+                        <div className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
                           {room.plan.totalBenches} Benches • Capacity {room.capacity}
                         </div>
                       </div>
                     </div>
 
                     {isLocked ? (
-                      <Badge className="bg-amber-100 text-amber-900 border-amber-300 text-[10px] font-bold gap-1 px-2 py-0.5">
-                        <Lock className="w-3 h-3 text-amber-700" />
+                      <Badge className="bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 border-amber-300 dark:border-amber-800 text-[10px] font-bold gap-1 px-2 py-0.5">
+                        <Lock className="w-3 h-3 text-amber-700 dark:text-amber-400" />
                         Locked
                       </Badge>
                     ) : isCompleted ? (
-                      <Badge className="bg-emerald-50 text-emerald-800 border-emerald-300 text-[10px] font-bold gap-1 px-2 py-0.5">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                      <Badge className="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 text-[10px] font-bold gap-1 px-2 py-0.5">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                         Recorded
                       </Badge>
                     ) : (
-                      <Badge className="bg-sky-50 text-sky-800 border-sky-300 text-[10px] font-bold px-2 py-0.5">
+                      <Badge className="bg-sky-50 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 border-sky-300 dark:border-sky-800 text-[10px] font-bold px-2 py-0.5">
                         Open for Walk
                       </Badge>
                     )}
                   </div>
 
                   {/* Middle: Duty & Candidate Details */}
-                  <div className="space-y-1.5 py-1 text-xs border-y border-slate-100">
+                  <div className="space-y-1.5 py-1 text-xs border-y border-slate-100 dark:border-slate-800">
                     <div className="flex justify-between">
-                      <span className="text-slate-400 font-semibold">Invigilator:</span>
-                      <span className="font-bold text-slate-700 truncate max-w-[170px]">
+                      <span className="text-slate-400 dark:text-slate-500 font-semibold">Invigilator:</span>
+                      <span className="font-bold text-slate-700 dark:text-slate-300 truncate max-w-[170px]">
                         {room.invigilator}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400 font-semibold">Subject:</span>
-                      <span className="font-bold text-slate-700 truncate max-w-[170px]">
+                      <span className="text-slate-400 dark:text-slate-500 font-semibold">Subject:</span>
+                      <span className="font-bold text-slate-700 dark:text-slate-300 truncate max-w-[170px]">
                         {room.subject}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400 font-semibold">Allocated Students:</span>
-                      <span className="font-black text-slate-900 font-mono">
+                      <span className="text-slate-400 dark:text-slate-500 font-semibold">Allocated Students:</span>
+                      <span className="font-black text-slate-900 dark:text-white font-mono">
                         {room.studentCount} Candidates
                       </span>
                     </div>
@@ -585,7 +585,7 @@ export default function AdminAttendancePage() {
                   {/* Bottom: Action state label */}
                   <div>
                     {isLocked ? (
-                      <div className="text-[11px] font-bold text-amber-800 bg-amber-100/70 p-2 rounded-xl text-center flex items-center justify-center gap-1.5">
+                      <div className="text-[11px] font-bold text-amber-800 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-950/60 p-2 rounded-xl text-center flex items-center justify-center gap-1.5">
                         <Lock className="w-3.5 h-3.5 shrink-0" />
                         <span className="truncate">Published to Invigilator — Unpublish to edit</span>
                       </div>

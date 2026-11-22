@@ -60,18 +60,18 @@ export function ExamTrendChart({ records }: ExamTrendChartProps) {
     <div className="w-full h-72 sm:h-80">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 20, right: 25, left: -15, bottom: 20 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#64748b" strokeOpacity={0.2} vertical={false} />
           <XAxis
             dataKey="shortTitle"
-            tick={{ fill: '#475569', fontSize: 11, fontWeight: 700 }}
-            axisLine={{ stroke: '#cbd5e1' }}
+            tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 700 }}
+            axisLine={{ stroke: '#94a3b8', strokeOpacity: 0.3 }}
             tickLine={false}
           />
           <YAxis
             domain={[40, 100]}
             ticks={[40, 50, 60, 70, 85, 100]}
-            tick={{ fill: '#64748b', fontSize: 11 }}
-            axisLine={{ stroke: '#cbd5e1' }}
+            tick={{ fill: '#94a3b8', fontSize: 11 }}
+            axisLine={{ stroke: '#94a3b8', strokeOpacity: 0.3 }}
             tickLine={false}
           />
           <Tooltip content={<CustomTooltip />} />

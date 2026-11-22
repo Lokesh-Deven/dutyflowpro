@@ -102,7 +102,7 @@ export function CourseSelectorPopover({
           value={inlineValue}
           onChange={(e) => setInlineValue(e.target.value)}
           placeholder="Type course..."
-          className="h-8 text-xs font-semibold bg-white border-indigo-300 focus-visible:ring-1 focus-visible:ring-indigo-500"
+          className="h-8 text-xs font-semibold bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white border-indigo-300 focus-visible:ring-1 focus-visible:ring-indigo-500"
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               e.preventDefault();
@@ -145,40 +145,40 @@ export function CourseSelectorPopover({
           className={cn(
             "w-full flex items-center justify-between text-left px-2.5 py-1.5 text-xs rounded-lg border transition-all duration-150 min-h-[34px]",
             disabled
-              ? "bg-slate-100/70 border-slate-200 text-slate-500 cursor-not-allowed"
+              ? "bg-slate-100/70 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed"
               : hasValue
-                ? "bg-indigo-50/50 border-indigo-200 hover:border-indigo-400 text-slate-900 font-bold"
-                : "bg-white border-slate-200 hover:border-slate-300 text-slate-400"
+                ? "bg-indigo-50/50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-900/60 hover:border-indigo-400 text-slate-900 dark:text-white font-bold"
+                : "bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-400 dark:text-slate-500"
           )}
         >
           <span className="truncate pr-1">
             {hasValue ? (
-              <span className="text-indigo-950 font-bold tracking-tight">
+              <span className="text-indigo-950 dark:text-indigo-200 font-bold tracking-tight">
                 {value}
               </span>
             ) : (
-              <span className="text-slate-400 italic text-[11px]">Select Course...</span>
+              <span className="text-slate-400 dark:text-slate-500 italic text-[11px]">Select Course...</span>
             )}
           </span>
-          <ChevronDown className={cn("w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform", isOpen && "rotate-180")} />
+          <ChevronDown className={cn("w-3.5 h-3.5 text-slate-400 dark:text-slate-500 shrink-0 transition-transform", isOpen && "rotate-180")} />
         </button>
       </PopoverTrigger>
 
       <PopoverContent
-        className="w-64 p-0 bg-white border border-slate-200 shadow-xl rounded-xl z-50 text-xs"
+        className="w-64 p-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white shadow-xl rounded-xl z-50 text-xs"
         align="start"
       >
         {/* Header */}
-        <div className="p-2.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 rounded-t-xl">
-          <div className="flex items-center gap-1.5 font-headline font-bold text-slate-800 text-xs">
-            <GraduationCap className="w-3.5 h-3.5 text-indigo-600" />
+        <div className="p-2.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50 rounded-t-xl">
+          <div className="flex items-center gap-1.5 font-headline font-bold text-slate-800 dark:text-slate-200 text-xs">
+            <GraduationCap className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
             <span>Select Course</span>
           </div>
           {hasValue && (
             <button
               type="button"
               onClick={handleSelectBlank}
-              className="text-[10px] text-slate-500 hover:text-rose-600 font-medium px-1.5 py-0.5 rounded hover:bg-slate-100 transition-colors"
+              className="text-[10px] text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 font-medium px-1.5 py-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
               Clear
             </button>
@@ -198,12 +198,12 @@ export function CourseSelectorPopover({
                 className={cn(
                   "w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left text-xs font-semibold transition-colors",
                   isSelected
-                    ? "bg-indigo-50 text-indigo-900 font-bold"
-                    : "text-slate-700 hover:bg-slate-100/80"
+                    ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-900 dark:text-indigo-300 font-bold"
+                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-slate-800"
                 )}
               >
                 <span>{opt}</span>
-                {isSelected && <Check className="w-3.5 h-3.5 text-indigo-600 shrink-0" />}
+                {isSelected && <Check className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />}
               </button>
             );
           })}
@@ -221,12 +221,12 @@ export function CourseSelectorPopover({
                   className={cn(
                     "w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left text-xs font-semibold transition-colors",
                     isSelected
-                      ? "bg-indigo-50 text-indigo-900 font-bold"
-                      : "text-slate-700 hover:bg-slate-100/80"
+                      ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-900 dark:text-indigo-300 font-bold"
+                      : "text-slate-700 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-slate-800"
                   )}
                 >
                   <span className="truncate">{opt}</span>
-                  {isSelected && <Check className="w-3.5 h-3.5 text-indigo-600 shrink-0" />}
+                  {isSelected && <Check className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />}
                 </button>
               );
             })}
@@ -238,19 +238,19 @@ export function CourseSelectorPopover({
             className={cn(
               "w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left text-xs transition-colors",
               !hasValue
-                ? "bg-slate-100 text-slate-800 font-bold"
-                : "text-slate-500 italic hover:bg-slate-100/80"
+                ? "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold"
+                : "text-slate-500 dark:text-slate-400 italic hover:bg-slate-100/80 dark:hover:bg-slate-800"
             )}
           >
             <span>— Blank (No Course) —</span>
-            {!hasValue && <Check className="w-3.5 h-3.5 text-slate-500 shrink-0" />}
+            {!hasValue && <Check className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400 shrink-0" />}
           </button>
         </div>
 
         {/* Divider & Type Custom Course Section */}
-        <div className="p-2.5 border-t border-slate-100 bg-slate-50/70 rounded-b-xl space-y-2">
+        <div className="p-2.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 rounded-b-xl space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-700">
+            <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
               Type Custom Course
             </span>
             <button
@@ -259,7 +259,7 @@ export function CourseSelectorPopover({
                 setIsOpen(false);
                 setIsInlineTyping(true);
               }}
-              className="text-[10px] text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1 hover:underline"
+              className="text-[10px] text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-semibold flex items-center gap-1 hover:underline"
             >
               <Edit3 className="w-3 h-3" />
               Type in Cell
@@ -271,7 +271,7 @@ export function CourseSelectorPopover({
               value={customCourseInput}
               onChange={(e) => setCustomCourseInput(e.target.value)}
               placeholder="e.g. B.Com, Diploma..."
-              className="h-7 text-xs bg-white border-slate-200 focus-visible:ring-1 focus-visible:ring-indigo-400"
+              className="h-7 text-xs bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white border-slate-200 focus-visible:ring-1 focus-visible:ring-indigo-400"
             />
             <Button
               type="submit"

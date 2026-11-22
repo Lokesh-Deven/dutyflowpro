@@ -59,17 +59,17 @@ export function TimetablePreviewDialog({
   return (
     <>
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl bg-slate-100 p-0 border border-slate-200 overflow-hidden shadow-2xl">
-        <DialogHeader className="p-4 bg-white border-b border-slate-200 flex flex-row items-center justify-between">
+      <DialogContent className="max-w-5xl bg-slate-100 dark:bg-slate-950 p-0 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white overflow-hidden shadow-2xl">
+        <DialogHeader className="p-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex flex-row items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-indigo-50 text-indigo-700 rounded-lg">
+            <div className="p-1.5 bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 rounded-lg">
               <FileText className="w-5 h-5" />
             </div>
             <div>
-              <DialogTitle className="font-headline text-base font-bold text-slate-900">
+              <DialogTitle className="font-headline text-base font-bold text-slate-900 dark:text-white">
                 Official Examination Timetable Preview
               </DialogTitle>
-              <p className="text-xs text-slate-500 font-medium">
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                 A4 Landscape Print Layout • One-page auto-scaled preview
               </p>
             </div>
@@ -77,13 +77,13 @@ export function TimetablePreviewDialog({
 
           <div className="flex items-center gap-2 pr-6">
             {timetable.isPublished && (
-              <span className="flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-md">
-                <Globe className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="flex items-center gap-1 text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2 py-1 rounded-md">
+                <Globe className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                 Published
               </span>
             )}
             {timetable.isLocked && (
-              <span className="flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded-md">
+              <span className="flex items-center gap-1 text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 px-2 py-1 rounded-md">
                 <Lock className="w-3.5 h-3.5" />
                 Locked
               </span>
@@ -93,19 +93,19 @@ export function TimetablePreviewDialog({
                 onClick={onPublish}
                 disabled={isPublishing}
                 variant="outline"
-                className="text-xs h-8 px-3.5 gap-1.5 font-bold border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+                className="text-xs h-8 px-3.5 gap-1.5 font-bold border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
               >
                 {isPublishing ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 ) : (
-                  <Globe className="w-3.5 h-3.5 text-indigo-600" />
+                  <Globe className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                 )}
                 <span>{timetable.isPublished ? "Update on Student Portal" : "Publish on Student Portal"}</span>
               </Button>
             )}
             <Button
               onClick={handleDownloadPdf}
-              className="bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs h-8 px-4 gap-1.5 shadow-sm"
+              className="bg-[#1E2A5E] hover:bg-[#151D42] dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white font-bold text-xs h-8 px-4 gap-1.5 shadow-sm"
             >
               <Download className="w-3.5 h-3.5" />
               Download PDF

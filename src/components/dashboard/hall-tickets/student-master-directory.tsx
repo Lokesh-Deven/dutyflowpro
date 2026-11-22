@@ -401,74 +401,74 @@ export function StudentMasterDirectory({
     <div className="space-y-6">
       {/* 1. Summary Statistics Strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-4 shadow-2xs flex items-center justify-between">
           <div>
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
               Total Students
             </div>
-            <div className="font-headline font-black text-2xl text-slate-900 mt-0.5">
+            <div className="font-headline font-black text-2xl text-slate-900 dark:text-white mt-0.5">
               {stats.total.toLocaleString()}
             </div>
-            <div className="text-[10px] text-slate-400 font-medium">Directory Headcount</div>
+            <div className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Directory Headcount</div>
           </div>
-          <div className="p-2.5 bg-slate-50 text-slate-600 rounded-lg border border-slate-100">
+          <div className="p-2.5 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg border border-slate-100 dark:border-slate-800">
             <Users className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-4 shadow-2xs flex items-center justify-between">
           <div>
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
               Passport Photos
             </div>
-            <div className="font-headline font-black text-2xl text-emerald-600 mt-0.5">
+            <div className="font-headline font-black text-2xl text-emerald-600 dark:text-emerald-400 mt-0.5">
               {stats.withPhoto.toLocaleString()}{' '}
-              <span className="text-xs font-semibold text-slate-400">/ {stats.total}</span>
+              <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">/ {stats.total}</span>
             </div>
-            <div className="text-[10px] text-emerald-600 font-semibold">{stats.photoPercentage}% Attested</div>
+            <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">{stats.photoPercentage}% Attested</div>
           </div>
-          <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-100">
+          <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 rounded-lg border border-emerald-100 dark:border-emerald-800">
             <Camera className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-4 shadow-2xs flex items-center justify-between">
           <div>
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
               Classes Active
             </div>
-            <div className="font-headline font-black text-2xl text-indigo-700 mt-0.5">
+            <div className="font-headline font-black text-2xl text-indigo-700 dark:text-indigo-400 mt-0.5">
               {availableClasses.length}
             </div>
-            <div className="text-[10px] text-slate-400 font-medium truncate max-w-[120px]">
+            <div className="text-[10px] text-slate-400 dark:text-slate-500 font-medium truncate max-w-[120px]">
               {availableClasses.join(', ') || 'None'}
             </div>
           </div>
-          <div className="p-2.5 bg-indigo-50 text-indigo-700 rounded-lg border border-indigo-100">
+          <div className="p-2.5 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 rounded-lg border border-indigo-100 dark:border-indigo-800">
             <GraduationCap className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-4 shadow-2xs flex items-center justify-between">
           <div>
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
               Combinations
             </div>
-            <div className="font-headline font-black text-2xl text-purple-700 mt-0.5">
+            <div className="font-headline font-black text-2xl text-purple-700 dark:text-purple-400 mt-0.5">
               {availableCombinations.length}
             </div>
-            <div className="text-[10px] text-slate-400 font-medium truncate max-w-[120px]">
+            <div className="text-[10px] text-slate-400 dark:text-slate-500 font-medium truncate max-w-[120px]">
               {availableCombinations.join(', ') || 'None'}
             </div>
           </div>
-          <div className="p-2.5 bg-purple-50 text-purple-700 rounded-lg border border-purple-100">
+          <div className="p-2.5 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 rounded-lg border border-purple-100 dark:border-purple-800">
             <Sparkles className="w-5 h-5" />
           </div>
         </div>
       </div>
 
       {/* 2. Action Controls Toolbar */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs space-y-3.5">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4 shadow-2xs space-y-3.5">
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
           {/* Real-time Search Input */}
           <div className="relative flex-1">
@@ -477,20 +477,20 @@ export function StudentMasterDirectory({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by student name, register number, SATS ID, father's name..."
-              className="pl-9 h-9 text-xs bg-slate-50/70 border-slate-200 rounded-lg"
+              className="pl-9 h-9 text-xs bg-slate-50/70 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg"
             />
           </div>
 
           {/* Action Buttons */}
           <div className="flex items-center gap-2 flex-wrap justify-end">
             {/* View Mode Toggle */}
-            <div className="flex items-center border border-slate-200 rounded-lg p-0.5 bg-slate-50">
+            <div className="flex items-center border border-slate-200 dark:border-slate-700 rounded-lg p-0.5 bg-slate-50 dark:bg-slate-800">
               <button
                 type="button"
                 onClick={() => setViewMode('table')}
                 className={cn(
                   "p-1.5 rounded-md text-xs font-bold transition-all",
-                  viewMode === 'table' ? "bg-white text-indigo-700 shadow-2xs" : "text-slate-500 hover:text-slate-900"
+                  viewMode === 'table' ? "bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-400 shadow-2xs" : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 )}
                 title="Table View"
               >
@@ -501,7 +501,7 @@ export function StudentMasterDirectory({
                 onClick={() => setViewMode('cards')}
                 className={cn(
                   "p-1.5 rounded-md text-xs font-bold transition-all",
-                  viewMode === 'cards' ? "bg-white text-indigo-700 shadow-2xs" : "text-slate-500 hover:text-slate-900"
+                  viewMode === 'cards' ? "bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-400 shadow-2xs" : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 )}
                 title="Cards View"
               >
@@ -518,9 +518,9 @@ export function StudentMasterDirectory({
                 setParsedPreview(null);
                 setIsExcelModalOpen(true);
               }}
-              className="h-9 text-xs font-bold gap-1.5 border-slate-200 text-slate-700 hover:bg-slate-50"
+              className="h-9 text-xs font-bold gap-1.5 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
             >
-              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
               Import Excel / CSV
             </Button>
 
@@ -533,9 +533,9 @@ export function StudentMasterDirectory({
                 setPhotoMatchSummary(null);
                 setIsPhotoModalOpen(true);
               }}
-              className="h-9 text-xs font-bold gap-1.5 border-slate-200 text-slate-700 hover:bg-slate-50"
+              className="h-9 text-xs font-bold gap-1.5 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
             >
-              <Camera className="w-3.5 h-3.5 text-purple-600" />
+              <Camera className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
               Bulk Photos Upload
             </Button>
 
@@ -545,7 +545,7 @@ export function StudentMasterDirectory({
               size="sm"
               onClick={() => exportStudentDirectoryToExcel(filteredProfiles)}
               disabled={filteredProfiles.length === 0}
-              className="h-9 text-xs font-bold gap-1.5 border-slate-200 text-slate-700 hover:bg-slate-50"
+              className="h-9 text-xs font-bold gap-1.5 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
             >
               <Download className="w-3.5 h-3.5" />
               Export
@@ -574,11 +574,11 @@ export function StudentMasterDirectory({
         </div>
 
         {/* Filters Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-slate-100">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
           <div>
             <Label className="text-[10px] font-bold text-slate-400 uppercase">Class</Label>
             <Select value={filterClass} onValueChange={setFilterClass}>
-              <SelectTrigger className="h-8 text-xs font-semibold bg-slate-50/50 mt-1">
+              <SelectTrigger className="h-8 text-xs font-semibold bg-slate-50/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white mt-1">
                 <SelectValue placeholder="All Classes" />
               </SelectTrigger>
               <SelectContent>
@@ -593,7 +593,7 @@ export function StudentMasterDirectory({
           <div>
             <Label className="text-[10px] font-bold text-slate-400 uppercase">Stream</Label>
             <Select value={filterStream} onValueChange={setFilterStream}>
-              <SelectTrigger className="h-8 text-xs font-semibold bg-slate-50/50 mt-1">
+              <SelectTrigger className="h-8 text-xs font-semibold bg-slate-50/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white mt-1">
                 <SelectValue placeholder="All Streams" />
               </SelectTrigger>
               <SelectContent>
@@ -608,7 +608,7 @@ export function StudentMasterDirectory({
           <div>
             <Label className="text-[10px] font-bold text-slate-400 uppercase">Combination</Label>
             <Select value={filterCombination} onValueChange={setFilterCombination}>
-              <SelectTrigger className="h-8 text-xs font-semibold bg-slate-50/50 mt-1">
+              <SelectTrigger className="h-8 text-xs font-semibold bg-slate-50/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white mt-1">
                 <SelectValue placeholder="All Combinations" />
               </SelectTrigger>
               <SelectContent>
@@ -623,7 +623,7 @@ export function StudentMasterDirectory({
           <div>
             <Label className="text-[10px] font-bold text-slate-400 uppercase">Photo Status</Label>
             <Select value={filterPhoto} onValueChange={(v: any) => setFilterPhoto(v)}>
-              <SelectTrigger className="h-8 text-xs font-semibold bg-slate-50/50 mt-1">
+              <SelectTrigger className="h-8 text-xs font-semibold bg-slate-50/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white mt-1">
                 <SelectValue placeholder="All Photo Status" />
               </SelectTrigger>
               <SelectContent>
@@ -638,19 +638,19 @@ export function StudentMasterDirectory({
 
       {/* 3. Directory Content (Table or Cards View) */}
       {filteredProfiles.length === 0 ? (
-        <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center space-y-3 shadow-xs">
-          <Users className="w-10 h-10 text-slate-300 mx-auto" />
-          <div className="text-sm font-bold text-slate-700">No Students Found</div>
-          <p className="text-xs text-slate-400 max-w-sm mx-auto">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-12 text-center space-y-3 shadow-xs">
+          <Users className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto" />
+          <div className="text-sm font-bold text-slate-700 dark:text-slate-200">No Students Found</div>
+          <p className="text-xs text-slate-400 dark:text-slate-500 max-w-sm mx-auto">
             {searchQuery || filterClass !== 'ALL' || filterStream !== 'ALL'
               ? 'No student profiles matched the active filters. Try clearing filters or search terms.'
               : 'Your Student Master Directory is currently empty. Add students or import an Excel sheet to get started.'}
           </p>
         </div>
       ) : viewMode === 'table' ? (
-        <div className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-xs">
-          <div className="p-3.5 border-b border-slate-100 flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-800">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
+          <div className="p-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-800 dark:text-slate-100">
               Showing {filteredProfiles.length} of {profiles.length} Students
             </span>
             {onNavigateToGenerator && (
@@ -658,7 +658,7 @@ export function StudentMasterDirectory({
                 variant="ghost"
                 size="sm"
                 onClick={onNavigateToGenerator}
-                className="text-xs text-indigo-700 hover:text-indigo-900 font-bold h-7 gap-1"
+                className="text-xs text-indigo-700 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 font-bold h-7 gap-1"
               >
                 Go to Hall Ticket Generation &rarr;
               </Button>
@@ -668,7 +668,7 @@ export function StudentMasterDirectory({
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-slate-50/70 border-b border-slate-200 text-slate-600 font-bold uppercase text-[10px]">
+                <tr className="bg-slate-50/70 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-bold uppercase text-[10px]">
                   <th className="py-3 px-3 text-center w-12">#</th>
                   <th className="py-3 px-3 w-14 text-center">Photo</th>
                   <th className="py-3 px-3 min-w-[180px]">Student Details</th>
@@ -680,15 +680,15 @@ export function StudentMasterDirectory({
                   <th className="py-3 px-4 text-center w-36">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70 font-medium text-slate-700 dark:text-slate-200">
                 {filteredProfiles.map((student, idx) => {
                   const classStyle = getClassBadgeStyle(student.className);
                   const initial = getInvigilatorInitial(student.name);
 
                   return (
-                    <tr key={student.id} className="hover:bg-slate-50/70 transition-colors">
+                    <tr key={student.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
                       {/* # */}
-                      <td className="py-3 px-3 text-center text-slate-400 font-bold text-[11px]">
+                      <td className="py-3 px-3 text-center text-slate-400 dark:text-slate-500 font-bold text-[11px]">
                         {idx + 1}
                       </td>
 
@@ -699,17 +699,17 @@ export function StudentMasterDirectory({
                             <img
                               src={student.photoUrl}
                               alt={student.name}
-                              className="w-10 h-12 object-cover rounded-md border border-slate-300 shadow-2xs"
+                              className="w-10 h-12 object-cover rounded-md border border-slate-300 dark:border-slate-700 shadow-2xs"
                             />
                           ) : (
-                            <div className="w-10 h-12 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-700 flex items-center justify-center font-headline font-black text-base shadow-2xs select-none">
+                            <div className="w-10 h-12 rounded-md bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/80 text-indigo-700 dark:text-indigo-400 flex items-center justify-center font-headline font-black text-base shadow-2xs select-none">
                               {initial}
                             </div>
                           )}
 
                           {/* Quick Photo Upload Trigger */}
                           <label
-                            className="absolute -bottom-1.5 -right-1.5 p-1 bg-white hover:bg-slate-100 text-slate-600 rounded-full border border-slate-300 shadow-xs cursor-pointer"
+                            className="absolute -bottom-1.5 -right-1.5 p-1 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full border border-slate-300 dark:border-slate-700 shadow-xs cursor-pointer"
                             title="Upload/Replace Photo"
                           >
                             <Camera className="w-2.5 h-2.5" />
@@ -728,11 +728,11 @@ export function StudentMasterDirectory({
 
                       {/* Student Details */}
                       <td className="py-3 px-3">
-                        <div className="font-headline font-black text-xs text-slate-900 leading-snug">
+                        <div className="font-headline font-black text-xs text-slate-900 dark:text-white leading-snug">
                           {student.name}
                         </div>
                         {student.fatherName && (
-                          <div className="text-[11px] text-slate-500 font-medium">
+                          <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                             Father: {student.fatherName}
                           </div>
                         )}
@@ -740,11 +740,11 @@ export function StudentMasterDirectory({
 
                       {/* Register No & SATS */}
                       <td className="py-3 px-3">
-                        <div className="font-mono font-bold text-xs text-indigo-900 bg-indigo-50/80 px-2 py-0.5 rounded border border-indigo-200/60 inline-block">
+                        <div className="font-mono font-bold text-xs text-indigo-900 dark:text-indigo-300 bg-indigo-50/80 dark:bg-indigo-950/40 px-2 py-0.5 rounded border border-indigo-200/60 dark:border-indigo-800/60 inline-block">
                           {student.registerNumber}
                         </div>
                         {student.satsNumber && (
-                          <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                          <div className="text-[10px] text-slate-400 dark:text-slate-500 font-mono mt-0.5">
                             SATS: {student.satsNumber}
                           </div>
                         )}
@@ -765,7 +765,7 @@ export function StudentMasterDirectory({
 
                       {/* Stream & Combination */}
                       <td className="py-3 px-3">
-                        <div className="font-bold text-xs text-slate-800">{student.stream}</div>
+                        <div className="font-bold text-xs text-slate-800 dark:text-slate-200">{student.stream}</div>
                         <Badge
                           variant="secondary"
                           className="bg-purple-50 text-purple-700 border border-purple-200/60 text-[10px] font-black mt-0.5 tracking-wider"
@@ -857,7 +857,7 @@ export function StudentMasterDirectory({
             return (
               <div
                 key={student.id}
-                className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs hover:border-indigo-300 transition-all flex flex-col justify-between space-y-3.5"
+                className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 shadow-xs hover:border-indigo-300 dark:hover:border-indigo-700 transition-all flex flex-col justify-between space-y-3.5"
               >
                 <div className="flex items-start gap-3">
                   {/* Photo Box */}
@@ -866,15 +866,15 @@ export function StudentMasterDirectory({
                       <img
                         src={student.photoUrl}
                         alt={student.name}
-                        className="w-14 h-16 object-cover rounded-lg border border-slate-300 shadow-2xs"
+                        className="w-14 h-16 object-cover rounded-lg border border-slate-300 dark:border-slate-700 shadow-2xs"
                       />
                     ) : (
-                      <div className="w-14 h-16 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 flex items-center justify-center font-headline font-black text-xl shadow-2xs select-none">
+                      <div className="w-14 h-16 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/80 text-indigo-700 dark:text-indigo-400 flex items-center justify-center font-headline font-black text-xl shadow-2xs select-none">
                         {initial}
                       </div>
                     )}
                     <label
-                      className="absolute -bottom-1.5 -right-1.5 p-1 bg-white hover:bg-slate-100 text-slate-600 rounded-full border border-slate-300 shadow-xs cursor-pointer"
+                      className="absolute -bottom-1.5 -right-1.5 p-1 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full border border-slate-300 dark:border-slate-700 shadow-xs cursor-pointer"
                       title="Upload Photo"
                     >
                       <Camera className="w-2.5 h-2.5" />
@@ -892,14 +892,14 @@ export function StudentMasterDirectory({
 
                   {/* Top Details */}
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-headline font-black text-xs text-slate-900 truncate" title={student.name}>
+                    <h3 className="font-headline font-black text-xs text-slate-900 dark:text-white truncate" title={student.name}>
                       {student.name}
                     </h3>
-                    <div className="font-mono font-bold text-[11px] text-indigo-800 mt-0.5">
+                    <div className="font-mono font-bold text-[11px] text-indigo-800 dark:text-indigo-300 mt-0.5">
                       {student.registerNumber}
                     </div>
                     {student.satsNumber && (
-                      <div className="text-[10px] text-slate-400 font-mono">
+                      <div className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
                         SATS: {student.satsNumber}
                       </div>
                     )}
@@ -915,7 +915,7 @@ export function StudentMasterDirectory({
                       </span>
                       <Badge
                         variant="secondary"
-                        className="bg-purple-50 text-purple-700 text-[10px] font-black py-0 px-1.5"
+                        className="bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 text-[10px] font-black py-0 px-1.5"
                       >
                         {student.combination}
                       </Badge>
@@ -923,32 +923,32 @@ export function StudentMasterDirectory({
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-500 space-y-1">
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 space-y-1">
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Stream:</span>
-                    <span className="font-bold text-slate-700">{student.stream}</span>
+                    <span className="text-slate-400 dark:text-slate-500">Stream:</span>
+                    <span className="font-bold text-slate-700 dark:text-slate-200">{student.stream}</span>
                   </div>
                   {student.fatherName && (
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Father:</span>
-                      <span className="font-medium text-slate-700 truncate max-w-[130px]">{student.fatherName}</span>
+                      <span className="text-slate-400 dark:text-slate-500">Father:</span>
+                      <span className="font-medium text-slate-700 dark:text-slate-300 truncate max-w-[130px]">{student.fatherName}</span>
                     </div>
                   )}
                   <div className="flex justify-between">
-                    <span className="text-slate-400">DOB / Gender:</span>
-                    <span className="font-medium text-slate-700">{student.dob || '—'} ({student.gender?.[0] || '—'})</span>
+                    <span className="text-slate-400 dark:text-slate-500">DOB / Gender:</span>
+                    <span className="font-medium text-slate-700 dark:text-slate-300">{student.dob || '—'} ({student.gender?.[0] || '—'})</span>
                   </div>
                 </div>
 
-                <div className="pt-1 flex items-center justify-between border-t border-slate-100">
+                <div className="pt-1 flex items-center justify-between border-t border-slate-100 dark:border-slate-800">
                   {onGenerateForStudent ? (
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => onGenerateForStudent(student)}
-                      className="h-7 text-[11px] font-bold px-2 gap-1 text-[#1E2A5E]"
+                      className="h-7 text-[11px] font-bold px-2 gap-1 text-[#1E2A5E] dark:text-indigo-300 border-slate-200 dark:border-slate-700"
                     >
-                      <FileText className="w-3 h-3 text-indigo-600" />
+                      <FileText className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
                       Hall Ticket
                     </Button>
                   ) : <div />}
@@ -961,7 +961,7 @@ export function StudentMasterDirectory({
                         setEditingStudent(student);
                         setIsEditModalOpen(true);
                       }}
-                      className="h-7 w-7 text-slate-600 hover:bg-slate-100"
+                      className="h-7 w-7 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
                     </Button>
@@ -969,7 +969,7 @@ export function StudentMasterDirectory({
                       size="icon"
                       variant="ghost"
                       onClick={() => setStudentToDelete(student)}
-                      className="h-7 w-7 text-slate-400 hover:text-rose-600"
+                      className="h-7 w-7 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </Button>
@@ -991,37 +991,37 @@ export function StudentMasterDirectory({
           }
         }}
       >
-        <DialogContent className="sm:max-w-lg bg-white border border-slate-200 max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="font-headline text-lg font-bold text-slate-900">
+            <DialogTitle className="font-headline text-lg font-bold text-slate-900 dark:text-white">
               {editingStudent?.id ? 'Edit Student Profile' : 'Add New Student'}
             </DialogTitle>
-            <DialogDescription className="text-xs text-slate-500">
+            <DialogDescription className="text-xs text-slate-500 dark:text-slate-400">
               Manage student candidate credentials, combinations, and passport photo.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSaveStudent} className="space-y-4 py-2">
             {/* Passport Photo Upload Zone in Form */}
-            <div className="flex items-center gap-4 bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
               <div className="relative shrink-0">
                 {editingStudent?.photoUrl ? (
                   <img
                     src={editingStudent.photoUrl}
                     alt="Preview"
-                    className="w-16 h-20 object-cover rounded-lg border border-slate-300 shadow-xs"
+                    className="w-16 h-20 object-cover rounded-lg border border-slate-300 dark:border-slate-700 shadow-xs"
                   />
                 ) : (
-                  <div className="w-16 h-20 rounded-lg bg-white border-2 border-dashed border-slate-300 flex flex-col items-center justify-center text-slate-400">
-                    <Camera className="w-6 h-6 text-slate-300" />
+                  <div className="w-16 h-20 rounded-lg bg-white dark:bg-slate-800 border-2 border-dashed border-slate-300 dark:border-slate-700 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500">
+                    <Camera className="w-6 h-6 text-slate-300 dark:text-slate-600" />
                     <span className="text-[9px] mt-1 font-semibold">Photo</span>
                   </div>
                 )}
               </div>
 
               <div className="space-y-1.5 flex-1">
-                <Label className="text-xs font-bold text-slate-700">Passport Photograph</Label>
-                <p className="text-[11px] text-slate-500">
+                <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">Passport Photograph</Label>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
                   Upload recent passport size photo (JPG, PNG). Appears on candidate hall ticket.
                 </p>
                 <div className="flex items-center gap-2">
@@ -1208,17 +1208,17 @@ export function StudentMasterDirectory({
 
       {/* 5. Bulk Excel Upload Modal */}
       <Dialog open={isExcelModalOpen} onOpenChange={setIsExcelModalOpen}>
-        <DialogContent className="sm:max-w-xl bg-white border border-slate-200 max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex items-center gap-2">
-              <div className="p-2 bg-emerald-50 text-emerald-700 rounded-lg">
+              <div className="p-2 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 rounded-lg">
                 <FileSpreadsheet className="w-5 h-5" />
               </div>
               <div>
-                <DialogTitle className="font-headline text-lg font-bold text-slate-900">
+                <DialogTitle className="font-headline text-lg font-bold text-slate-900 dark:text-white">
                   Bulk Import Student Directory
                 </DialogTitle>
-                <DialogDescription className="text-xs text-slate-500">
+                <DialogDescription className="text-xs text-slate-500 dark:text-slate-400">
                   Upload an Excel or CSV file containing student master profiles.
                 </DialogDescription>
               </div>
@@ -1227,8 +1227,8 @@ export function StudentMasterDirectory({
 
           <div className="space-y-4 py-2">
             {/* Template Download Help Bar */}
-            <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 flex items-center justify-between gap-3">
-              <div className="text-xs text-slate-600">
+            <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700 rounded-xl p-3 flex items-center justify-between gap-3">
+              <div className="text-xs text-slate-600 dark:text-slate-300">
                 <span className="font-bold">Need sample format?</span> Download our pre-formatted template with standard headers.
               </div>
               <Button
@@ -1236,7 +1236,7 @@ export function StudentMasterDirectory({
                 size="sm"
                 variant="outline"
                 onClick={downloadStudentDirectoryTemplate}
-                className="h-8 text-xs font-bold gap-1 shrink-0 text-indigo-700 border-indigo-200 bg-white hover:bg-indigo-50"
+                className="h-8 text-xs font-bold gap-1 shrink-0 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
               >
                 <Download className="w-3.5 h-3.5" />
                 Template (.xlsx)
@@ -1246,7 +1246,7 @@ export function StudentMasterDirectory({
             {/* Drop Zone */}
             <div
               onClick={() => excelInputRef.current?.click()}
-              className="border-2 border-dashed border-indigo-200 hover:border-indigo-400 bg-indigo-50/40 hover:bg-indigo-50/70 transition-all rounded-xl p-6 text-center cursor-pointer space-y-2"
+              className="border-2 border-dashed border-indigo-200 dark:border-indigo-800/80 hover:border-indigo-400 dark:hover:border-indigo-600 bg-indigo-50/40 dark:bg-indigo-950/20 hover:bg-indigo-50/70 dark:hover:bg-indigo-950/40 transition-all rounded-xl p-6 text-center cursor-pointer space-y-2"
             >
               <input
                 ref={excelInputRef}
@@ -1344,17 +1344,17 @@ export function StudentMasterDirectory({
 
       {/* 6. Bulk Photo Upload Modal with Register Number Matching */}
       <Dialog open={isPhotoModalOpen} onOpenChange={setIsPhotoModalOpen}>
-        <DialogContent className="sm:max-w-xl bg-white border border-slate-200 max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex items-center gap-2">
-              <div className="p-2 bg-purple-50 text-purple-700 rounded-lg">
+              <div className="p-2 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 rounded-lg">
                 <Camera className="w-5 h-5" />
               </div>
               <div>
-                <DialogTitle className="font-headline text-lg font-bold text-slate-900">
+                <DialogTitle className="font-headline text-lg font-bold text-slate-900 dark:text-white">
                   Bulk Upload Passport Photos
                 </DialogTitle>
-                <DialogDescription className="text-xs text-slate-500">
+                <DialogDescription className="text-xs text-slate-500 dark:text-slate-400">
                   Automatically match and embed photos into student profiles by matching file name with Register Number.
                 </DialogDescription>
               </div>
@@ -1363,20 +1363,20 @@ export function StudentMasterDirectory({
 
           <div className="space-y-4 py-2">
             {/* Instruction Banner */}
-            <div className="bg-purple-50/70 border border-purple-200/80 rounded-xl p-3 text-xs text-purple-950 space-y-1">
-              <div className="font-bold flex items-center gap-1.5 text-purple-900">
-                <Sparkles className="w-4 h-4 text-purple-700" />
+            <div className="bg-purple-50/70 dark:bg-purple-950/30 border border-purple-200/80 dark:border-purple-900/50 rounded-xl p-3 text-xs text-purple-950 dark:text-purple-200 space-y-1">
+              <div className="font-bold flex items-center gap-1.5 text-purple-900 dark:text-purple-300">
+                <Sparkles className="w-4 h-4 text-purple-700 dark:text-purple-400" />
                 Automatic Register Number Matching
               </div>
-              <p className="text-[11px] text-purple-800 leading-relaxed">
-                Name your image files using each student&apos;s Register Number (e.g., <code className="bg-white/80 px-1 py-0.5 rounded font-mono font-bold">24PU0101.jpg</code> or <code className="bg-white/80 px-1 py-0.5 rounded font-mono font-bold">24PU0102.png</code>). DutyFlow will automatically map each photo to the correct student profile.
+              <p className="text-[11px] text-purple-800 dark:text-purple-300 leading-relaxed">
+                Name your image files using each student&apos;s Register Number (e.g., <code className="bg-white/80 dark:bg-slate-800 px-1 py-0.5 rounded font-mono font-bold text-slate-900 dark:text-white">24PU0101.jpg</code> or <code className="bg-white/80 dark:bg-slate-800 px-1 py-0.5 rounded font-mono font-bold text-slate-900 dark:text-white">24PU0102.png</code>). DutyFlow will automatically map each photo to the correct student profile.
               </p>
             </div>
 
             {/* Drop Zone */}
             <div
               onClick={() => photoInputRef.current?.click()}
-              className="border-2 border-dashed border-purple-200 hover:border-purple-400 bg-purple-50/30 hover:bg-purple-50/60 transition-all rounded-xl p-6 text-center cursor-pointer space-y-2"
+              className="border-2 border-dashed border-purple-200 dark:border-purple-800/80 hover:border-purple-400 dark:hover:border-purple-600 bg-purple-50/30 dark:bg-purple-950/20 hover:bg-purple-50/60 dark:hover:bg-purple-950/40 transition-all rounded-xl p-6 text-center cursor-pointer space-y-2"
             >
               <input
                 ref={photoInputRef}
@@ -1483,22 +1483,22 @@ export function StudentMasterDirectory({
           if (!open) setStudentToDelete(null);
         }}
       >
-        <AlertDialogContent className="bg-white border border-slate-200">
+        <AlertDialogContent className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white">
           <AlertDialogHeader>
             <div className="flex items-center gap-2.5 mb-1">
-              <div className="p-2 bg-rose-50 text-rose-600 rounded-lg">
+              <div className="p-2 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 rounded-lg">
                 <AlertCircle className="w-5 h-5" />
               </div>
-              <AlertDialogTitle className="font-headline text-lg font-bold text-slate-900">
+              <AlertDialogTitle className="font-headline text-lg font-bold text-slate-900 dark:text-white">
                 Delete Student Profile?
               </AlertDialogTitle>
             </div>
-            <AlertDialogDescription className="text-xs text-slate-600 leading-relaxed">
+            <AlertDialogDescription className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
               Are you sure you want to delete profile for &ldquo;{studentToDelete?.name}&rdquo; ({studentToDelete?.registerNumber})? This will remove all their credentials and photo from the master directory.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="text-xs h-9">Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="text-xs h-9 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmDelete}
               className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs h-9"

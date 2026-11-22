@@ -195,14 +195,14 @@ export default function StudentDataPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2.5">
-              <div className="p-2 bg-indigo-50 text-indigo-700 rounded-lg">
+              <div className="p-2 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 rounded-lg border border-indigo-100 dark:border-indigo-900/40">
                 <Users className="w-6 h-6" />
               </div>
               <div>
                 <h1 className="font-headline text-2xl font-black tracking-tight text-slate-800 dark:text-slate-100">
                   Student Data
                 </h1>
-                <p className="text-xs text-slate-500 font-medium">
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                   Upload student rosters subject-wise with automated Excel validation.
                 </p>
               </div>
@@ -223,10 +223,10 @@ export default function StudentDataPage() {
                   });
                 }
               }}
-              className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 font-bold text-xs h-9 px-3 gap-1.5 shadow-2xs"
+              className="border-indigo-200 dark:border-indigo-800/60 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 font-bold text-xs h-9 px-3 gap-1.5 shadow-2xs"
               title="Copy Student Login URL to share with students"
             >
-              <GraduationCap className="w-4 h-4 text-indigo-600" />
+              <GraduationCap className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
               <span className="hidden sm:inline">Student Portal</span> Link
             </Button>
 
@@ -234,7 +234,7 @@ export default function StudentDataPage() {
               <Button
                 variant="outline"
                 onClick={() => setIsClearConfirmOpen(true)}
-                className="border-rose-200 text-rose-600 hover:bg-rose-50 hover:border-rose-300 font-bold text-xs h-9 px-3 gap-1.5 shadow-2xs"
+                className="border-rose-200 dark:border-rose-800/60 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:border-rose-300 dark:hover:border-rose-800 font-bold text-xs h-9 px-3 gap-1.5 shadow-2xs"
                 title="Clear all subjects and student data"
               >
                 <Trash2 className="w-4 h-4" />
@@ -250,7 +250,7 @@ export default function StudentDataPage() {
                 setNewSubjExpected('');
                 setIsAddSubjectOpen(true);
               }}
-              className="bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs h-9 px-4 gap-1.5 shadow-xs"
+              className="bg-[#1E2A5E] hover:bg-[#151D42] dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white font-bold text-xs h-9 px-4 gap-1.5 shadow-xs cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               Add Subject
@@ -261,52 +261,52 @@ export default function StudentDataPage() {
 
       {/* Summary Metrics Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs flex items-center justify-between">
           <div>
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
               Total Subjects
             </div>
-            <div className="font-headline font-black text-2xl text-slate-800 mt-0.5">
+            <div className="font-headline font-black text-2xl text-slate-800 dark:text-white mt-0.5">
               {subjects.length}
             </div>
           </div>
-          <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-100 text-slate-600">
+          <div className="p-2.5 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-300">
             <BookOpen className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs flex items-center justify-between">
           <div>
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
               Rosters Uploaded
             </div>
-            <div className="font-headline font-black text-2xl text-slate-800 mt-0.5">
+            <div className="font-headline font-black text-2xl text-slate-800 dark:text-white mt-0.5">
               {uploadedSubjectsCount}{" "}
-              <span className="text-xs font-normal text-slate-400">
+              <span className="text-xs font-normal text-slate-400 dark:text-slate-500">
                 / {subjects.length}
               </span>
             </div>
           </div>
-          <div className="p-2.5 bg-emerald-50 rounded-lg border border-emerald-100 text-emerald-600">
+          <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 rounded-lg border border-emerald-100 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400">
             <CheckCircle2 className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs flex items-center justify-between">
           <div>
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
               Total Unique Students
             </div>
-            <div className="font-headline font-black text-2xl text-indigo-700 mt-0.5">
+            <div className="font-headline font-black text-2xl text-indigo-700 dark:text-indigo-400 mt-0.5">
               {totalUniqueStudents.toLocaleString()}
             </div>
             {totalEnrollments > 0 && totalEnrollments !== totalUniqueStudents && (
-              <div className="text-[11px] text-slate-400 font-medium mt-0.5">
+              <div className="text-[11px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">
                 {totalEnrollments.toLocaleString()} total subject enrollments
               </div>
             )}
           </div>
-          <div className="p-2.5 bg-indigo-50 rounded-lg border border-indigo-100 text-indigo-600">
+          <div className="p-2.5 bg-indigo-50 dark:bg-indigo-950/40 rounded-lg border border-indigo-100 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400">
             <Users className="w-5 h-5" />
           </div>
         </div>
@@ -314,15 +314,15 @@ export default function StudentDataPage() {
 
       {/* Subject Cards Grid or Clean Empty Space */}
       {subjects.length === 0 ? (
-        <div className="bg-white border-2 border-dashed border-slate-200 rounded-2xl p-10 sm:p-14 text-center space-y-4 shadow-xs">
-          <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto shadow-xs border border-indigo-100">
+        <div className="bg-white dark:bg-slate-900 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-10 sm:p-14 text-center space-y-4 shadow-xs">
+          <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto shadow-xs border border-indigo-100 dark:border-indigo-900/40">
             <BookOpen className="w-7 h-7" />
           </div>
           <div className="space-y-1.5 max-w-md mx-auto">
-            <h3 className="font-headline font-bold text-base text-slate-800">
+            <h3 className="font-headline font-bold text-base text-slate-800 dark:text-white">
               No Subjects Added Yet
             </h3>
-            <p className="text-xs text-slate-500 leading-relaxed">
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
               Your student workspace is clear and ready. Click <strong>Add Subject</strong> to configure examination subjects and upload student rosters fresh.
             </p>
           </div>
@@ -334,7 +334,7 @@ export default function StudentDataPage() {
               setNewSubjExpected('');
               setIsAddSubjectOpen(true);
             }}
-            className="bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs h-9 px-4 gap-1.5 shadow-xs"
+            className="bg-[#1E2A5E] hover:bg-[#151D42] dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white font-bold text-xs h-9 px-4 gap-1.5 shadow-xs cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             Add First Subject
@@ -349,12 +349,12 @@ export default function StudentDataPage() {
             return (
               <div
                 key={subj.id}
-                className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs hover:border-indigo-200 transition-all flex flex-col justify-between space-y-4"
+                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs hover:border-indigo-200 dark:hover:border-indigo-800 transition-all flex flex-col justify-between space-y-4"
               >
                 <div className="space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <h3 className="font-headline font-bold text-base text-slate-900 leading-tight">
+                      <h3 className="font-headline font-bold text-base text-slate-900 dark:text-white leading-tight">
                         {subj.name}
                       </h3>
                       {subj.code ? (
@@ -381,8 +381,8 @@ export default function StudentDataPage() {
                       variant="outline"
                       className={
                         hasUploaded
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px]"
-                          : "bg-amber-50 text-amber-700 border-amber-200 text-[10px]"
+                          ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 text-[10px]"
+                          : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800 text-[10px]"
                       }
                     >
                       {hasUploaded ? "Uploaded" : "No Data"}
@@ -390,33 +390,33 @@ export default function StudentDataPage() {
                   </div>
 
                   {/* Counter Metric */}
-                  <div className="bg-slate-50/80 p-3 rounded-lg border border-slate-100 flex items-center justify-between">
+                  <div className="bg-slate-50/80 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800 flex items-center justify-between">
                     <div>
-                      <div className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">
+                      <div className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">
                         Student Count
                       </div>
-                      <div className="font-headline font-black text-xl text-slate-800">
+                      <div className="font-headline font-black text-xl text-slate-800 dark:text-white">
                         {students.length}{" "}
-                        <span className="text-xs font-normal text-slate-400">
+                        <span className="text-xs font-normal text-slate-400 dark:text-slate-500">
                           {subj.expectedStudents > 0 ? `/ ${subj.expectedStudents} Exp.` : 'Students'}
                         </span>
                       </div>
                     </div>
-                    <div className="p-2 bg-white rounded-lg border border-slate-200 text-indigo-600 shadow-2xs">
+                    <div className="p-2 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 text-indigo-600 dark:text-indigo-400 shadow-2xs">
                       <BookOpen className="w-5 h-5" />
                     </div>
                   </div>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
                   <div className="flex items-center gap-1.5">
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => setViewingSubject(subj)}
                       disabled={!hasUploaded}
-                      className="h-8 text-xs font-semibold px-2.5 gap-1 text-slate-700 hover:bg-slate-100"
+                      className="h-8 text-xs font-semibold px-2.5 gap-1 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700"
                     >
                       <Eye className="w-3.5 h-3.5" />
                       View
@@ -425,7 +425,7 @@ export default function StudentDataPage() {
                     <Button
                       size="sm"
                       onClick={() => setUploadSubject(subj)}
-                      className="h-8 text-xs font-bold px-3 gap-1 bg-[#1E2A5E] hover:bg-[#151D42] text-white"
+                      className="h-8 text-xs font-bold px-3 gap-1 bg-[#1E2A5E] hover:bg-[#151D42] dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white cursor-pointer"
                     >
                       <Upload className="w-3.5 h-3.5" />
                       {hasUploaded ? "Re-upload" : "Upload"}
@@ -441,7 +441,7 @@ export default function StudentDataPage() {
                         toast({ title: "Subject Deleted", description: `Deleted ${subj.name}.` });
                       }
                     }}
-                    className="h-8 w-8 text-slate-400 hover:text-rose-600 hover:bg-rose-50"
+                    className="h-8 w-8 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30"
                     title="Delete Subject"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -461,17 +461,17 @@ export default function StudentDataPage() {
           if (!open) setIsDropdownOpen(false);
         }}
       >
-        <DialogContent className="sm:max-w-md bg-white border border-slate-200">
+        <DialogContent className="sm:max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white">
           <DialogHeader>
             <div className="flex items-center gap-2.5 mb-1">
-              <div className="p-2 bg-indigo-50 text-indigo-700 rounded-lg">
+              <div className="p-2 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 rounded-lg border border-indigo-100 dark:border-indigo-900/40">
                 <BookOpen className="w-5 h-5" />
               </div>
-              <DialogTitle className="font-headline text-lg font-bold text-slate-900">
+              <DialogTitle className="font-headline text-lg font-bold text-slate-900 dark:text-white">
                 Add New Subject
               </DialogTitle>
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Create a subject card to upload student lists for examinations.
             </p>
           </DialogHeader>
@@ -479,10 +479,10 @@ export default function StudentDataPage() {
           <form onSubmit={handleCreateSubject} className="space-y-4 py-2">
             <div className="space-y-1.5 relative" ref={dropdownRef}>
               <div className="flex items-center justify-between">
-                <Label htmlFor="subj-name" className="text-xs font-bold text-slate-700">
+                <Label htmlFor="subj-name" className="text-xs font-bold text-slate-700 dark:text-slate-200">
                   Subject Name <span className="text-rose-500">*</span>
                 </Label>
-                <span className="text-[10px] text-slate-400 font-medium">
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
                   Select or type
                 </span>
               </div>
@@ -497,7 +497,7 @@ export default function StudentDataPage() {
                     setIsDropdownOpen(true);
                   }}
                   onClick={() => setIsDropdownOpen(true)}
-                  className="text-xs font-semibold pr-9 bg-slate-50/50 focus:bg-white transition-colors"
+                  className="text-xs font-semibold pr-9 bg-slate-50/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-800 transition-colors"
                   required
                   autoComplete="off"
                 />
@@ -505,13 +505,13 @@ export default function StudentDataPage() {
                   type="button"
                   onClick={() => setIsDropdownOpen((prev) => !prev)}
                   tabIndex={-1}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-indigo-600 transition-colors rounded-sm"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors rounded-sm"
                   title="Toggle standard subjects list"
                 >
                   <ChevronDown
                     className={cn(
                       "w-4 h-4 transition-transform duration-200",
-                      isDropdownOpen && "rotate-180 text-indigo-600"
+                      isDropdownOpen && "rotate-180 text-indigo-600 dark:text-indigo-400"
                     )}
                   />
                 </button>
@@ -519,10 +519,10 @@ export default function StudentDataPage() {
 
               {/* Enhanced Visual Dropdown Menu */}
               {isDropdownOpen && (
-                <div className="absolute left-0 right-0 z-50 mt-1 max-h-56 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-xl py-1 text-xs divide-y divide-slate-100 animate-in fade-in-50 zoom-in-95 duration-100">
-                  <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/95 sticky top-0 flex items-center justify-between z-10 backdrop-blur-xs">
+                <div className="absolute left-0 right-0 z-50 mt-1 max-h-56 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl py-1 text-xs divide-y divide-slate-100 dark:divide-slate-800 animate-in fade-in-50 zoom-in-95 duration-100">
+                  <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider bg-slate-50/95 dark:bg-slate-800/95 sticky top-0 flex items-center justify-between z-10 backdrop-blur-xs">
                     <span>Standard Subjects ({STANDARD_STUDENT_SUBJECTS.length})</span>
-                    <span className="text-[9px] font-semibold text-indigo-600">A – Z</span>
+                    <span className="text-[9px] font-semibold text-indigo-600 dark:text-indigo-400">A – Z</span>
                   </div>
 
                   <div className="py-0.5">
@@ -535,15 +535,15 @@ export default function StudentDataPage() {
                             type="button"
                             onClick={() => handleSelectSubject(subj)}
                             className={cn(
-                              "w-full text-left px-3 py-2 flex items-center justify-between transition-colors hover:bg-indigo-50/80 hover:text-indigo-900 group",
-                              isSelected ? "bg-indigo-50 font-bold text-indigo-700" : "text-slate-700 font-medium"
+                              "w-full text-left px-3 py-2 flex items-center justify-between transition-colors hover:bg-indigo-50/80 dark:hover:bg-indigo-950/60 hover:text-indigo-900 dark:hover:text-indigo-200 group cursor-pointer",
+                              isSelected ? "bg-indigo-50 dark:bg-indigo-950/80 font-bold text-indigo-700 dark:text-indigo-300" : "text-slate-700 dark:text-slate-200 font-medium"
                             )}
                           >
                             <span>{subj}</span>
                             {isSelected ? (
-                              <Check className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                              <Check className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
                             ) : (
-                              <span className="text-[10px] text-slate-400 font-mono">
+                              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
                                 {STANDARD_SUBJECT_CODES[subj] || ''}
                               </span>
                             )}
@@ -552,9 +552,9 @@ export default function StudentDataPage() {
                       })
                     ) : (
                       <div className="p-3 text-center space-y-1">
-                        <p className="text-slate-600 font-semibold text-xs">Custom Subject</p>
-                        <p className="text-[11px] text-slate-500">
-                          Click &ldquo;Create Subject&rdquo; to use <span className="font-bold text-slate-800">&ldquo;{newSubjName}&rdquo;</span>
+                        <p className="text-slate-600 dark:text-slate-300 font-semibold text-xs">Custom Subject</p>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                          Click &ldquo;Create Subject&rdquo; to use <span className="font-bold text-slate-800 dark:text-slate-200">&ldquo;{newSubjName}&rdquo;</span>
                         </p>
                       </div>
                     )}
@@ -565,7 +565,7 @@ export default function StudentDataPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="subj-code" className="text-xs font-bold text-slate-700">
+                <Label htmlFor="subj-code" className="text-xs font-bold text-slate-700 dark:text-slate-200">
                   Class
                 </Label>
                 <Input
@@ -573,7 +573,7 @@ export default function StudentDataPage() {
                   placeholder="e.g. 1 PUC, 2 PUC"
                   value={newSubjCode}
                   onChange={(e) => setNewSubjCode(e.target.value)}
-                  className="text-xs font-medium"
+                  className="text-xs font-medium bg-slate-50/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
                 />
                 {newSubjCode.trim() && (
                   <div className="flex items-center gap-1.5 mt-1">
@@ -593,7 +593,7 @@ export default function StudentDataPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="subj-expected" className="text-xs font-bold text-slate-700">
+                <Label htmlFor="subj-expected" className="text-xs font-bold text-slate-700 dark:text-slate-200">
                   Student Strength
                 </Label>
                 <Input
@@ -608,7 +608,7 @@ export default function StudentDataPage() {
                       setNewSubjExpected(val);
                     }
                   }}
-                  className="text-xs font-bold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="text-xs font-bold bg-slate-50/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               </div>
             </div>
@@ -619,14 +619,14 @@ export default function StudentDataPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => setIsAddSubjectOpen(false)}
-                className="text-xs h-9"
+                className="text-xs h-9 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 size="sm"
-                className="bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs h-9 px-5"
+                className="bg-[#1E2A5E] hover:bg-[#151D42] dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white font-bold text-xs h-9 px-5 cursor-pointer"
               >
                 Create Subject
               </Button>
@@ -652,16 +652,16 @@ export default function StudentDataPage() {
           if (!open) setViewingSubject(null);
         }}
       >
-        <DialogContent className="sm:max-w-xl bg-white border border-slate-200 max-h-[85vh] flex flex-col">
+        <DialogContent className="sm:max-w-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white max-h-[85vh] flex flex-col">
           <DialogHeader>
             <div className="flex items-center justify-between pr-6">
               <div className="flex items-center gap-2">
-                <div className="p-2 bg-indigo-50 text-indigo-700 rounded-lg">
+                <div className="p-2 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 rounded-lg border border-indigo-100 dark:border-indigo-900/40">
                   <Users className="w-5 h-5" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <DialogTitle className="font-headline text-lg font-bold text-slate-900">
+                    <DialogTitle className="font-headline text-lg font-bold text-slate-900 dark:text-white">
                       {viewingSubject?.name} &bull; Students ({viewingSubject ? getSubjectStudents(viewingSubject.id).length : 0})
                     </DialogTitle>
                     {viewingSubject?.code && (
@@ -678,7 +678,7 @@ export default function StudentDataPage() {
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     Uploaded student roster for {viewingSubject?.name}
                   </p>
                 </div>
@@ -695,7 +695,7 @@ export default function StudentDataPage() {
                       toast({ title: "List Cleared", description: "Cleared student list." });
                     }
                   }}
-                  className="text-xs h-8 text-rose-600 hover:bg-rose-50 border-rose-200"
+                  className="text-xs h-8 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900/60"
                 >
                   Clear List
                 </Button>
@@ -703,10 +703,10 @@ export default function StudentDataPage() {
             </div>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto border border-slate-200 rounded-xl my-2">
+          <div className="flex-1 overflow-y-auto border border-slate-200 dark:border-slate-800 rounded-xl my-2">
             {viewingSubject && getSubjectStudents(viewingSubject.id).length > 0 ? (
               <table className="w-full text-left text-xs">
-                <thead className="sticky top-0 bg-slate-100/90 backdrop-blur-xs border-b border-slate-200 text-slate-600 font-bold uppercase text-[10px]">
+                <thead className="sticky top-0 bg-slate-100/90 dark:bg-slate-800/90 backdrop-blur-xs border-b border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold uppercase text-[10px]">
                   <tr>
                     <th className="py-2.5 px-3 text-center w-12">Sl No</th>
                     <th className="py-2.5 px-3 font-bold">Roll No.</th>
@@ -714,19 +714,19 @@ export default function StudentDataPage() {
                     <th className="py-2.5 px-3 text-center">Section</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium text-slate-700 dark:text-slate-300">
                   {getSubjectStudents(viewingSubject.id).map((std, idx) => (
-                    <tr key={std.id} className="hover:bg-slate-50">
-                      <td className="py-2.5 px-3 text-center text-slate-400 font-bold">{idx + 1}</td>
-                      <td className="py-2.5 px-3 font-mono font-bold text-indigo-700">{std.rollNo}</td>
-                      <td className="py-2.5 px-4 font-bold text-slate-900">{std.name}</td>
+                    <tr key={std.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                      <td className="py-2.5 px-3 text-center text-slate-400 dark:text-slate-500 font-bold">{idx + 1}</td>
+                      <td className="py-2.5 px-3 font-mono font-bold text-indigo-700 dark:text-indigo-400">{std.rollNo}</td>
+                      <td className="py-2.5 px-4 font-bold text-slate-900 dark:text-white">{std.name}</td>
                       <td className="py-2.5 px-3 text-center">{std.section}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             ) : (
-              <div className="p-8 text-center text-xs text-slate-400">
+              <div className="p-8 text-center text-xs text-slate-400 dark:text-slate-500">
                 No student records uploaded yet.
               </div>
             )}
@@ -738,7 +738,7 @@ export default function StudentDataPage() {
               variant="outline"
               size="sm"
               onClick={() => setViewingSubject(null)}
-              className="text-xs h-9"
+              className="text-xs h-9 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200"
             >
               Close
             </Button>
@@ -748,20 +748,20 @@ export default function StudentDataPage() {
 
       {/* Clear All Subjects & Students Confirmation Dialog */}
       <AlertDialog open={isClearConfirmOpen} onOpenChange={setIsClearConfirmOpen}>
-        <AlertDialogContent className="bg-white border border-slate-200 max-w-md">
+        <AlertDialogContent className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 max-w-md text-slate-900 dark:text-white">
           <AlertDialogHeader>
-            <div className="flex items-center gap-2 text-rose-600 mb-1">
+            <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 mb-1">
               <Trash2 className="w-5 h-5" />
-              <AlertDialogTitle className="text-base font-bold text-slate-900">
+              <AlertDialogTitle className="text-base font-bold text-slate-900 dark:text-white">
                 Clear All Subjects & Student Data?
               </AlertDialogTitle>
             </div>
-            <AlertDialogDescription className="text-xs text-slate-600 leading-relaxed">
+            <AlertDialogDescription className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
               This will permanently delete all {subjects.length} subjects and any uploaded student rosters from your workspace, giving you a fresh, empty space to add new subjects. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="text-xs h-8">Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="text-xs h-8 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 clearAllSubjects();

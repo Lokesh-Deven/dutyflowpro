@@ -206,14 +206,14 @@ export default function StudentExaminationCalendarPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 flex flex-col">
       <div className="flex-1 max-w-6xl w-full mx-auto p-3.5 sm:p-6 lg:p-8 space-y-6">
         {/* ========================================================================= */}
         {/* 1. TOP HEADER BAR: Institution & Portal Navigation */}
         {/* ========================================================================= */}
-        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="relative w-10 h-10 rounded-xl overflow-hidden border border-slate-200 bg-white shrink-0 shadow-xs">
+            <div className="relative w-10 h-10 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 shadow-xs">
               <Image
                 src="/Dutyflow Logo.png"
                 alt="DutyFlow Logo"
@@ -224,25 +224,25 @@ export default function StudentExaminationCalendarPage() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-headline font-black text-base sm:text-lg tracking-tight text-slate-900">
-                  Duty<span className="text-indigo-600">Flow</span>
+                <span className="font-headline font-black text-base sm:text-lg tracking-tight text-slate-900 dark:text-white">
+                  Duty<span className="text-indigo-600 dark:text-indigo-400">Flow</span>
                 </span>
                 <Badge
                   variant="outline"
-                  className="bg-indigo-50 text-indigo-700 border-indigo-200 text-[10px] font-bold py-0 h-4.5"
+                  className="bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800 text-[10px] font-bold py-0 h-4.5"
                 >
                   Student Portal
                 </Badge>
                 {session.institutionCode && (
                   <Badge
                     variant="outline"
-                    className="bg-purple-50 text-[#6342e8] border-purple-200 font-mono text-[10px] font-bold py-0 h-4.5"
+                    className="bg-purple-50 dark:bg-purple-950/60 text-[#6342e8] dark:text-purple-300 border-purple-200 dark:border-purple-800 font-mono text-[10px] font-bold py-0 h-4.5"
                   >
                     Code: {session.institutionCode}
                   </Badge>
                 )}
               </div>
-              <p className="text-xs text-slate-500 font-medium truncate max-w-xs sm:max-w-md">
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate max-w-xs sm:max-w-md">
                 {session.institutionName || 'Examination Center'}
               </p>
             </div>
@@ -251,23 +251,23 @@ export default function StudentExaminationCalendarPage() {
           {/* Action Controls & Navigation Switcher */}
           <div className="flex items-center gap-2 self-end sm:self-auto">
             {/* Navigation Tabs */}
-            <div className="bg-slate-100 p-1 rounded-xl flex items-center border border-slate-200/80">
+            <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl flex items-center border border-slate-200/80 dark:border-slate-700">
               <Link
                 href="/student/my-examination"
-                className="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors flex items-center gap-1.5"
+                className="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex items-center gap-1.5"
               >
                 <BookOpen className="w-3.5 h-3.5" />
                 <span className="hidden xs:inline">My Slip</span>
               </Link>
               <Link
                 href="/student/examination-timetable"
-                className="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors flex items-center gap-1.5"
+                className="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex items-center gap-1.5"
               >
                 <CalendarClock className="w-3.5 h-3.5" />
                 <span>Timetable</span>
               </Link>
-              <div className="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-indigo-700 shadow-xs flex items-center gap-1.5">
-                <CalendarRange className="w-3.5 h-3.5 text-indigo-600" />
+              <div className="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 shadow-xs flex items-center gap-1.5">
+                <CalendarRange className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                 <span className="hidden xs:inline">Calendar</span>
               </div>
             </div>
@@ -278,7 +278,7 @@ export default function StudentExaminationCalendarPage() {
               onClick={handleManualRefresh}
               disabled={isRefreshing}
               title="Refresh calendar schedules"
-              className="h-8.5 w-8.5 p-0 text-slate-600 border-slate-200 hover:text-indigo-700 hover:bg-indigo-50 rounded-xl"
+              className="h-8.5 w-8.5 p-0 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:text-indigo-700 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-slate-800 rounded-xl"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
             </Button>
@@ -287,7 +287,7 @@ export default function StudentExaminationCalendarPage() {
               size="sm"
               variant="ghost"
               onClick={handleLogout}
-              className="h-8.5 text-xs font-bold px-3 gap-1.5 text-rose-600 hover:bg-rose-50 hover:text-rose-700 rounded-xl"
+              className="h-8.5 text-xs font-bold px-3 gap-1.5 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-700 dark:hover:text-rose-300 rounded-xl"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span className="hidden xs:inline">Log Out</span>
@@ -296,24 +296,24 @@ export default function StudentExaminationCalendarPage() {
         </header>
 
         {/* ========================================================================= */}
-        {/* 2. PROMINENT STUDENT CALENDAR NOTICE (Prompt Requirement #5) */}
+        {/* 2. PROMINENT STUDENT CALENDAR NOTICE */}
         {/* ========================================================================= */}
-        <div className="bg-gradient-to-r from-blue-50 via-indigo-50/70 to-blue-50 border-2 border-blue-200/90 rounded-2xl p-4 sm:p-5 shadow-xs relative overflow-hidden">
+        <div className="bg-gradient-to-r from-blue-50 via-indigo-50/70 to-blue-50 dark:from-blue-950/40 dark:via-indigo-950/30 dark:to-blue-950/40 border-2 border-blue-200/90 dark:border-blue-800/80 rounded-2xl p-4 sm:p-5 shadow-xs relative overflow-hidden">
           <div className="flex items-start gap-3.5">
-            <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-sm mt-0.5">
+            <div className="w-9 h-9 rounded-xl bg-blue-600 dark:bg-blue-500 text-white flex items-center justify-center shrink-0 shadow-sm mt-0.5">
               <Info className="w-5 h-5" />
             </div>
             <div className="space-y-1">
-              <h2 className="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-2">
+              <h2 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base flex items-center gap-2">
                 Official Examination Schedule Notice
-                <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-[10px] font-bold py-0 h-4">
+                <Badge className="bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800 text-[10px] font-bold py-0 h-4">
                   Institutional Calendar
                 </Badge>
               </h2>
-              <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">
-                Please note that the examination dates displayed in <strong className="text-blue-700 font-black">BLUE</strong> are provisional (tentative). Final examination dates will be announced separately and updated in this calendar.
+              <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
+                Please note that the examination dates displayed in <strong className="text-blue-700 dark:text-blue-400 font-black">BLUE</strong> are provisional (tentative). Final examination dates will be announced separately and updated in this calendar.
               </p>
-              <div className="flex items-center gap-4 text-xs font-semibold text-slate-600 pt-1 flex-wrap">
+              <div className="flex items-center gap-4 text-xs font-semibold text-slate-600 dark:text-slate-400 pt-1 flex-wrap">
                 <span className="inline-flex items-center gap-1.5">
                   <span className="w-3 h-3 rounded-full bg-blue-600 inline-block shadow-xs" />
                   <strong>Blue:</strong> Tentative Dates
@@ -333,11 +333,11 @@ export default function StudentExaminationCalendarPage() {
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-indigo-600" />
+              <h1 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                 Academic Year Examination Calendar
               </h1>
-              <p className="text-xs text-slate-500 font-medium">
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                 View scheduled dates, tests, mid-term, and preparatory exam slots published by the administration.
               </p>
             </div>
@@ -351,31 +351,31 @@ export default function StudentExaminationCalendarPage() {
         </section>
 
         {/* ========================================================================= */}
-        {/* 4. UPCOMING EXAMINATIONS SECTION (Prompt Requirement #5) */}
+        {/* 4. UPCOMING EXAMINATIONS SECTION */}
         {/* ========================================================================= */}
         <section className="space-y-3 pt-2">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
-                <Award className="w-5 h-5 text-indigo-600" />
+              <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+                <Award className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                 Upcoming Published Examinations
               </h2>
-              <p className="text-xs text-slate-500 font-medium">
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                 Detailed timeline and total marks breakdown for each announced examination.
               </p>
             </div>
-            <Badge variant="outline" className="font-mono text-xs font-bold text-slate-700 bg-white">
+            <Badge variant="outline" className="font-mono text-xs font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
               {upcomingExaminations.length} Active {upcomingExaminations.length === 1 ? 'Exam' : 'Exams'}
             </Badge>
           </div>
 
           {upcomingExaminations.length === 0 ? (
-            <Card className="bg-white border border-slate-200 rounded-2xl p-8 text-center shadow-xs">
-              <div className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200 text-slate-400 flex items-center justify-center mx-auto mb-3">
+            <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-8 text-center shadow-xs">
+              <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 flex items-center justify-center mx-auto mb-3">
                 <CalendarRange className="w-6 h-6" />
               </div>
-              <h3 className="text-sm font-bold text-slate-800">No Examinations Published Yet</h3>
-              <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+              <h3 className="text-sm font-bold text-slate-800 dark:text-white">No Examinations Published Yet</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
                 Your institution has not published any tentative or final examination schedules yet. Please check back later or refresh.
               </p>
             </Card>
@@ -391,8 +391,8 @@ export default function StudentExaminationCalendarPage() {
                     key={`upcoming-${exam.slot_number}`}
                     className={`border rounded-2xl shadow-xs transition-all duration-200 overflow-hidden relative ${
                       isFinal
-                        ? 'bg-gradient-to-br from-emerald-50/50 via-white to-white border-emerald-200/90 hover:border-emerald-300'
-                        : 'bg-gradient-to-br from-blue-50/50 via-white to-white border-blue-200/90 hover:border-blue-300'
+                        ? 'bg-gradient-to-br from-emerald-50/50 via-white to-white dark:from-emerald-950/30 dark:via-slate-900 dark:to-slate-900 border-emerald-200/90 dark:border-emerald-800/70 hover:border-emerald-300 dark:hover:border-emerald-700'
+                        : 'bg-gradient-to-br from-blue-50/50 via-white to-white dark:from-blue-950/30 dark:via-slate-900 dark:to-slate-900 border-blue-200/90 dark:border-blue-800/70 hover:border-blue-300 dark:hover:border-blue-700'
                     }`}
                   >
                     <div
@@ -402,7 +402,7 @@ export default function StudentExaminationCalendarPage() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="space-y-0.5">
                           <div className="flex items-center gap-2">
-                            <span className="text-[11px] font-mono font-bold text-slate-400">
+                            <span className="text-[11px] font-mono font-bold text-slate-400 dark:text-slate-500">
                               Slot #{exam.slot_number}
                             </span>
                             {isFinal ? (
@@ -417,44 +417,44 @@ export default function StudentExaminationCalendarPage() {
                               </Badge>
                             )}
                           </div>
-                          <h3 className="font-headline text-base sm:text-lg font-black text-slate-900 pt-0.5">
+                          <h3 className="font-headline text-base sm:text-lg font-black text-slate-900 dark:text-white pt-0.5">
                             {exam.exam_name}
                           </h3>
                         </div>
 
                         {/* Total Marks badge */}
-                        <div className="text-right shrink-0 bg-slate-50 border border-slate-200/80 px-2.5 py-1.5 rounded-xl">
-                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                        <div className="text-right shrink-0 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 px-2.5 py-1.5 rounded-xl">
+                          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
                             Total Marks
                           </span>
-                          <span className="font-mono text-sm sm:text-base font-black text-slate-900">
+                          <span className="font-mono text-sm sm:text-base font-black text-slate-900 dark:text-white">
                             {exam.total_marks}
                           </span>
                         </div>
                       </div>
 
                       {/* Dates and Duration */}
-                      <div className="bg-white/80 border border-slate-200/80 rounded-xl p-3 space-y-1.5">
-                        <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
-                          <span className="flex items-center gap-1.5 text-slate-500">
+                      <div className="bg-white/80 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/80 rounded-xl p-3 space-y-1.5">
+                        <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
+                          <span className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
                             <Calendar className="w-3.5 h-3.5 text-slate-400" />
                             Date Period:
                           </span>
-                          <span className="font-bold text-slate-900 text-right">
+                          <span className="font-bold text-slate-900 dark:text-white text-right">
                             {dateRangeText}
                           </span>
                         </div>
 
                         {duration && (
-                          <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100">
+                          <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-100 dark:border-slate-700/60">
                             <span>Duration:</span>
-                            <span className="font-semibold text-slate-700">{duration}</span>
+                            <span className="font-semibold text-slate-700 dark:text-slate-300">{duration}</span>
                           </div>
                         )}
 
                         {/* History note if final dates replaced tentative dates */}
                         {isFinal && exam.tentative_start_date && (
-                          <div className="mt-2 pt-2 border-t border-slate-100 text-[11px] text-emerald-800 bg-emerald-50/60 rounded-lg p-2 font-medium">
+                          <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700/60 text-[11px] text-emerald-800 dark:text-emerald-300 bg-emerald-50/60 dark:bg-emerald-950/40 rounded-lg p-2 font-medium">
                             <span className="font-bold">Historical Note:</span> Previously scheduled as tentative from {formatDateRange(exam.tentative_start_date, exam.tentative_end_date || undefined)}. Now confirmed dates.
                           </div>
                         )}

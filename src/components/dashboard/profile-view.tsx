@@ -325,7 +325,7 @@ export function ProfileView() {
                 Active
               </Badge>
             </div>
-            <CardDescription className="text-xs text-slate-500">Summary of generated examination documents and reports</CardDescription>
+            <CardDescription className="text-xs text-slate-500 dark:text-slate-400">Summary of generated examination documents and reports</CardDescription>
           </CardHeader>
 
           <CardContent className="space-y-3 pt-1">
@@ -333,33 +333,33 @@ export function ProfileView() {
             <div className="grid grid-cols-3 gap-2">
               {/* Activity 1: Master Rosters */}
               <div className="p-2.5 rounded-xl bg-purple-50/50 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900/40 text-center space-y-1">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 block truncate">Master Roster</span>
-                <div className="text-base font-black font-headline text-[#6342e8]">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 block truncate">Master Roster</span>
+                <div className="text-base font-black font-headline text-[#6342e8] dark:text-purple-400">
                   {masterRosters}
                 </div>
-                <span className="text-[9px] font-medium text-slate-400 block tracking-tight">
+                <span className="text-[9px] font-medium text-slate-400 dark:text-slate-500 block tracking-tight">
                   Generated
                 </span>
               </div>
 
               {/* Activity 2: Individual Profiles */}
               <div className="p-2.5 rounded-xl bg-purple-50/50 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900/40 text-center space-y-1">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 block truncate">Indiv. Slips</span>
-                <div className="text-base font-black font-headline text-[#6342e8]">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 block truncate">Indiv. Slips</span>
+                <div className="text-base font-black font-headline text-[#6342e8] dark:text-purple-400">
                   {individualProfiles}
                 </div>
-                <span className="text-[9px] font-medium text-slate-400 block tracking-tight">
+                <span className="text-[9px] font-medium text-slate-400 dark:text-slate-500 block tracking-tight">
                   Generated
                 </span>
               </div>
 
               {/* Activity 3: Day-wise Profiles */}
               <div className="p-2.5 rounded-xl bg-amber-50/50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/40 text-center space-y-1">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 block truncate">Day-wise</span>
-                <div className="text-base font-black font-headline text-[#f59e0b]">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 block truncate">Day-wise</span>
+                <div className="text-base font-black font-headline text-[#f59e0b] dark:text-amber-400">
                   {daywiseProfiles}
                 </div>
-                <span className="text-[9px] font-medium text-slate-400 block tracking-tight">
+                <span className="text-[9px] font-medium text-slate-400 dark:text-slate-500 block tracking-tight">
                   Generated
                 </span>
               </div>
@@ -369,12 +369,12 @@ export function ProfileView() {
             <div className="p-3.5 rounded-xl bg-gradient-to-r from-purple-50/70 to-indigo-50/70 dark:from-purple-950/30 dark:to-indigo-950/30 border border-purple-100 dark:border-purple-900/40 flex items-center justify-between">
               <div className="space-y-0.5">
                 <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                  <Download className="h-3.5 w-3.5 text-[#6342e8]" />
+                  <Download className="h-3.5 w-3.5 text-[#6342e8] dark:text-purple-400" />
                   Total Downloads Generated
                 </span>
-                <p className="text-[11px] text-slate-500">PDF sheets, duty slips & reports</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">PDF sheets, duty slips & reports</p>
               </div>
-              <div className="text-xl font-black font-headline text-[#6342e8]">
+              <div className="text-xl font-black font-headline text-[#6342e8] dark:text-purple-400">
                 {totalDownloads}
               </div>
             </div>
@@ -385,7 +385,7 @@ export function ProfileView() {
       {/* ========================================================================= */}
       {/* 3. HELP & SUPPORT CARD */}
       {/* ========================================================================= */}
-      <Card className="border border-purple-100 dark:border-purple-900/50 rounded-2xl shadow-xs overflow-hidden bg-white dark:bg-slate-900">
+      <Card className="border border-purple-100 dark:border-slate-800 rounded-2xl shadow-xs overflow-hidden bg-white dark:bg-slate-900">
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2 text-[#6342e8]">
             <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-950/50">
@@ -393,7 +393,7 @@ export function ProfileView() {
             </div>
             <CardTitle className="text-base font-headline font-bold text-slate-900 dark:text-white">Help & Support</CardTitle>
           </div>
-          <CardDescription className="text-xs text-slate-500">
+          <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
             Have questions about DutyFlow, feature suggestions, or need technical assistance? Reach out directly.
           </CardDescription>
         </CardHeader>
@@ -403,12 +403,12 @@ export function ProfileView() {
 
             {/* Email Contact Card */}
             <div className="p-4 rounded-xl bg-slate-50/50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-2">
-              <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
-                <Mail className="h-4 w-4 text-[#6342e8]" />
+              <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                <Mail className="h-4 w-4 text-[#6342e8] dark:text-purple-400" />
                 <span>Support & Admin Email</span>
               </div>
               <p className="text-sm font-bold text-slate-900 dark:text-white select-all">{supportEmail}</p>
-              <Button asChild variant="outline" size="sm" className="w-full text-xs font-semibold h-8 border-purple-200 dark:border-purple-800 text-[#6342e8] hover:bg-purple-50/50 rounded-lg">
+              <Button asChild variant="outline" size="sm" className="w-full text-xs font-semibold h-8 border-purple-200 dark:border-purple-800 text-[#6342e8] dark:text-purple-300 hover:bg-purple-50/50 dark:hover:bg-purple-950/40 rounded-lg">
                 <a href={`mailto:${supportEmail}?subject=DutyFlow%20Support%20Request%20-%20${encodeURIComponent(institutionName)}`}>
                   <Mail className="mr-1.5 h-3.5 w-3.5" />
                   Send Email ({supportEmail})
@@ -418,8 +418,8 @@ export function ProfileView() {
 
             {/* WhatsApp Contact Card */}
             <div className="p-4 rounded-xl bg-slate-50/50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-2">
-              <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
-                <MessageCircle className="h-4 w-4 text-emerald-600" />
+              <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                <MessageCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                 <span>WhatsApp Helpline</span>
               </div>
               <p className="text-sm font-bold text-slate-900 dark:text-white select-all">{whatsappDisplay}</p>
@@ -439,7 +439,7 @@ export function ProfileView() {
       {/* 4. LOGOUT ACTION BUTTON */}
       {/* ========================================================================= */}
       <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-200/70 dark:border-slate-800">
-        <p className="text-xs text-slate-500 text-center sm:text-left">
+        <p className="text-xs text-slate-500 dark:text-slate-400 text-center sm:text-left">
           Signed in as <strong className="text-slate-800 dark:text-slate-200">{email}</strong>
         </p>
 

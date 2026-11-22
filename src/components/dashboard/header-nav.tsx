@@ -11,8 +11,8 @@ export function HeaderNav() {
   const { clearCurrentAllotment } = useAllotment();
 
   const items = [
-    { href: '/dashboard/examinations', label: 'Duty Allotment', icon: Plus, isAction: true },
-    { href: '/dashboard/saved', label: 'Saved Allotments', icon: Bookmark },
+    { href: '/dashboard/examinations', label: 'Duty Allocation', icon: Plus, isAction: true },
+    { href: '/dashboard/saved', label: 'Saved Allocations', icon: Bookmark },
     { href: '/dashboard/schedule', label: 'Day-wise Schedule', icon: CalendarDays },
     { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart2 },
     { href: '/dashboard/instructions', label: 'Instructions', icon: ListChecks },
@@ -36,7 +36,7 @@ export function HeaderNav() {
               key={item.href}
               href={item.href}
               onClick={() => {
-                if (item.label === 'Duty Allotment' || item.label === 'New Allotment') {
+                if (item.label === 'Duty Allocation' || item.label === 'Duty Allotment' || item.label === 'New Allotment' || item.label === 'New Allocation') {
                   clearCurrentAllotment();
                 }
               }}

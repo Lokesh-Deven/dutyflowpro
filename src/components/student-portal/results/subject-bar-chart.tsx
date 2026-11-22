@@ -61,11 +61,11 @@ export function SubjectBarChart({ subjects, classAverage = 80 }: SubjectBarChart
     <div className="w-full h-72 sm:h-80">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 20, right: 15, left: -15, bottom: 25 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#64748b" strokeOpacity={0.2} vertical={false} />
           <XAxis
             dataKey="shortName"
-            tick={{ fill: '#64748b', fontSize: 11, fontWeight: 600 }}
-            axisLine={{ stroke: '#cbd5e1' }}
+            tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 600 }}
+            axisLine={{ stroke: '#94a3b8', strokeOpacity: 0.3 }}
             tickLine={false}
             interval={0}
             angle={-15}
@@ -74,8 +74,8 @@ export function SubjectBarChart({ subjects, classAverage = 80 }: SubjectBarChart
           <YAxis
             domain={[0, 100]}
             ticks={[0, 20, 35, 50, 70, 85, 100]}
-            tick={{ fill: '#64748b', fontSize: 11 }}
-            axisLine={{ stroke: '#cbd5e1' }}
+            tick={{ fill: '#94a3b8', fontSize: 11 }}
+            axisLine={{ stroke: '#94a3b8', strokeOpacity: 0.3 }}
             tickLine={false}
           />
           <Tooltip content={<CustomTooltip />} />

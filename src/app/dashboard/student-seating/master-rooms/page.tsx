@@ -211,7 +211,7 @@ export default function MasterRoomsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2.5">
-              <div className="p-2 bg-indigo-50 text-indigo-700 rounded-lg">
+              <div className="p-2 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 rounded-lg">
                 <DoorOpen className="w-6 h-6" />
               </div>
               <div>
@@ -233,7 +233,7 @@ export default function MasterRoomsPage() {
                     </Badge>
                   ) : null}
                 </div>
-                <p className="text-xs text-slate-500 font-medium">
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                   Create and manage examination rooms.
                 </p>
               </div>
@@ -270,21 +270,21 @@ export default function MasterRoomsPage() {
       </div>
 
       {/* Rooms Table */}
-      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs">
-        <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-          <div className="font-headline font-bold text-sm text-slate-800">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden shadow-xs">
+        <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <div className="font-headline font-bold text-sm text-slate-800 dark:text-slate-100">
             All Configured Rooms ({rooms.length})
           </div>
-          <span className="text-xs text-slate-400">
+          <span className="text-xs text-slate-400 dark:text-slate-500">
             Capacities calculated as: 2&times; (Total&times;2), 3&times; (Total&times;3)
           </span>
         </div>
 
         {rooms.length === 0 ? (
           <div className="p-10 text-center space-y-3">
-            <DoorOpen className="w-10 h-10 text-slate-300 mx-auto" />
-            <div className="text-sm font-bold text-slate-700">No Examination Rooms Configured</div>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+            <DoorOpen className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto" />
+            <div className="text-sm font-bold text-slate-700 dark:text-slate-200">No Examination Rooms Configured</div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
               Click &ldquo;+ Add Room&rdquo; to add your examination halls and specify left and right benches.
             </p>
             <Button
@@ -309,54 +309,54 @@ export default function MasterRoomsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase text-[10px] tracking-wider">
+                <tr className="bg-slate-50/80 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-bold uppercase text-[10px] tracking-wider">
                   <th className="py-3 px-3 text-center w-12">Sl No</th>
                   <th className="py-3 px-4">Room No.</th>
                   <th className="py-3 px-3 text-center">Left Benches</th>
                   <th className="py-3 px-3 text-center">Middle Benches</th>
                   <th className="py-3 px-3 text-center">Right Benches</th>
-                  <th className="py-3 px-3 text-center font-black text-slate-800">Total Benches</th>
-                  <th className="py-3 px-3 text-center text-purple-700 bg-purple-50/50">Capacity — 2/Bench</th>
-                  <th className="py-3 px-3 text-center text-blue-700 bg-blue-50/50">Capacity — 3/Bench</th>
+                  <th className="py-3 px-3 text-center font-black text-slate-800 dark:text-slate-100">Total Benches</th>
+                  <th className="py-3 px-3 text-center text-purple-700 dark:text-purple-300 bg-purple-50/50 dark:bg-purple-950/20">Capacity — 2/Bench</th>
+                  <th className="py-3 px-3 text-center text-blue-700 dark:text-blue-300 bg-blue-50/50 dark:bg-blue-950/20">Capacity — 3/Bench</th>
                   <th className="py-3 px-3 text-center">Status</th>
                   <th className="py-3 px-4 text-center w-28">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70 font-medium text-slate-700 dark:text-slate-200">
                 {rooms.map((room, idx) => {
                   const inUse = isRoomInUse(room.id);
                   return (
-                    <tr key={room.id} className="hover:bg-slate-50/60 transition-colors">
-                      <td className="py-3 px-3 text-center text-slate-400 font-bold">
+                    <tr key={room.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                      <td className="py-3 px-3 text-center text-slate-400 dark:text-slate-500 font-bold">
                         {idx + 1}
                       </td>
-                      <td className="py-3 px-4 font-headline font-black text-xs text-slate-900">
+                      <td className="py-3 px-4 font-headline font-black text-xs text-slate-900 dark:text-white">
                         {room.roomNo}
                       </td>
                       <td className="py-3 px-3 text-center">{room.leftBenches}</td>
                       <td className="py-3 px-3 text-center">
                         {room.middleBenches && room.middleBenches > 0 ? (
-                          <span className="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200/60">
+                          <span className="font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded-md border border-indigo-200/60 dark:border-indigo-800/60">
                             {room.middleBenches}
                           </span>
                         ) : (
-                          <span className="text-slate-400 italic">Nil</span>
+                          <span className="text-slate-400 dark:text-slate-500 italic">Nil</span>
                         )}
                       </td>
                       <td className="py-3 px-3 text-center">{room.rightBenches}</td>
-                      <td className="py-3 px-3 text-center font-bold text-slate-900 bg-slate-50/30">
+                      <td className="py-3 px-3 text-center font-bold text-slate-900 dark:text-white bg-slate-50/30 dark:bg-slate-800/30">
                         {room.totalBenches}
                       </td>
-                      <td className="py-3 px-3 text-center font-bold text-purple-700 bg-purple-50/30">
+                      <td className="py-3 px-3 text-center font-bold text-purple-700 dark:text-purple-300 bg-purple-50/30 dark:bg-purple-950/20">
                         {room.capacityTwo}
                       </td>
-                      <td className="py-3 px-3 text-center font-bold text-blue-700 bg-blue-50/30">
+                      <td className="py-3 px-3 text-center font-bold text-blue-700 dark:text-blue-300 bg-blue-50/30 dark:bg-blue-950/20">
                         {room.capacityThree}
                       </td>
                       <td className="py-3 px-3 text-center">
                         <Badge
                           variant="outline"
-                          className={inUse ? "bg-purple-50 text-purple-700 border-purple-200 text-[10px]" : "bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px]"}
+                          className={inUse ? "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800 text-[10px]" : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 text-[10px]"}
                         >
                           {inUse ? "In Allocation" : "Available"}
                         </Badge>
@@ -375,8 +375,8 @@ export default function MasterRoomsPage() {
                             className={cn(
                               "h-7 w-7",
                               isRoomsLocked
-                                ? "text-slate-300 cursor-not-allowed"
-                                : "text-slate-500 hover:text-indigo-600 hover:bg-indigo-50"
+                                ? "text-slate-300 dark:text-slate-600 cursor-not-allowed"
+                                : "text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
                             )}
                             title={isRoomsLocked ? "Saved rooms are locked" : "Edit Room"}
                           >
@@ -394,8 +394,8 @@ export default function MasterRoomsPage() {
                             className={cn(
                               "h-7 w-7",
                               isRoomsLocked
-                                ? "text-slate-300 cursor-not-allowed"
-                                : "text-slate-400 hover:text-rose-600 hover:bg-rose-50"
+                                ? "text-slate-300 dark:text-slate-600 cursor-not-allowed"
+                                : "text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
                             )}
                             title={isRoomsLocked ? "Saved rooms are locked" : "Delete Room"}
                           >
@@ -408,27 +408,27 @@ export default function MasterRoomsPage() {
                 })}
               </tbody>
               {rooms.length > 0 && (
-                <tfoot className="border-t-2 border-slate-300 bg-slate-100/90 font-bold text-slate-800">
+                <tfoot className="border-t-2 border-slate-300 dark:border-slate-700 bg-slate-100/90 dark:bg-slate-800/90 font-bold text-slate-800 dark:text-slate-100">
                   <tr>
-                    <td colSpan={2} className="py-3 px-4 font-headline font-black text-xs text-slate-900 tracking-wide uppercase">
+                    <td colSpan={2} className="py-3 px-4 font-headline font-black text-xs text-slate-900 dark:text-white tracking-wide uppercase">
                       Total ({rooms.length} Rooms)
                     </td>
-                    <td className="py-3 px-3 text-center font-bold text-slate-800">
+                    <td className="py-3 px-3 text-center font-bold text-slate-800 dark:text-slate-200">
                       {totals.leftBenches}
                     </td>
-                    <td className="py-3 px-3 text-center font-bold text-slate-800">
+                    <td className="py-3 px-3 text-center font-bold text-slate-800 dark:text-slate-200">
                       {totals.middleBenches > 0 ? totals.middleBenches : '—'}
                     </td>
-                    <td className="py-3 px-3 text-center font-bold text-slate-800">
+                    <td className="py-3 px-3 text-center font-bold text-slate-800 dark:text-slate-200">
                       {totals.rightBenches}
                     </td>
-                    <td className="py-3 px-3 text-center font-black text-slate-950 bg-slate-200/70 text-xs">
+                    <td className="py-3 px-3 text-center font-black text-slate-950 dark:text-white bg-slate-200/70 dark:bg-slate-700/60 text-xs">
                       {totals.totalBenches}
                     </td>
-                    <td className="py-3 px-3 text-center font-black text-purple-900 bg-purple-100/70 text-xs">
+                    <td className="py-3 px-3 text-center font-black text-purple-900 dark:text-purple-200 bg-purple-100/70 dark:bg-purple-950/60 text-xs">
                       {totals.capacityTwo}
                     </td>
-                    <td className="py-3 px-3 text-center font-black text-blue-900 bg-blue-100/70 text-xs">
+                    <td className="py-3 px-3 text-center font-black text-blue-900 dark:text-blue-200 bg-blue-100/70 dark:bg-blue-950/60 text-xs">
                       {totals.capacityThree}
                     </td>
                     <td className="py-3 px-3 text-center text-slate-400 font-normal">—</td>
@@ -442,77 +442,77 @@ export default function MasterRoomsPage() {
 
         {/* Table Footer Bar & Totals Summary */}
         {rooms.length > 0 ? (
-          <div className="border-t border-slate-200 bg-slate-50/70 p-4">
+          <div className="border-t border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/60 p-4">
             {/* Total Metric Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3.5">
               {/* Total Rooms Card (replaced Total Benches) */}
-              <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-2xs relative overflow-hidden">
-                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-lg p-3 shadow-2xs relative overflow-hidden">
+                <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Total Rooms
                 </div>
-                <div className="text-2xl font-black text-slate-900 mt-0.5">
+                <div className="text-2xl font-black text-slate-900 dark:text-white mt-0.5">
                   {rooms.length}
                 </div>
-                <div className="text-[11px] text-slate-500 font-medium mt-0.5">
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">
                   {rooms.length} Active Examination {rooms.length === 1 ? 'Hall' : 'Halls'}
                 </div>
               </div>
 
               {/* Total Benches Card (replaced Capacity 1/Bench) */}
-              <div className="bg-white border border-indigo-200 rounded-lg p-3 shadow-2xs relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-12 h-12 bg-indigo-50 rounded-bl-full pointer-events-none -mr-2 -mt-2" />
-                <div className="text-[10px] font-bold text-indigo-700 uppercase tracking-wider flex items-center justify-between">
+              <div className="bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-900/50 rounded-lg p-3 shadow-2xs relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-12 h-12 bg-indigo-50 dark:bg-indigo-950/30 rounded-bl-full pointer-events-none -mr-2 -mt-2" />
+                <div className="text-[10px] font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider flex items-center justify-between">
                   <span>Total Benches</span>
                 </div>
-                <div className="text-2xl font-black text-indigo-900 mt-0.5">
+                <div className="text-2xl font-black text-indigo-900 dark:text-indigo-100 mt-0.5">
                   {totals.totalBenches}
                 </div>
-                <div className="text-[11px] text-indigo-600 font-medium mt-0.5">
+                <div className="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium mt-0.5">
                   {totals.leftBenches} Left{totals.middleBenches > 0 ? ` + ${totals.middleBenches} Middle` : ''} + {totals.rightBenches} Right
                 </div>
               </div>
 
               {/* 2/Bench Capacity Card */}
-              <div className="bg-white border border-purple-200 rounded-lg p-3 shadow-2xs relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-12 h-12 bg-purple-50 rounded-bl-full pointer-events-none -mr-2 -mt-2" />
-                <div className="text-[10px] font-bold text-purple-700 uppercase tracking-wider flex items-center justify-between">
+              <div className="bg-white dark:bg-slate-900 border border-purple-200 dark:border-purple-900/50 rounded-lg p-3 shadow-2xs relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-12 h-12 bg-purple-50 dark:bg-purple-950/30 rounded-bl-full pointer-events-none -mr-2 -mt-2" />
+                <div className="text-[10px] font-bold text-purple-700 dark:text-purple-400 uppercase tracking-wider flex items-center justify-between">
                   <span>Capacity (2/Bench)</span>
-                  <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 text-[9px] px-1 py-0 h-4">
+                  <Badge variant="outline" className="bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800 text-[9px] px-1 py-0 h-4">
                     2&times;
                   </Badge>
                 </div>
-                <div className="text-2xl font-black text-purple-900 mt-0.5">
+                <div className="text-2xl font-black text-purple-900 dark:text-purple-100 mt-0.5">
                   {totals.capacityTwo}
                 </div>
-                <div className="text-[11px] text-purple-600 font-medium mt-0.5">
+                <div className="text-[11px] text-purple-600 dark:text-purple-400 font-medium mt-0.5">
                   Max students at 2 per bench
                 </div>
               </div>
 
               {/* 3/Bench Capacity Card */}
-              <div className="bg-white border border-blue-200 rounded-lg p-3 shadow-2xs relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-12 h-12 bg-blue-50 rounded-bl-full pointer-events-none -mr-2 -mt-2" />
-                <div className="text-[10px] font-bold text-blue-700 uppercase tracking-wider flex items-center justify-between">
+              <div className="bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-900/50 rounded-lg p-3 shadow-2xs relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-12 h-12 bg-blue-50 dark:bg-blue-950/30 rounded-bl-full pointer-events-none -mr-2 -mt-2" />
+                <div className="text-[10px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider flex items-center justify-between">
                   <span>Capacity (3/Bench)</span>
-                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-[9px] px-1 py-0 h-4">
+                  <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800 text-[9px] px-1 py-0 h-4">
                     3&times;
                   </Badge>
                 </div>
-                <div className="text-2xl font-black text-blue-900 mt-0.5">
+                <div className="text-2xl font-black text-blue-900 dark:text-blue-100 mt-0.5">
                   {totals.capacityThree}
                 </div>
-                <div className="text-[11px] text-blue-600 font-medium mt-0.5">
+                <div className="text-[11px] text-blue-600 dark:text-blue-400 font-medium mt-0.5">
                   Max students at 3 per bench
                 </div>
               </div>
             </div>
 
             {/* Bottom Actions Row */}
-            <div className="pt-2 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-              <div className="text-slate-500 font-medium flex items-center gap-1.5">
-                <span>Total Configured Rooms: <strong className="text-slate-800">{rooms.length}</strong></span>
+            <div className="pt-2 border-t border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+              <div className="text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1.5">
+                <span>Total Configured Rooms: <strong className="text-slate-800 dark:text-slate-100">{rooms.length}</strong></span>
                 {isRoomsLocked && (
-                  <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-300 text-[10px] font-bold gap-1 ml-2">
+                  <Badge variant="outline" className="bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800 text-[10px] font-bold gap-1 ml-2">
                     <Lock className="w-3 h-3 text-amber-600" /> Locked
                   </Badge>
                 )}
@@ -524,7 +524,7 @@ export default function MasterRoomsPage() {
                   variant="outline"
                   onClick={() => setIsClearConfirmOpen(true)}
                   disabled={rooms.length === 0 || isRoomsLocked || isSaving}
-                  className="h-8 px-3 text-xs font-bold rounded-lg border-rose-200 text-rose-700 hover:bg-rose-50 hover:text-rose-800 transition-all gap-1.5 shadow-2xs disabled:opacity-50"
+                  className="h-8 px-3 text-xs font-bold rounded-lg border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-800 transition-all gap-1.5 shadow-2xs disabled:opacity-50"
                   title={isRoomsLocked ? "Unlock rooms before clearing" : "Clear all configured rooms"}
                 >
                   <Trash2 className="w-3.5 h-3.5 text-rose-600" />
@@ -539,8 +539,8 @@ export default function MasterRoomsPage() {
                   className={cn(
                     "h-8 px-3 text-xs font-bold rounded-lg transition-all gap-1.5 shadow-2xs",
                     isRoomsLocked
-                      ? "border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 font-bold"
-                      : "border-slate-300 text-slate-700 hover:bg-slate-50 font-bold"
+                      ? "border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-950/60 font-bold"
+                      : "border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold"
                   )}
                   title={isRoomsLocked ? "Click to unlock saved rooms" : "Lock the saved rooms against modifications"}
                 >
@@ -554,7 +554,7 @@ export default function MasterRoomsPage() {
                     </>
                   ) : (
                     <>
-                      <Lock className="w-3.5 h-3.5 text-slate-600" />
+                      <Lock className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />
                       <span>Lock the Saved Room</span>
                     </>
                   )}
@@ -578,7 +578,7 @@ export default function MasterRoomsPage() {
             </div>
           </div>
         ) : (
-          <div className="p-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+          <div className="p-3.5 bg-slate-50 dark:bg-slate-900/60 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
             <span>No rooms configured yet.</span>
           </div>
         )}
@@ -600,17 +600,17 @@ export default function MasterRoomsPage() {
         open={isClearConfirmOpen}
         onOpenChange={setIsClearConfirmOpen}
       >
-        <AlertDialogContent className="bg-white border border-slate-200">
+        <AlertDialogContent className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white">
           <AlertDialogHeader>
             <div className="flex items-center gap-2.5 mb-1">
-              <div className="p-2 bg-rose-50 text-rose-600 rounded-lg">
+              <div className="p-2 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 rounded-lg">
                 <AlertTriangle className="w-5 h-5" />
               </div>
-              <AlertDialogTitle className="font-headline text-lg font-bold text-slate-900">
+              <AlertDialogTitle className="font-headline text-lg font-bold text-slate-900 dark:text-white">
                 Clear All Examination Rooms?
               </AlertDialogTitle>
             </div>
-            <AlertDialogDescription className="text-xs text-slate-600 leading-relaxed">
+            <AlertDialogDescription className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
               Are you sure you want to clear all <strong>{rooms.length}</strong> configured examination rooms? This will remove all rooms and their bench configurations from the system. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -631,17 +631,17 @@ export default function MasterRoomsPage() {
         open={isUnlockConfirmOpen}
         onOpenChange={setIsUnlockConfirmOpen}
       >
-        <AlertDialogContent className="bg-white border border-slate-200">
+        <AlertDialogContent className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white">
           <AlertDialogHeader>
             <div className="flex items-center gap-2.5 mb-1">
-              <div className="p-2 bg-amber-50 text-amber-600 rounded-lg">
+              <div className="p-2 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 rounded-lg">
                 <Unlock className="w-5 h-5" />
               </div>
-              <AlertDialogTitle className="font-headline text-lg font-bold text-slate-900">
+              <AlertDialogTitle className="font-headline text-lg font-bold text-slate-900 dark:text-white">
                 Unlock Examination Rooms?
               </AlertDialogTitle>
             </div>
-            <AlertDialogDescription className="text-xs text-slate-600 leading-relaxed">
+            <AlertDialogDescription className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
               Examination rooms are currently locked against edits. Unlocking will allow adding, editing, and deleting rooms.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -664,17 +664,17 @@ export default function MasterRoomsPage() {
           if (!open) setRoomToDelete(null);
         }}
       >
-        <AlertDialogContent className="bg-white border border-slate-200">
+        <AlertDialogContent className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white">
           <AlertDialogHeader>
             <div className="flex items-center gap-2.5 mb-1">
-              <div className="p-2 bg-rose-50 text-rose-600 rounded-lg">
+              <div className="p-2 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 rounded-lg">
                 <ShieldAlert className="w-5 h-5" />
               </div>
-              <AlertDialogTitle className="font-headline text-lg font-bold text-slate-900">
+              <AlertDialogTitle className="font-headline text-lg font-bold text-slate-900 dark:text-white">
                 Delete Room {roomToDelete?.roomNo}?
               </AlertDialogTitle>
             </div>
-            <AlertDialogDescription className="text-xs text-slate-600 leading-relaxed">
+            <AlertDialogDescription className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
               {roomToDelete && isRoomInUse(roomToDelete.id) ? (
                 <span className="text-rose-600 font-semibold block">
                   &bull; Warning: This room is currently assigned in one or more saved seating allocations. Deleting it may impact existing records.

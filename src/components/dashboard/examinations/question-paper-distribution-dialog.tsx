@@ -18,7 +18,7 @@ export function QuestionPaperDistributionDialog({
 }: QuestionPaperDistributionDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[92vh] flex flex-col p-4 sm:p-6 rounded-2xl overflow-y-auto border-slate-200 dark:border-slate-800 shadow-2xl">
+      <DialogContent className="max-w-5xl max-h-[92vh] flex flex-col p-4 sm:p-6 rounded-2xl overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white shadow-2xl">
         <QuestionPaperDistributionView isDialog={true} onClose={() => onOpenChange(false)} />
       </DialogContent>
     </Dialog>

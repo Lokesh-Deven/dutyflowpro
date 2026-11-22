@@ -12,7 +12,7 @@ export const metadata = {
 export default function StudentLayout({ children }: { children: ReactNode }) {
   return (
     <StudentPortalProvider>
-      <div className="min-h-screen bg-[#F8FAFC] text-slate-800 flex flex-col font-sans selection:bg-indigo-100 selection:text-indigo-900">
+      <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0b0f19] text-slate-800 dark:text-slate-100 flex flex-col font-sans selection:bg-indigo-100 selection:text-indigo-900">
         {children}
       </div>
     </StudentPortalProvider>

@@ -899,17 +899,17 @@ function SeatingAllocationWizardContent() {
                   },
                 }));
               }}
-              className="flex items-center gap-4 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shrink-0"
+              className="flex items-center gap-4 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 shrink-0"
             >
               <div className="flex items-center space-x-1.5 cursor-pointer">
                 <RadioGroupItem value="no" id="3col-toggle-no" />
-                <Label htmlFor="3col-toggle-no" className="text-xs font-semibold cursor-pointer">
+                <Label htmlFor="3col-toggle-no" className="text-xs font-semibold cursor-pointer text-slate-700 dark:text-slate-200">
                   No
                 </Label>
               </div>
               <div className="flex items-center space-x-1.5 cursor-pointer">
                 <RadioGroupItem value="yes" id="3col-toggle-yes" />
-                <Label htmlFor="3col-toggle-yes" className="text-xs font-semibold cursor-pointer text-indigo-700">
+                <Label htmlFor="3col-toggle-yes" className="text-xs font-semibold cursor-pointer text-indigo-700 dark:text-indigo-400">
                   Yes
                 </Label>
               </div>
@@ -919,23 +919,23 @@ function SeatingAllocationWizardContent() {
 
         {/* Configuration Interface when Yes is selected */}
         {is3ColEnabled && (
-          <div className="p-4 bg-indigo-50/40 border border-indigo-200/80 rounded-xl space-y-5">
-            <div className="text-[11px] text-slate-600">
+          <div className="p-4 bg-indigo-50/40 dark:bg-indigo-950/20 border border-indigo-200/80 dark:border-indigo-900/50 rounded-xl space-y-5">
+            <div className="text-[11px] text-slate-600 dark:text-slate-400">
               Configure Left Side Benches, Middle Benches, and Right Side Benches independently for 3-column rooms.
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               {/* B. Left Side Benches */}
-              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-3xs space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                  <span className="font-bold text-xs uppercase tracking-wider text-[#1E2A5E]">
+              <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-3xs space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                  <span className="font-bold text-xs uppercase tracking-wider text-[#1E2A5E] dark:text-indigo-300">
                     Left Side Benches
                   </span>
-                  <Badge variant="outline" className="text-[10px] font-semibold bg-indigo-50 text-indigo-700 border-indigo-200">
+                  <Badge variant="outline" className="text-[10px] font-semibold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800">
                     Column 1
                   </Badge>
                 </div>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
                   Select subjects for Side A, Centre, and Side B:
                 </p>
 
@@ -949,11 +949,11 @@ function SeatingAllocationWizardContent() {
                         : threeColumnConfig.leftSubjectId || sortedSelectedSubjectIds[0] || '');
 
                     return (
-                      <div key={pos} className="p-2 rounded-lg border bg-slate-50/70 border-slate-200">
+                      <div key={pos} className="p-2 rounded-lg border bg-slate-50/70 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-[11px] font-bold text-slate-700">{posLabel}</span>
+                          <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200">{posLabel}</span>
                           {currentVal === 'VACANT' && (
-                            <Badge variant="outline" className="text-[9px] font-semibold bg-amber-50 text-amber-700 border-amber-200">
+                            <Badge variant="outline" className="text-[9px] font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800">
                               Vacant
                             </Badge>
                           )}
@@ -974,7 +974,7 @@ function SeatingAllocationWizardContent() {
                             }))
                           }
                         >
-                          <SelectTrigger className="bg-white text-xs font-semibold h-8 border-slate-200">
+                          <SelectTrigger className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-semibold h-8 border-slate-200 dark:border-slate-700">
                             <SelectValue placeholder={`Select for ${posLabel}`} />
                           </SelectTrigger>
                           <SelectContent>
@@ -1004,18 +1004,18 @@ function SeatingAllocationWizardContent() {
               </div>
 
               {/* D. Middle Benches – Custom Seat Configuration */}
-              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-3xs space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                  <span className="font-bold text-xs uppercase tracking-wider text-[#1E2A5E]">
+              <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-3xs space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                  <span className="font-bold text-xs uppercase tracking-wider text-[#1E2A5E] dark:text-indigo-300">
                     Middle Benches
                   </span>
-                  <Badge variant="outline" className="text-[10px] font-semibold bg-purple-50 text-purple-700 border-purple-200">
+                  <Badge variant="outline" className="text-[10px] font-semibold bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800">
                     Column 2
                   </Badge>
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-[11px] font-bold text-slate-700">Middle Bench Seating Pattern</Label>
+                  <Label className="text-[11px] font-bold text-slate-700 dark:text-slate-300">Middle Bench Seating Pattern</Label>
                   <Select
                     value={middlePattern}
                     onValueChange={(val: MiddleBenchSeatingPattern) => {
@@ -1036,7 +1036,7 @@ function SeatingAllocationWizardContent() {
                       });
                     }}
                   >
-                    <SelectTrigger className="bg-slate-50 text-xs font-semibold h-9 border-slate-200">
+                    <SelectTrigger className="bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-semibold h-9 border-slate-200 dark:border-slate-700">
                       <SelectValue placeholder="Select Pattern" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1058,12 +1058,12 @@ function SeatingAllocationWizardContent() {
 
                 {/* If Custom Seat Selection, allow independent checkbox enabling */}
                 {middlePattern === 'custom' && (
-                  <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-200 space-y-1.5">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                  <div className="p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-700 space-y-1.5">
+                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
                       Enable / Disable Positions
                     </span>
                     <div className="flex items-center gap-4">
-                      <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 cursor-pointer">
+                      <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
                         <Checkbox
                           checked={middleEnabled.sideA}
                           onCheckedChange={(checked) =>
@@ -1079,7 +1079,7 @@ function SeatingAllocationWizardContent() {
                         Side A
                       </label>
 
-                      <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 cursor-pointer">
+                      <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
                         <Checkbox
                           checked={middleEnabled.center}
                           onCheckedChange={(checked) =>
@@ -1095,7 +1095,7 @@ function SeatingAllocationWizardContent() {
                         Centre
                       </label>
 
-                      <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 cursor-pointer">
+                      <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
                         <Checkbox
                           checked={middleEnabled.sideB}
                           onCheckedChange={(checked) =>
@@ -1130,11 +1130,11 @@ function SeatingAllocationWizardContent() {
                     const currentVal = middleSeats[pos] || sortedSelectedSubjectIds[pos === 'sideA' ? 0 : pos === 'center' ? 1 : 2] || sortedSelectedSubjectIds[0] || '';
 
                     return (
-                      <div key={pos} className={`p-2 rounded-lg border ${isEnabled ? "bg-slate-50/70 border-slate-200" : "bg-slate-100/60 border-slate-200 opacity-60"}`}>
+                      <div key={pos} className={`p-2 rounded-lg border ${isEnabled ? "bg-slate-50/70 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700" : "bg-slate-100/60 dark:bg-slate-800/20 border-slate-200 dark:border-slate-700 opacity-60"}`}>
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-[11px] font-bold text-slate-700">{posLabel}</span>
+                          <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200">{posLabel}</span>
                           {!isEnabled && (
-                            <Badge variant="outline" className="text-[9px] font-semibold bg-slate-200 text-slate-500 border-slate-300">
+                            <Badge variant="outline" className="text-[9px] font-semibold bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 border-slate-300 dark:border-slate-600">
                               Disabled
                             </Badge>
                           )}
@@ -1163,7 +1163,7 @@ function SeatingAllocationWizardContent() {
                               }))
                             }
                           >
-                            <SelectTrigger className="bg-white text-xs font-semibold h-8 border-slate-200">
+                            <SelectTrigger className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-semibold h-8 border-slate-200 dark:border-slate-700">
                               <SelectValue placeholder={`Select for ${posLabel}`} />
                             </SelectTrigger>
                             <SelectContent>
@@ -1198,16 +1198,16 @@ function SeatingAllocationWizardContent() {
               </div>
 
               {/* C. Right Side Benches */}
-              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-3xs space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                  <span className="font-bold text-xs uppercase tracking-wider text-[#1E2A5E]">
+              <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-3xs space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                  <span className="font-bold text-xs uppercase tracking-wider text-[#1E2A5E] dark:text-indigo-300">
                     Right Side Benches
                   </span>
-                  <Badge variant="outline" className="text-[10px] font-semibold bg-indigo-50 text-indigo-700 border-indigo-200">
+                  <Badge variant="outline" className="text-[10px] font-semibold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800">
                     Column 3
                   </Badge>
                 </div>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
                   Select subjects for Side A, Centre, and Side B:
                 </p>
 
@@ -1221,11 +1221,11 @@ function SeatingAllocationWizardContent() {
                         : threeColumnConfig.rightSubjectId || sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0] || '');
 
                     return (
-                      <div key={pos} className="p-2 rounded-lg border bg-slate-50/70 border-slate-200">
+                      <div key={pos} className="p-2 rounded-lg border bg-slate-50/70 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-[11px] font-bold text-slate-700">{posLabel}</span>
+                          <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200">{posLabel}</span>
                           {currentVal === 'VACANT' && (
-                            <Badge variant="outline" className="text-[9px] font-semibold bg-amber-50 text-amber-700 border-amber-200">
+                            <Badge variant="outline" className="text-[9px] font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800">
                               Vacant
                             </Badge>
                           )}
@@ -1246,7 +1246,7 @@ function SeatingAllocationWizardContent() {
                             }))
                           }
                         >
-                          <SelectTrigger className="bg-white text-xs font-semibold h-8 border-slate-200">
+                          <SelectTrigger className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-semibold h-8 border-slate-200 dark:border-slate-700">
                             <SelectValue placeholder={`Select for ${posLabel}`} />
                           </SelectTrigger>
                           <SelectContent>
@@ -1330,7 +1330,7 @@ function SeatingAllocationWizardContent() {
       </div>
 
       {/* Step Progress Indicator Bar */}
-      <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-2xs overflow-x-auto">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-2xs overflow-x-auto">
         <div className="flex items-center justify-between min-w-[620px] px-2">
           {steps.map((s, idx) => {
             const isCompleted = currentStep > s.num;
@@ -1345,18 +1345,18 @@ function SeatingAllocationWizardContent() {
                     }
                   }}
                   className={`flex items-center gap-2 cursor-pointer transition-all ${isCurrent
-                    ? "text-[#1E2A5E] font-black"
+                    ? "text-[#1E2A5E] dark:text-indigo-400 font-black"
                     : isCompleted
-                      ? "text-emerald-700 font-bold"
-                      : "text-slate-400 font-medium"
+                      ? "text-emerald-700 dark:text-emerald-400 font-bold"
+                      : "text-slate-400 dark:text-slate-500 font-medium"
                     }`}
                 >
                   <div
                     className={`w-7 h-7 rounded-full flex items-center justify-center text-xs transition-all ${isCurrent
                       ? "bg-[#1E2A5E] text-white shadow-xs"
                       : isCompleted
-                        ? "bg-emerald-100 text-emerald-800 font-bold"
-                        : "bg-slate-100 text-slate-400"
+                        ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-bold"
+                        : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500"
                       }`}
                   >
                     {isCompleted ? <Check className="w-3.5 h-3.5" /> : s.num}
@@ -1365,7 +1365,7 @@ function SeatingAllocationWizardContent() {
                 </div>
                 {idx < steps.length - 1 && (
                   <div
-                    className={`flex-1 h-0.5 mx-3 ${isCompleted ? "bg-emerald-300" : "bg-slate-200"
+                    className={`flex-1 h-0.5 mx-3 ${isCompleted ? "bg-emerald-300 dark:bg-emerald-800" : "bg-slate-200 dark:bg-slate-800"
                       }`}
                   />
                 )}
@@ -1377,26 +1377,26 @@ function SeatingAllocationWizardContent() {
 
       {/* STEP 1 — EXAMINATION DETAILS */}
       {currentStep === 1 && (
-        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs max-w-2xl mx-auto space-y-5">
-          <div className="border-b border-slate-100 pb-3">
-            <h2 className="font-headline font-bold text-lg text-slate-800">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-xs max-w-2xl mx-auto space-y-5">
+          <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
+            <h2 className="font-headline font-bold text-lg text-slate-800 dark:text-slate-100">
               Step 1: Examination Details
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Auto-fill from your Examination Timetable or enter examination details manually.
             </p>
           </div>
 
           {/* Auto-fill from Examination Timetable */}
-          <div className="bg-indigo-50/60 border border-indigo-100 rounded-xl p-4 space-y-3">
+          <div className="bg-indigo-50/60 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/50 rounded-xl p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <Label className="text-xs font-bold text-[#1E2A5E] flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-indigo-600" />
+              <Label className="text-xs font-bold text-[#1E2A5E] dark:text-indigo-300 flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                 Auto-fill from Examination Timetable:
               </Label>
               <Link
                 href="/dashboard/examination-timetable"
-                className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 hover:underline flex items-center gap-1"
+                className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 hover:underline flex items-center gap-1"
               >
                 <span>Examination Timetable</span>
                 <ArrowRight className="w-3 h-3" />
@@ -1404,9 +1404,9 @@ function SeatingAllocationWizardContent() {
             </div>
 
             {savedTimetables.length === 0 ? (
-              <p className="text-xs text-slate-500 bg-white/70 border border-slate-200/60 rounded-lg p-2.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 bg-white/70 dark:bg-slate-900/70 border border-slate-200/60 dark:border-slate-800 rounded-lg p-2.5">
                 No examination timetables found. You can create one in{' '}
-                <Link href="/dashboard/examination-timetable" className="text-indigo-600 font-semibold underline">
+                <Link href="/dashboard/examination-timetable" className="text-indigo-600 dark:text-indigo-400 font-semibold underline">
                   Examination Timetable
                 </Link>{' '}
                 or fill in the examination details manually below.
@@ -1414,16 +1414,16 @@ function SeatingAllocationWizardContent() {
             ) : savedTimetables.length === 1 ? (
               /* Single Timetable: direct session selector */
               <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-[11px] text-slate-600 px-0.5">
-                  <span className="font-semibold text-indigo-900 truncate max-w-[320px]">
+                <div className="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-400 px-0.5">
+                  <span className="font-semibold text-indigo-900 dark:text-indigo-300 truncate max-w-[320px]">
                     Timetable: {currentSelectedTimetable?.examinationName || 'Official Timetable'}
                   </span>
-                  <Badge variant="outline" className="text-[10px] bg-white border-indigo-200 text-indigo-700">
+                  <Badge variant="outline" className="text-[10px] bg-white dark:bg-slate-800 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300">
                     {currentTimetableRows.length} {currentTimetableRows.length === 1 ? 'Date' : 'Dates'}
                   </Badge>
                 </div>
                 <Select value={selectedTimetableRowId} onValueChange={handleSelectTimetableRow}>
-                  <SelectTrigger className="bg-white text-xs font-semibold h-9 border-indigo-200 shadow-xs cursor-pointer">
+                  <SelectTrigger className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-semibold h-9 border-indigo-200 dark:border-indigo-800 shadow-xs cursor-pointer">
                     <SelectValue placeholder="Select examination date / session to auto-fill" />
                   </SelectTrigger>
                   <SelectContent className="max-h-72">
@@ -1629,12 +1629,12 @@ function SeatingAllocationWizardContent() {
 
       {/* STEP 2 — SELECT SUBJECTS */}
       {currentStep === 2 && (
-        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs max-w-2xl mx-auto space-y-5">
-          <div className="border-b border-slate-100 pb-3">
-            <h2 className="font-headline font-bold text-lg text-slate-800">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-xs max-w-2xl mx-auto space-y-5">
+          <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
+            <h2 className="font-headline font-bold text-lg text-slate-800 dark:text-slate-100">
               Step 2: Select Examination Subjects
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Select one or multiple subjects scheduled for this examination session.
             </p>
           </div>
@@ -1655,8 +1655,8 @@ function SeatingAllocationWizardContent() {
                     }
                   }}
                   className={`flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer ${isChecked
-                    ? "border-indigo-500 bg-indigo-50/50 shadow-2xs"
-                    : "border-slate-200 hover:border-slate-300 bg-white"
+                    ? "border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/30 shadow-2xs"
+                    : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900"
                     }`}
                 >
                   <div className="flex items-center gap-3">
@@ -1666,11 +1666,11 @@ function SeatingAllocationWizardContent() {
                       className="data-[state=checked]:bg-[#1E2A5E]"
                     />
                     <div>
-                      <div className="font-headline font-bold text-xs text-slate-900">
+                      <div className="font-headline font-bold text-xs text-slate-900 dark:text-white">
                         {subj.name}
                       </div>
                       {subj.code && (
-                        <div className="text-[10px] text-slate-500 font-medium">
+                        <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
                           Class: {subj.code}
                         </div>
                       )}
@@ -1680,8 +1680,8 @@ function SeatingAllocationWizardContent() {
                   <Badge
                     variant="outline"
                     className={`font-semibold text-xs px-2.5 py-0.5 ${students.length > 0
-                      ? "bg-white text-indigo-700 border-indigo-200"
-                      : "bg-slate-100 text-slate-400 border-slate-200"
+                      ? "bg-white dark:bg-slate-800 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700"
                       }`}
                   >
                     {students.length} Students
@@ -1692,26 +1692,26 @@ function SeatingAllocationWizardContent() {
           </div>
 
           {/* Dynamic Selection Summary */}
-          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex items-center justify-between">
+          <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
             <div>
-              <div className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">
+              <div className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">
                 Total Students Selected
               </div>
-              <div className="font-headline font-black text-2xl text-slate-900 mt-0.5">
+              <div className="font-headline font-black text-2xl text-slate-900 dark:text-white mt-0.5">
                 {totalStudentsSelected}
               </div>
             </div>
-            <Badge variant="outline" className="bg-white text-xs font-semibold py-1 px-3 border-slate-200">
+            <Badge variant="outline" className="bg-white dark:bg-slate-800 text-xs font-semibold py-1 px-3 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200">
               {selectedSubjectIds.length} Subject(s) Chosen
             </Badge>
           </div>
 
-          <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+          <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setCurrentStep(1)}
-              className="text-xs h-9 gap-1"
+              className="text-xs h-9 gap-1 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               Back
@@ -1731,12 +1731,12 @@ function SeatingAllocationWizardContent() {
 
       {/* STEP 3 — SELECT SEATING PATTERN */}
       {currentStep === 3 && (
-        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs max-w-2xl mx-auto space-y-5">
-          <div className="border-b border-slate-100 pb-3">
-            <h2 className="font-headline font-bold text-lg text-slate-800">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-xs max-w-2xl mx-auto space-y-5">
+          <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
+            <h2 className="font-headline font-bold text-lg text-slate-800 dark:text-slate-100">
               Step 3: Select Seating Pattern
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Choose how many students sit on each examination bench.
             </p>
           </div>
@@ -1747,28 +1747,28 @@ function SeatingAllocationWizardContent() {
             <div
               onClick={() => setPattern('1_PER_BENCH')}
               className={`p-4 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between space-y-3 ${pattern === '1_PER_BENCH'
-                ? "border-[#1E2A5E] bg-indigo-50/40 shadow-xs"
-                : "border-slate-200 hover:border-slate-300 bg-white"
+                ? "border-[#1E2A5E] dark:border-indigo-500 bg-indigo-50/40 dark:bg-indigo-950/20 shadow-xs"
+                : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900"
                 }`}
             >
               <div>
-                <Badge variant="outline" className="text-[10px] font-bold bg-white text-slate-700 mb-2">
+                <Badge variant="outline" className="text-[10px] font-bold bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 mb-2">
                   Option 1
                 </Badge>
-                <div className="font-headline font-black text-sm text-slate-900">
+                <div className="font-headline font-black text-sm text-slate-900 dark:text-white">
                   1 Student / Bench
                 </div>
-                <div className="text-[11px] font-semibold text-indigo-700 mt-1">
+                <div className="text-[11px] font-semibold text-indigo-700 dark:text-indigo-400 mt-1">
                   Position: CENTER
                 </div>
               </div>
 
-              <div className="p-2.5 bg-white rounded-lg border border-slate-200 text-center">
-                <span className="text-[10px] text-slate-400 font-bold uppercase block">Capacity</span>
-                <span className="font-headline font-black text-base text-slate-800">
+              <div className="p-2.5 bg-white dark:bg-slate-800/80 rounded-lg border border-slate-200 dark:border-slate-700 text-center">
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase block">Capacity</span>
+                <span className="font-headline font-black text-base text-slate-800 dark:text-slate-100">
                   20 students
                 </span>
-                <span className="text-[9px] text-slate-400 block">for 20-bench room</span>
+                <span className="text-[9px] text-slate-400 dark:text-slate-500 block">for 20-bench room</span>
               </div>
             </div>
 
@@ -1776,28 +1776,28 @@ function SeatingAllocationWizardContent() {
             <div
               onClick={() => setPattern('2_PER_BENCH')}
               className={`p-4 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between space-y-3 ${pattern === '2_PER_BENCH'
-                ? "border-[#1E2A5E] bg-indigo-50/40 shadow-xs"
-                : "border-slate-200 hover:border-slate-300 bg-white"
+                ? "border-[#1E2A5E] dark:border-indigo-500 bg-indigo-50/40 dark:bg-indigo-950/20 shadow-xs"
+                : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900"
                 }`}
             >
               <div>
-                <Badge variant="outline" className="text-[10px] font-bold bg-white text-slate-700 mb-2">
+                <Badge variant="outline" className="text-[10px] font-bold bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 mb-2">
                   Option 2
                 </Badge>
-                <div className="font-headline font-black text-sm text-slate-900">
+                <div className="font-headline font-black text-sm text-slate-900 dark:text-white">
                   2 Students / Bench
                 </div>
-                <div className="text-[11px] font-semibold text-purple-700 mt-1">
+                <div className="text-[11px] font-semibold text-purple-700 dark:text-purple-400 mt-1">
                   SIDE A + SIDE B
                 </div>
               </div>
 
-              <div className="p-2.5 bg-white rounded-lg border border-slate-200 text-center">
-                <span className="text-[10px] text-slate-400 font-bold uppercase block">Capacity</span>
-                <span className="font-headline font-black text-base text-slate-800">
+              <div className="p-2.5 bg-white dark:bg-slate-800/80 rounded-lg border border-slate-200 dark:border-slate-700 text-center">
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase block">Capacity</span>
+                <span className="font-headline font-black text-base text-slate-800 dark:text-slate-100">
                   40 students
                 </span>
-                <span className="text-[9px] text-slate-400 block">for 20-bench room</span>
+                <span className="text-[9px] text-slate-400 dark:text-slate-500 block">for 20-bench room</span>
               </div>
             </div>
 
@@ -1805,38 +1805,38 @@ function SeatingAllocationWizardContent() {
             <div
               onClick={() => setPattern('3_PER_BENCH')}
               className={`p-4 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between space-y-3 ${pattern === '3_PER_BENCH'
-                ? "border-[#1E2A5E] bg-indigo-50/40 shadow-xs"
-                : "border-slate-200 hover:border-slate-300 bg-white"
+                ? "border-[#1E2A5E] dark:border-indigo-500 bg-indigo-50/40 dark:bg-indigo-950/20 shadow-xs"
+                : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900"
                 }`}
             >
               <div>
-                <Badge variant="outline" className="text-[10px] font-bold bg-white text-slate-700 mb-2">
+                <Badge variant="outline" className="text-[10px] font-bold bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 mb-2">
                   Option 3
                 </Badge>
-                <div className="font-headline font-black text-sm text-slate-900">
+                <div className="font-headline font-black text-sm text-slate-900 dark:text-white">
                   3 Students / Bench
                 </div>
-                <div className="text-[11px] font-semibold text-blue-700 mt-1">
+                <div className="text-[11px] font-semibold text-blue-700 dark:text-blue-400 mt-1">
                   SIDE A + CENTER + SIDE B
                 </div>
               </div>
 
-              <div className="p-2.5 bg-white rounded-lg border border-slate-200 text-center">
-                <span className="text-[10px] text-slate-400 font-bold uppercase block">Capacity</span>
-                <span className="font-headline font-black text-base text-slate-800">
+              <div className="p-2.5 bg-white dark:bg-slate-800/80 rounded-lg border border-slate-200 dark:border-slate-700 text-center">
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase block">Capacity</span>
+                <span className="font-headline font-black text-base text-slate-800 dark:text-slate-100">
                   60 students
                 </span>
-                <span className="text-[9px] text-slate-400 block">for 20-bench room</span>
+                <span className="text-[9px] text-slate-400 dark:text-slate-500 block">for 20-bench room</span>
               </div>
             </div>
           </div>
 
-          <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+          <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setCurrentStep(2)}
-              className="text-xs h-9 gap-1"
+              className="text-xs h-9 gap-1 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               Back
@@ -1855,12 +1855,12 @@ function SeatingAllocationWizardContent() {
 
       {/* STEP 4 — ASSIGN SUBJECTS TO POSITIONS */}
       {currentStep === 4 && (
-        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs mx-auto space-y-6 transition-all max-w-4xl">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-xs mx-auto space-y-6 transition-all max-w-4xl">
           {/* Header & Mode Switcher */}
-          <div className="border-b border-slate-100 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="border-b border-slate-100 dark:border-slate-800 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="font-headline font-bold text-lg text-slate-800">
+                <h2 className="font-headline font-bold text-lg text-slate-800 dark:text-slate-100">
                   Step 4: Assign Subjects to Bench Positions
                 </h2>
                 {isMultiSubjectMode && (
@@ -1874,7 +1874,7 @@ function SeatingAllocationWizardContent() {
                   </Badge>
                 )}
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 {isMultiSubjectMode
                   ? "Configure 4 sequential rows for Side A, Centre, and Side B. The system advances immediately when either subject finishes."
                   : "Specify which subject occupies each physical seat slot on the bench with automatic subsequent transitions."}
@@ -1890,7 +1890,7 @@ function SeatingAllocationWizardContent() {
                 onClick={() => setStep4Mode('standard')}
                 className={`text-xs h-8 font-bold ${step4Mode === 'standard'
                     ? "bg-[#1E2A5E] text-white hover:bg-[#151D42]"
-                    : "text-slate-600 border-slate-200"
+                    : "text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700"
                   }`}
               >
                 Standard (1 or 2 Subjects)
@@ -1908,7 +1908,7 @@ function SeatingAllocationWizardContent() {
                 }}
                 className={`text-xs h-8 font-bold gap-1.5 ${step4Mode === 'multiSubject'
                     ? "bg-[#1E2A5E] text-white hover:bg-[#151D42] shadow-xs"
-                    : "text-indigo-700 border-indigo-300 bg-indigo-50/60 hover:bg-indigo-100/80"
+                    : "text-indigo-700 dark:text-indigo-400 border-indigo-300 dark:border-indigo-800 bg-indigo-50/60 dark:bg-indigo-950/40 hover:bg-indigo-100/80"
                   }`}
               >
                 <Plus className="w-3.5 h-3.5" />
@@ -2821,18 +2821,18 @@ function SeatingAllocationWizardContent() {
 
       {/* STEP 5 — ROOM SELECTION */}
       {currentStep === 5 && (
-        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs max-w-4xl mx-auto space-y-5">
-          <div className="border-b border-slate-100 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-xs max-w-4xl mx-auto space-y-5">
+          <div className="border-b border-slate-100 dark:border-slate-800 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="font-headline font-bold text-lg text-slate-800">
+                <h2 className="font-headline font-bold text-lg text-slate-800 dark:text-slate-100">
                   Step 5: Select Examination Rooms
                 </h2>
-                <Badge className="bg-indigo-50 text-indigo-700 border-indigo-200 font-bold text-xs px-2.5 py-0.5">
+                <Badge className="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800 font-bold text-xs px-2.5 py-0.5">
                   {selectedRoomIds.length} of {masterRooms.length} Rooms Selected
                 </Badge>
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Select Examination Rooms to accommodate {totalStudentsSelected} students ({pattern.replace('_', ' ')}).
               </p>
             </div>
@@ -2848,7 +2848,7 @@ function SeatingAllocationWizardContent() {
                     setSelectedRoomIds(masterRooms.map((r) => r.id));
                   }
                 }}
-                className="text-xs h-8 text-slate-700 font-semibold"
+                className="text-xs h-8 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 font-semibold"
               >
                 {selectedRoomIds.length === masterRooms.length ? "Deselect All" : "Select All Rooms"}
               </Button>
@@ -2867,7 +2867,7 @@ function SeatingAllocationWizardContent() {
                   }
                   setSelectedRoomIds(picked);
                 }}
-                className="text-xs h-8 text-[#1E2A5E] font-bold"
+                className="text-xs h-8 text-[#1E2A5E] dark:text-indigo-400 border-slate-200 dark:border-slate-700 font-bold"
               >
                 Auto-Select Needed Rooms
               </Button>
@@ -2875,9 +2875,9 @@ function SeatingAllocationWizardContent() {
           </div>
 
           {/* Rooms Table / Cards */}
-          <div className="border border-slate-200 rounded-xl overflow-hidden">
+          <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase text-[10px]">
+              <thead className="bg-slate-50/80 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-bold uppercase text-[10px]">
                 <tr>
                   <th className="py-3 px-3 text-center w-12">Sl No.</th>
                   <th className="py-3 px-3 text-center w-12">
@@ -2899,13 +2899,13 @@ function SeatingAllocationWizardContent() {
                   </th>
                   <th className="py-3 px-4">Room No.</th>
                   <th className="py-3 px-3 text-center">Benches</th>
-                  <th className="py-3 px-3 text-center font-bold text-[#1E2A5E]">
+                  <th className="py-3 px-3 text-center font-bold text-[#1E2A5E] dark:text-indigo-300">
                     Current Capacity ({isMultiSubjectMode ? '3/Bench (Multi-Subject)' : pattern === '1_PER_BENCH' ? '1/Bench' : pattern === '2_PER_BENCH' ? '2/Bench' : '3/Bench'}{threeColumnConfig.enabled ? ' • 3-Col Configured' : ''})
                   </th>
                   <th className="py-3 px-3 text-center">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70 font-medium text-slate-700 dark:text-slate-200">
                 {masterRooms.map((room, index) => {
                   const isChecked = selectedRoomIds.includes(room.id);
                   const effectiveCap = getRoomEffectiveCapacity(room, pattern, isMultiSubjectMode, threeColumnConfig);
@@ -2920,10 +2920,10 @@ function SeatingAllocationWizardContent() {
                           setSelectedRoomIds((prev) => [...prev, room.id]);
                         }
                       }}
-                      className={`cursor-pointer transition-colors ${isChecked ? "bg-indigo-50/50" : "hover:bg-slate-50"
+                      className={`cursor-pointer transition-colors ${isChecked ? "bg-indigo-50/50 dark:bg-indigo-950/30" : "hover:bg-slate-50 dark:hover:bg-slate-800/40"
                         }`}
                     >
-                      <td className="py-3 px-3 text-center text-slate-500 font-mono font-semibold text-[11px]">
+                      <td className="py-3 px-3 text-center text-slate-500 dark:text-slate-400 font-mono font-semibold text-[11px]">
                         {index + 1}
                       </td>
                       <td className="py-3 px-3 text-center">
@@ -2933,17 +2933,17 @@ function SeatingAllocationWizardContent() {
                           className="data-[state=checked]:bg-[#1E2A5E]"
                         />
                       </td>
-                      <td className="py-3 px-4 font-headline font-black text-xs text-slate-900">
+                      <td className="py-3 px-4 font-headline font-black text-xs text-slate-900 dark:text-white">
                         {room.roomNo}
                       </td>
-                      <td className="py-3 px-3 text-center text-slate-500 font-medium">
+                      <td className="py-3 px-3 text-center text-slate-500 dark:text-slate-400 font-medium">
                         {room.totalBenches} ({room.leftBenches}L + {room.rightBenches}R)
                       </td>
-                      <td className="py-3 px-3 text-center font-headline font-black text-xs text-indigo-700">
+                      <td className="py-3 px-3 text-center font-headline font-black text-xs text-indigo-700 dark:text-indigo-400">
                         {effectiveCap} seats
                       </td>
                       <td className="py-3 px-3 text-center">
-                        <Badge variant="outline" className="bg-emerald-50 text-emerald-700 text-[10px]">
+                        <Badge variant="outline" className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 text-[10px]">
                           Available
                         </Badge>
                       </td>
@@ -3020,47 +3020,47 @@ function SeatingAllocationWizardContent() {
         <div className="space-y-6">
           {/* Top Summary Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3.5">
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
-              <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+              <div className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
                 Total Students
               </div>
-              <div className="font-headline font-black text-2xl text-slate-900 mt-1">
+              <div className="font-headline font-black text-2xl text-slate-900 dark:text-white mt-1">
                 {activeAllocation.summary.totalStudents}
               </div>
             </div>
 
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
-              <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+              <div className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
                 Selected Rooms
               </div>
-              <div className="font-headline font-black text-2xl text-indigo-700 mt-1">
+              <div className="font-headline font-black text-2xl text-indigo-700 dark:text-indigo-400 mt-1">
                 {activeAllocation.summary.totalRooms}
               </div>
             </div>
 
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
-              <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+              <div className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
                 Total Capacity
               </div>
-              <div className="font-headline font-black text-2xl text-purple-700 mt-1">
+              <div className="font-headline font-black text-2xl text-purple-700 dark:text-purple-400 mt-1">
                 {activeAllocation.summary.totalCapacity}
               </div>
             </div>
 
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
-              <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+              <div className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
                 Allocated
               </div>
-              <div className="font-headline font-black text-2xl text-emerald-600 mt-1">
+              <div className="font-headline font-black text-2xl text-emerald-600 dark:text-emerald-400 mt-1">
                 {activeAllocation.summary.allocatedStudents}
               </div>
             </div>
 
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs col-span-2 sm:col-span-1">
-              <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs col-span-2 sm:col-span-1">
+              <div className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
                 Vacant Seats
               </div>
-              <div className="font-headline font-black text-2xl text-amber-600 mt-1">
+              <div className="font-headline font-black text-2xl text-amber-600 dark:text-amber-400 mt-1">
                 {activeAllocation.summary.vacantSeats}
               </div>
             </div>
@@ -3319,12 +3319,12 @@ function SeatingAllocationWizardContent() {
           )}
 
           {/* Global Action Bar for PDFs */}
-          <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 className="font-headline font-bold text-sm text-slate-900">
+              <h3 className="font-headline font-bold text-sm text-slate-900 dark:text-white">
                 {activeAllocation.name}
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Date: {activeAllocation.examination.date} &bull; Time: {activeAllocation.examination.startTime} – {activeAllocation.examination.endTime}
               </p>
             </div>
@@ -3350,9 +3350,9 @@ function SeatingAllocationWizardContent() {
                 variant="outline"
                 onClick={handleDownloadIndexPdf}
                 disabled={isDownloadingPdf}
-                className="h-9 text-xs font-bold px-3 gap-1.5 border-slate-200 text-slate-700 hover:bg-slate-50"
+                className="h-9 text-xs font-bold px-3 gap-1.5 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
               >
-                <FileText className="w-3.5 h-3.5 text-indigo-600" />
+                <FileText className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                 Student Index PDF
               </Button>
 
@@ -3369,12 +3369,12 @@ function SeatingAllocationWizardContent() {
           </div>
 
           {/* Subject-Wise Allocation Table */}
-          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs">
-            <div className="p-4 border-b border-slate-100 font-headline font-bold text-xs uppercase tracking-wider text-slate-700">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-xs">
+            <div className="p-4 border-b border-slate-100 dark:border-slate-800 font-headline font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">
               Subject-Wise Allocation
             </div>
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 text-slate-600 font-bold uppercase text-[10px]">
+              <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 font-bold uppercase text-[10px]">
                 <tr>
                   <th className="py-2.5 px-4">Subject</th>
                   <th className="py-2.5 px-3 text-center">Total Students</th>
@@ -3382,10 +3382,10 @@ function SeatingAllocationWizardContent() {
                   <th className="py-2.5 px-3 text-center">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70 font-medium text-slate-700 dark:text-slate-200">
                 {activeAllocation.subjectStats.map((stat) => (
-                  <tr key={stat.subjectId} className="hover:bg-slate-50">
-                    <td className="py-2.5 px-4 font-bold text-slate-900">
+                  <tr key={stat.subjectId} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                    <td className="py-2.5 px-4 font-bold text-slate-900 dark:text-white">
                       {(() => {
                         const allSubjNames = activeAllocation.subjectStats.map((s) => s.subjectName);
                         const sc = getSubjectColor(stat.subjectName, allSubjNames);
@@ -3400,14 +3400,14 @@ function SeatingAllocationWizardContent() {
                       })()}
                     </td>
                     <td className="py-2.5 px-3 text-center">{stat.totalStudents}</td>
-                    <td className="py-2.5 px-3 text-center font-bold text-indigo-700">{stat.allocatedCount}</td>
+                    <td className="py-2.5 px-3 text-center font-bold text-indigo-700 dark:text-indigo-400">{stat.allocatedCount}</td>
                     <td className="py-2.5 px-3 text-center">
                       <Badge
                         variant="outline"
                         className={
                           stat.status === 'Complete'
-                            ? "bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px]"
-                            : "bg-amber-50 text-amber-700 border-amber-200 text-[10px]"
+                            ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 text-[10px]"
+                            : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800 text-[10px]"
                         }
                       >
                         {stat.status}
@@ -3420,12 +3420,12 @@ function SeatingAllocationWizardContent() {
           </div>
 
           {/* Room-Wise Allocation Table */}
-          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs">
-            <div className="p-4 border-b border-slate-100 font-headline font-bold text-xs uppercase tracking-wider text-slate-700">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-xs">
+            <div className="p-4 border-b border-slate-100 dark:border-slate-800 font-headline font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">
               Room-Wise Allocation ({activeAllocation.roomPlans.length} Rooms)
             </div>
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 text-slate-600 font-bold uppercase text-[10px]">
+              <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 font-bold uppercase text-[10px]">
                 <tr>
                   <th className="py-2.5 px-4">Room No.</th>
                   <th className="py-2.5 px-3 text-center">Capacity</th>
@@ -3435,22 +3435,22 @@ function SeatingAllocationWizardContent() {
                   <th className="py-2.5 px-4 text-center">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70 font-medium text-slate-700 dark:text-slate-200">
                 {activeAllocation.roomPlans.map((plan) => (
-                  <tr key={plan.roomId} className="hover:bg-slate-50">
-                    <td className="py-2.5 px-4 font-headline font-black text-xs text-slate-900">
+                  <tr key={plan.roomId} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                    <td className="py-2.5 px-4 font-headline font-black text-xs text-slate-900 dark:text-white">
                       Room {plan.roomNo}
                     </td>
                     <td className="py-2.5 px-3 text-center">{plan.capacity}</td>
-                    <td className="py-2.5 px-3 text-center font-bold text-emerald-700">{plan.allocatedCount}</td>
-                    <td className="py-2.5 px-3 text-center text-slate-400">{plan.vacantCount}</td>
+                    <td className="py-2.5 px-3 text-center font-bold text-emerald-700 dark:text-emerald-400">{plan.allocatedCount}</td>
+                    <td className="py-2.5 px-3 text-center text-slate-400 dark:text-slate-500">{plan.vacantCount}</td>
                     <td className="py-2.5 px-3 text-center">
                       <Badge
                         variant="outline"
                         className={
                           plan.status === 'Full'
-                            ? "bg-purple-50 text-purple-700 border-purple-200 text-[10px]"
-                            : "bg-blue-50 text-blue-700 border-blue-200 text-[10px]"
+                            ? "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800 text-[10px]"
+                            : "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800 text-[10px]"
                         }
                       >
                         {plan.status}
@@ -3462,7 +3462,7 @@ function SeatingAllocationWizardContent() {
                           size="sm"
                           variant="outline"
                           onClick={() => setViewingRoomPlan(plan)}
-                          className="h-7 text-[11px] font-bold px-2.5 gap-1 text-[#1E2A5E]"
+                          className="h-7 text-[11px] font-bold px-2.5 gap-1 text-[#1E2A5E] dark:text-indigo-300 border-slate-200 dark:border-slate-700"
                         >
                           <Eye className="w-3 h-3" />
                           View Seating Plan
@@ -3473,7 +3473,7 @@ function SeatingAllocationWizardContent() {
                           variant="ghost"
                           onClick={() => handleDownloadSingleRoomPdf(plan)}
                           disabled={isDownloadingPdf}
-                          className="h-7 text-[11px] font-semibold px-2 text-indigo-700 hover:bg-indigo-50"
+                          className="h-7 text-[11px] font-semibold px-2 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
                         >
                           <Printer className="w-3 h-3 mr-1" />
                           PDF
@@ -3493,10 +3493,10 @@ function SeatingAllocationWizardContent() {
               if (!open) setViewingRoomPlan(null);
             }}
           >
-            <DialogContent className="max-w-5xl bg-slate-50 border border-slate-200 max-h-[92vh] overflow-y-auto p-6">
+            <DialogContent className="max-w-5xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white max-h-[92vh] overflow-y-auto p-6">
               <DialogHeader>
                 <div className="flex items-center justify-between pr-6">
-                  <DialogTitle className="font-headline text-lg font-bold text-slate-900">
+                  <DialogTitle className="font-headline text-lg font-bold text-slate-900 dark:text-white">
                     Room No. {viewingRoomPlan?.roomNo} &bull; Visual Seating Plan
                   </DialogTitle>
                 </div>
@@ -3529,7 +3529,7 @@ function SeatingAllocationWizardContent() {
                   variant="outline"
                   size="sm"
                   onClick={() => setViewingRoomPlan(null)}
-                  className="text-xs h-9"
+                  className="text-xs h-9 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200"
                 >
                   Close
                 </Button>

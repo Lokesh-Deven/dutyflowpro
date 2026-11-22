@@ -77,18 +77,18 @@ export function StudentUploadDialog({
         onOpenChange(v);
       }}
     >
-      <DialogContent className="sm:max-w-lg bg-white border border-slate-200 max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-2.5 mb-1">
-            <div className="p-2 bg-indigo-50 text-indigo-700 rounded-lg">
+            <div className="p-2 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 rounded-lg">
               <FileSpreadsheet className="w-5 h-5" />
             </div>
             <div>
-              <DialogTitle className="font-headline text-lg font-bold text-slate-900">
+              <DialogTitle className="font-headline text-lg font-bold text-slate-900 dark:text-white">
                 Upload Student List &bull; {subject?.name || 'Subject'}
               </DialogTitle>
-              <p className="text-xs text-slate-500">
-                Expected Format: <code className="bg-slate-100 px-1 py-0.5 rounded text-[11px] font-semibold text-slate-700">Sl No | Name | Section | Roll No</code>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Expected Format: <code className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-[11px] font-semibold text-slate-700 dark:text-slate-300">Sl No | Name | Section | Roll No</code>
               </p>
             </div>
           </div>
@@ -98,7 +98,7 @@ export function StudentUploadDialog({
           {/* File Upload Zone */}
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-indigo-200 hover:border-indigo-400 bg-indigo-50/40 hover:bg-indigo-50/70 transition-all rounded-xl p-6 text-center cursor-pointer space-y-2"
+            className="border-2 border-dashed border-indigo-200 dark:border-indigo-800/80 hover:border-indigo-400 dark:hover:border-indigo-600 bg-indigo-50/40 dark:bg-indigo-950/20 hover:bg-indigo-50/70 dark:hover:bg-indigo-950/40 transition-all rounded-xl p-6 text-center cursor-pointer space-y-2"
           >
             <input
               ref={fileInputRef}
@@ -107,14 +107,14 @@ export function StudentUploadDialog({
               onChange={handleFileChange}
               className="hidden"
             />
-            <div className="w-10 h-10 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center mx-auto">
+            <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-full flex items-center justify-center mx-auto">
               <Upload className="w-5 h-5" />
             </div>
             <div>
-              <div className="text-xs font-bold text-slate-800">
+              <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
                 {file ? file.name : "Click to browse or drop student Excel file"}
               </div>
-              <p className="text-[11px] text-slate-400 mt-0.5">
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
                 Supported formats: .xlsx, .xls, .csv
               </p>
             </div>
@@ -122,28 +122,28 @@ export function StudentUploadDialog({
 
           {isValidating && (
             <div className="text-center py-3 space-y-1">
-              <RefreshCw className="w-5 h-5 animate-spin text-indigo-600 mx-auto" />
-              <p className="text-xs font-semibold text-slate-600">Validating student rows and roll numbers...</p>
+              <RefreshCw className="w-5 h-5 animate-spin text-indigo-600 dark:text-indigo-400 mx-auto" />
+              <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">Validating student rows and roll numbers...</p>
             </div>
           )}
 
           {parseError && (
-            <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-xl p-3 text-xs flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
+            <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-400 rounded-xl p-3 text-xs flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600 dark:text-rose-400" />
               <div>{parseError}</div>
             </div>
           )}
 
           {/* Validation Report */}
           {result && (
-            <div className="space-y-3 bg-slate-50/80 border border-slate-200 rounded-xl p-4">
+            <div className="space-y-3 bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-xl p-4">
               <div className="flex items-center justify-between">
-                <span className="font-headline font-bold text-xs uppercase tracking-wider text-slate-700">
+                <span className="font-headline font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">
                   Validation Results
                 </span>
                 <Badge
                   variant="outline"
-                  className={result.isValid ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-rose-50 text-rose-700 border-rose-200"}
+                  className={result.isValid ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800" : "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800"}
                 >
                   {result.isValid ? "Valid List" : "Issues Found"}
                 </Badge>
@@ -151,30 +151,30 @@ export function StudentUploadDialog({
 
               {/* Metrics Grid */}
               <div className="grid grid-cols-4 gap-2 text-center">
-                <div className="bg-white p-2 rounded-lg border border-slate-200 shadow-2xs">
-                  <div className="text-[9px] text-slate-400 font-bold uppercase">Expected</div>
-                  <div className="font-headline text-sm font-black text-slate-800 mt-0.5">
+                <div className="bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-800 shadow-2xs">
+                  <div className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase">Expected</div>
+                  <div className="font-headline text-sm font-black text-slate-800 dark:text-slate-100 mt-0.5">
                     {result.expectedCount || '—'}
                   </div>
                 </div>
 
-                <div className="bg-white p-2 rounded-lg border border-slate-200 shadow-2xs">
-                  <div className="text-[9px] text-slate-400 font-bold uppercase">Uploaded</div>
-                  <div className="font-headline text-sm font-black text-slate-800 mt-0.5">
+                <div className="bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-800 shadow-2xs">
+                  <div className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase">Uploaded</div>
+                  <div className="font-headline text-sm font-black text-slate-800 dark:text-slate-100 mt-0.5">
                     {result.totalRows}
                   </div>
                 </div>
 
-                <div className="bg-white p-2 rounded-lg border border-slate-200 shadow-2xs">
-                  <div className="text-[9px] text-slate-400 font-bold uppercase">Valid</div>
-                  <div className="font-headline text-sm font-black text-emerald-600 mt-0.5">
+                <div className="bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-800 shadow-2xs">
+                  <div className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase">Valid</div>
+                  <div className="font-headline text-sm font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
                     {result.validRecords.length}
                   </div>
                 </div>
 
-                <div className="bg-white p-2 rounded-lg border border-slate-200 shadow-2xs">
-                  <div className="text-[9px] text-slate-400 font-bold uppercase">Duplicates</div>
-                  <div className={`font-headline text-sm font-black mt-0.5 ${result.duplicates.length > 0 ? "text-rose-600" : "text-slate-400"}`}>
+                <div className="bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-800 shadow-2xs">
+                  <div className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase">Duplicates</div>
+                  <div className={`font-headline text-sm font-black mt-0.5 ${result.duplicates.length > 0 ? "text-rose-600 dark:text-rose-400" : "text-slate-400 dark:text-slate-500"}`}>
                     {result.duplicates.length}
                   </div>
                 </div>
@@ -182,8 +182,8 @@ export function StudentUploadDialog({
 
               {/* Mismatch Warning */}
               {result.warning && (
-                <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-2.5 text-xs flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
+                <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 text-amber-800 dark:text-amber-300 rounded-lg p-2.5 text-xs flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
                   <div className="font-medium">{result.warning}</div>
                 </div>
               )}
@@ -191,14 +191,14 @@ export function StudentUploadDialog({
               {/* Error messages if any */}
               {result.errors.length > 0 && (
                 <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
-                  <div className="text-[11px] font-bold text-rose-700">Errors ({result.errors.length}):</div>
+                  <div className="text-[11px] font-bold text-rose-700 dark:text-rose-400">Errors ({result.errors.length}):</div>
                   {result.errors.slice(0, 5).map((err, i) => (
-                    <div key={i} className="text-[11px] text-rose-600 bg-rose-50/70 p-1.5 rounded border border-rose-200">
+                    <div key={i} className="text-[11px] text-rose-600 dark:text-rose-300 bg-rose-50/70 dark:bg-rose-950/30 p-1.5 rounded border border-rose-200 dark:border-rose-900/50">
                       {err.reason}
                     </div>
                   ))}
                   {result.errors.length > 5 && (
-                    <div className="text-[10px] text-slate-500 italic">
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 italic">
                       + {result.errors.length - 5} more error(s)...
                     </div>
                   )}
@@ -208,17 +208,17 @@ export function StudentUploadDialog({
               {/* Sample Preview of Valid Records */}
               {result.validRecords.length > 0 && (
                 <div className="pt-1">
-                  <div className="text-[11px] font-bold text-slate-700 mb-1">
+                  <div className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
                     First 3 Students Preview:
                   </div>
-                  <div className="bg-white rounded-lg border border-slate-200 divide-y divide-slate-100 text-xs">
+                  <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                     {result.validRecords.slice(0, 3).map((std) => (
                       <div key={std.id} className="p-2 flex items-center justify-between">
                         <div>
-                          <span className="font-bold text-slate-800">{std.name}</span>
-                          <span className="text-slate-400 text-[11px] ml-2">Sec: {std.section}</span>
+                          <span className="font-bold text-slate-800 dark:text-slate-200">{std.name}</span>
+                          <span className="text-slate-400 dark:text-slate-500 text-[11px] ml-2">Sec: {std.section}</span>
                         </div>
-                        <Badge variant="outline" className="text-xs font-mono font-bold text-indigo-700 border-indigo-200">
+                        <Badge variant="outline" className="text-xs font-mono font-bold text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-950/30">
                           {std.rollNo}
                         </Badge>
                       </div>
@@ -239,7 +239,7 @@ export function StudentUploadDialog({
               resetState();
               onOpenChange(false);
             }}
-            className="text-xs h-9"
+            className="text-xs h-9 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200"
           >
             Cancel
           </Button>

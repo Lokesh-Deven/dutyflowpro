@@ -401,7 +401,7 @@ export function QuestionPaperDistributionView({
           {/* Top Distribution Summary Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {/* 1. Total Examination Rooms */}
-            <div className="bg-white dark:bg-slate-850 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-xs">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-xs">
               <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
                 <DoorOpen className="h-4 w-4 text-[#6342e8]" />
                 <span>Total Examination Rooms</span>
@@ -413,7 +413,7 @@ export function QuestionPaperDistributionView({
             </div>
 
             {/* 2. Total Students */}
-            <div className="bg-white dark:bg-slate-850 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-xs">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-xs">
               <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
                 <Users className="h-4 w-4 text-[#6342e8]" />
                 <span>Total Students Allocated</span>
@@ -425,7 +425,7 @@ export function QuestionPaperDistributionView({
             </div>
 
             {/* 3. Total Question Papers Required */}
-            <div className="bg-white dark:bg-slate-850 border border-emerald-200 dark:border-emerald-900/60 rounded-2xl p-5 shadow-sm bg-gradient-to-br from-emerald-50/60 to-transparent dark:from-emerald-950/20">
+            <div className="bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-900/60 rounded-2xl p-5 shadow-sm bg-gradient-to-br from-emerald-50/60 to-transparent dark:from-emerald-950/20">
               <div className="flex items-center justify-between text-xs font-semibold text-emerald-700 dark:text-emerald-400">
                 <div className="flex items-center gap-2">
                   <Layers className="h-4 w-4 text-emerald-600" />
@@ -443,7 +443,7 @@ export function QuestionPaperDistributionView({
           </div>
 
           {/* Subject-Wise Question Paper Requirement Box */}
-          <Card className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-850 shadow-xs">
+          <Card className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
             <CardHeader className="pb-3 pt-5 px-5 sm:px-6">
               <div className="flex items-center justify-between">
                 <div className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 flex items-center gap-2">
@@ -487,7 +487,7 @@ export function QuestionPaperDistributionView({
                 placeholder="Search Room, Subject, Reg No..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 h-10 text-xs sm:text-sm rounded-xl bg-white dark:bg-slate-850 border-slate-200 dark:border-slate-800 shadow-sm font-medium"
+                className="pl-10 h-10 text-xs sm:text-sm rounded-xl bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-800 dark:text-white shadow-sm font-medium"
               />
             </div>
 
@@ -497,7 +497,7 @@ export function QuestionPaperDistributionView({
                 value={selectedSubjectFilter}
                 onValueChange={(val) => setSelectedSubjectFilter(val)}
               >
-                <SelectTrigger className="h-10 w-full sm:w-48 text-xs rounded-xl bg-white dark:bg-slate-850 border-slate-200 dark:border-slate-800 font-medium shadow-sm">
+                <SelectTrigger className="h-10 w-full sm:w-48 text-xs rounded-xl bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-800 dark:text-white font-medium shadow-sm">
                   <SelectValue placeholder="All Subjects" />
                 </SelectTrigger>
                 <SelectContent>

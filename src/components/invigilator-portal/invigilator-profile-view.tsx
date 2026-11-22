@@ -73,31 +73,31 @@ export function InvigilatorProfileView() {
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
       <div>
-        <h2 className="font-headline font-black text-xl text-slate-900 tracking-tight">
+        <h2 className="font-headline font-black text-xl text-slate-900 dark:text-white tracking-tight">
           Invigilator Profile
         </h2>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-slate-500 dark:text-slate-400">
           Faculty details, examination duty summary, and security settings
         </p>
       </div>
 
       {/* Main Profile Card */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs">
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
           {/* Avatar Monogram Initial (Per Rule: >= 50% circle, centered) */}
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 text-white font-black text-4xl flex items-center justify-center leading-none shadow-md ring-4 ring-indigo-50 shrink-0 select-none">
+          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 text-white font-black text-4xl flex items-center justify-center leading-none shadow-md ring-4 ring-indigo-50 dark:ring-indigo-950/60 shrink-0 select-none">
             {initial}
           </div>
 
           <div className="flex-1 text-center sm:text-left space-y-1">
-            <h3 className="font-headline font-black text-2xl text-slate-900">
+            <h3 className="font-headline font-black text-2xl text-slate-900 dark:text-white">
               {session.name}
             </h3>
-            <p className="text-xs font-semibold text-indigo-700 flex items-center justify-center sm:justify-start gap-1.5">
+            <p className="text-xs font-semibold text-indigo-700 dark:text-indigo-400 flex items-center justify-center sm:justify-start gap-1.5">
               <Briefcase className="w-3.5 h-3.5" />
               {session.designation || 'Faculty Member'}
             </p>
-            <p className="text-xs text-slate-500 flex items-center justify-center sm:justify-start gap-1.5 pt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-center sm:justify-start gap-1.5 pt-0.5">
               <Building2 className="w-3.5 h-3.5 text-slate-400" />
               {session.institutionName || 'College Examination Cell'}
             </p>
@@ -105,26 +105,26 @@ export function InvigilatorProfileView() {
         </div>
 
         {/* Contact Info Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-6 pt-6 border-t border-slate-100 text-xs">
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200/80">
-            <Mail className="w-4 h-4 text-indigo-600 shrink-0" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-6 pt-6 border-t border-slate-100 dark:border-slate-800 text-xs">
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/80">
+            <Mail className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
             <div>
-              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                 Email Address
               </div>
-              <div className="font-semibold text-slate-800">
+              <div className="font-semibold text-slate-800 dark:text-slate-200">
                 {session.email}
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200/80">
-            <Phone className="w-4 h-4 text-indigo-600 shrink-0" />
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/80">
+            <Phone className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
             <div>
-              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                 Mobile Number
               </div>
-              <div className="font-semibold text-slate-800">
+              <div className="font-semibold text-slate-800 dark:text-slate-200">
                 {session.mobile}
               </div>
             </div>
@@ -133,20 +133,20 @@ export function InvigilatorProfileView() {
 
         {/* Duty Metrics */}
         <div className="grid grid-cols-2 gap-3 mt-4">
-          <div className="p-4 rounded-xl bg-indigo-50/60 border border-indigo-100 text-center">
-            <div className="text-[10px] font-bold text-indigo-900 uppercase tracking-wider">
+          <div className="p-4 rounded-xl bg-indigo-50/60 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-800/60 text-center">
+            <div className="text-[10px] font-bold text-indigo-900 dark:text-indigo-300 uppercase tracking-wider">
               Total Allotted Duties
             </div>
-            <div className="font-headline font-black text-3xl text-indigo-950 mt-1">
+            <div className="font-headline font-black text-3xl text-indigo-950 dark:text-indigo-200 mt-1">
               {totalDuties}
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-emerald-50/60 border border-emerald-100 text-center">
-            <div className="text-[10px] font-bold text-emerald-900 uppercase tracking-wider">
+          <div className="p-4 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-800/60 text-center">
+            <div className="text-[10px] font-bold text-emerald-900 dark:text-emerald-300 uppercase tracking-wider">
               Completed Sessions
             </div>
-            <div className="font-headline font-black text-3xl text-emerald-950 mt-1">
+            <div className="font-headline font-black text-3xl text-emerald-950 dark:text-emerald-200 mt-1">
               {completedDuties}
             </div>
           </div>
@@ -154,23 +154,23 @@ export function InvigilatorProfileView() {
       </div>
 
       {/* Security: Change PIN */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs">
         <div className="flex items-center gap-2 mb-4">
-          <KeyRound className="w-5 h-5 text-indigo-600" />
-          <h3 className="font-headline font-bold text-base text-slate-800">
+          <KeyRound className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+          <h3 className="font-headline font-bold text-base text-slate-800 dark:text-white">
             Security &amp; Change PIN
           </h3>
         </div>
 
         {errorMsg && (
-          <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
+          <div className="mb-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-medium">
             {errorMsg}
           </div>
         )}
 
         <form onSubmit={handleChangePinSubmit} className="space-y-4 max-w-md">
           <div className="space-y-1.5">
-            <Label htmlFor="curr-pin" className="text-xs font-semibold text-slate-700">
+            <Label htmlFor="curr-pin" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
               Current PIN / Password:
             </Label>
             <Input
@@ -179,14 +179,14 @@ export function InvigilatorProfileView() {
               placeholder="Enter current PIN"
               value={currentPin}
               onChange={(e) => setCurrentPin(e.target.value)}
-              className="h-10 text-xs rounded-lg"
+              className="h-10 text-xs rounded-lg bg-slate-50/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
               required
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="new-pin" className="text-xs font-semibold text-slate-700">
+              <Label htmlFor="new-pin" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                 New PIN:
               </Label>
               <Input
@@ -195,14 +195,14 @@ export function InvigilatorProfileView() {
                 placeholder="At least 4 digits"
                 value={newPin}
                 onChange={(e) => setNewPin(e.target.value)}
-                className="h-10 text-xs rounded-lg"
+                className="h-10 text-xs rounded-lg bg-slate-50/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
                 minLength={4}
                 required
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="confirm-pin" className="text-xs font-semibold text-slate-700">
+              <Label htmlFor="confirm-pin" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                 Confirm New PIN:
               </Label>
               <Input
@@ -211,7 +211,7 @@ export function InvigilatorProfileView() {
                 placeholder="Re-enter new PIN"
                 value={confirmPin}
                 onChange={(e) => setConfirmPin(e.target.value)}
-                className="h-10 text-xs rounded-lg"
+                className="h-10 text-xs rounded-lg bg-slate-50/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
                 minLength={4}
                 required
               />

@@ -65,15 +65,15 @@ export default function SavedAllotmentsPage() {
               <FolderArchive className="h-8 w-8" />
             </div>
             <div className="space-y-1.5">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">No Saved Allotments Yet</h3>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">No Saved Allocations Yet</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-                You haven&apos;t saved any allotment sheets yet. Create an allotment and save it to easily access it here anytime.
+                You haven&apos;t saved any allocation sheets yet. Create an allocation and save it to easily access it here anytime.
               </p>
             </div>
             <Button asChild className="bg-[#6342e8] hover:bg-[#5232d6] text-white font-semibold rounded-xl shadow-xs gap-2">
               <Link href="/dashboard/examinations" onClick={() => clearCurrentAllotment()}>
                 <PlusCircle className="h-4 w-4" />
-                <span>Create New Allotment</span>
+                <span>Create New Allocation</span>
               </Link>
             </Button>
           </div>
@@ -130,7 +130,7 @@ export default function SavedAllotmentsPage() {
                         </DropdownMenu>
                         <AlertDialogContent className="rounded-2xl border-slate-200 dark:border-slate-800">
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Saved Allotment?</AlertDialogTitle>
+                            <AlertDialogTitle>Delete Saved Allocation?</AlertDialogTitle>
                             <AlertDialogDescription>
                               This action cannot be undone. This will permanently remove &quot;{allotment.name}&quot; from your saved sheets.
                             </AlertDialogDescription>
@@ -199,7 +199,7 @@ export default function SavedAllotmentsPage() {
                     variant="outline"
                     className="w-full justify-between font-semibold border-slate-200 dark:border-slate-800 hover:border-[#6342e8]/60 hover:bg-[#6342e8]/5 dark:hover:bg-purple-950/40 text-slate-800 dark:text-slate-200 group-hover:text-[#6342e8] dark:group-hover:text-purple-300 rounded-xl transition-all"
                   >
-                    <span>Open Allotment</span>
+                    <span>Open Allocation</span>
                     <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </CardFooter>

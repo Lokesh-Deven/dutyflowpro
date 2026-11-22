@@ -134,16 +134,16 @@ export function RoomAllocationView({
   };
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl shadow-xs p-5 space-y-6">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl shadow-xs p-5 space-y-6">
       {/* Top Header with Status and Primary Action Buttons */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-[#1E2A5E]/10 text-[#1E2A5E] rounded-lg">
+          <div className="p-2 bg-[#1E2A5E]/10 dark:bg-indigo-950/60 text-[#1E2A5E] dark:text-indigo-400 rounded-lg">
             <Users className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="font-headline text-lg font-bold text-slate-800">
+              <h3 className="font-headline text-lg font-bold text-slate-800 dark:text-white">
                 Duty Role & Room Allocation
               </h3>
               {status === 'Locked' ? (
@@ -155,17 +155,17 @@ export function RoomAllocationView({
                   <CheckCircle2 className="w-3 h-3" /> Generated
                 </Badge>
               ) : (
-                <Badge variant="outline" className="text-slate-500 text-xs font-semibold">
+                <Badge variant="outline" className="text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 text-xs font-semibold">
                   Pending Allocation
                 </Badge>
               )}
             </div>
             {isLocked ? (
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Confirmed and locked against accidental changes.
               </p>
             ) : !isGenerated ? (
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Select rooms above, then click 'Generate Allocation'.
               </p>
             ) : null}
@@ -179,7 +179,7 @@ export function RoomAllocationView({
               type="button"
               onClick={handleGenerate}
               disabled={isGenerating || (selectedRooms.length !== requiredInvigilators && masterRooms.length < requiredInvigilators)}
-              className="bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs h-9 px-4 gap-1.5 shadow-xs"
+              className="bg-[#1E2A5E] hover:bg-[#151D42] dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white font-bold text-xs h-9 px-4 gap-1.5 shadow-xs"
             >
               <Sparkles className="w-3.5 h-3.5" />
               {selectedRooms.length === requiredInvigilators ? "Generate Allocation" : "Auto-Select & Generate"}
@@ -192,7 +192,7 @@ export function RoomAllocationView({
                   variant="outline"
                   size="sm"
                   onClick={() => setIsRegenerateConfirmOpen(true)}
-                  className="text-xs font-semibold h-9 px-3 gap-1 text-slate-700 hover:text-slate-900 border-slate-300"
+                  className="text-xs font-semibold h-9 px-3 gap-1 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border-slate-300 dark:border-slate-700"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
                   Regenerate
@@ -206,8 +206,8 @@ export function RoomAllocationView({
                 onClick={handleToggleLock}
                 className={`text-xs font-bold h-9 px-3 gap-1.5 ${
                   isLocked
-                    ? "border-amber-400 text-amber-800 hover:bg-amber-50"
-                    : "bg-[#1E2A5E] hover:bg-[#151D42] text-white"
+                    ? "border-amber-400 dark:border-amber-700 text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40"
+                    : "bg-[#1E2A5E] hover:bg-[#151D42] dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white"
                 }`}
               >
                 {isLocked ? (
@@ -229,7 +229,7 @@ export function RoomAllocationView({
 
       {/* Warnings if any */}
       {allocation?.warnings && allocation.warnings.length > 0 && (
-        <div className="p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg text-xs space-y-1">
+        <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 rounded-lg text-xs space-y-1">
           {allocation.warnings.map((w, idx) => (
             <div key={idx} className="flex items-start gap-2">
               <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
@@ -246,17 +246,17 @@ export function RoomAllocationView({
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <DoorOpen className="w-4 h-4 text-indigo-600" />
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                <DoorOpen className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-white">
                   Invigilators&apos; Duty ({allocation.invigilatorDuties.length} Rooms Assigned)
                 </h4>
               </div>
               <span className="text-[11px] text-slate-400 font-medium">1 Invigilator per Room</span>
             </div>
 
-            <div className="rounded-lg border border-slate-200 overflow-hidden">
+            <div className="rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden">
               <table className="w-full text-left text-xs border-collapse">
-                <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+                <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-800">
                   <tr>
                     <th className="py-2.5 px-3 w-16 text-center">Sl No</th>
                     <th className="py-2.5 px-4 w-40">Room No.</th>
@@ -264,19 +264,19 @@ export function RoomAllocationView({
                     <th className="py-2.5 px-4">Designation</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70">
                   {allocation.invigilatorDuties.map((duty, idx) => (
-                    <tr key={duty.invigilatorId} className="hover:bg-indigo-50/20 transition-colors">
-                      <td className="py-2.5 px-3 text-center text-slate-500 font-medium">{idx + 1}</td>
+                    <tr key={duty.invigilatorId} className="hover:bg-indigo-50/20 dark:hover:bg-slate-800/40 transition-colors">
+                      <td className="py-2.5 px-3 text-center text-slate-500 dark:text-slate-400 font-medium">{idx + 1}</td>
                       <td className="py-2.5 px-4">
-                        <span className="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 text-xs">
+                        <span className="font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-100 dark:border-indigo-900/60 text-xs">
                           {duty.room}
                         </span>
                       </td>
-                      <td className="py-2.5 px-4 font-semibold text-slate-800 text-sm">
+                      <td className="py-2.5 px-4 font-semibold text-slate-800 dark:text-white text-sm">
                         {duty.invigilatorName}
                       </td>
-                      <td className="py-2.5 px-4 text-slate-500">
+                      <td className="py-2.5 px-4 text-slate-500 dark:text-slate-400">
                         {duty.designation || "—"}
                       </td>
                     </tr>
@@ -290,8 +290,8 @@ export function RoomAllocationView({
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-purple-600" />
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                <Users className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-white">
                   Relievers&apos; Duty ({allocation.relieverDuties.length} Relievers)
                 </h4>
               </div>
@@ -300,9 +300,9 @@ export function RoomAllocationView({
               </span>
             </div>
 
-            <div className="rounded-lg border border-slate-200 overflow-hidden">
+            <div className="rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden">
               <table className="w-full text-left text-xs border-collapse">
-                <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+                <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-800">
                   <tr>
                     <th className="py-2.5 px-3 w-16 text-center">Sl No</th>
                     <th className="py-2.5 px-4 w-48">Reliever Name</th>
@@ -311,14 +311,14 @@ export function RoomAllocationView({
                     <th className="py-2.5 px-3 w-24 text-center">Room Count</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70">
                   {allocation.relieverDuties.map((duty, idx) => (
-                    <tr key={duty.relieverId} className="hover:bg-purple-50/20 transition-colors">
-                      <td className="py-2.5 px-3 text-center text-slate-500 font-medium">{idx + 1}</td>
-                      <td className="py-2.5 px-4 font-semibold text-slate-800 text-sm">
+                    <tr key={duty.relieverId} className="hover:bg-purple-50/20 dark:hover:bg-slate-800/40 transition-colors">
+                      <td className="py-2.5 px-3 text-center text-slate-500 dark:text-slate-400 font-medium">{idx + 1}</td>
+                      <td className="py-2.5 px-4 font-semibold text-slate-800 dark:text-white text-sm">
                         {duty.relieverName}
                       </td>
-                      <td className="py-2.5 px-4 text-slate-500">
+                      <td className="py-2.5 px-4 text-slate-500 dark:text-slate-400">
                         {duty.designation || "—"}
                       </td>
                       <td className="py-2.5 px-4">
@@ -326,14 +326,14 @@ export function RoomAllocationView({
                           {duty.rooms.map((rm) => (
                             <span
                               key={rm}
-                              className="text-[11px] font-semibold bg-purple-50 text-purple-800 border border-purple-200 px-2 py-0.5 rounded"
+                              className="text-[11px] font-semibold bg-purple-50 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800 px-2 py-0.5 rounded"
                             >
                               {rm}
                             </span>
                           ))}
                         </div>
                       </td>
-                      <td className="py-2.5 px-3 text-center font-bold text-slate-700">
+                      <td className="py-2.5 px-3 text-center font-bold text-slate-700 dark:text-slate-300">
                         {duty.rooms.length}
                       </td>
                     </tr>
@@ -344,12 +344,12 @@ export function RoomAllocationView({
           </div>
 
           {/* Section 3: PDF Generation Action Bar */}
-          <div className="pt-4 border-t border-slate-200 flex flex-wrap items-center justify-end gap-2.5 bg-slate-50/60 p-4 rounded-xl">
+          <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-end gap-2.5 bg-slate-50/60 dark:bg-slate-800/40 p-4 rounded-xl">
             <Button
               type="button"
               onClick={onGenerateRoomAllocationPdf}
               disabled={isGeneratingPdf}
-              className="bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs h-9 px-4 gap-1.5 shadow-xs"
+              className="bg-[#1E2A5E] hover:bg-[#151D42] dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white font-bold text-xs h-9 px-4 gap-1.5 shadow-xs"
             >
               <FileText className="w-3.5 h-3.5" />
               Room Allocation PDF
@@ -359,7 +359,7 @@ export function RoomAllocationView({
               type="button"
               onClick={onGenerateRelieverSlipsPdf}
               disabled={isGeneratingPdf}
-              className="bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs h-9 px-4 gap-1.5 shadow-xs"
+              className="bg-purple-700 hover:bg-purple-800 dark:bg-purple-600 dark:hover:bg-purple-700 text-white font-bold text-xs h-9 px-4 gap-1.5 shadow-xs"
             >
               <Printer className="w-3.5 h-3.5" />
               Reliever Duty Slips
@@ -368,10 +368,10 @@ export function RoomAllocationView({
         </div>
       ) : (
         /* Empty / Pending State Guidance */
-        <div className="py-10 text-center border-2 border-dashed border-slate-200 rounded-xl bg-slate-50/50">
-          <DoorOpen className="w-10 h-10 text-slate-300 mx-auto mb-2.5" />
-          <h4 className="font-bold text-slate-700 text-sm">Allocation Not Yet Generated</h4>
-          <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto leading-relaxed">
+        <div className="py-10 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-800/30">
+          <DoorOpen className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2.5" />
+          <h4 className="font-bold text-slate-700 dark:text-slate-200 text-sm">Allocation Not Yet Generated</h4>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto leading-relaxed">
             {selectedRooms.length === requiredInvigilators
               ? `You have selected ${selectedRooms.length} rooms. Click below to automatically assign invigilator rooms and distribute reliever duties.`
               : `Select ${requiredInvigilators} rooms above, or click below to auto-select from your Master Rooms list and generate duties.`}
@@ -380,7 +380,7 @@ export function RoomAllocationView({
             type="button"
             onClick={handleGenerate}
             disabled={isGenerating || (selectedRooms.length !== requiredInvigilators && masterRooms.length < requiredInvigilators)}
-            className="mt-4 bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs h-9 px-5 gap-1.5 shadow-xs"
+            className="mt-4 bg-[#1E2A5E] hover:bg-[#151D42] dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white font-bold text-xs h-9 px-5 gap-1.5 shadow-xs"
           >
             <Sparkles className="w-3.5 h-3.5" />
             {selectedRooms.length === requiredInvigilators ? "Generate Allocation Now" : "Auto-Select & Generate Allocation"}
@@ -390,23 +390,23 @@ export function RoomAllocationView({
 
       {/* Confirmation Dialog for Regenerate */}
       <AlertDialog open={isRegenerateConfirmOpen} onOpenChange={setIsRegenerateConfirmOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-base font-bold text-slate-800">
+            <AlertDialogTitle className="text-base font-bold text-slate-800 dark:text-white">
               Regenerate Room Allocation?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-xs text-slate-500 leading-relaxed">
+            <AlertDialogDescription className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
               Regenerating will recalculate the Invigilator and Reliever roles and room assignments for this session. Existing assignments for this session will be overwritten.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="text-xs font-semibold h-8">Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="text-xs font-semibold h-8 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 setIsRegenerateConfirmOpen(false);
                 handleGenerate();
               }}
-              className="bg-[#1E2A5E] hover:bg-[#151D42] text-white text-xs font-bold h-8"
+              className="bg-[#1E2A5E] hover:bg-[#151D42] dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white text-xs font-bold h-8"
             >
               Confirm & Regenerate
             </AlertDialogAction>

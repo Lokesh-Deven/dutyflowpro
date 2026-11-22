@@ -579,17 +579,17 @@ export default function RoomAttendanceManualPage() {
         <RoomAttendanceTabs />
 
         {/* Breadcrumb & Title */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
           <div>
             <div className="flex items-center gap-2.5">
-              <div className="p-2.5 bg-indigo-50 text-[#1E2A5E] rounded-xl shadow-xs">
-                <FileSpreadsheet className="w-6 h-6 text-indigo-700" />
+              <div className="p-2.5 bg-indigo-50 dark:bg-indigo-950/60 text-[#1E2A5E] dark:text-indigo-400 rounded-xl shadow-xs">
+                <FileSpreadsheet className="w-6 h-6 text-indigo-700 dark:text-indigo-400" />
               </div>
               <div>
-                <h1 className="font-headline text-2xl font-black tracking-tight text-slate-800">
+                <h1 className="font-headline text-2xl font-black tracking-tight text-slate-800 dark:text-white">
                   Manual Attendance
                 </h1>
-                <p className="text-xs text-slate-500 font-medium">
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                   Printable manual attendance sheets mirroring seating layouts &amp; post-exam web app digitization
                 </p>
               </div>
@@ -605,9 +605,9 @@ export default function RoomAttendanceManualPage() {
                 setReportRoomScope(selectedRoomFilter);
                 setIsReportOpen(true);
               }}
-              className="text-xs h-9 px-3.5 gap-1.5 font-bold text-rose-700 border-rose-300 hover:bg-rose-50 shadow-2xs"
+              className="text-xs h-9 px-3.5 gap-1.5 font-bold text-rose-700 dark:text-rose-400 border-rose-300 dark:border-rose-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 shadow-2xs"
             >
-              <Users className="w-3.5 h-3.5 text-rose-600" />
+              <Users className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
               <span>Generate Absentees Report</span>
               {activeStats.absent > 0 && (
                 <span className="ml-1 px-1.5 py-0.2 bg-rose-600 text-white rounded-full text-[10px] font-black">
@@ -628,20 +628,20 @@ export default function RoomAttendanceManualPage() {
                     <ChevronDown className="w-3 h-3 opacity-80" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuContent align="end" className="w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white">
                   <DropdownMenuItem
                     onClick={() => handlePrintManualSheets('all')}
-                    className="text-xs font-semibold cursor-pointer"
+                    className="text-xs font-semibold cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800"
                   >
-                    <Printer className="w-3.5 h-3.5 mr-2 text-indigo-600" />
+                    <Printer className="w-3.5 h-3.5 mr-2 text-indigo-600 dark:text-indigo-400" />
                     Print All Rooms ({displayedRooms.length} Sheets)
                   </DropdownMenuItem>
                   {selectedRoomFilter !== 'ALL' && (
                     <DropdownMenuItem
                       onClick={() => handlePrintManualSheets('current')}
-                      className="text-xs font-semibold cursor-pointer"
+                      className="text-xs font-semibold cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800"
                     >
-                      <DoorOpen className="w-3.5 h-3.5 mr-2 text-emerald-600" />
+                      <DoorOpen className="w-3.5 h-3.5 mr-2 text-emerald-600 dark:text-emerald-400" />
                       Print Room {selectedRoomFilter} Only
                     </DropdownMenuItem>
                   )}
@@ -652,20 +652,20 @@ export default function RoomAttendanceManualPage() {
         </div>
 
         {/* Top Mode Switcher Tabs */}
-        <div className="bg-slate-100/90 p-1.5 rounded-2xl flex flex-col sm:flex-row items-center gap-2 border border-slate-200/80 shadow-2xs">
+        <div className="bg-slate-100/90 dark:bg-slate-900 p-1.5 rounded-2xl flex flex-col sm:flex-row items-center gap-2 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
           <button
             type="button"
             onClick={() => setActiveMode('manual_printable')}
             className={cn(
               "flex-1 w-full py-2.5 px-4 rounded-xl font-headline font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer",
               activeMode === 'manual_printable'
-                ? "bg-white text-[#1E2A5E] shadow-sm border border-slate-200/80"
-                : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
+                ? "bg-white dark:bg-slate-800 text-[#1E2A5E] dark:text-white shadow-sm border border-slate-200/80 dark:border-slate-700"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800/60"
             )}
           >
-            <Printer className="w-4 h-4 text-indigo-600" />
+            <Printer className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
             <span>Mode 1: Manual Attendance (Printable Sheet)</span>
-            <Badge variant="outline" className="text-[10px] bg-slate-50 text-slate-600 ml-1 font-semibold">
+            <Badge variant="outline" className="text-[10px] bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600 ml-1 font-semibold">
               Ink-Friendly B&amp;W
             </Badge>
           </button>
@@ -676,31 +676,31 @@ export default function RoomAttendanceManualPage() {
             className={cn(
               "flex-1 w-full py-2.5 px-4 rounded-xl font-headline font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer",
               activeMode === 'digital_interactive'
-                ? "bg-white text-[#1E2A5E] shadow-sm border border-slate-200/80"
-                : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
+                ? "bg-white dark:bg-slate-800 text-[#1E2A5E] dark:text-white shadow-sm border border-slate-200/80 dark:border-slate-700"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800/60"
             )}
           >
-            <Smartphone className="w-4 h-4 text-emerald-600" />
+            <Smartphone className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <span>Mode 2: Digital Attendance (Web app Entry)</span>
-            <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] ml-1 font-bold">
+            <Badge className="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 text-[10px] ml-1 font-bold">
               Live Digitization
             </Badge>
           </button>
         </div>
 
         {/* Multi-Level Filters Bar */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs flex flex-wrap items-center justify-between gap-4">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-3">
             {/* Examination / Allocation Selector */}
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Exam:</span>
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Exam:</span>
               <select
                 value={selectedAllocationId}
                 onChange={(e) => {
                   setSelectedAllocationId(e.target.value);
                   setSelectedRoomFilter('ALL');
                 }}
-                className="text-xs font-bold text-slate-800 bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                className="text-xs font-bold text-slate-800 dark:text-white bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-indigo-500 cursor-pointer"
               >
                 {availableAllocations.map((alloc) => (
                   <option key={alloc.id} value={alloc.id}>
@@ -711,21 +711,21 @@ export default function RoomAttendanceManualPage() {
             </div>
 
             {/* Date & Session Info */}
-            <div className="flex items-center gap-2 bg-indigo-50/60 border border-indigo-100 rounded-lg px-3 py-1.5 text-xs text-indigo-900 font-semibold">
-              <Calendar className="w-3.5 h-3.5 text-indigo-600" />
+            <div className="flex items-center gap-2 bg-indigo-50/60 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-800/60 rounded-lg px-3 py-1.5 text-xs text-indigo-900 dark:text-indigo-300 font-semibold">
+              <Calendar className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
               <span>{dateWithDay}</span>
-              <span className="text-indigo-300">|</span>
-              <Clock className="w-3.5 h-3.5 text-indigo-600" />
+              <span className="text-indigo-300 dark:text-indigo-700">|</span>
+              <Clock className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
               <span>{examTimings}</span>
             </div>
 
             {/* Room Filter Selector */}
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Room:</span>
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Room:</span>
               <select
                 value={selectedRoomFilter}
                 onChange={(e) => setSelectedRoomFilter(e.target.value)}
-                className="text-xs font-bold text-slate-800 bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                className="text-xs font-bold text-slate-800 dark:text-white bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-indigo-500 cursor-pointer"
               >
                 <option value="ALL">All Rooms ({currentAllocation.roomPlans?.length || 0})</option>
                 {currentAllocation.roomPlans?.map((r) => (
@@ -739,15 +739,15 @@ export default function RoomAttendanceManualPage() {
 
           {/* Mode 2 View Sub-Toggle (Web Grid vs Mobile Cards) */}
           {activeMode === 'digital_interactive' && (
-            <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg border border-slate-200">
+            <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
               <button
                 type="button"
                 onClick={() => setViewSubToggle('web_grid')}
                 className={cn(
                   "px-3 py-1 text-xs font-bold rounded-md flex items-center gap-1.5 transition-all cursor-pointer",
                   viewSubToggle === 'web_grid'
-                    ? "bg-white text-indigo-900 shadow-2xs"
-                    : "text-slate-600 hover:text-slate-900"
+                    ? "bg-white dark:bg-slate-700 text-indigo-900 dark:text-white shadow-2xs"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 )}
               >
                 <Monitor className="w-3.5 h-3.5" />
@@ -759,8 +759,8 @@ export default function RoomAttendanceManualPage() {
                 className={cn(
                   "px-3 py-1 text-xs font-bold rounded-md flex items-center gap-1.5 transition-all cursor-pointer",
                   viewSubToggle === 'mobile_cards'
-                    ? "bg-white text-indigo-900 shadow-2xs"
-                    : "text-slate-600 hover:text-slate-900"
+                    ? "bg-white dark:bg-slate-700 text-indigo-900 dark:text-white shadow-2xs"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 )}
               >
                 <Smartphone className="w-3.5 h-3.5" />
@@ -777,15 +777,15 @@ export default function RoomAttendanceManualPage() {
       {activeMode === 'manual_printable' && (
         <div className="space-y-8">
           {/* Informational Banner on Screen */}
-          <div className="screen-only-controls bg-blue-50/70 border border-blue-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-blue-900">
+          <div className="screen-only-controls bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-blue-900 dark:text-blue-300">
             <div className="flex items-center gap-2.5">
-              <Sparkles className="w-4 h-4 text-blue-600 shrink-0" />
+              <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
               <span>
                 <strong>A4 Landscape Format (Strict 1-Page Per Room):</strong> Optimized for ink-saving black &amp; white printing. Automatically configured in Landscape orientation so each examination room fits completely onto a single A4 page with handwriting lines for Ans. Script No. &amp; Signature.
               </span>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <Badge className="bg-indigo-100 text-indigo-800 border-indigo-200 text-[10px] font-bold">
+              <Badge className="bg-indigo-100 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800 text-[10px] font-bold">
                 A4 Landscape
               </Badge>
               <Button
@@ -1029,24 +1029,24 @@ export default function RoomAttendanceManualPage() {
                 return (
                   <div
                     key={room.roomId || room.roomNo}
-                    className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4"
+                    className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4"
                   >
                     {/* Room Diagram Header */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
                       <div className="flex items-center gap-2.5">
-                        <div className="p-2 bg-[#1E2A5E]/10 text-[#1E2A5E] rounded-xl">
-                          <DoorOpen className="w-5 h-5 text-indigo-800" />
+                        <div className="p-2 bg-[#1E2A5E]/10 dark:bg-indigo-950/60 text-[#1E2A5E] dark:text-indigo-400 rounded-xl">
+                          <DoorOpen className="w-5 h-5 text-indigo-800 dark:text-indigo-400" />
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <h3 className="font-headline text-lg font-black text-slate-800">
+                            <h3 className="font-headline text-lg font-black text-slate-800 dark:text-white">
                               Room No. {room.roomNo}
                             </h3>
-                            <Badge variant="outline" className="text-[10px] font-bold text-slate-600">
+                            <Badge variant="outline" className="text-[10px] font-bold text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700">
                               {hasMiddleColumn ? '3-Column Layout' : '2-Column Layout'}
                             </Badge>
                           </div>
-                          <p className="text-xs text-slate-500 font-medium">
+                          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                             {room.totalBenches} Benches • Capacity: {room.capacity}
                           </p>
                         </div>
@@ -1054,14 +1054,14 @@ export default function RoomAttendanceManualPage() {
 
                       {/* Live Counter Badges */}
                       <div className="flex items-center gap-2">
-                        <Badge className="bg-slate-100 text-slate-800 border-slate-200 text-xs px-2.5 py-1 font-bold">
+                        <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 text-xs px-2.5 py-1 font-bold">
                           Allocated: {stats.total}
                         </Badge>
-                        <Badge className="bg-emerald-50 text-emerald-800 border-emerald-300 text-xs px-2.5 py-1 font-bold gap-1">
+                        <Badge className="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 text-xs px-2.5 py-1 font-bold gap-1">
                           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                           Present: {stats.present}
                         </Badge>
-                        <Badge className="bg-rose-50 text-rose-800 border-rose-300 text-xs px-2.5 py-1 font-bold gap-1">
+                        <Badge className="bg-rose-50 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border-rose-300 dark:border-rose-800 text-xs px-2.5 py-1 font-bold gap-1">
                           <span className="w-2 h-2 rounded-full bg-rose-500" />
                           Absent: {stats.absent}
                         </Badge>
@@ -1082,7 +1082,7 @@ export default function RoomAttendanceManualPage() {
                     >
                       {/* Left Column Benches */}
                       <div className="space-y-3">
-                        <div className="text-xs font-bold uppercase tracking-wider text-slate-500 pb-1 border-b border-slate-200 text-center">
+                        <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 pb-1 border-b border-slate-200 dark:border-slate-800 text-center">
                           Left Side Benches ({leftBenches.length})
                         </div>
                         {leftBenches.map((bench) => (
@@ -1099,7 +1099,7 @@ export default function RoomAttendanceManualPage() {
                       {/* Middle Column Benches */}
                       {hasMiddleColumn && (
                         <div className="space-y-3">
-                          <div className="text-xs font-bold uppercase tracking-wider text-slate-500 pb-1 border-b border-slate-200 text-center">
+                          <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 pb-1 border-b border-slate-200 dark:border-slate-800 text-center">
                             Middle Benches ({middleBenches.length})
                           </div>
                           {middleBenches.map((bench) => (
@@ -1116,7 +1116,7 @@ export default function RoomAttendanceManualPage() {
 
                       {/* Right Column Benches */}
                       <div className="space-y-3">
-                        <div className="text-xs font-bold uppercase tracking-wider text-slate-500 pb-1 border-b border-slate-200 text-center">
+                        <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 pb-1 border-b border-slate-200 dark:border-slate-800 text-center">
                           Right Side Benches ({rightBenches.length})
                         </div>
                         {rightBenches.map((bench) => (
@@ -1146,14 +1146,14 @@ export default function RoomAttendanceManualPage() {
                 return (
                   <div
                     key={`mob-${room.roomId || room.roomNo}`}
-                    className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs space-y-4"
+                    className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs space-y-4"
                   >
-                    <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                       <div>
-                        <h3 className="font-headline text-lg font-black text-slate-800">
+                        <h3 className="font-headline text-lg font-black text-slate-800 dark:text-white">
                           Room No. {room.roomNo}
                         </h3>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
                           {studentsInRoom.length} Candidates • Touch card to toggle Absent
                         </p>
                       </div>
@@ -1244,17 +1244,17 @@ export default function RoomAttendanceManualPage() {
       {/* ABSENTEES REPORT MODAL / DIALOG                                           */}
       {/* ========================================================================= */}
       <Dialog open={isReportOpen} onOpenChange={setIsReportOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white">
           <DialogHeader>
             <div className="flex items-center gap-2">
-              <div className="p-2 bg-rose-50 text-rose-700 rounded-xl">
-                <Users className="w-5 h-5 text-rose-600" />
+              <div className="p-2 bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 rounded-xl">
+                <Users className="w-5 h-5 text-rose-600 dark:text-rose-400" />
               </div>
               <div>
-                <DialogTitle className="text-lg font-black text-slate-800">
+                <DialogTitle className="text-lg font-black text-slate-800 dark:text-white">
                   Absentees Report Generator
                 </DialogTitle>
-                <DialogDescription className="text-xs text-slate-500">
+                <DialogDescription className="text-xs text-slate-500 dark:text-slate-400">
                   {collegeName} • {examTitle}
                 </DialogDescription>
               </div>
@@ -1262,13 +1262,13 @@ export default function RoomAttendanceManualPage() {
           </DialogHeader>
 
           {/* Scope Selector in Modal */}
-          <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
             <div className="flex items-center gap-2">
-              <span className="font-bold text-slate-600">Filter Scope:</span>
+              <span className="font-bold text-slate-600 dark:text-slate-300">Filter Scope:</span>
               <select
                 value={reportRoomScope}
                 onChange={(e) => setReportRoomScope(e.target.value)}
-                className="text-xs font-bold text-slate-800 bg-white border border-slate-300 rounded-lg px-2.5 py-1 focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                className="text-xs font-bold text-slate-800 dark:text-white bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1 focus:ring-2 focus:ring-indigo-500 cursor-pointer"
               >
                 <option value="ALL">All Rooms in Session ({displayedRooms.length} Rooms)</option>
                 {currentAllocation.roomPlans?.map((r) => (
@@ -1281,34 +1281,34 @@ export default function RoomAttendanceManualPage() {
 
             {/* Total Absentees Badge */}
             <div className="flex items-center gap-2">
-              <span className="text-slate-500 font-semibold">Total Absentees:</span>
-              <span className="px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 font-black text-xs">
+              <span className="text-slate-500 dark:text-slate-400 font-semibold">Total Absentees:</span>
+              <span className="px-2.5 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 font-black text-xs border border-rose-200 dark:border-rose-800">
                 {absenteesList.length} Students
               </span>
             </div>
           </div>
 
           {/* Absentees Structured Table */}
-          <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
-            <div className="bg-slate-100/90 px-4 py-2 border-b border-slate-200 text-xs font-bold text-slate-700 flex items-center justify-between">
+          <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xs">
+            <div className="bg-slate-100/90 dark:bg-slate-800/80 px-4 py-2 border-b border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
               <span>Structured Candidate Table</span>
-              <span className="text-[10px] text-slate-500 font-medium">
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
                 {dateWithDay} • {examTimings}
               </span>
             </div>
 
             {absenteesList.length === 0 ? (
-              <div className="p-8 text-center text-slate-500 space-y-2">
+              <div className="p-8 text-center text-slate-500 dark:text-slate-400 space-y-2">
                 <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" />
-                <p className="font-bold text-sm text-slate-800">100% Attendance Recorded!</p>
-                <p className="text-xs text-slate-500">
+                <p className="font-bold text-sm text-slate-800 dark:text-white">100% Attendance Recorded!</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   There are no candidates marked absent in this selection.
                 </p>
               </div>
             ) : (
               <div className="max-h-72 overflow-y-auto">
                 <table className="w-full text-xs text-left border-collapse">
-                  <thead className="bg-slate-50 text-[10px] uppercase font-bold text-slate-500 sticky top-0 border-b border-slate-200">
+                  <thead className="bg-slate-50 dark:bg-slate-800/60 text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 sticky top-0 border-b border-slate-200 dark:border-slate-800">
                     <tr>
                       <th className="py-2 px-3 text-center w-12">#</th>
                       <th className="py-2 px-3">Student Name</th>
@@ -1320,28 +1320,28 @@ export default function RoomAttendanceManualPage() {
                       <th className="py-2 px-3 text-center w-20">Status</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70">
                     {absenteesList.map((item, idx) => (
-                      <tr key={item.rollNo} className="hover:bg-rose-50/40 transition-colors">
-                        <td className="py-2 px-3 text-center font-bold text-slate-400">
+                      <tr key={item.rollNo} className="hover:bg-rose-50/40 dark:hover:bg-rose-950/30 transition-colors">
+                        <td className="py-2 px-3 text-center font-bold text-slate-400 dark:text-slate-500">
                           {idx + 1}
                         </td>
-                        <td className="py-2 px-3 font-bold text-slate-800">{item.name}</td>
-                        <td className="py-2 px-2 text-center font-semibold text-slate-600">
+                        <td className="py-2 px-3 font-bold text-slate-800 dark:text-slate-200">{item.name}</td>
+                        <td className="py-2 px-2 text-center font-semibold text-slate-600 dark:text-slate-400">
                           {item.section}
                         </td>
-                        <td className="py-2 px-3 font-mono font-bold text-slate-900">
+                        <td className="py-2 px-3 font-mono font-bold text-slate-900 dark:text-white">
                           {item.rollNo}
                         </td>
-                        <td className="py-2 px-3 font-medium text-slate-600">{item.subject}</td>
-                        <td className="py-2 px-2 text-center font-bold text-indigo-700">
+                        <td className="py-2 px-3 font-medium text-slate-600 dark:text-slate-400">{item.subject}</td>
+                        <td className="py-2 px-2 text-center font-bold text-indigo-700 dark:text-indigo-400">
                           {item.roomNo}
                         </td>
-                        <td className="py-2 px-2 text-center font-semibold text-slate-600">
+                        <td className="py-2 px-2 text-center font-semibold text-slate-600 dark:text-slate-400">
                           {item.benchLabel}
                         </td>
                         <td className="py-2 px-3 text-center">
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-300">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-800">
                             Absent
                           </span>
                         </td>
@@ -1355,17 +1355,17 @@ export default function RoomAttendanceManualPage() {
 
           {/* Formatted Plain Text List Box (Sl No – Name – Section – Roll No – Subject – Status) */}
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+            <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
               <span>Formatted List (Ready for WhatsApp / Notice Board)</span>
               <button
                 type="button"
                 onClick={handleCopyText}
-                className="text-indigo-600 hover:text-indigo-800 font-bold flex items-center gap-1 cursor-pointer"
+                className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-bold flex items-center gap-1 cursor-pointer"
               >
                 {copiedSuccess ? (
                   <>
-                    <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    <span className="text-emerald-700">Copied!</span>
+                    <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <span className="text-emerald-700 dark:text-emerald-300">Copied!</span>
                   </>
                 ) : (
                   <>
@@ -1375,13 +1375,13 @@ export default function RoomAttendanceManualPage() {
                 )}
               </button>
             </div>
-            <pre className="bg-slate-900 text-slate-100 p-3.5 rounded-xl text-[11px] font-mono whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto border border-slate-800">
+            <pre className="bg-slate-900 dark:bg-slate-950 text-slate-100 p-3.5 rounded-xl text-[11px] font-mono whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto border border-slate-800">
               {formattedAbsenteesText}
             </pre>
           </div>
 
-          <DialogFooter className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-2 border-t border-slate-100">
-            <div className="text-xs text-slate-500 font-medium">
+          <DialogFooter className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
               Generated: {new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
             </div>
             <div className="flex items-center gap-2">
@@ -1528,10 +1528,10 @@ function InteractiveBenchCard({
   const benchLabel = `${benchPrefix}${bench.benchNumber}`;
 
   return (
-    <div className="flex items-stretch gap-2 bg-slate-50/80 p-2 rounded-xl border border-slate-200 shadow-2xs">
+    <div className="flex items-stretch gap-2 bg-slate-50/80 dark:bg-slate-800/40 p-2 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
       {/* Bench Indicator */}
-      <div className="w-11 shrink-0 bg-white rounded-lg flex flex-col items-center justify-center font-headline font-bold text-xs text-slate-700 border border-slate-200 py-1">
-        <span className="text-[9px] uppercase text-slate-400 font-semibold tracking-wide">BENCH</span>
+      <div className="w-11 shrink-0 bg-white dark:bg-slate-800 rounded-lg flex flex-col items-center justify-center font-headline font-bold text-xs text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 py-1">
+        <span className="text-[9px] uppercase text-slate-400 dark:text-slate-500 font-semibold tracking-wide">BENCH</span>
         <span className="font-black text-sm">{benchLabel}</span>
       </div>
 
@@ -1545,10 +1545,10 @@ function InteractiveBenchCard({
             return (
               <div
                 key={sIdx}
-                className="flex-1 p-2 rounded-lg border border-dashed border-slate-200 bg-white/60 text-center flex flex-col justify-center items-center select-none"
+                className="flex-1 p-2 rounded-lg border border-dashed border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-800/40 text-center flex flex-col justify-center items-center select-none"
               >
-                <span className="text-[9px] uppercase text-slate-400 font-bold">{posLabel}</span>
-                <span className="text-[10px] italic text-slate-400 font-medium">Vacant</span>
+                <span className="text-[9px] uppercase text-slate-400 dark:text-slate-500 font-bold">{posLabel}</span>
+                <span className="text-[10px] italic text-slate-400 dark:text-slate-500 font-medium">Vacant</span>
               </div>
             );
           }
@@ -1572,13 +1572,13 @@ function InteractiveBenchCard({
               className={cn(
                 "flex-1 p-2 rounded-xl border transition-all cursor-pointer select-none flex flex-col justify-between min-w-0",
                 isAbsent
-                  ? "bg-rose-50/90 border-rose-300 shadow-xs ring-1 ring-rose-300"
-                  : "bg-white border-slate-200 hover:border-emerald-300 hover:shadow-xs"
+                  ? "bg-rose-50/90 dark:bg-rose-950/50 border-rose-300 dark:border-rose-800 shadow-xs ring-1 ring-rose-300 dark:ring-rose-800"
+                  : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-emerald-300 dark:hover:border-emerald-600 hover:shadow-xs"
               )}
             >
               <div>
                 <div className="flex items-center justify-between text-[10px] font-bold mb-1">
-                  <span className="text-[9px] uppercase tracking-wider text-slate-500 font-bold">
+                  <span className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-bold">
                     {posLabel}
                   </span>
                   <span
@@ -1586,32 +1586,32 @@ function InteractiveBenchCard({
                       "px-1.5 py-0.2 rounded-full text-[9px] font-black uppercase tracking-wider",
                       isAbsent
                         ? "bg-rose-600 text-white"
-                        : "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                        : "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
                     )}
                   >
                     {isAbsent ? 'Absent' : 'Present'}
                   </span>
                 </div>
 
-                <div className="font-headline font-black text-xs text-slate-900 tracking-tight">
+                <div className="font-headline font-black text-xs text-slate-900 dark:text-white tracking-tight">
                   {roll}
                 </div>
-                <div className="text-[11px] font-bold text-slate-800 truncate" title={seat.student.name}>
+                <div className="text-[11px] font-bold text-slate-800 dark:text-slate-200 truncate" title={seat.student.name}>
                   {seat.student.name}
                 </div>
-                <div className="text-[9px] text-slate-500 font-medium truncate">
+                <div className="text-[9px] text-slate-500 dark:text-slate-400 font-medium truncate">
                   {seat.subjectName}
                 </div>
               </div>
 
               {/* Ans Script No input */}
-              <div className="mt-2 pt-1 border-t border-slate-200/80" onClick={(e) => e.stopPropagation()}>
+              <div className="mt-2 pt-1 border-t border-slate-200/80 dark:border-slate-700/80" onClick={(e) => e.stopPropagation()}>
                 <input
                   type="text"
                   value={curState.ansScriptNo || ''}
                   onChange={(e) => onAnsScriptChange(roll, e.target.value)}
                   placeholder="Script No."
-                  className="w-full text-[10px] font-mono px-2 py-0.5 rounded border border-slate-200 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="w-full text-[10px] font-mono px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 />
               </div>
             </div>
@@ -1642,20 +1642,20 @@ function DigitalStudentCard({
       className={cn(
         "p-3 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-2 shadow-2xs select-none",
         isAbsent
-          ? "bg-rose-50 border-rose-300 ring-1 ring-rose-300"
-          : "bg-white border-slate-200 hover:border-slate-300"
+          ? "bg-rose-50 dark:bg-rose-950/50 border-rose-300 dark:border-rose-800 ring-1 ring-rose-300 dark:ring-rose-800"
+          : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
       )}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="space-y-0.5 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="font-mono font-black text-sm text-slate-900">{student.rollNo}</span>
-            <span className="text-[10px] font-extrabold text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.2 rounded">
+            <span className="font-mono font-black text-sm text-slate-900 dark:text-white">{student.rollNo}</span>
+            <span className="text-[10px] font-extrabold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 px-1.5 py-0.2 rounded">
               {student.benchLabel} ({student.position})
             </span>
           </div>
-          <div className="text-xs font-bold text-slate-800 truncate">{student.name}</div>
-          <div className="text-[10px] text-slate-500 font-medium">
+          <div className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{student.name}</div>
+          <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
             {student.subject} • Sec {student.section}
           </div>
         </div>
@@ -1690,16 +1690,16 @@ function DigitalStudentCard({
 
       {/* Script No field */}
       <div
-        className="flex items-center gap-2 pt-1 border-t border-slate-100"
+        className="flex items-center gap-2 pt-1 border-t border-slate-100 dark:border-slate-700"
         onClick={(e) => e.stopPropagation()}
       >
-        <span className="text-[10px] font-bold text-slate-500 shrink-0">Script No:</span>
+        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 shrink-0">Script No:</span>
         <input
           type="text"
           value={student.ansScriptNo || ''}
           onChange={(e) => onAnsScriptChange(e.target.value)}
           placeholder="Ans. Script No."
-          className="flex-1 text-[11px] font-mono px-2 py-1 rounded-md border border-slate-200 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          className="flex-1 text-[11px] font-mono px-2 py-1 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
         />
       </div>
     </div>

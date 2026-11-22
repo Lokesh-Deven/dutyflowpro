@@ -73,15 +73,15 @@ export function RoomSeatingDiagram({
       return (
         <div
           key={index}
-          className="flex-1 p-2 rounded-lg border border-slate-200 bg-slate-100/90 text-center flex flex-col justify-between min-w-[70px] select-none opacity-60"
+          className="flex-1 p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100/90 dark:bg-slate-800/80 text-center flex flex-col justify-between min-w-[70px] select-none opacity-60"
         >
           <div className="flex items-center justify-between text-[10px] font-bold mb-1 gap-1">
-            <span className="uppercase tracking-wider text-[9px] text-slate-400 font-bold shrink-0">
+            <span className="uppercase tracking-wider text-[9px] text-slate-400 dark:text-slate-500 font-bold shrink-0">
               {posLabel}
             </span>
           </div>
           <div className="py-3 text-center flex flex-col items-center justify-center my-auto min-h-[46px]">
-            <span className="text-[9px] uppercase tracking-wider text-slate-500 font-bold bg-slate-200/90 px-2 py-0.5 rounded border border-slate-300/80 shadow-3xs">
+            <span className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-bold bg-slate-200/90 dark:bg-slate-700/80 px-2 py-0.5 rounded border border-slate-300/80 dark:border-slate-600 shadow-3xs">
               Disabled
             </span>
           </div>
@@ -99,8 +99,8 @@ export function RoomSeatingDiagram({
         className={cn(
           "flex-1 p-2 rounded-lg border text-center transition-all flex flex-col justify-between min-w-[70px]",
           isVacant
-            ? "bg-slate-50/70 border-dashed border-slate-200 text-slate-400"
-            : "bg-white border-slate-200 shadow-2xs hover:border-slate-300"
+            ? "bg-slate-50/70 dark:bg-slate-900/40 border-dashed border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500"
+            : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-2xs hover:border-slate-300 dark:hover:border-slate-600"
         )}
         style={
           !isVacant && subjStyle
@@ -113,11 +113,11 @@ export function RoomSeatingDiagram({
         }
       >
         <div className="flex items-center justify-between text-[10px] font-bold mb-1 gap-1">
-          <span className="uppercase tracking-wider text-[9px] text-slate-500 font-bold shrink-0">
+          <span className="uppercase tracking-wider text-[9px] text-slate-500 dark:text-slate-400 font-bold shrink-0">
             {posLabel}
           </span>
           {seat.student?.section && (
-            <span className="text-[9px] text-slate-400 font-medium truncate max-w-[45px]">
+            <span className="text-[9px] text-slate-400 dark:text-slate-500 font-medium truncate max-w-[45px]">
               Sec {seat.student.section}
             </span>
           )}
@@ -125,16 +125,16 @@ export function RoomSeatingDiagram({
 
         {isVacant ? (
           <div className="py-3 text-center flex flex-col items-center justify-center my-auto min-h-[46px]">
-            <span className="text-[10px] italic text-slate-400 font-medium tracking-wide">
+            <span className="text-[10px] italic text-slate-400 dark:text-slate-500 font-medium tracking-wide">
               VACANT
             </span>
           </div>
         ) : (
           <div className="space-y-0.5 my-0.5">
-            <div className="font-headline font-black text-xs text-slate-900 tracking-tight">
+            <div className="font-headline font-black text-xs text-slate-900 dark:text-white tracking-tight">
               {seat.student!.rollNo}
             </div>
-            <div className="text-[11px] font-medium text-slate-700 truncate" title={seat.student!.name}>
+            <div className="text-[11px] font-medium text-slate-700 dark:text-slate-300 truncate" title={seat.student!.name}>
               {seat.student!.name}
             </div>
             {seat.subjectName && subjStyle && (
@@ -163,14 +163,14 @@ export function RoomSeatingDiagram({
     return (
       <div
         key={`${keyPrefix}-${bench.benchNumber}`}
-        className="flex items-stretch gap-2 bg-white p-2 sm:p-2.5 rounded-lg border border-slate-200/80 shadow-2xs min-w-0"
+        className="flex items-stretch gap-2 bg-white dark:bg-slate-900 p-2 sm:p-2.5 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs min-w-0"
       >
         {/* Bench Number Indicator */}
-        <div className="w-11 sm:w-12 shrink-0 bg-slate-100/80 rounded-md flex flex-col items-center justify-center font-headline font-bold text-xs text-slate-700 border border-slate-200/50 py-1">
-          <span className="text-[9px] uppercase text-slate-400 font-semibold tracking-wide">BENCH</span>
+        <div className="w-11 sm:w-12 shrink-0 bg-slate-100/80 dark:bg-slate-800/80 rounded-md flex flex-col items-center justify-center font-headline font-bold text-xs text-slate-700 dark:text-slate-300 border border-slate-200/50 dark:border-slate-700/50 py-1">
+          <span className="text-[9px] uppercase text-slate-400 dark:text-slate-500 font-semibold tracking-wide">BENCH</span>
           <span className="font-extrabold tracking-tight">{benchLabel}</span>
           {bench.rowLabel && (
-            <span className="mt-1 text-[8px] font-extrabold text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-1 py-0.2 rounded-xs whitespace-nowrap">
+            <span className="mt-1 text-[8px] font-extrabold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-800/80 px-1 py-0.2 rounded-xs whitespace-nowrap">
               {bench.rowLabel}
             </span>
           )}
@@ -185,19 +185,19 @@ export function RoomSeatingDiagram({
   };
 
   return (
-    <div className={cn("bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-4", className)}>
+    <div className={cn("bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4", className)}>
       {/* Room Diagram Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
         <div>
           <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-[#1E2A5E]/10 text-[#1E2A5E] rounded-lg">
+            <div className="p-1.5 bg-[#1E2A5E]/10 dark:bg-indigo-950/40 text-[#1E2A5E] dark:text-indigo-400 rounded-lg">
               <DoorOpen className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-headline text-lg font-bold text-slate-800">
+              <h3 className="font-headline text-lg font-bold text-slate-800 dark:text-slate-100">
                 Room No. {plan.roomNo}
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 {examName || 'Examination'} &bull; {examDate || 'Scheduled Date'} {examTime ? `(${examTime})` : ''}
               </p>
             </div>
@@ -206,13 +206,13 @@ export function RoomSeatingDiagram({
 
         {/* Capacity Metrics */}
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="bg-slate-50 text-slate-700 text-xs py-1 px-2.5 font-semibold">
+          <Badge variant="outline" className="bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 text-xs py-1 px-2.5 font-semibold">
             Capacity: {plan.capacity}
           </Badge>
-          <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs py-1 px-2.5 font-semibold">
+          <Badge variant="outline" className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 text-xs py-1 px-2.5 font-semibold">
             Allocated: {plan.allocatedCount}
           </Badge>
-          <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs py-1 px-2.5 font-semibold">
+          <Badge variant="outline" className="bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800 text-xs py-1 px-2.5 font-semibold">
             Vacant: {plan.vacantCount}
           </Badge>
         </div>
@@ -220,10 +220,10 @@ export function RoomSeatingDiagram({
 
       {/* Subject Highlight Legend Bar */}
       {roomSubjects.length > 0 && (
-        <div className="bg-slate-50/90 border border-slate-200/80 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-2.5 shadow-2xs">
+        <div className="bg-slate-50/90 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-2.5 shadow-2xs">
           <div className="flex items-center gap-2">
-            <BookOpen className="w-3.5 h-3.5 text-indigo-700" />
-            <span className="font-headline font-bold text-xs uppercase tracking-wider text-slate-700">
+            <BookOpen className="w-3.5 h-3.5 text-indigo-700 dark:text-indigo-400" />
+            <span className="font-headline font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">
               Allocated Subjects ({roomSubjects.length}):
             </span>
           </div>
@@ -353,13 +353,13 @@ export function RoomSeatingDiagram({
         <div className="overflow-x-auto pb-2">
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 lg:gap-5 min-w-[980px]">
             {/* Left Side Benches */}
-            <div className="space-y-3 bg-slate-50/50 p-3.5 sm:p-4 rounded-xl border border-slate-100 min-w-0">
-              <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                <span className="font-bold text-xs uppercase tracking-wider text-[#1E2A5E] flex items-center gap-1.5">
-                  <ArrowDown className="w-3.5 h-3.5 text-indigo-600" />
+            <div className="space-y-3 bg-slate-50/50 dark:bg-slate-800/30 p-3.5 sm:p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 min-w-0">
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+                <span className="font-bold text-xs uppercase tracking-wider text-[#1E2A5E] dark:text-indigo-300 flex items-center gap-1.5">
+                  <ArrowDown className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                   Left Side Benches ({leftBenches.length})
                 </span>
-                <span className="text-[11px] text-slate-400 font-medium">Benches 1 &rarr; {leftBenches.length}</span>
+                <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">Benches 1 &rarr; {leftBenches.length}</span>
               </div>
 
               <div className="space-y-2.5">
@@ -368,13 +368,13 @@ export function RoomSeatingDiagram({
             </div>
 
             {/* Middle Benches */}
-            <div className="space-y-3 bg-indigo-50/20 p-3.5 sm:p-4 rounded-xl border border-indigo-100/70 min-w-0">
-              <div className="flex items-center justify-between border-b border-indigo-200/60 pb-2">
-                <span className="font-bold text-xs uppercase tracking-wider text-indigo-900 flex items-center gap-1.5">
-                  <ArrowDown className="w-3.5 h-3.5 text-indigo-600" />
+            <div className="space-y-3 bg-indigo-50/20 dark:bg-indigo-950/20 p-3.5 sm:p-4 rounded-xl border border-indigo-100/70 dark:border-indigo-900/50 min-w-0">
+              <div className="flex items-center justify-between border-b border-indigo-200/60 dark:border-indigo-800/60 pb-2">
+                <span className="font-bold text-xs uppercase tracking-wider text-indigo-900 dark:text-indigo-200 flex items-center gap-1.5">
+                  <ArrowDown className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                   Middle Benches ({middleBenches.length})
                 </span>
-                <span className="text-[11px] text-indigo-600/70 font-medium">Benches 1 &rarr; {middleBenches.length}</span>
+                <span className="text-[11px] text-indigo-600/70 dark:text-indigo-400/70 font-medium">Benches 1 &rarr; {middleBenches.length}</span>
               </div>
 
               <div className="space-y-2.5">
@@ -383,13 +383,13 @@ export function RoomSeatingDiagram({
             </div>
 
             {/* Right Side Benches */}
-            <div className="space-y-3 bg-slate-50/50 p-3.5 sm:p-4 rounded-xl border border-slate-100 min-w-0">
-              <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                <span className="font-bold text-xs uppercase tracking-wider text-[#1E2A5E] flex items-center gap-1.5">
-                  <ArrowDown className="w-3.5 h-3.5 text-indigo-600" />
+            <div className="space-y-3 bg-slate-50/50 dark:bg-slate-800/30 p-3.5 sm:p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 min-w-0">
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+                <span className="font-bold text-xs uppercase tracking-wider text-[#1E2A5E] dark:text-indigo-300 flex items-center gap-1.5">
+                  <ArrowDown className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                   Right Side Benches ({rightBenches.length})
                 </span>
-                <span className="text-[11px] text-slate-400 font-medium">Benches 1 &rarr; {rightBenches.length}</span>
+                <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">Benches 1 &rarr; {rightBenches.length}</span>
               </div>
 
               <div className="space-y-2.5">
@@ -401,13 +401,13 @@ export function RoomSeatingDiagram({
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Side Benches */}
-          <div className="space-y-3 bg-slate-50/50 p-4 rounded-xl border border-slate-100 min-w-0">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-              <span className="font-bold text-xs uppercase tracking-wider text-[#1E2A5E] flex items-center gap-1.5">
-                <ArrowDown className="w-3.5 h-3.5 text-indigo-600" />
+          <div className="space-y-3 bg-slate-50/50 dark:bg-slate-800/30 p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 min-w-0">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+              <span className="font-bold text-xs uppercase tracking-wider text-[#1E2A5E] dark:text-indigo-300 flex items-center gap-1.5">
+                <ArrowDown className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                 Left Side Benches ({leftBenches.length})
               </span>
-              <span className="text-[11px] text-slate-400 font-medium">Benches 1 &rarr; {leftBenches.length}</span>
+              <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">Benches 1 &rarr; {leftBenches.length}</span>
             </div>
 
             <div className="space-y-2.5">
@@ -416,13 +416,13 @@ export function RoomSeatingDiagram({
           </div>
 
           {/* Right Side Benches */}
-          <div className="space-y-3 bg-slate-50/50 p-4 rounded-xl border border-slate-100 min-w-0">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-              <span className="font-bold text-xs uppercase tracking-wider text-[#1E2A5E] flex items-center gap-1.5">
-                <ArrowDown className="w-3.5 h-3.5 text-indigo-600" />
+          <div className="space-y-3 bg-slate-50/50 dark:bg-slate-800/30 p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 min-w-0">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+              <span className="font-bold text-xs uppercase tracking-wider text-[#1E2A5E] dark:text-indigo-300 flex items-center gap-1.5">
+                <ArrowDown className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                 Right Side Benches ({rightBenches.length})
               </span>
-              <span className="text-[11px] text-slate-400 font-medium">Benches 1 &rarr; {rightBenches.length}</span>
+              <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">Benches 1 &rarr; {rightBenches.length}</span>
             </div>
 
             <div className="space-y-2.5">

@@ -61,7 +61,7 @@ export function InvigilatorDashboardView() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 flex flex-col">
       {/* Top Header Bar */}
       <InvigilatorHeader
         activeTab={activeTab}
@@ -71,13 +71,13 @@ export function InvigilatorDashboardView() {
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
         {/* Top Greeting & Title (Requirement 2 & 24) */}
         <div>
-          <div className="text-xs font-bold text-indigo-700 uppercase tracking-wider mb-0.5">
+          <div className="text-xs font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider mb-0.5">
             Invigilator Dashboard
           </div>
-          <h1 className="font-headline font-black text-2xl sm:text-3xl text-slate-900 tracking-tight">
+          <h1 className="font-headline font-black text-2xl sm:text-3xl text-slate-900 dark:text-white tracking-tight">
             {greeting}, {session?.name || 'Invigilator'}
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5 font-medium">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
             Review your hall duties, mark student attendance, and track examination sessions.
           </p>
         </div>
@@ -174,9 +174,9 @@ export function InvigilatorDashboardView() {
             </div>
           </div>
         ) : (
-          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs text-center">
-            <h3 className="font-headline font-bold text-slate-800 text-lg">No Examination Duty For Today</h3>
-            <p className="text-xs text-slate-500 mt-1">Review your duties history or check upcoming schedules below.</p>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs text-center">
+            <h3 className="font-headline font-bold text-slate-800 dark:text-white text-lg">No Examination Duty For Today</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Review your duties history or check upcoming schedules below.</p>
           </div>
         )}
 
@@ -191,21 +191,21 @@ export function InvigilatorDashboardView() {
             className={`p-4 rounded-2xl border text-left transition-all relative overflow-hidden ${
               activeTab === 'today'
                 ? 'bg-indigo-600 text-white border-indigo-600 shadow-md ring-2 ring-indigo-600/20'
-                : 'bg-white hover:bg-slate-50 border-slate-200 shadow-2xs hover:border-indigo-300'
+                : 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-800 shadow-2xs hover:border-indigo-300 dark:hover:border-indigo-700'
             }`}
           >
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-2.5 ${
-              activeTab === 'today' ? 'bg-white/20 text-white' : 'bg-indigo-50 text-indigo-700'
+              activeTab === 'today' ? 'bg-white/20 text-white' : 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400'
             }`}>
               <CalendarDays className="w-5 h-5" />
             </div>
             <div className={`font-headline font-black text-sm sm:text-base leading-snug ${
-              activeTab === 'today' ? 'text-white' : 'text-slate-900'
+              activeTab === 'today' ? 'text-white' : 'text-slate-900 dark:text-white'
             }`}>
               1. Today&apos;s Duties
             </div>
             <div className={`text-[11px] mt-0.5 ${
-              activeTab === 'today' ? 'text-indigo-100' : 'text-slate-500'
+              activeTab === 'today' ? 'text-indigo-100' : 'text-slate-500 dark:text-slate-400'
             }`}>
               {todayDuties.length} session{todayDuties.length > 1 ? 's' : ''} assigned
             </div>
@@ -223,21 +223,21 @@ export function InvigilatorDashboardView() {
             className={`p-4 rounded-2xl border text-left transition-all relative overflow-hidden ${
               activeTab === 'attendance'
                 ? 'bg-indigo-600 text-white border-indigo-600 shadow-md ring-2 ring-indigo-600/20'
-                : 'bg-white hover:bg-slate-50 border-slate-200 shadow-2xs hover:border-indigo-300'
+                : 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-800 shadow-2xs hover:border-indigo-300 dark:hover:border-indigo-700'
             }`}
           >
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-2.5 ${
-              activeTab === 'attendance' ? 'bg-white/20 text-white' : 'bg-emerald-50 text-emerald-700'
+              activeTab === 'attendance' ? 'bg-white/20 text-white' : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400'
             }`}>
               <UserCheck className="w-5 h-5" />
             </div>
             <div className={`font-headline font-black text-sm sm:text-base leading-snug ${
-              activeTab === 'attendance' ? 'text-white' : 'text-slate-900'
+              activeTab === 'attendance' ? 'text-white' : 'text-slate-900 dark:text-white'
             }`}>
               2. Room Attendance
             </div>
             <div className={`text-[11px] mt-0.5 ${
-              activeTab === 'attendance' ? 'text-indigo-100' : 'text-slate-500'
+              activeTab === 'attendance' ? 'text-indigo-100' : 'text-slate-500 dark:text-slate-400'
             }`}>
               {activeDuty ? `Room ${activeDuty.roomNo}` : 'Mark hall attendance'}
             </div>
@@ -250,21 +250,21 @@ export function InvigilatorDashboardView() {
             className={`p-4 rounded-2xl border text-left transition-all relative overflow-hidden ${
               activeTab === 'history'
                 ? 'bg-indigo-600 text-white border-indigo-600 shadow-md ring-2 ring-indigo-600/20'
-                : 'bg-white hover:bg-slate-50 border-slate-200 shadow-2xs hover:border-indigo-300'
+                : 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-800 shadow-2xs hover:border-indigo-300 dark:hover:border-indigo-700'
             }`}
           >
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-2.5 ${
-              activeTab === 'history' ? 'bg-white/20 text-white' : 'bg-amber-50 text-amber-700'
+              activeTab === 'history' ? 'bg-white/20 text-white' : 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400'
             }`}>
               <History className="w-5 h-5" />
             </div>
             <div className={`font-headline font-black text-sm sm:text-base leading-snug ${
-              activeTab === 'history' ? 'text-white' : 'text-slate-900'
+              activeTab === 'history' ? 'text-white' : 'text-slate-900 dark:text-white'
             }`}>
               3. Duties History
             </div>
             <div className={`text-[11px] mt-0.5 ${
-              activeTab === 'history' ? 'text-indigo-100' : 'text-slate-500'
+              activeTab === 'history' ? 'text-indigo-100' : 'text-slate-500 dark:text-slate-400'
             }`}>
               {historyDuties.length} previous duty record{historyDuties.length > 1 ? 's' : ''}
             </div>
@@ -277,21 +277,21 @@ export function InvigilatorDashboardView() {
             className={`p-4 rounded-2xl border text-left transition-all relative overflow-hidden ${
               activeTab === 'profile'
                 ? 'bg-indigo-600 text-white border-indigo-600 shadow-md ring-2 ring-indigo-600/20'
-                : 'bg-white hover:bg-slate-50 border-slate-200 shadow-2xs hover:border-indigo-300'
+                : 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-800 shadow-2xs hover:border-indigo-300 dark:hover:border-indigo-700'
             }`}
           >
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-2.5 ${
-              activeTab === 'profile' ? 'bg-white/20 text-white' : 'bg-purple-50 text-purple-700'
+              activeTab === 'profile' ? 'bg-white/20 text-white' : 'bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-400'
             }`}>
               <User className="w-5 h-5" />
             </div>
             <div className={`font-headline font-black text-sm sm:text-base leading-snug ${
-              activeTab === 'profile' ? 'text-white' : 'text-slate-900'
+              activeTab === 'profile' ? 'text-white' : 'text-slate-900 dark:text-white'
             }`}>
               4. Profile
             </div>
             <div className={`text-[11px] mt-0.5 ${
-              activeTab === 'profile' ? 'text-indigo-100' : 'text-slate-500'
+              activeTab === 'profile' ? 'text-indigo-100' : 'text-slate-500 dark:text-slate-400'
             }`}>
               Faculty info &amp; change PIN
             </div>
@@ -317,10 +317,10 @@ export function InvigilatorDashboardView() {
                   onBack={() => setActiveTab('today')}
                 />
               ) : (
-                <div className="p-8 text-center bg-white rounded-2xl border border-slate-200">
-                  <DoorOpen className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-                  <h3 className="font-bold text-slate-800 text-sm">Please select a duty first</h3>
-                  <p className="text-xs text-slate-500 mt-1">Select an assigned duty from Today&apos;s Duties to take attendance.</p>
+                <div className="p-8 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+                  <DoorOpen className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+                  <h3 className="font-bold text-slate-800 dark:text-white text-sm">Please select a duty first</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Select an assigned duty from Today&apos;s Duties to take attendance.</p>
                   <Button
                     onClick={() => setActiveTab('today')}
                     className="mt-3 bg-[#1E2A5E] hover:bg-[#151D42] text-white text-xs font-bold h-9 rounded-xl"

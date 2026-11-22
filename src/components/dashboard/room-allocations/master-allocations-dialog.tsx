@@ -70,16 +70,16 @@ export function MasterAllocationsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[88vh] flex flex-col p-6 overflow-hidden">
-        <DialogHeader className="pb-3 border-b border-slate-200">
+      <DialogContent className="max-w-4xl max-h-[88vh] flex flex-col p-6 overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white">
+        <DialogHeader className="pb-3 border-b border-slate-200 dark:border-slate-800">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <DialogTitle className="text-xl font-bold font-headline text-slate-800 flex items-center gap-2">
-                <DoorOpen className="w-5 h-5 text-indigo-600" />
+              <DialogTitle className="text-xl font-bold font-headline text-slate-800 dark:text-white flex items-center gap-2">
+                <DoorOpen className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                 Master Room Allocations
               </DialogTitle>
-              <DialogDescription className="text-xs text-slate-500 mt-0.5">
-                Complete overview of duty room allocations across all sessions in <strong className="text-slate-700">{allotment.name}</strong>.
+              <DialogDescription className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Complete overview of duty room allocations across all sessions in <strong className="text-slate-700 dark:text-slate-300">{allotment.name}</strong>.
               </DialogDescription>
             </div>
 
@@ -98,8 +98,8 @@ export function MasterAllocationsDialog({
 
           {/* Quick Metrics */}
           <div className="flex flex-wrap items-center gap-2 pt-2 text-xs">
-            <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200">
-              Total Sessions: <strong className="ml-1 text-slate-900">{stats.total}</strong>
+            <Badge variant="outline" className="bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700">
+              Total Sessions: <strong className="ml-1 text-slate-900 dark:text-white">{stats.total}</strong>
             </Badge>
             <Badge className="bg-emerald-600 text-white">
               Allocated: <strong className="ml-1">{stats.allocated}</strong>
@@ -108,7 +108,7 @@ export function MasterAllocationsDialog({
               Locked: <strong className="ml-1">{stats.locked}</strong>
             </Badge>
             {stats.pending > 0 && (
-              <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+              <Badge variant="outline" className="bg-red-50 dark:bg-rose-950/40 text-red-700 dark:text-rose-400 border-red-200 dark:border-rose-800">
                 Pending: <strong className="ml-1">{stats.pending}</strong>
               </Badge>
             )}
@@ -125,16 +125,16 @@ export function MasterAllocationsDialog({
             return (
               <div
                 key={exam.id}
-                className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs space-y-3"
+                className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs space-y-3"
               >
                 {/* Session Card Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-100 dark:border-slate-800">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="h-5 w-5 bg-indigo-50 text-indigo-700 rounded-full flex items-center justify-center font-bold text-[11px]">
+                      <span className="h-5 w-5 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 rounded-full flex items-center justify-center font-bold text-[11px]">
                         {idx + 1}
                       </span>
-                      <h4 className="font-headline font-bold text-sm text-slate-800">
+                      <h4 className="font-headline font-bold text-sm text-slate-800 dark:text-white">
                         {exam.subject}
                       </h4>
                       {isLocked ? (
@@ -146,23 +146,23 @@ export function MasterAllocationsDialog({
                           Allocated
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="text-slate-500 text-[10px] h-4">
+                        <Badge variant="outline" className="text-slate-500 dark:text-slate-400 text-[10px] h-4">
                           Pending
                         </Badge>
                       )}
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 mt-1 font-medium pl-7">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium pl-7">
                       <span className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3 text-indigo-500" />
+                        <Calendar className="w-3 h-3 text-indigo-500 dark:text-indigo-400" />
                         {formatAppDateWithDay(exam.date)}
                       </span>
                       <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-indigo-500" />
+                        <Clock className="w-3 h-3 text-indigo-500 dark:text-indigo-400" />
                         {exam.startTime} – {exam.endTime}
                       </span>
                       <span>
-                        Rooms: <strong className="text-slate-700">{exam.rooms}</strong> &bull; Relievers: <strong className="text-slate-700">{exam.relievers}</strong>
+                        Rooms: <strong className="text-slate-700 dark:text-slate-300">{exam.rooms}</strong> &bull; Relievers: <strong className="text-slate-700 dark:text-slate-300">{exam.relievers}</strong>
                       </span>
                     </div>
                   </div>
@@ -170,7 +170,7 @@ export function MasterAllocationsDialog({
 
                 {/* Session Content */}
                 {!isAllocated || !alloc ? (
-                  <div className="p-4 bg-slate-50 border border-dashed border-slate-200 rounded-lg text-center text-xs text-slate-500">
+                  <div className="p-4 bg-slate-50 dark:bg-slate-800/40 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg text-center text-xs text-slate-500 dark:text-slate-400">
                     <AlertCircle className="w-4 h-4 mx-auto mb-1 text-slate-400" />
                     Room allocation is pending for this examination session ({exam.rooms} invigilators & {exam.relievers} relievers needed).
                   </div>
@@ -178,29 +178,29 @@ export function MasterAllocationsDialog({
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
                     {/* Invigilators List */}
                     <div className="space-y-1.5">
-                      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                        <DoorOpen className="w-3.5 h-3.5 text-indigo-600" />
+                      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                        <DoorOpen className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                         Invigilators ({alloc.invigilatorDuties.length} Rooms)
                       </div>
-                      <div className="rounded-lg border border-slate-200 overflow-hidden max-h-52 overflow-y-auto">
+                      <div className="rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden max-h-52 overflow-y-auto">
                         <table className="w-full text-left text-xs border-collapse">
-                          <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200 sticky top-0">
+                          <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800 sticky top-0">
                             <tr>
                               <th className="py-1.5 px-2 w-10 text-center">#</th>
                               <th className="py-1.5 px-2.5 w-24">Room</th>
                               <th className="py-1.5 px-3">Invigilator</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-100">
+                          <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70">
                             {alloc.invigilatorDuties.map((duty, dIdx) => (
-                              <tr key={duty.invigilatorId} className="hover:bg-indigo-50/20">
+                              <tr key={duty.invigilatorId} className="hover:bg-indigo-50/20 dark:hover:bg-slate-800/40 transition-colors">
                                 <td className="py-1.5 px-2 text-center text-slate-400 text-[11px]">
                                   {dIdx + 1}
                                 </td>
-                                <td className="py-1.5 px-2.5 font-bold text-indigo-700 text-xs">
+                                <td className="py-1.5 px-2.5 font-bold text-indigo-700 dark:text-indigo-400 text-xs">
                                   {duty.room}
                                 </td>
-                                <td className="py-1.5 px-3 text-slate-800 font-medium">
+                                <td className="py-1.5 px-3 text-slate-800 dark:text-slate-200 font-medium">
                                   {duty.invigilatorName}
                                 </td>
                               </tr>
@@ -212,26 +212,26 @@ export function MasterAllocationsDialog({
 
                     {/* Relievers List */}
                     <div className="space-y-1.5">
-                      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                        <Users className="w-3.5 h-3.5 text-purple-600" />
+                      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                        <Users className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
                         Relievers ({alloc.relieverDuties.length} Assigned)
                       </div>
-                      <div className="rounded-lg border border-slate-200 overflow-hidden max-h-52 overflow-y-auto">
+                      <div className="rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden max-h-52 overflow-y-auto">
                         <table className="w-full text-left text-xs border-collapse">
-                          <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200 sticky top-0">
+                          <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800 sticky top-0">
                             <tr>
                               <th className="py-1.5 px-2 w-10 text-center">#</th>
                               <th className="py-1.5 px-3 w-36">Reliever</th>
                               <th className="py-1.5 px-3">Assigned Rooms</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-100">
+                          <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70">
                             {alloc.relieverDuties.map((duty, rIdx) => (
-                              <tr key={duty.relieverId} className="hover:bg-purple-50/20">
+                              <tr key={duty.relieverId} className="hover:bg-purple-50/20 dark:hover:bg-slate-800/40 transition-colors">
                                 <td className="py-1.5 px-2 text-center text-slate-400 text-[11px]">
                                   {rIdx + 1}
                                 </td>
-                                <td className="py-1.5 px-3 font-medium text-slate-800">
+                                <td className="py-1.5 px-3 font-medium text-slate-800 dark:text-slate-200">
                                   {duty.relieverName}
                                 </td>
                                 <td className="py-1.5 px-3">
@@ -239,7 +239,7 @@ export function MasterAllocationsDialog({
                                     {duty.rooms.map((r) => (
                                       <span
                                         key={r}
-                                        className="text-[10px] font-semibold bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.2 rounded"
+                                        className="text-[10px] font-semibold bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 px-1.5 py-0.2 rounded"
                                       >
                                         {r}
                                       </span>
@@ -259,8 +259,8 @@ export function MasterAllocationsDialog({
           })}
         </div>
 
-        <DialogFooter className="pt-3 border-t border-slate-200 flex items-center justify-between sm:justify-between">
-          <div className="text-xs text-slate-500 font-medium">
+        <DialogFooter className="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between sm:justify-between">
+          <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
             {stats.allocated} of {stats.total} sessions allocated
           </div>
           <Button

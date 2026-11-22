@@ -309,13 +309,13 @@ export function AdminMarksUpload() {
       </div>
 
       {/* 2. Ingestion Settings & File Dropzone Card */}
-      <div className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-7 shadow-xs space-y-6">
-        <div className="border-b border-slate-100 pb-4">
-          <h2 className="text-base font-black text-slate-900 flex items-center gap-2">
-            <Upload className="w-5 h-5 text-indigo-600" />
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-xs space-y-6">
+        <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
+          <h2 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <Upload className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
             1. Configure Examination Session & Upload Results Sheet
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-400 dark:text-slate-400 mt-0.5">
             Select or enter the examination details, then drag and drop the completed Excel sheet.
           </p>
         </div>
@@ -323,22 +323,22 @@ export function AdminMarksUpload() {
         {/* Configuration Row */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="space-y-1">
-            <Label className="text-xs font-bold text-slate-700">Exam / Test Title</Label>
+            <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">Exam / Test Title</Label>
             <Input
               value={examTitle}
               onChange={(e) => setExamTitle(e.target.value)}
               placeholder="e.g. Mid-Term Examination 2025-26"
-              className="h-9 text-xs font-semibold bg-slate-50/70"
+              className="h-9 text-xs font-semibold bg-slate-50/70 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
             />
           </div>
 
           <div className="space-y-1">
-            <Label className="text-xs font-bold text-slate-700">Exam Type</Label>
+            <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">Exam Type</Label>
             <Select value={examType} onValueChange={setExamType}>
-              <SelectTrigger className="h-9 text-xs font-semibold bg-slate-50/70">
+              <SelectTrigger className="h-9 text-xs font-semibold bg-slate-50/70 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
                 <SelectValue placeholder="Select Exam Type" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white">
                 <SelectItem value="Unit Test">Unit Test</SelectItem>
                 <SelectItem value="Mid-Term">Mid-Term Examination</SelectItem>
                 <SelectItem value="Preparatory">Preparatory Examination</SelectItem>
@@ -348,12 +348,12 @@ export function AdminMarksUpload() {
           </div>
 
           <div className="space-y-1">
-            <Label className="text-xs font-bold text-slate-700">Class / Grade</Label>
+            <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">Class / Grade</Label>
             <Select value={selectedClass} onValueChange={setSelectedClass}>
-              <SelectTrigger className="h-9 text-xs font-semibold bg-slate-50/70">
+              <SelectTrigger className="h-9 text-xs font-semibold bg-slate-50/70 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
                 <SelectValue placeholder="Select Class" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white">
                 <SelectItem value="1PUC">1 PUC (11th Standard)</SelectItem>
                 <SelectItem value="2PUC">2 PUC (12th Standard)</SelectItem>
                 <SelectItem value="Combined">1 & 2 PUC (All Classes)</SelectItem>
@@ -362,12 +362,12 @@ export function AdminMarksUpload() {
           </div>
 
           <div className="space-y-1">
-            <Label className="text-xs font-bold text-slate-700">Academic Year</Label>
+            <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">Academic Year</Label>
             <Input
               value={academicYear}
               onChange={(e) => setAcademicYear(e.target.value)}
               placeholder="e.g. 2025-26"
-              className="h-9 text-xs font-semibold bg-slate-50/70"
+              className="h-9 text-xs font-semibold bg-slate-50/70 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
             />
           </div>
         </div>
@@ -378,10 +378,10 @@ export function AdminMarksUpload() {
           className={cn(
             "border-2 border-dashed rounded-2xl p-8 sm:p-10 text-center transition-all cursor-pointer group",
             isParsing
-              ? "border-indigo-400 bg-indigo-50/50"
+              ? "border-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/40"
               : previewResult
-              ? "border-emerald-300 bg-emerald-50/30 hover:border-emerald-400"
-              : "border-slate-300 hover:border-indigo-500 hover:bg-indigo-50/20"
+              ? "border-emerald-300 dark:border-emerald-800 bg-emerald-50/30 dark:bg-emerald-950/20 hover:border-emerald-400"
+              : "border-slate-300 dark:border-slate-700 hover:border-indigo-500 hover:bg-indigo-50/20 dark:hover:bg-indigo-950/20"
           )}
         >
           <input
@@ -395,32 +395,32 @@ export function AdminMarksUpload() {
           <div className="space-y-3 max-w-md mx-auto">
             {isParsing ? (
               <>
-                <RefreshCw className="w-10 h-10 text-indigo-600 animate-spin mx-auto" />
-                <div className="text-sm font-bold text-indigo-900">
+                <RefreshCw className="w-10 h-10 text-indigo-600 dark:text-indigo-400 animate-spin mx-auto" />
+                <div className="text-sm font-bold text-indigo-900 dark:text-indigo-200">
                   Parsing dynamic subject columns & validating scores...
                 </div>
               </>
             ) : previewResult ? (
               <>
-                <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto" />
-                <div className="text-sm font-black text-slate-900">
+                <CheckCircle2 className="w-10 h-10 text-emerald-600 dark:text-emerald-400 mx-auto" />
+                <div className="text-sm font-black text-slate-900 dark:text-white">
                   File Loaded: {uploadedFileName}
                 </div>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   {previewResult.records.length} students detected. Click again to replace with another file.
                 </p>
               </>
             ) : (
               <>
-                <FileSpreadsheet className="w-10 h-10 text-indigo-600 mx-auto group-hover:scale-110 transition-transform" />
-                <div className="text-sm font-black text-slate-800">
+                <FileSpreadsheet className="w-10 h-10 text-indigo-600 dark:text-indigo-400 mx-auto group-hover:scale-110 transition-transform" />
+                <div className="text-sm font-black text-slate-800 dark:text-slate-200">
                   Click to Browse or Drag & Drop Results Excel Sheet
                 </div>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <p className="text-xs text-slate-400 dark:text-slate-400 leading-relaxed">
                   Supports .xlsx, .xls, and .csv files. Handles 6+ dynamic subject columns, missing totals, and custom combinations.
                 </p>
                 <div className="pt-2">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800/60">
                     <Sparkles className="w-3.5 h-3.5" />
                     Auto-detects Max Marks & Passing Thresholds
                   </span>
@@ -433,20 +433,20 @@ export function AdminMarksUpload() {
 
       {/* 3. Data Preview & Validation Table (Shown upon successful parse) */}
       {previewResult && (
-        <div className="bg-white border-2 border-indigo-500/40 rounded-3xl p-6 sm:p-7 shadow-lg space-y-6 animate-in fade-in-50 duration-200">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+        <div className="bg-white dark:bg-slate-900 border-2 border-indigo-500/40 rounded-3xl p-6 sm:p-7 shadow-lg space-y-6 animate-in fade-in-50 duration-200">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
             <div>
               <div className="flex items-center gap-2">
                 <Badge className="bg-indigo-600 text-white font-bold text-xs">
                   Validation Preview
                 </Badge>
-                <h3 className="text-lg font-black text-slate-900">
+                <h3 className="text-lg font-black text-slate-900 dark:text-white">
                   {previewResult.batchSummary.examTitle}
                 </h3>
               </div>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 Detected {previewResult.batchSummary.detectedSubjects.length} Subject Columns: {' '}
-                <span className="font-semibold text-slate-700">
+                <span className="font-semibold text-slate-700 dark:text-slate-300">
                   {previewResult.batchSummary.detectedSubjects.map((s) => s.name).join(', ')}
                 </span>
               </p>
@@ -459,7 +459,7 @@ export function AdminMarksUpload() {
                 variant="outline"
                 size="sm"
                 onClick={() => setPreviewResult(null)}
-                className="text-xs font-bold text-slate-600"
+                className="text-xs font-bold text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
               >
                 Discard Preview
               </Button>
@@ -487,14 +487,14 @@ export function AdminMarksUpload() {
 
           {/* Validation Warnings Box if any */}
           {previewResult.warnings.length > 0 && (
-            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 space-y-2">
-              <div className="text-xs font-black text-amber-900 flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-600" />
+            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-2xl p-4 space-y-2">
+              <div className="text-xs font-black text-amber-900 dark:text-amber-300 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                 <span>
                   Validation Notices ({previewResult.warnings.length} issues flagged):
                 </span>
               </div>
-              <ul className="text-xs text-amber-800 space-y-1 list-disc pl-5 max-h-36 overflow-y-auto">
+              <ul className="text-xs text-amber-800 dark:text-amber-300 space-y-1 list-disc pl-5 max-h-36 overflow-y-auto">
                 {previewResult.warnings.map((w, i) => (
                   <li key={i}>
                     <strong>Row {w.row}</strong> ({w.student}): {w.message}
@@ -505,10 +505,10 @@ export function AdminMarksUpload() {
           )}
 
           {/* Preview Table */}
-          <div className="overflow-x-auto border border-slate-200 rounded-2xl">
+          <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-2xl">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-slate-100 text-slate-600 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200">
+                <tr className="bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200 dark:border-slate-800">
                   <th className="py-3 px-3 w-10 text-center">#</th>
                   <th className="py-3 px-3">Reg No</th>
                   <th className="py-3 px-3">Student Name</th>
@@ -516,7 +516,7 @@ export function AdminMarksUpload() {
                   {previewResult.batchSummary.detectedSubjects.map((sub) => (
                     <th key={sub.name} className="py-3 px-2.5 text-center">
                       <div>{sub.name}</div>
-                      <div className="text-[9px] font-normal text-slate-400">
+                      <div className="text-[9px] font-normal text-slate-400 dark:text-slate-500">
                         Max: {sub.maxMarks}
                       </div>
                     </th>
@@ -526,19 +526,19 @@ export function AdminMarksUpload() {
                   <th className="py-3 px-3 text-center">Result</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-medium">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70 font-medium">
                 {previewResult.records.map((rec, idx) => (
-                  <tr key={rec.id} className="hover:bg-slate-50/70">
-                    <td className="py-2.5 px-3 text-center text-slate-400 font-bold">
+                  <tr key={rec.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
+                    <td className="py-2.5 px-3 text-center text-slate-400 dark:text-slate-500 font-bold">
                       {idx + 1}
                     </td>
-                    <td className="py-2.5 px-3 font-mono font-bold text-indigo-700">
+                    <td className="py-2.5 px-3 font-mono font-bold text-indigo-700 dark:text-indigo-400">
                       {rec.registerNumber}
                     </td>
-                    <td className="py-2.5 px-3 font-bold text-slate-900">
+                    <td className="py-2.5 px-3 font-bold text-slate-900 dark:text-white">
                       {rec.studentName}
                     </td>
-                    <td className="py-2.5 px-3 text-slate-600">
+                    <td className="py-2.5 px-3 text-slate-600 dark:text-slate-400">
                       {rec.className} • {rec.combination}
                     </td>
                     {rec.subjects.map((sub) => (
@@ -546,16 +546,16 @@ export function AdminMarksUpload() {
                         key={sub.subjectName}
                         className={cn(
                           "py-2.5 px-2.5 text-center font-mono",
-                          sub.status === 'Fail' ? "text-rose-600 font-bold bg-rose-50/60" : "text-slate-800"
+                          sub.status === 'Fail' ? "text-rose-600 dark:text-rose-400 font-bold bg-rose-50/60 dark:bg-rose-950/40" : "text-slate-800 dark:text-slate-200"
                         )}
                       >
                         {sub.marksScored}
                       </td>
                     ))}
-                    <td className="py-2.5 px-3 text-center font-mono font-black text-slate-900">
+                    <td className="py-2.5 px-3 text-center font-mono font-black text-slate-900 dark:text-white">
                       {rec.grandTotal}/{rec.maxGrandTotal}
                     </td>
-                    <td className="py-2.5 px-3 text-center font-mono font-bold text-indigo-600">
+                    <td className="py-2.5 px-3 text-center font-mono font-bold text-indigo-600 dark:text-indigo-400">
                       {rec.percentage}%
                     </td>
                     <td className="py-2.5 px-3 text-center">
@@ -563,12 +563,12 @@ export function AdminMarksUpload() {
                         className={cn(
                           "inline-block px-2 py-0.5 rounded-full text-[10px] font-black",
                           rec.resultClassification === 'Distinction'
-                            ? "bg-emerald-100 text-emerald-800"
+                            ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300"
                             : rec.resultClassification === 'First Class'
-                            ? "bg-indigo-100 text-indigo-800"
+                            ? "bg-indigo-100 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300"
                             : rec.status === 'Fail'
-                            ? "bg-rose-100 text-rose-800"
-                            : "bg-slate-100 text-slate-800"
+                            ? "bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300"
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-300"
                         )}
                       >
                         {rec.resultClassification}
@@ -583,24 +583,24 @@ export function AdminMarksUpload() {
       )}
 
       {/* 4. Published Result Batches History */}
-      <div className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-7 shadow-xs space-y-6">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4 flex-wrap gap-2">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-xs space-y-6">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4 flex-wrap gap-2">
           <div>
-            <h2 className="text-base font-black text-slate-900 flex items-center gap-2">
-              <Layers className="w-5 h-5 text-indigo-600" />
+            <h2 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+              <Layers className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
               Published Result Batches ({savedBatches.length})
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-400 dark:text-slate-400 mt-0.5">
               Past uploaded result sheets available for viewing, student scorecards, and export
             </p>
           </div>
         </div>
 
         {savedBatches.length === 0 ? (
-          <div className="p-12 text-center space-y-2 border border-dashed border-slate-200 rounded-2xl">
-            <Trophy className="w-10 h-10 text-slate-300 mx-auto" />
-            <div className="text-sm font-bold text-slate-700">No Result Batches Published Yet</div>
-            <p className="text-xs text-slate-400 max-w-sm mx-auto">
+          <div className="p-12 text-center space-y-2 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
+            <Trophy className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto" />
+            <div className="text-sm font-bold text-slate-700 dark:text-slate-300">No Result Batches Published Yet</div>
+            <p className="text-xs text-slate-400 dark:text-slate-500 max-w-sm mx-auto">
               Upload an Excel result sheet above to publish your first examination marks batch.
             </p>
           </div>
@@ -614,55 +614,55 @@ export function AdminMarksUpload() {
               return (
                 <div
                   key={batch.id}
-                  className="bg-slate-50/70 border border-slate-200 rounded-2xl p-5 hover:border-indigo-300 transition-all space-y-4 shadow-2xs hover:shadow-sm"
+                  className="bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-all space-y-4 shadow-2xs hover:shadow-sm"
                 >
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-full">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-100 dark:border-indigo-800/60 px-2 py-0.5 rounded-full">
                         {batch.examType} • {batch.className}
                       </span>
-                      <span className="text-[10px] font-semibold text-slate-400">
+                      <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500">
                         {new Date(batch.uploadedAt).toLocaleDateString()}
                       </span>
                     </div>
 
-                    <h3 className="text-base font-black text-slate-900 leading-tight">
+                    <h3 className="text-base font-black text-slate-900 dark:text-white leading-tight">
                       {batch.examTitle}
                     </h3>
                   </div>
 
                   {/* Batch KPIs */}
                   <div className="grid grid-cols-3 gap-2 text-center">
-                    <div className="bg-white p-2 rounded-xl border border-slate-200/80">
-                      <div className="text-[10px] font-bold text-slate-400 uppercase">Students</div>
-                      <div className="text-base font-black text-slate-900">{batch.totalStudents}</div>
+                    <div className="bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-200/80 dark:border-slate-700">
+                      <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Students</div>
+                      <div className="text-base font-black text-slate-900 dark:text-white">{batch.totalStudents}</div>
                     </div>
-                    <div className="bg-white p-2 rounded-xl border border-slate-200/80">
-                      <div className="text-[10px] font-bold text-slate-400 uppercase">Pass Rate</div>
-                      <div className="text-base font-black text-emerald-600">{passPct}%</div>
+                    <div className="bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-200/80 dark:border-slate-700">
+                      <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Pass Rate</div>
+                      <div className="text-base font-black text-emerald-600 dark:text-emerald-400">{passPct}%</div>
                     </div>
-                    <div className="bg-white p-2 rounded-xl border border-slate-200/80">
-                      <div className="text-[10px] font-bold text-slate-400 uppercase">Class Avg</div>
-                      <div className="text-base font-black text-indigo-600">{batch.classAverage}%</div>
+                    <div className="bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-200/80 dark:border-slate-700">
+                      <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Class Avg</div>
+                      <div className="text-base font-black text-indigo-600 dark:text-indigo-400">{batch.classAverage}%</div>
                     </div>
                   </div>
 
                   {/* Classification Breakdown Bar */}
                   <div className="space-y-1 text-[11px]">
-                    <div className="flex items-center justify-between text-slate-500 font-semibold">
-                      <span>Distinctions: <strong className="text-emerald-700">{batch.distinctionCount}</strong></span>
-                      <span>First Class: <strong className="text-indigo-700">{batch.firstClassCount}</strong></span>
+                    <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 font-semibold">
+                      <span>Distinctions: <strong className="text-emerald-700 dark:text-emerald-400">{batch.distinctionCount}</strong></span>
+                      <span>First Class: <strong className="text-indigo-700 dark:text-indigo-400">{batch.firstClassCount}</strong></span>
                     </div>
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-200/60">
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
                       onClick={() => exportExamResultsToExcel(batch)}
-                      className="text-xs font-bold text-slate-600 hover:text-indigo-700 h-8 px-2 gap-1"
+                      className="text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-indigo-700 dark:hover:text-indigo-400 h-8 px-2 gap-1"
                     >
                       <Download className="w-3.5 h-3.5" />
                       Export
@@ -688,7 +688,7 @@ export function AdminMarksUpload() {
                         variant="ghost"
                         size="sm"
                         onClick={() => setBatchToDelete(batch)}
-                        className="text-xs font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 h-8 w-8 p-0"
+                        className="text-xs font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 h-8 w-8 p-0"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>
@@ -704,12 +704,12 @@ export function AdminMarksUpload() {
       {/* 5. Scorecard Preview Modal */}
       {previewStudentRecords && previewStudentRecords.length > 0 && (
         <Dialog open={!!previewStudentRecords} onOpenChange={(open) => !open && setPreviewStudentRecords(null)}>
-          <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto p-6 sm:p-8">
-            <DialogHeader className="border-b border-slate-100 pb-3">
+          <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto p-6 sm:p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white">
+            <DialogHeader className="border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <DialogTitle className="text-lg font-black text-slate-900 flex items-center gap-2">
-                    <Trophy className="w-5 h-5 text-indigo-600" />
+                  <DialogTitle className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                    <Trophy className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                     Student Visual Scorecard & Analytics Preview
                   </DialogTitle>
                 </div>
@@ -723,12 +723,12 @@ export function AdminMarksUpload() {
               />
             </div>
 
-            <DialogFooter className="mt-4 pt-3 border-t border-slate-100">
+            <DialogFooter className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setPreviewStudentRecords(null)}
-                className="text-xs font-bold"
+                className="text-xs font-bold border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
               >
                 Close Preview
               </Button>
@@ -740,18 +740,18 @@ export function AdminMarksUpload() {
       {/* 6. Delete Confirmation Dialog */}
       {batchToDelete && (
         <AlertDialog open={!!batchToDelete} onOpenChange={(open) => !open && setBatchToDelete(null)}>
-          <AlertDialogContent>
+          <AlertDialogContent className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white">
             <AlertDialogHeader>
-              <AlertDialogTitle className="text-base font-bold text-slate-900">
+              <AlertDialogTitle className="text-base font-bold text-slate-900 dark:text-white">
                 Delete Published Batch?
               </AlertDialogTitle>
-              <AlertDialogDescription className="text-xs text-slate-500">
+              <AlertDialogDescription className="text-xs text-slate-500 dark:text-slate-400">
                 Are you sure you want to delete &quot;{batchToDelete.examTitle}&quot; ({batchToDelete.totalStudents} students)?
                 Students will no longer be able to view scorecards for this exam.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel className="text-xs font-semibold">Cancel</AlertDialogCancel>
+              <AlertDialogCancel className="text-xs font-semibold border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">Cancel</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDeleteBatch}
                 className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold"

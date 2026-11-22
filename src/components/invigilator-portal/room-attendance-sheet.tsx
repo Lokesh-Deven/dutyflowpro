@@ -340,46 +340,46 @@ export function RoomAttendanceSheet({
       )}
 
       {/* Sticky / Top Live Attendance Summary Bar (Requirement 9) */}
-      <div className="sticky top-16 z-20 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200 p-4 shadow-md transition-all">
+      <div className="sticky top-16 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-md transition-all">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-indigo-600" />
-            <span className="font-headline font-black text-sm text-slate-800">
+            <Users className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+            <span className="font-headline font-black text-sm text-slate-800 dark:text-white">
               Attendance Summary:
             </span>
           </div>
 
           {/* Metric Badges */}
           <div className="grid grid-cols-4 gap-2 text-center">
-            <div className="p-2 rounded-xl bg-slate-100 border border-slate-200">
-              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+            <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 Total
               </div>
-              <div className="text-base sm:text-lg font-black text-slate-800">
+              <div className="text-base sm:text-lg font-black text-slate-800 dark:text-white">
                 {summary.total}
               </div>
             </div>
-            <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-200">
-              <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">
+            <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60">
+              <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
                 Present
               </div>
-              <div className="text-base sm:text-lg font-black text-emerald-700">
+              <div className="text-base sm:text-lg font-black text-emerald-700 dark:text-emerald-300">
                 {summary.present}
               </div>
             </div>
-            <div className="p-2 rounded-xl bg-rose-50 border border-rose-200">
-              <div className="text-[10px] font-bold text-rose-600 uppercase tracking-wider">
+            <div className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60">
+              <div className="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider">
                 Absent
               </div>
-              <div className="text-base sm:text-lg font-black text-rose-700">
+              <div className="text-base sm:text-lg font-black text-rose-700 dark:text-rose-300">
                 {summary.absent}
               </div>
             </div>
             <div
               className={`p-2 rounded-xl border ${
                 summary.notMarked > 0
-                  ? 'bg-amber-50 border-amber-300 text-amber-900'
-                  : 'bg-slate-50 border-slate-200 text-slate-400'
+                  ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-300'
+                  : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500'
               }`}
             >
               <div className="text-[10px] font-bold uppercase tracking-wider">
@@ -394,9 +394,9 @@ export function RoomAttendanceSheet({
 
         {/* Unmarked Warning Alert (Requirement 9) */}
         {!isLocked && summary.notMarked > 0 && (
-          <div className="mt-3 p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold flex items-center justify-between gap-2 animate-in fade-in">
+          <div className="mt-3 p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs font-semibold flex items-center justify-between gap-2 animate-in fade-in">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+              <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
               <span>
                 ⚠️ {summary.notMarked} student{summary.notMarked > 1 ? 's have' : ' has'} not been marked.
               </span>
@@ -404,7 +404,7 @@ export function RoomAttendanceSheet({
             <button
               type="button"
               onClick={handleQuickMarkAllRemainingPresent}
-              className="text-[11px] font-bold text-indigo-700 hover:text-indigo-900 underline whitespace-nowrap"
+              className="text-[11px] font-bold text-indigo-700 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 underline whitespace-nowrap"
             >
               Mark Rest Present
             </button>
@@ -413,8 +413,8 @@ export function RoomAttendanceSheet({
 
         {/* Offline Local Draft Confirmation Note */}
         {!isLocked && hasDraftSaved && (
-          <div className="mt-2 text-[11px] text-slate-500 font-medium flex items-center gap-1.5">
-            <Save className="w-3 h-3 text-emerald-600" />
+          <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1.5">
+            <Save className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
             <span>Selections auto-saved locally on device (offline safe).</span>
           </div>
         )}
@@ -422,19 +422,19 @@ export function RoomAttendanceSheet({
 
       {/* Search Input Box (Requirement 7) */}
       <div className="relative">
-        <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
+        <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400 dark:text-slate-500" />
         <Input
           type="text"
           placeholder="Search Register Number or Student Name (e.g. 123456 or Rahul)..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 h-11 bg-white border-slate-300 rounded-xl text-sm placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-indigo-600 shadow-2xs"
+          className="pl-10 h-11 bg-white dark:bg-slate-800/50 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl text-sm placeholder:text-slate-400 dark:placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-indigo-600 shadow-2xs"
         />
         {searchQuery && (
           <button
             type="button"
             onClick={() => setSearchQuery('')}
-            className="absolute right-3 top-3 text-xs font-semibold text-slate-400 hover:text-slate-600"
+            className="absolute right-3 top-3 text-xs font-semibold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
           >
             Clear
           </button>
@@ -444,10 +444,10 @@ export function RoomAttendanceSheet({
       {/* Student Attendance List Cards (Requirement 6, 8, 19) */}
       <div className="space-y-2.5">
         {filteredStudents.length === 0 ? (
-          <div className="p-8 text-center bg-white rounded-2xl border border-slate-200 text-slate-500">
-            <Users className="w-8 h-8 mx-auto text-slate-300 mb-2" />
-            <p className="text-sm font-semibold text-slate-700">No candidates match your search.</p>
-            <p className="text-xs text-slate-400 mt-1">Try another register number or student name.</p>
+          <div className="p-8 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
+            <Users className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">No candidates match your search.</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Try another register number or student name.</p>
           </div>
         ) : (
           filteredStudents.map((student, idx) => {
@@ -460,38 +460,38 @@ export function RoomAttendanceSheet({
                 key={student.registerNumber}
                 className={`p-3.5 sm:p-4 rounded-xl border transition-all ${
                   isPresent
-                    ? 'bg-emerald-50/60 border-emerald-300 shadow-2xs'
+                    ? 'bg-emerald-50/60 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800 shadow-2xs'
                     : isAbsent
-                    ? 'bg-rose-50/60 border-rose-300 shadow-2xs'
-                    : 'bg-white border-slate-200 hover:border-slate-300'
+                    ? 'bg-rose-50/60 dark:bg-rose-950/30 border-rose-300 dark:border-rose-800 shadow-2xs'
+                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
                 }`}
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   {/* Student Details (Requirement 8) */}
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-sm sm:text-base text-slate-900 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
+                      <span className="font-mono font-bold text-sm sm:text-base text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700">
                         {student.registerNumber}
                       </span>
-                      <span className="font-headline font-bold text-slate-800 text-sm sm:text-base">
+                      <span className="font-headline font-bold text-slate-800 dark:text-slate-100 text-sm sm:text-base">
                         {student.studentName}
                       </span>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
-                      <span className="font-semibold text-indigo-700">Section {student.section}</span>
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+                      <span className="font-semibold text-indigo-700 dark:text-indigo-400">Section {student.section}</span>
                       <span>•</span>
                       <span>Room {duty.roomNo}</span>
                       {student.benchNumber && (
                         <>
                           <span>•</span>
-                          <span className="font-bold text-slate-800">Bench {student.benchNumber}</span>
+                          <span className="font-bold text-slate-800 dark:text-slate-200">Bench {student.benchNumber}</span>
                         </>
                       )}
                       {student.position && student.position !== 'Unassigned' && (
                         <>
                           <span>•</span>
-                          <span className="text-slate-500 font-medium">Position: {student.position}</span>
+                          <span className="text-slate-500 dark:text-slate-400 font-medium">Position: {student.position}</span>
                         </>
                       )}
                     </div>
@@ -506,10 +506,10 @@ export function RoomAttendanceSheet({
                       className={`flex-1 sm:flex-none min-w-[90px] h-11 sm:h-10 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 ${
                         isPresent
                           ? 'bg-emerald-600 text-white shadow-md ring-2 ring-emerald-600/30'
-                          : 'bg-white border border-slate-300 text-slate-700 hover:border-emerald-400 hover:bg-emerald-50/50'
+                          : 'bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30'
                       } ${isLocked ? 'cursor-not-allowed opacity-90' : ''}`}
                     >
-                      <Check className={`w-4 h-4 ${isPresent ? 'text-white' : 'text-emerald-600'}`} />
+                      <Check className={`w-4 h-4 ${isPresent ? 'text-white' : 'text-emerald-600 dark:text-emerald-400'}`} />
                       <span>Present</span>
                     </button>
 
@@ -520,10 +520,10 @@ export function RoomAttendanceSheet({
                       className={`flex-1 sm:flex-none min-w-[90px] h-11 sm:h-10 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 ${
                         isAbsent
                           ? 'bg-rose-600 text-white shadow-md ring-2 ring-rose-600/30'
-                          : 'bg-white border border-slate-300 text-slate-700 hover:border-rose-400 hover:bg-rose-50/50'
+                          : 'bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-rose-400 hover:bg-rose-50/50 dark:hover:bg-rose-950/30'
                       } ${isLocked ? 'cursor-not-allowed opacity-90' : ''}`}
                     >
-                      <XCircle className={`w-4 h-4 ${isAbsent ? 'text-white' : 'text-rose-600'}`} />
+                      <XCircle className={`w-4 h-4 ${isAbsent ? 'text-white' : 'text-rose-600 dark:text-rose-400'}`} />
                       <span>Absent</span>
                     </button>
                   </div>
@@ -544,7 +544,7 @@ export function RoomAttendanceSheet({
             className={`w-full h-12 text-sm font-bold tracking-wider rounded-xl shadow-md transition-all ${
               summary.isComplete
                 ? 'bg-[#1E2A5E] hover:bg-[#151D42] text-white'
-                : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                : 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
             }`}
           >
             <FileCheck2 className="w-5 h-5 mr-2" />
@@ -557,31 +557,31 @@ export function RoomAttendanceSheet({
 
       {/* Confirmation Modal (Requirement 10) */}
       <Dialog open={isConfirmSubmitOpen} onOpenChange={setIsConfirmSubmitOpen}>
-        <DialogContent className="max-w-md bg-white rounded-2xl">
+        <DialogContent className="max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white rounded-2xl">
           <DialogHeader>
-            <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-200 text-indigo-700 flex items-center justify-center mx-auto mb-2">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-400 flex items-center justify-center mx-auto mb-2">
               <DoorOpen className="w-6 h-6" />
             </div>
-            <DialogTitle className="text-xl font-headline font-bold text-center text-slate-800">
+            <DialogTitle className="text-xl font-headline font-bold text-center text-slate-800 dark:text-white">
               Submit Room Attendance?
             </DialogTitle>
-            <DialogDescription className="text-center text-slate-500 text-xs">
+            <DialogDescription className="text-center text-slate-500 dark:text-slate-400 text-xs">
               Are you sure you want to submit attendance for <strong>Room {duty.roomNo}</strong> ({duty.subjectName})?
             </DialogDescription>
           </DialogHeader>
 
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 my-2">
-            <div className="text-center font-bold text-sm text-slate-800 mb-1">
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 my-2">
+            <div className="text-center font-bold text-sm text-slate-800 dark:text-white mb-1">
               Final Attendance Count
             </div>
             <div className="flex items-center justify-center gap-4 text-xs font-semibold">
-              <span className="text-slate-600">{summary.total} Total</span>
+              <span className="text-slate-600 dark:text-slate-400">{summary.total} Total</span>
               <span>•</span>
-              <span className="text-emerald-700 font-bold">{summary.present} Present</span>
+              <span className="text-emerald-700 dark:text-emerald-400 font-bold">{summary.present} Present</span>
               <span>•</span>
-              <span className="text-rose-700 font-bold">{summary.absent} Absent</span>
+              <span className="text-rose-700 dark:text-rose-400 font-bold">{summary.absent} Absent</span>
             </div>
-            <p className="text-[11px] text-slate-500 text-center mt-2">
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 text-center mt-2">
               Once submitted, attendance is locked to maintain examination integrity.
             </p>
           </div>
@@ -591,7 +591,7 @@ export function RoomAttendanceSheet({
               type="button"
               variant="outline"
               onClick={() => setIsConfirmSubmitOpen(false)}
-              className="flex-1 h-10 rounded-xl font-bold text-xs"
+              className="flex-1 h-10 rounded-xl font-bold text-xs border-slate-200 dark:border-slate-700"
             >
               Cancel
             </Button>
@@ -609,12 +609,12 @@ export function RoomAttendanceSheet({
 
       {/* Request Correction Modal (Requirement 11) */}
       <Dialog open={isCorrectionModalOpen} onOpenChange={setIsCorrectionModalOpen}>
-        <DialogContent className="max-w-md bg-white rounded-2xl">
+        <DialogContent className="max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-lg font-headline font-bold text-slate-800">
+            <DialogTitle className="text-lg font-headline font-bold text-slate-800 dark:text-white">
               Request Attendance Correction
             </DialogTitle>
-            <DialogDescription className="text-xs text-slate-500">
+            <DialogDescription className="text-xs text-slate-500 dark:text-slate-400">
               Provide details on what needs modification for Room {duty.roomNo}.
             </DialogDescription>
           </DialogHeader>
@@ -625,7 +625,7 @@ export function RoomAttendanceSheet({
               value={correctionReason}
               onChange={(e) => setCorrectionReason(e.target.value)}
               placeholder="e.g. Student 103 arrived late and should be marked Present instead of Absent..."
-              className="w-full rounded-xl border border-slate-300 p-3 text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-600"
+              className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 p-3 text-xs text-slate-800 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-600"
             />
           </div>
 
@@ -634,7 +634,7 @@ export function RoomAttendanceSheet({
               type="button"
               variant="outline"
               onClick={() => setIsCorrectionModalOpen(false)}
-              className="flex-1 font-bold text-xs h-9 rounded-xl"
+              className="flex-1 font-bold text-xs h-9 rounded-xl border-slate-200 dark:border-slate-700"
             >
               Cancel
             </Button>

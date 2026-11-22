@@ -47,15 +47,15 @@ export function StrengthsRadarChart({ subjects }: StrengthsRadarChartProps) {
     <div className="w-full h-72 sm:h-80">
       <ResponsiveContainer width="100%" height="100%">
         <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarData}>
-          <PolarGrid stroke="#e2e8f0" />
+          <PolarGrid stroke="#64748b" strokeOpacity={0.25} />
           <PolarAngleAxis
             dataKey="subject"
-            tick={{ fill: '#475569', fontSize: 11, fontWeight: 700 }}
+            tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 700 }}
           />
           <PolarRadiusAxis
             angle={30}
             domain={[0, 100]}
-            tick={{ fill: '#94a3b8', fontSize: 9 }}
+            tick={{ fill: '#64748b', fontSize: 9 }}
           />
           <Radar
             name="Subject Mastery"
