@@ -973,19 +973,19 @@ export default function ExaminationTimetablePage() {
   };
 
   return (
-    <div className="space-y-8 pb-20 max-w-7xl mx-auto">
+    <div className="space-y-6 pb-20 max-w-7xl mx-auto">
       {/* Top Banner Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <div className="flex items-center gap-2.5">
-            <div className="p-2.5 bg-indigo-50 text-[#1E2A5E] rounded-xl shadow-xs">
-              <CalendarClock className="w-6 h-6 text-indigo-700" />
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-indigo-50 dark:bg-indigo-950/60 text-[#1E2A5E] dark:text-indigo-300 rounded-xl shadow-xs">
+              <CalendarClock className="w-6 h-6 text-indigo-700 dark:text-indigo-400" />
             </div>
             <div>
-              <h1 className="font-headline text-2xl font-black tracking-tight text-slate-800">
+              <h1 className="font-headline text-2xl font-black tracking-tight text-slate-900 dark:text-white">
                 Examination Timetable
               </h1>
-              <p className="text-xs text-slate-500 font-medium">
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
                 Configure examination sessions, paper schedules, and manage publishing
               </p>
             </div>
@@ -995,7 +995,7 @@ export default function ExaminationTimetablePage() {
 
       {/* Lock Notice Banner if locked */}
       {timetable.isLocked && (
-        <div className="p-3.5 bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl flex items-center justify-between gap-3 text-amber-900 dark:text-amber-200 animate-in fade-in">
+        <div className="p-4 bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl flex items-center justify-between gap-4 text-amber-900 dark:text-amber-200 animate-in fade-in">
           <div className="flex items-center gap-2.5 text-xs">
             <Lock className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
             <span>
@@ -1005,7 +1005,7 @@ export default function ExaminationTimetablePage() {
           <Button
             size="sm"
             onClick={() => setIsUnlockConfirmOpen(true)}
-            className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs h-7 px-3 shrink-0"
+            className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs h-8 px-3.5 shrink-0 rounded-lg"
           >
             <Unlock className="w-3 h-3 mr-1" />
             Unlock to Edit
@@ -1014,17 +1014,19 @@ export default function ExaminationTimetablePage() {
       )}
 
       {/* 1. Examination Details Card */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-5">
+        <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-slate-800">
           <h2 className="font-headline font-bold text-sm text-slate-800 dark:text-white flex items-center gap-2">
-            <Building className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+            <div className="p-1.5 bg-indigo-50 dark:bg-indigo-950/60 rounded-lg">
+              <Building className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+            </div>
             1. Examination Details
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-          {/* Institution Name */}
-          <div className="space-y-1.5">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_auto] gap-5 items-end">
+          {/* Institution Name — full fluid width */}
+          <div className="space-y-1.5 min-w-0">
             <Label htmlFor="institution-name" className="text-xs font-bold text-slate-700 dark:text-slate-300">
               Name of Institution
             </Label>
@@ -1034,12 +1036,13 @@ export default function ExaminationTimetablePage() {
               value={timetable.institutionName}
               onChange={(e) => handleInstitutionChange(e.target.value)}
               disabled={timetable.isLocked}
-              className="text-xs font-semibold uppercase bg-slate-50/50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 dark:border-slate-700 dark:text-white"
+              title={timetable.institutionName}
+              className="text-xs font-semibold uppercase bg-slate-50/50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 dark:border-slate-700 dark:text-white h-10"
             />
           </div>
 
-          {/* Examination Name */}
-          <div className="space-y-1.5">
+          {/* Examination Name — full fluid width */}
+          <div className="space-y-1.5 min-w-0">
             <Label htmlFor="exam-name" className="text-xs font-bold text-slate-700 dark:text-slate-300">
               Name of Examination
             </Label>
@@ -1049,18 +1052,19 @@ export default function ExaminationTimetablePage() {
               value={timetable.examinationName}
               onChange={(e) => handleExamNameChange(e.target.value)}
               disabled={timetable.isLocked}
-              className="text-xs font-semibold bg-slate-50/50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 dark:border-slate-700 dark:text-white"
+              title={timetable.examinationName}
+              className="text-xs font-semibold bg-slate-50/50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 dark:border-slate-700 dark:text-white h-10"
             />
           </div>
 
-          {/* Permanent Title Display */}
-          <div className="space-y-1.5">
+          {/* Permanent Title Display — compact auto-width */}
+          <div className="space-y-1.5 w-full lg:w-56">
             <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">
               Title
             </Label>
-            <div className="h-9 px-3 rounded-md border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800/80 flex items-center justify-between text-xs font-black tracking-widest text-[#1E2A5E] dark:text-indigo-400">
+            <div className="h-10 px-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/80 flex items-center gap-3 text-xs font-black tracking-widest text-[#1E2A5E] dark:text-indigo-400">
               <span>TIMETABLE</span>
-              <Badge variant="outline" className="text-[10px] text-slate-500 dark:text-slate-400 font-normal border-slate-300 dark:border-slate-700">
+              <Badge variant="outline" className="text-[10px] text-slate-500 dark:text-slate-400 font-normal border-slate-300 dark:border-slate-700 whitespace-nowrap">
                 Permanent Title
               </Badge>
             </div>
@@ -1069,22 +1073,27 @@ export default function ExaminationTimetablePage() {
       </div>
 
       {/* 2. Timetable Creation Table Card */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
           <div>
             <h2 className="font-headline font-bold text-sm text-slate-800 dark:text-white flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-              2. Timetable Schedule ({totalSessions} Scheduled Sessions across {timetable.rows.length} Dates)
+              <div className="p-1.5 bg-indigo-50 dark:bg-indigo-950/60 rounded-lg">
+                <Calendar className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+              </div>
+              2. Timetable Schedule
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 ml-1">
+                ({totalSessions} Sessions · {timetable.rows.length} Dates)
+              </span>
             </h2>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <Button
               type="button"
               size="sm"
               onClick={handleAddDateRow}
               disabled={timetable.isLocked}
-              className="bg-[#1E2A5E] hover:bg-[#151D42] dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white font-bold text-xs h-8 px-3.5 gap-1.5 shadow-xs"
+              className="bg-[#1E2A5E] hover:bg-[#151D42] dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white font-bold text-xs h-9 px-4 gap-2 shadow-sm rounded-xl cursor-pointer transition-all"
             >
               <Plus className="w-3.5 h-3.5" />
               Add Examination Date
@@ -1094,36 +1103,36 @@ export default function ExaminationTimetablePage() {
 
         {/* Dynamic Timetable Grid */}
         <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse min-w-[760px]">
+          <table className="w-full text-left text-xs border-collapse min-w-[860px]">
             <thead>
               {/* Row 0: Basic Columns + Classes with "+" button */}
-              <tr className="bg-slate-50/90 dark:bg-slate-800/70 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-800">
-                <th rowSpan={2} className="py-2.5 px-3 text-center w-12 border-r border-slate-200 dark:border-slate-800">
+              <tr className="bg-slate-50 dark:bg-slate-800/70 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-800">
+                <th rowSpan={2} className="py-3 px-3 text-center w-14 border-r border-slate-200 dark:border-slate-800">
                   Sl. No.
                 </th>
-                <th rowSpan={2} className="py-2.5 px-3 text-center w-36 border-r border-slate-200 dark:border-slate-800">
+                <th rowSpan={2} className="py-3 px-3 text-center w-40 border-r border-slate-200 dark:border-slate-800">
                   Date (DD.MM.YYYY)
                 </th>
-                <th rowSpan={2} className="py-2.5 px-3 text-center w-28 border-r border-slate-200 dark:border-slate-800">
+                <th rowSpan={2} className="py-3 px-3 text-center w-28 border-r border-slate-200 dark:border-slate-800">
                   Day
                 </th>
-                <th rowSpan={2} className="py-2.5 px-3 text-center w-36 border-r border-slate-200 dark:border-slate-800">
+                <th rowSpan={2} className="py-3 px-3 text-center w-40 border-r border-slate-200 dark:border-slate-800">
                   Class
                 </th>
 
                 {/* Class Columns */}
-                {timetable.classes.map((c, cIdx) => (
+                {timetable.classes.map((c) => (
                   <th
                     key={c.id}
                     colSpan={2}
-                    className="py-2 px-3 text-center border-r border-slate-200 dark:border-slate-800 bg-indigo-50/40 dark:bg-indigo-950/40 text-indigo-900 dark:text-indigo-300"
+                    className="py-2.5 px-3 text-center border-r border-slate-200 dark:border-slate-800 bg-indigo-50/50 dark:bg-indigo-950/40 text-indigo-900 dark:text-indigo-300"
                   >
                     <div className="flex items-center justify-center gap-1.5">
                       <Input
                         value={c.name}
                         onChange={(e) => handleUpdateClassName(c.id, e.target.value)}
                         disabled={timetable.isLocked}
-                        className="h-6 text-xs text-center font-bold font-headline bg-transparent border-none p-0 focus-visible:ring-1 focus-visible:ring-indigo-400 dark:text-indigo-200 w-24"
+                        className="h-7 text-xs text-center font-bold font-headline bg-transparent border-none p-0 focus-visible:ring-1 focus-visible:ring-indigo-400 dark:text-indigo-200 w-28"
                       />
                       {timetable.classes.length > 1 && !timetable.isLocked && (
                         <button
@@ -1141,23 +1150,23 @@ export default function ExaminationTimetablePage() {
 
                 {/* "+" Button Column to Add More Classes */}
                 {!timetable.isLocked && (
-                  <th rowSpan={2} className="py-2 px-2 text-center w-12 border-r border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60">
+                  <th rowSpan={2} className="py-2.5 px-2 text-center w-12 border-r border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60">
                     <button
                       type="button"
                       onClick={handleAddClass}
                       title="Add another class column (e.g. Class 2, Class 3)"
-                      className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 hover:scale-105 transition-all font-bold"
+                      className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 hover:scale-105 transition-all font-bold cursor-pointer"
                     >
                       <Plus className="w-4 h-4" />
                     </button>
                   </th>
                 )}
 
-                <th rowSpan={2} className="py-2.5 px-3 min-w-[200px] border-r border-slate-200 dark:border-slate-800">
+                <th rowSpan={2} className="py-3 px-3 min-w-[200px] border-r border-slate-200 dark:border-slate-800">
                   Subject(s)
                 </th>
 
-                <th rowSpan={2} className="py-2.5 px-2 text-center w-12">
+                <th rowSpan={2} className="py-3 px-2 text-center w-14">
                   Action
                 </th>
               </tr>
@@ -1166,10 +1175,10 @@ export default function ExaminationTimetablePage() {
               <tr className="bg-slate-100/70 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 font-semibold text-[10px] uppercase border-b border-slate-200 dark:border-slate-800">
                 {timetable.classes.map((c) => (
                   <React.Fragment key={`${c.id}-subheaders`}>
-                    <th className="py-1.5 px-2 text-center w-28 border-r border-slate-200 dark:border-slate-800 font-bold text-indigo-900 dark:text-indigo-300">
+                    <th className="py-2 px-2 text-center min-w-[120px] border-r border-slate-200 dark:border-slate-800 font-bold text-indigo-900 dark:text-indigo-300">
                       Start Time
                     </th>
-                    <th className="py-1.5 px-2 text-center w-28 border-r border-slate-200 dark:border-slate-800 font-bold text-indigo-900 dark:text-indigo-300">
+                    <th className="py-2 px-2 text-center min-w-[120px] border-r border-slate-200 dark:border-slate-800 font-bold text-indigo-900 dark:text-indigo-300">
                       End Time
                     </th>
                   </React.Fragment>
@@ -1189,6 +1198,11 @@ export default function ExaminationTimetablePage() {
                   const isFirstSlot = sIdx === 0;
                   const isLastSlot = sIdx === slotCount - 1;
 
+                  // Determine course color theme for distinct class color-coding
+                  const courseName = (slot.course || '').toLowerCase().trim();
+                  const is1PUC = courseName === '1 puc';
+                  const is2PUC = courseName === '2 puc';
+
                   return (
                     <tr
                       key={`${row.id}-${slot.id || sIdx}`}
@@ -1202,32 +1216,32 @@ export default function ExaminationTimetablePage() {
                       {isFirstSlot && (
                         <td
                           rowSpan={slotCount}
-                          className="py-3 px-3 text-center text-slate-500 dark:text-slate-400 font-mono text-[11px] border-r border-slate-200 dark:border-slate-800 align-middle bg-inherit"
+                          className="py-3.5 px-3 text-center text-slate-500 dark:text-slate-400 font-mono text-[11px] border-r border-slate-200 dark:border-slate-800 align-middle bg-inherit"
                         >
-                          <div className="font-bold text-slate-800 dark:text-slate-200 text-xs">{dateIdx + 1}</div>
+                          <div className="font-bold text-slate-800 dark:text-slate-200 text-sm tabular-nums">{dateIdx + 1}</div>
                           {slotCount > 1 && (
-                            <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800 mt-1 font-semibold">
+                            <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800 mt-1.5 font-semibold">
                               {slotCount} slots
                             </Badge>
                           )}
                         </td>
                       )}
 
-                      {/* Date Picker + Strict DD.MM.YYYY Display + "+ Add Row" Button (spans all slots on this date) */}
+                      {/* Date Picker + DD.MM.YYYY + "+ Add Row" */}
                       {isFirstSlot && (
                         <td
                           rowSpan={slotCount}
-                          className="py-2.5 px-3 border-r border-slate-200 dark:border-slate-800 align-middle bg-inherit"
+                          className="py-3 px-3 border-r border-slate-200 dark:border-slate-800 align-middle bg-inherit"
                         >
-                          <div className="space-y-1.5 max-w-[150px] mx-auto">
+                          <div className="space-y-2 max-w-[160px] mx-auto">
                             <Input
                               type="date"
                               value={row.date}
                               onChange={(e) => handleDateChange(row.id, e.target.value)}
                               disabled={timetable.isLocked}
-                              className="h-8 text-xs font-semibold bg-white dark:bg-slate-800/50 dark:border-slate-700 dark:text-white"
+                              className="h-9 text-xs font-semibold bg-white dark:bg-slate-800/50 dark:border-slate-700 dark:text-white tabular-nums"
                             />
-                            <div className="text-[10px] text-center font-mono font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50/70 dark:bg-indigo-950/50 rounded px-1.5 py-0.5 border border-indigo-100 dark:border-indigo-900/60">
+                            <div className="text-[11px] text-center font-mono font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50/70 dark:bg-indigo-950/50 rounded-md px-2 py-1 border border-indigo-100 dark:border-indigo-900/60 tabular-nums">
                               {row.displayDate || formatDateToDDMMYYYY(row.date) || '—'}
                             </div>
                             {!timetable.isLocked && (
@@ -1236,7 +1250,7 @@ export default function ExaminationTimetablePage() {
                                 size="sm"
                                 variant="outline"
                                 onClick={() => handleAddSlotToDate(row.id)}
-                                className="w-full text-[10px] h-6 px-1.5 font-bold text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800 bg-indigo-50/80 dark:bg-indigo-950/60 hover:bg-indigo-100/90 dark:hover:bg-indigo-900/80 gap-1 mt-1 shadow-2xs cursor-pointer"
+                                className="w-full text-[10px] h-7 px-2 font-bold text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800 bg-indigo-50/80 dark:bg-indigo-950/60 hover:bg-indigo-100/90 dark:hover:bg-indigo-900/80 gap-1 shadow-2xs cursor-pointer rounded-lg"
                                 title={`Add another examination schedule under ${row.displayDate || row.date}`}
                               >
                                 <Plus className="w-3 h-3" />
@@ -1247,30 +1261,36 @@ export default function ExaminationTimetablePage() {
                         </td>
                       )}
 
-                      {/* Day (spans all slots on this date) */}
+                      {/* Day */}
                       {isFirstSlot && (
                         <td
                           rowSpan={slotCount}
-                          className="py-3 px-3 text-center border-r border-slate-200 dark:border-slate-800 align-middle bg-inherit"
+                          className="py-3.5 px-3 text-center border-r border-slate-200 dark:border-slate-800 align-middle bg-inherit"
                         >
-                          <span className="font-semibold text-xs text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md inline-block">
+                          <span className="font-semibold text-xs text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2.5 py-1.5 rounded-lg inline-block">
                             {row.day || '—'}
                           </span>
                         </td>
                       )}
 
-                      {/* Course Selector (Dropdown + Custom Type with Add Option) */}
-                      <td className="py-2 px-3 border-r border-slate-100 dark:border-slate-800">
-                        <CourseSelectorPopover
-                          value={slot.course || ''}
-                          onChange={(val) => handleSlotCourseChange(row.id, slot.id, val)}
-                          disabled={timetable.isLocked}
-                          availableCourses={allAvailableCourses}
-                          onAddCustomCourse={handleAddCustomCourse}
-                        />
+                      {/* Course Selector with class color-coding */}
+                      <td className="py-2.5 px-3 border-r border-slate-100 dark:border-slate-800">
+                        <div className={cn(
+                          "rounded-lg transition-colors",
+                          is1PUC && "ring-1 ring-indigo-200 dark:ring-indigo-800 bg-indigo-50/30 dark:bg-indigo-950/20",
+                          is2PUC && "ring-1 ring-emerald-200 dark:ring-emerald-800 bg-emerald-50/30 dark:bg-emerald-950/20"
+                        )}>
+                          <CourseSelectorPopover
+                            value={slot.course || ''}
+                            onChange={(val) => handleSlotCourseChange(row.id, slot.id, val)}
+                            disabled={timetable.isLocked}
+                            availableCourses={allAvailableCourses}
+                            onAddCustomCourse={handleAddCustomCourse}
+                          />
+                        </div>
                       </td>
 
-                      {/* Class Timings (Start Time & End Time) */}
+                      {/* Class Timings (Start Time & End Time) — wider columns */}
                       {timetable.classes.map((c) => {
                         const timing = slot.timings?.[c.id] || { startTime: '-', endTime: '-' };
                         const currentStart = timing.startTime || '-';
@@ -1279,15 +1299,16 @@ export default function ExaminationTimetablePage() {
 
                         return (
                           <React.Fragment key={`${row.id}-${slot.id}-${c.id}`}>
-                            <td className="py-2 px-2 border-r border-slate-100 dark:border-slate-800">
+                            <td className="py-2.5 px-2.5 border-r border-slate-100 dark:border-slate-800" style={{ minWidth: '120px' }}>
                               <TimePickerInput
                                 value={currentStart}
                                 onChange={(val) => handleSlotTimingChange(row.id, slot.id, c.id, 'startTime', val)}
                                 placeholder="10:00 AM"
                                 disabled={timetable.isLocked}
+                                className="tabular-nums"
                               />
                             </td>
-                            <td className="py-2 px-2 border-r border-slate-100 dark:border-slate-800">
+                            <td className="py-2.5 px-2.5 border-r border-slate-100 dark:border-slate-800" style={{ minWidth: '120px' }}>
                               <TimePickerInput
                                 value={currentEnd}
                                 onChange={(val) => handleSlotTimingChange(row.id, slot.id, c.id, 'endTime', val)}
@@ -1295,6 +1316,7 @@ export default function ExaminationTimetablePage() {
                                 isInvalid={!isValid}
                                 errorMessage="Must be later than Start Time"
                                 disabled={timetable.isLocked}
+                                className="tabular-nums"
                               />
                             </td>
                           </React.Fragment>
@@ -1302,10 +1324,10 @@ export default function ExaminationTimetablePage() {
                       })}
 
                       {/* Blank cell to balance "+" header */}
-                      {!timetable.isLocked && <td className="py-2 px-2 border-r border-slate-100 dark:border-slate-800"></td>}
+                      {!timetable.isLocked && <td className="py-2.5 px-2 border-r border-slate-100 dark:border-slate-800"></td>}
 
                       {/* Subject Multi-Select Popover */}
-                      <td className="py-2 px-3 border-r border-slate-100 dark:border-slate-800">
+                      <td className="py-2.5 px-3 border-r border-slate-100 dark:border-slate-800">
                         <SubjectSelectorPopover
                           selectedSubjects={slot.subjects || []}
                           onChange={(subjects) => handleSlotSubjectsChange(row.id, slot.id, subjects)}
@@ -1316,13 +1338,13 @@ export default function ExaminationTimetablePage() {
                       </td>
 
                       {/* Delete Row / Slot Action */}
-                      <td className="py-2 px-2 text-center align-middle">
+                      <td className="py-2.5 px-2 text-center align-middle">
                         <button
                           type="button"
                           onClick={() => handleDeleteSlot(row.id, slot.id)}
                           disabled={timetable.isLocked || (timetable.rows.length <= 1 && slotCount <= 1)}
                           title={slotCount > 1 ? "Delete this examination schedule" : "Delete examination date"}
-                          className="p-1.5 text-slate-400 hover:text-rose-600 disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors"
+                          className="p-1.5 text-slate-400 hover:text-rose-600 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -1335,10 +1357,10 @@ export default function ExaminationTimetablePage() {
           </table>
         </div>
 
-        {/* Bottom table controls */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
-          <div className="text-xs text-slate-500 font-medium flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+        {/* Bottom table hint + add button */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3">
+          <div className="text-xs text-slate-500 dark:text-slate-400 font-medium flex items-center gap-2">
+            <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
             <span>Click <strong>&ldquo;+ Add Row&rdquo;</strong> inside any date to schedule multiple exams on that date without repeating the date and day.</span>
           </div>
           <Button
@@ -1347,15 +1369,15 @@ export default function ExaminationTimetablePage() {
             variant="outline"
             onClick={handleAddDateRow}
             disabled={timetable.isLocked}
-            className="text-xs h-8 px-3.5 gap-1.5 text-[#1E2A5E] font-bold border-indigo-200 hover:bg-indigo-50 shadow-2xs self-end sm:self-auto"
+            className="text-xs h-9 px-4 gap-2 text-[#1E2A5E] dark:text-indigo-300 font-bold border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 shadow-2xs self-end sm:self-auto rounded-xl cursor-pointer transition-all"
           >
             <Plus className="w-3.5 h-3.5" />
             Add Examination Date
           </Button>
         </div>
 
-        {/* Action Bar (Directly beneath Add Examination Date) */}
-        <div className="pt-4 border-t border-slate-200/90 dark:border-slate-800 flex flex-wrap items-center gap-3">
+        {/* Action Bar Toolbar */}
+        <div className="pt-5 border-t border-slate-200/90 dark:border-slate-800 flex flex-wrap items-center gap-2.5">
           {/* 1. Preview Timetable */}
           <Button
             type="button"
@@ -1373,7 +1395,7 @@ export default function ExaminationTimetablePage() {
               type="button"
               variant="outline"
               onClick={() => setIsUnlockConfirmOpen(true)}
-              className="text-xs h-9 px-4 gap-1.5 font-bold text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60 rounded-xl shadow-2xs transition-all"
+              className="text-xs h-9 px-4 gap-2 font-bold text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60 rounded-xl shadow-2xs cursor-pointer transition-all"
             >
               <Unlock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
               Unlock Timetable
@@ -1383,30 +1405,30 @@ export default function ExaminationTimetablePage() {
               type="button"
               variant="outline"
               onClick={() => setIsLockConfirmOpen(true)}
-              className="text-xs h-9 px-4 gap-1.5 font-bold text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl shadow-2xs transition-all"
+              className="text-xs h-9 px-4 gap-2 font-bold text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl shadow-2xs cursor-pointer transition-all"
             >
               <Lock className="w-4 h-4 text-slate-500 dark:text-slate-400" />
               Lock Timetable
             </Button>
           )}
 
-          {/* 3. Download PDF */}
+          {/* 3. Download PDF — primary action */}
           <Button
             type="button"
             onClick={handleDownloadPdf}
-            className="bg-[#1E2A5E] hover:bg-[#151D42] dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white font-bold text-xs h-9 px-4 gap-1.5 rounded-xl shadow-xs transition-all cursor-pointer"
+            className="bg-[#1E2A5E] hover:bg-[#151D42] dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white font-bold text-xs h-9 px-4 gap-2 rounded-xl shadow-sm cursor-pointer transition-all"
           >
             <Download className="w-4 h-4" />
             Download PDF
           </Button>
 
-          {/* 4. Publish/Update on Student Portal */}
+          {/* 4. Publish/Update on Student Portal — semantic */}
           <Button
             type="button"
             onClick={() => handlePublishToStudentPortal()}
             disabled={isPublishing}
             className={cn(
-              "text-xs h-9 px-4 gap-2 font-bold rounded-xl shadow-xs transition-all cursor-pointer",
+              "text-xs h-9 px-4 gap-2 font-bold rounded-xl shadow-sm cursor-pointer transition-all",
               timetable.isPublished
                 ? "bg-emerald-600 hover:bg-emerald-700 text-white"
                 : "bg-indigo-600 hover:bg-indigo-700 text-white"
@@ -1422,12 +1444,13 @@ export default function ExaminationTimetablePage() {
             <span>{timetable.isPublished ? "Update on Student Portal" : "Publish on Student Portal"}</span>
           </Button>
 
-          {/* 5. Save Timetable */}
+          {/* 5. Save Timetable — primary right-aligned */}
+          <div className="flex-1" />
           <Button
             type="button"
             onClick={handleSave}
             disabled={isSaving || timetable.isLocked}
-            className="bg-[#1E2A5E] hover:bg-[#151D42] dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white font-bold text-xs h-9 px-5 gap-2 rounded-xl shadow-xs hover:shadow cursor-pointer transition-all disabled:opacity-50"
+            className="bg-[#1E2A5E] hover:bg-[#151D42] dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white font-bold text-xs h-9 px-5 gap-2 rounded-xl shadow-sm hover:shadow cursor-pointer transition-all disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
             {hasUnsavedChanges && (
@@ -1439,86 +1462,78 @@ export default function ExaminationTimetablePage() {
       </div>
 
       {/* Metrics Summary Cards (Total Sessions & Total Subjects) */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs">
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Total Sessions Card */}
-          <div className="bg-gradient-to-br from-indigo-50/90 to-blue-50/40 dark:from-indigo-950/40 dark:to-blue-950/20 border border-indigo-100 dark:border-indigo-900/60 rounded-xl p-3 shadow-sm min-w-[210px] flex-1 sm:flex-initial">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-indigo-600/10 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 flex items-center justify-center shrink-0">
-                  <Calendar className="w-4 h-4 text-indigo-700 dark:text-indigo-300" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Total Sessions Card */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 flex items-center justify-center shrink-0">
+                <Calendar className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Total Sessions
                 </div>
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Total Sessions
-                  </div>
-                  <div className="text-xl font-black font-mono text-indigo-950 dark:text-white leading-tight">
-                    {totalSessions}
-                  </div>
+                <div className="text-2xl font-black font-mono text-indigo-950 dark:text-white leading-tight tabular-nums">
+                  {totalSessions}
                 </div>
               </div>
-              <span className="text-[10px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-100/70 dark:bg-indigo-950/80 px-2 py-0.5 rounded-full shrink-0">
-                {totalSessions === totalSlotsCount
-                  ? "100% Scheduled"
-                  : `${sessionProgressPct}% Complete`}
-              </span>
             </div>
-            {/* Progress Bar & Details */}
-            <div className="mt-2.5">
-              <div className="h-1.5 w-full bg-indigo-100/80 dark:bg-slate-800 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-indigo-600 dark:bg-indigo-500 rounded-full transition-all duration-300"
-                  style={{ width: `${sessionProgressPct}%` }}
-                />
-              </div>
-              <div className="flex justify-between items-center text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-1">
-                <span>{totalSessions} of {totalSlotsCount} schedule slots assigned</span>
-                <span>{timetable.rows.length} {timetable.rows.length === 1 ? 'Date' : 'Dates'}</span>
-              </div>
-            </div>
+            <span className="text-[10px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/80 px-2.5 py-1 rounded-full shrink-0 border border-indigo-100 dark:border-indigo-900/60">
+              {totalSessions === totalSlotsCount
+                ? "100% Scheduled"
+                : `${sessionProgressPct}% Complete`}
+            </span>
           </div>
+          <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-indigo-500 to-indigo-600 dark:from-indigo-500 dark:to-indigo-400 rounded-full transition-all duration-500"
+              style={{ width: `${sessionProgressPct}%` }}
+            />
+          </div>
+          <div className="flex justify-between items-center text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-2">
+            <span>{totalSessions} of {totalSlotsCount} schedule slots assigned</span>
+            <span>{timetable.rows.length} {timetable.rows.length === 1 ? 'Date' : 'Dates'}</span>
+          </div>
+        </div>
 
-          {/* Total Subjects Card */}
-          <div className="bg-gradient-to-br from-emerald-50/90 to-teal-50/40 dark:from-emerald-950/40 dark:to-teal-950/20 border border-emerald-100 dark:border-emerald-900/60 rounded-xl p-3 shadow-sm min-w-[210px] flex-1 sm:flex-initial">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-emerald-600/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0">
-                  <GraduationCap className="w-4 h-4 text-emerald-700 dark:text-emerald-300" />
-                </div>
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Total Subjects
-                  </div>
-                  <div className="text-xl font-black font-mono text-emerald-950 dark:text-white leading-tight">
-                    {totalSubjects}
-                  </div>
-                </div>
+        {/* Total Subjects Card */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0">
+                <GraduationCap className="w-5 h-5" />
               </div>
-              <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100/70 dark:bg-emerald-950/80 px-2 py-0.5 rounded-full shrink-0">
-                {uniqueSubjectsCount} Unique
-              </span>
-            </div>
-            {/* Progress / Subject Details */}
-            <div className="mt-2.5">
-              <div className="h-1.5 w-full bg-emerald-100/80 dark:bg-slate-800 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-emerald-600 dark:bg-emerald-500 rounded-full transition-all duration-300"
-                  style={{
-                    width: `${totalSubjects > 0 ? Math.min(100, Math.max(15, (uniqueSubjectsCount / Math.max(1, totalSubjects)) * 100)) : 0}%`,
-                  }}
-                />
-              </div>
-              <div className="flex justify-between items-center text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-1">
-                <span>{totalSubjects} papers mapped</span>
-                <span>{uniqueSubjectsCount} distinct</span>
+              <div>
+                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Total Subjects
+                </div>
+                <div className="text-2xl font-black font-mono text-emerald-950 dark:text-white leading-tight tabular-nums">
+                  {totalSubjects}
+                </div>
               </div>
             </div>
+            <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/80 px-2.5 py-1 rounded-full shrink-0 border border-emerald-100 dark:border-emerald-900/60">
+              {uniqueSubjectsCount} Unique
+            </span>
+          </div>
+          <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-emerald-500 to-emerald-600 dark:from-emerald-500 dark:to-emerald-400 rounded-full transition-all duration-500"
+              style={{
+                width: `${totalSubjects > 0 ? Math.min(100, Math.max(15, (uniqueSubjectsCount / Math.max(1, totalSubjects)) * 100)) : 0}%`,
+              }}
+            />
+          </div>
+          <div className="flex justify-between items-center text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-2">
+            <span>{totalSubjects} papers mapped</span>
+            <span>{uniqueSubjectsCount} distinct</span>
           </div>
         </div>
       </div>
 
       {/* 3. Saved Timetables Section */}
-      <div className="bg-slate-50/60 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-xl p-5 space-y-4">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 space-y-4 shadow-sm">
         <SavedTimetablesList
           timetables={savedTimetables}
           activeTimetableId={activeTimetableId}

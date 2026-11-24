@@ -67,14 +67,14 @@ export function SavedTimetablesList({
 
   if (!timetables || timetables.length === 0) {
     return (
-      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-8 text-center space-y-2">
-        <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto text-slate-400 dark:text-slate-500">
-          <CalendarClock className="w-5 h-5" />
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-10 text-center space-y-3">
+        <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto text-slate-400 dark:text-slate-500">
+          <CalendarClock className="w-6 h-6" />
         </div>
         <div className="font-headline font-bold text-sm text-slate-700 dark:text-slate-200">
           No Saved Timetables Yet
         </div>
-        <p className="text-xs text-slate-400 dark:text-slate-500 max-w-sm mx-auto">
+        <p className="text-xs text-slate-400 dark:text-slate-500 max-w-sm mx-auto leading-relaxed">
           Create examination schedules above and click &ldquo;Save Timetable&rdquo; to store, manage, and lock them here.
         </p>
       </div>
@@ -82,11 +82,13 @@ export function SavedTimetablesList({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
           <h3 className="font-headline font-bold text-sm text-slate-800 dark:text-white flex items-center gap-2">
-            <FolderOpen className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+            <div className="p-1.5 bg-indigo-50 dark:bg-indigo-950/60 rounded-lg">
+              <FolderOpen className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+            </div>
             Saved Timetables ({timetables.length})
           </h3>
         </div>
@@ -103,16 +105,16 @@ export function SavedTimetablesList({
           return (
             <div
               key={item.id}
-              className={`bg-white dark:bg-slate-900 rounded-xl border p-4.5 space-y-3.5 transition-all flex flex-col justify-between ${
+              className={`bg-white dark:bg-slate-900 rounded-2xl border p-5 space-y-4 transition-all flex flex-col justify-between ${
                 isCurrentlyActive
                   ? 'border-emerald-500 dark:border-emerald-500/80 shadow-md ring-2 ring-emerald-500/30'
-                  : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs'
+                  : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-sm hover:shadow-md'
               }`}
             >
-              <div className="space-y-2.5">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="space-y-0.5 flex-1 min-w-0">
-                    <h4 className="font-headline font-bold text-xs text-slate-900 dark:text-white truncate" title={item.examinationName}>
+              <div className="space-y-3 min-w-0">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1 flex-1 min-w-0">
+                    <h4 className="font-headline font-bold text-[13px] text-slate-900 dark:text-white truncate leading-snug" title={item.examinationName}>
                       {item.examinationName || 'Untitled Examination'}
                     </h4>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate" title={item.institutionName}>
@@ -120,8 +122,8 @@ export function SavedTimetablesList({
                     </p>
                   </div>
 
-                  {/* Status Badges: Draft, Finalised, Active, Archived */}
-                  <div className="flex items-center gap-1 shrink-0 flex-wrap justify-end">
+                  {/* Status Badges */}
+                  <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end max-w-[140px]">
                     {effectiveStatus === 'Active' ? (
                       <Badge className="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 text-[10px] px-2 py-0.5 font-bold gap-1 shadow-2xs">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -153,12 +155,12 @@ export function SavedTimetablesList({
                   </div>
                 </div>
 
-                <div className="space-y-1 text-[11px] text-slate-600 dark:text-slate-400 bg-slate-50/70 dark:bg-slate-800/50 p-2.5 rounded-lg border border-slate-100 dark:border-slate-800">
+                <div className="space-y-1.5 text-[11px] text-slate-600 dark:text-slate-400 bg-slate-50/70 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-semibold truncate">
                     <Calendar className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
-                    <span>{dateRange}</span>
+                    <span className="truncate">{dateRange}</span>
                   </div>
-                  <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400 text-[10px] pt-1 border-t border-slate-200/60 dark:border-slate-700/60">
+                  <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400 text-[10px] pt-1.5 border-t border-slate-200/60 dark:border-slate-700/60">
                     <span><strong>{totalRows}</strong> Exam Dates</span>
                     <span>&bull;</span>
                     <span><strong>{classesCount}</strong> {classesCount === 1 ? 'Class' : 'Classes'}</span>
@@ -167,8 +169,8 @@ export function SavedTimetablesList({
               </div>
 
               {/* Action Buttons Area */}
-              <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800 space-y-2">
-                {/* Primary Activation / Deactivation Button: Never display both simultaneously */}
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
+                {/* Primary Activation / Deactivation Button */}
                 <div className="w-full">
                   {isCurrentlyActive ? (
                     <Button
@@ -176,7 +178,7 @@ export function SavedTimetablesList({
                       size="sm"
                       variant="outline"
                       onClick={() => onDeactivateTimetable?.(item)}
-                      className="w-full h-8 text-xs font-bold text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800 bg-amber-50/90 dark:bg-amber-950/50 hover:bg-amber-100 dark:hover:bg-amber-900/60 hover:text-amber-900 dark:hover:text-amber-200 gap-1.5 rounded-lg shadow-2xs cursor-pointer transition-all"
+                      className="w-full h-9 text-xs font-bold text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800 bg-amber-50/90 dark:bg-amber-950/50 hover:bg-amber-100 dark:hover:bg-amber-900/60 hover:text-amber-900 dark:hover:text-amber-200 gap-2 rounded-xl shadow-2xs cursor-pointer transition-all"
                       title="Deactivate this examination across all modules"
                     >
                       <PauseCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
@@ -187,7 +189,7 @@ export function SavedTimetablesList({
                       type="button"
                       size="sm"
                       onClick={() => onActivateTimetable?.(item)}
-                      className="w-full h-8 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 gap-1.5 rounded-lg shadow-2xs cursor-pointer transition-all"
+                      className="w-full h-9 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 gap-2 rounded-xl shadow-sm cursor-pointer transition-all"
                       title="Activate this examination across Seating Allocation, Attendance, and Portals"
                     >
                       <PlayCircle className="w-4 h-4 text-emerald-100" />
@@ -198,12 +200,12 @@ export function SavedTimetablesList({
 
                 {/* Secondary Utility Controls */}
                 <div className="flex items-center justify-between gap-1.5 pt-1">
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5">
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => onOpenTimetable(item)}
-                      className="h-7 text-xs px-2.5 font-bold text-[#1E2A5E] dark:text-indigo-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+                      className="h-8 text-xs px-3 font-bold text-[#1E2A5E] dark:text-indigo-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg"
                       title="Open in editor"
                     >
                       Open
@@ -212,7 +214,7 @@ export function SavedTimetablesList({
                       size="sm"
                       variant="ghost"
                       onClick={() => onPreviewTimetable(item)}
-                      className="h-7 w-7 p-0 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white"
+                      className="h-8 w-8 p-0 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white rounded-lg"
                       title="Preview Timetable"
                     >
                       <Eye className="w-3.5 h-3.5" />
@@ -221,7 +223,7 @@ export function SavedTimetablesList({
                       size="sm"
                       variant="ghost"
                       onClick={() => generateExaminationTimetablePdf({ timetable: item, signatory })}
-                      className="h-7 w-7 p-0 text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-white"
+                      className="h-8 w-8 p-0 text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-white rounded-lg"
                       title="Download PDF"
                     >
                       <Download className="w-3.5 h-3.5" />
@@ -231,7 +233,7 @@ export function SavedTimetablesList({
                         size="sm"
                         variant="ghost"
                         onClick={() => onPublishTimetable(item)}
-                        className="h-7 w-7 p-0 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white"
+                        className="h-8 w-8 p-0 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white rounded-lg"
                         title={item.isPublished ? "Update on Student Portal" : "Publish on Student Portal"}
                       >
                         <Globe className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
@@ -245,7 +247,7 @@ export function SavedTimetablesList({
                         size="sm"
                         variant="ghost"
                         onClick={() => onToggleArchive(item.id, effectiveStatus)}
-                        className="h-7 w-7 p-0 text-slate-400 dark:text-slate-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                        className="h-8 w-8 p-0 text-slate-400 dark:text-slate-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
                         title={effectiveStatus === 'Archived' ? "Unarchive Timetable" : "Archive Timetable"}
                       >
                         {effectiveStatus === 'Archived' ? (
@@ -259,7 +261,7 @@ export function SavedTimetablesList({
                       size="sm"
                       variant="ghost"
                       onClick={() => onToggleLock(item.id, !item.isLocked)}
-                      className={`h-7 w-7 p-0 ${
+                      className={`h-8 w-8 p-0 rounded-lg ${
                         item.isLocked
                           ? 'text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/40'
                           : 'text-slate-400 dark:text-slate-500 hover:text-amber-600 hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -272,7 +274,7 @@ export function SavedTimetablesList({
                       size="sm"
                       variant="ghost"
                       onClick={() => setDeleteTargetId(item.id)}
-                      className="h-7 w-7 p-0 text-slate-400 dark:text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                      className="h-8 w-8 p-0 text-slate-400 dark:text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg"
                       title="Delete Timetable"
                     >
                       <Trash2 className="w-3.5 h-3.5" />

@@ -135,6 +135,9 @@ export function CourseSelectorPopover({
   }
 
   const hasValue = Boolean(value && value.trim().length > 0);
+  const courseLower = value.toLowerCase().trim();
+  const is1PUC = courseLower === '1 puc';
+  const is2PUC = courseLower === '2 puc';
 
   return (
     <Popover open={isOpen} onOpenChange={(open) => !disabled && setIsOpen(open)}>
@@ -143,17 +146,24 @@ export function CourseSelectorPopover({
           type="button"
           disabled={disabled}
           className={cn(
-            "w-full flex items-center justify-between text-left px-2.5 py-1.5 text-xs rounded-lg border transition-all duration-150 min-h-[34px]",
+            "w-full flex items-center justify-between text-left px-2.5 py-2 text-xs rounded-lg border transition-all duration-150 min-h-[36px]",
             disabled
               ? "bg-slate-100/70 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed"
-              : hasValue
-                ? "bg-indigo-50/50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-900/60 hover:border-indigo-400 text-slate-900 dark:text-white font-bold"
-                : "bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-400 dark:text-slate-500"
+              : is1PUC
+                ? "bg-indigo-50/60 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800 hover:border-indigo-400 text-indigo-900 dark:text-indigo-200 font-bold"
+                : is2PUC
+                  ? "bg-emerald-50/60 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 hover:border-emerald-400 text-emerald-900 dark:text-emerald-200 font-bold"
+                  : hasValue
+                    ? "bg-indigo-50/50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-900/60 hover:border-indigo-400 text-slate-900 dark:text-white font-bold"
+                    : "bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-400 dark:text-slate-500"
           )}
         >
           <span className="truncate pr-1">
             {hasValue ? (
-              <span className="text-indigo-950 dark:text-indigo-200 font-bold tracking-tight">
+              <span className={cn(
+                "font-bold tracking-tight",
+                is1PUC ? "text-indigo-800 dark:text-indigo-200" : is2PUC ? "text-emerald-800 dark:text-emerald-200" : "text-indigo-950 dark:text-indigo-200"
+              )}>
                 {value}
               </span>
             ) : (

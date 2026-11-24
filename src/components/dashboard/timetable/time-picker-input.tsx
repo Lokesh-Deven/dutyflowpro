@@ -45,7 +45,7 @@ export function TimePickerInput({
   const isHyphen = value === '-' || value === '—';
 
   return (
-    <div className="relative group w-full">
+    <div className="relative group w-full" style={{ minWidth: '110px' }}>
       <div className="relative flex items-center">
         <Input
           value={value}
@@ -54,7 +54,7 @@ export function TimePickerInput({
           disabled={disabled}
           title={isInvalid ? errorMessage : "Type or click arrow to select time or hyphen (-)"}
           className={cn(
-            "h-8 text-xs font-mono font-semibold pl-2 pr-7 rounded-md transition-colors",
+            "h-9 text-xs font-mono font-semibold pl-2.5 pr-7 rounded-lg transition-colors tabular-nums",
             isHyphen && "text-slate-700 dark:text-slate-200 font-bold text-center text-sm",
             isInvalid
               ? "border-rose-400 dark:border-rose-700 bg-rose-50/50 dark:bg-rose-950/40 text-rose-900 dark:text-rose-200 focus-visible:ring-rose-400"
