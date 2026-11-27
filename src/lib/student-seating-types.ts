@@ -162,6 +162,8 @@ export interface SeatingAllocationRecord {
   multiSubjectConfig?: MultiSubjectConfig;
   threeColumnConfig?: ThreeColumnPatternConfig;
   status: 'Draft' | 'Finalized';
+  isPublished?: boolean;
+  publishedAt?: string;
   createdAt: string;
   updatedAt: string;
 }

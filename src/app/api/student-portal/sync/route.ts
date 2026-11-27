@@ -32,14 +32,15 @@ function formatExamDate(dateStr: string): { formatted: string; day: string } {
 function formatPosition(pos: string | undefined): 'Left' | 'Center' | 'Right' | 'Side A' | 'Side B' | 'Unassigned' {
   if (!pos) return 'Unassigned';
   const p = pos.toUpperCase();
-  if (p === 'LEFT' || p === 'L' || p === 'SIDE_A') return 'Left';
-  if (p === 'RIGHT' || p === 'R' || p === 'SIDE_B') return 'Right';
+  if (p === 'SIDE_A' || p === 'SIDE A' || p === 'LEFT' || p === 'L') return 'Side A';
+  if (p === 'SIDE_B' || p === 'SIDE B' || p === 'RIGHT' || p === 'R') return 'Side B';
   if (p === 'CENTER' || p === 'C' || p === 'MIDDLE' || p === 'M') return 'Center';
   return 'Unassigned';
 }
 
 /**
- * Builds StudentExaminationDetail array for a given student from raw seating allocations
+ * Builds StudentExaminationDetail array for a given student from raw seating allocations.
+ * STRICT VISIBILITY RULE: Only allocations marked as Published (isPublished: true) are shown to students.
  */
 function extractStudentExaminations(
   allocations: SeatingAllocationRecord[],
@@ -53,7 +54,7 @@ function extractStudentExaminations(
   const todayStr = new Date().toISOString().slice(0, 10);
 
   for (const alloc of allocations) {
-    if (!alloc || !Array.isArray(alloc.roomPlans)) continue;
+    if (!alloc || !alloc.isPublished || !Array.isArray(alloc.roomPlans)) continue;
 
     const examName = alloc.examination?.examName || alloc.name || 'Examination';
     const examDate = alloc.examination?.date || '';

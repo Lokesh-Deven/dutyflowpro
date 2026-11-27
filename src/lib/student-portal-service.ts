@@ -493,12 +493,29 @@ function formatPosition(
 ): 'Left' | 'Center' | 'Right' | 'Side A' | 'Side B' | 'Unassigned' {
   if (!pos) return 'Unassigned';
   const p = pos.toUpperCase();
-  if (p === 'LEFT' || p === 'L') return 'Left';
-  if (p === 'RIGHT' || p === 'R') return 'Right';
+  if (p === 'SIDE_A' || p === 'SIDE A' || p === 'LEFT' || p === 'L') return 'Side A';
+  if (p === 'SIDE_B' || p === 'SIDE B' || p === 'RIGHT' || p === 'R') return 'Side B';
   if (p === 'CENTER' || p === 'C' || p === 'MIDDLE' || p === 'M') return 'Center';
-  if (p === 'SIDE_A' || p === 'LEFT') return 'Left';
-  if (p === 'SIDE_B' || p === 'RIGHT') return 'Right';
   return 'Unassigned';
+}
+
+/**
+ * Purges cached student examination entries for an institution
+ * when allocations are published, unpublished, or deleted.
+ */
+export function clearInstitutionStudentExamsCache(institutionId?: string): void {
+  if (typeof window === 'undefined' || !institutionId) return;
+  try {
+    const prefix = `dutyflow_${institutionId}_student_exams_`;
+    const toRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(prefix)) {
+        toRemove.push(k);
+      }
+    }
+    toRemove.forEach((k) => localStorage.removeItem(k));
+  } catch (_) {}
 }
 
 /**
@@ -557,9 +574,10 @@ export function getStudentExaminations(
     }
   } catch (_) {}
 
-  // 2. Scan each allocation for this student's allocated seat
+  // 2. Scan each Published allocation for this student's allocated seat
   for (const alloc of allocations) {
-    if (!alloc || !Array.isArray(alloc.roomPlans)) continue;
+    // Student Portal Visibility Rule: Only display exams marked as Published
+    if (!alloc || !alloc.isPublished || !Array.isArray(alloc.roomPlans)) continue;
 
     const examName = alloc.examination?.examName || alloc.name || 'Examination';
     const examDate = alloc.examination?.date || '';

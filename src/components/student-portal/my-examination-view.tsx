@@ -536,12 +536,12 @@ export function MyExaminationView() {
                 <div className="bg-slate-50 dark:bg-slate-800/60 p-2 rounded-xl border border-slate-100 dark:border-slate-800 flex items-center justify-around gap-1 text-center">
                   <div
                     className={`flex-1 py-1 px-1.5 rounded-lg text-[10px] font-bold transition-all ${
-                      activeExam.position === 'Left'
+                      activeExam.position === 'Side A' || activeExam.position === 'Left'
                         ? 'bg-emerald-600 text-white shadow-xs'
                         : 'bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500'
                     }`}
                   >
-                    Left
+                    Side A
                   </div>
                   <div
                     className={`flex-1 py-1 px-1.5 rounded-lg text-[10px] font-bold transition-all ${
@@ -554,12 +554,12 @@ export function MyExaminationView() {
                   </div>
                   <div
                     className={`flex-1 py-1 px-1.5 rounded-lg text-[10px] font-bold transition-all ${
-                      activeExam.position === 'Right'
+                      activeExam.position === 'Side B' || activeExam.position === 'Right'
                         ? 'bg-emerald-600 text-white shadow-xs'
                         : 'bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500'
                     }`}
                   >
-                    Right
+                    Side B
                   </div>
                 </div>
               </div>

@@ -22,6 +22,7 @@ import {
   saveSeatingRoomsToCloud,
   fetchSeatingRoomsFromCloud,
 } from './student-seating-service';
+import { clearInstitutionStudentExamsCache } from './student-portal-service';
 import {
   idbGet,
   idbSet,
@@ -76,6 +77,7 @@ interface StudentSeatingContextType {
   saveAllocation: (allocation: SeatingAllocationRecord) => void;
   deleteAllocation: (id: string) => void;
   duplicateAllocation: (id: string) => SeatingAllocationRecord | null;
+  togglePublishAllocation: (id: string, publish?: boolean) => Promise<SeatingAllocationRecord | null>;
 }
 
 const StudentSeatingContext = createContext<StudentSeatingContextType | undefined>(undefined);
@@ -1051,13 +1053,72 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
       }
       return next;
     });
+
     if (activeAllocation?.id === id) {
       setActiveAllocation(null);
       if (user?.id && isUUID(user.id)) {
         syncUserWorkspaceToDatabase(user.id, { activeSeatingAllocationId: null }).catch(() => {});
       }
     }
+
+    // Deletion Sync: Invalidate student portal cache and broadcast event
+    clearInstitutionStudentExamsCache(scope);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('dutyflow:seating-published-change', {
+          detail: { id, isPublished: false, deleted: true },
+        })
+      );
+    }
   }, [activeAllocation?.id, user?.id]);
+
+  const togglePublishAllocation = useCallback(async (id: string, publish?: boolean): Promise<SeatingAllocationRecord | null> => {
+    const scope = user?.id ? user.id : 'guest';
+    let updatedAlloc: SeatingAllocationRecord | null = null;
+
+    setAllocations((prev) => {
+      const idx = prev.findIndex((a) => a.id === id);
+      if (idx < 0) return prev;
+      const current = prev[idx];
+      const nextIsPublished = publish !== undefined ? publish : !current.isPublished;
+      updatedAlloc = {
+        ...current,
+        isPublished: nextIsPublished,
+        publishedAt: nextIsPublished ? (current.publishedAt || new Date().toISOString()) : undefined,
+        updatedAt: new Date().toISOString(),
+      };
+      const next = [...prev];
+      next[idx] = updatedAlloc;
+
+      safeSetLocalStorage(`dutyflow_${scope}_seating_allocations`, next);
+      idbSet(`dutyflow_${scope}_seating_allocations`, next);
+      if (scope === 'guest') {
+        safeSetLocalStorage('dutyflow_guest_seating_allocations', next);
+      }
+
+      if (user?.id && isUUID(user.id)) {
+        syncSeatingAllocationToDatabase(updatedAlloc, user.id).catch(() => {});
+      }
+
+      return next;
+    });
+
+    if (updatedAlloc) {
+      if (activeAllocation?.id === id) {
+        setActiveAllocation(updatedAlloc);
+      }
+      clearInstitutionStudentExamsCache(scope);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('dutyflow:seating-published-change', {
+            detail: { id, isPublished: (updatedAlloc as SeatingAllocationRecord).isPublished },
+          })
+        );
+      }
+    }
+
+    return updatedAlloc;
+  }, [user?.id, activeAllocation?.id]);
 
   const duplicateAllocation = useCallback((id: string): SeatingAllocationRecord | null => {
     const existing = allocations.find((a) => a.id === id);
@@ -1122,6 +1183,7 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
         saveAllocation,
         deleteAllocation,
         duplicateAllocation,
+        togglePublishAllocation,
       }}
     >
       {children}

@@ -28,7 +28,6 @@ import {
   History,
   Eye,
   Download,
-  Copy,
   Trash2,
   Calendar,
   FileText,
@@ -44,6 +43,7 @@ import {
   CheckCircle2,
   ChevronsUpDown,
   Sparkles,
+  Globe,
 } from 'lucide-react';
 
 interface ExamColorTheme {
@@ -234,7 +234,7 @@ export default function AllocationHistoryPage() {
   const {
     allocations,
     deleteAllocation,
-    duplicateAllocation,
+    togglePublishAllocation,
     setActiveAllocation,
     rooms: masterRooms,
     subjects,
@@ -356,12 +356,43 @@ export default function AllocationHistoryPage() {
     router.push('/dashboard/student-seating/seating-allocation?view=history');
   };
 
-  const handleDuplicate = (id: string) => {
-    const duplicated = duplicateAllocation(id);
-    if (duplicated) {
+  const handleTogglePublish = async (alloc: SeatingAllocationRecord) => {
+    try {
+      const willPublish = !alloc.isPublished;
+      const updated = await togglePublishAllocation(alloc.id, willPublish);
+      if (updated) {
+        toast({
+          title: willPublish ? "Published to Student Portal" : "Unpublished from Student Portal",
+          description: willPublish
+            ? `Seating details for "${alloc.name}" are now live on the Student Portal.`
+            : `Seating details for "${alloc.name}" have been removed from the Student Portal.`,
+        });
+      }
+    } catch (err: any) {
       toast({
-        title: "Allocation Duplicated",
-        description: `Created copy: "${duplicated.name}".`,
+        variant: "destructive",
+        title: "Action Failed",
+        description: err?.message || "Could not update publication status.",
+      });
+    }
+  };
+
+  const handleTogglePublishGroup = async (group: { examTitle: string; allocations: SeatingAllocationRecord[] }) => {
+    try {
+      const isAnyPublished = group.allocations.some((a) => a.isPublished);
+      const willPublish = !isAnyPublished;
+      await Promise.all(group.allocations.map((a) => togglePublishAllocation(a.id, willPublish)));
+      toast({
+        title: willPublish ? "Exam Published to Student Portal" : "Exam Unpublished from Student Portal",
+        description: willPublish
+          ? `All allocations for "${group.examTitle}" are now live on the Student Portal.`
+          : `All allocations for "${group.examTitle}" have been unpublished from the Student Portal.`,
+      });
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Action Failed",
+        description: err?.message || "Could not update exam publication status.",
       });
     }
   };
@@ -371,7 +402,7 @@ export default function AllocationHistoryPage() {
     deleteAllocation(allocationToDelete.id);
     toast({
       title: "Allocation Deleted",
-      description: `Seating allocation "${allocationToDelete.name}" has been deleted.`,
+      description: `Seating allocation "${allocationToDelete.name}" has been permanently removed and unpublished from the Student Portal.`,
     });
     setAllocationToDelete(null);
   };
@@ -591,6 +622,9 @@ export default function AllocationHistoryPage() {
               new Set(group.allocations.map((a) => a.examination?.date).filter(Boolean))
             ) as string[];
 
+            const isGroupFullyPublished = group.allocations.length > 0 && group.allocations.every((a) => a.isPublished);
+            const isGroupPartiallyPublished = !isGroupFullyPublished && group.allocations.some((a) => a.isPublished);
+
             return (
               <div
                 key={group.examTitle}
@@ -624,6 +658,22 @@ export default function AllocationHistoryPage() {
                           {group.allocations.length}{' '}
                           {group.allocations.length === 1 ? 'Allocation' : 'Allocations'}
                         </Badge>
+                        {isGroupFullyPublished ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">
+                            <Globe className="w-3 h-3 text-emerald-600" />
+                            Portal Published
+                          </span>
+                        ) : isGroupPartiallyPublished ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
+                            <Globe className="w-3 h-3 text-amber-600" />
+                            Partially Published
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                            <Globe className="w-3 h-3 text-slate-400" />
+                            Not Published
+                          </span>
+                        )}
                       </div>
                       <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium flex items-center gap-2 mt-1">
                         <Calendar className="w-3 h-3 text-slate-400 dark:text-slate-500 inline" />
@@ -645,6 +695,25 @@ export default function AllocationHistoryPage() {
                         {sortedExamRooms.length > 0 ? sortedExamRooms.length : allRoomIds.size} Rooms
                       </span>
                     </div>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleTogglePublishGroup(group);
+                      }}
+                      className={cn(
+                        "h-7 text-[11px] font-bold px-2.5 gap-1.5 transition-all shadow-3xs cursor-pointer",
+                        isGroupFullyPublished
+                          ? "bg-white text-rose-600 border-rose-200 hover:bg-rose-50 dark:bg-slate-900 dark:border-rose-900/60 dark:text-rose-400"
+                          : "bg-emerald-600 hover:bg-emerald-700 text-white border-transparent shadow-xs"
+                      )}
+                      title={isGroupFullyPublished ? "Unpublish all allocations for this exam from Student Portal" : "Publish all allocations for this exam to Student Portal"}
+                    >
+                      <Globe className="w-3.5 h-3.5" />
+                      {isGroupFullyPublished ? "Unpublish All" : "Publish to Portal"}
+                    </Button>
 
                     <div
                       className={cn(
@@ -700,10 +769,12 @@ export default function AllocationHistoryPage() {
                           <th className="py-3 px-3 text-center">Rooms</th>
                           {/* Column 6: Status */}
                           <th className="py-3 px-3 text-center">Status</th>
-                          {/* Column 7: Created On */}
+                          {/* Column 7: Student Portal */}
+                          <th className="py-3 px-3 text-center min-w-[120px]">Student Portal</th>
+                          {/* Column 8: Created On */}
                           <th className="py-3 px-3 text-center">Created On</th>
-                          {/* Column 8: Actions */}
-                          <th className="py-3 px-4 text-center w-44">Actions</th>
+                          {/* Column 9: Actions */}
+                          <th className="py-3 px-4 text-center w-52">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70 font-medium text-slate-700 dark:text-slate-200">
@@ -789,14 +860,57 @@ export default function AllocationHistoryPage() {
                                 )}
                               </td>
 
-                              {/* 7th Column: Created On */}
+                              {/* 7th Column: Student Portal */}
+                              <td className="py-3 px-3 text-center">
+                                {alloc.isPublished ? (
+                                  <div className="flex flex-col items-center gap-0.5">
+                                    <Badge
+                                      variant="outline"
+                                      className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700 text-[10px] font-bold gap-1 px-2 py-0.5 shadow-3xs"
+                                    >
+                                      <Globe className="w-2.5 h-2.5 text-emerald-600" />
+                                      Published
+                                    </Badge>
+                                    {alloc.publishedAt && (
+                                      <span className="text-[9px] text-slate-400 dark:text-slate-500 font-medium">
+                                        {new Date(alloc.publishedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                      </span>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <Badge
+                                    variant="outline"
+                                    className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 text-[10px] font-semibold px-2 py-0.5"
+                                  >
+                                    Not Published
+                                  </Badge>
+                                )}
+                              </td>
+
+                              {/* 8th Column: Created On */}
                               <td className="py-3 px-3 text-center text-slate-400 dark:text-slate-500 text-[11px]">
                                 {alloc.createdAt ? new Date(alloc.createdAt).toLocaleDateString() : '—'}
                               </td>
 
-                              {/* 8th Column: Actions */}
+                              {/* 9th Column: Actions */}
                               <td className="py-3 px-4 text-center">
                                 <div className="flex items-center justify-center gap-1">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleTogglePublish(alloc)}
+                                    className={cn(
+                                      "h-7 text-[11px] font-bold px-2 gap-1 transition-all cursor-pointer",
+                                      alloc.isPublished
+                                        ? "text-rose-600 border-rose-200 hover:bg-rose-50 dark:text-rose-400 dark:border-rose-900/60 dark:hover:bg-rose-950/40"
+                                        : "text-emerald-700 border-emerald-300 hover:bg-emerald-50 dark:text-emerald-300 dark:border-emerald-800 dark:hover:bg-emerald-950/40"
+                                    )}
+                                    title={alloc.isPublished ? "Unpublish from Student Portal" : "Publish to Student Portal"}
+                                  >
+                                    <Globe className="w-3 h-3" />
+                                    {alloc.isPublished ? "Unpublish" : "Publish"}
+                                  </Button>
+
                                   <Button
                                     size="sm"
                                     variant="outline"
@@ -828,16 +942,6 @@ export default function AllocationHistoryPage() {
                                     title="Download Student Seating Index PDF"
                                   >
                                     <FileText className="w-3.5 h-3.5" />
-                                  </Button>
-
-                                  <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    onClick={() => handleDuplicate(alloc.id)}
-                                    className="h-7 w-7 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-                                    title="Duplicate Allocation"
-                                  >
-                                    <Copy className="w-3.5 h-3.5" />
                                   </Button>
 
                                   <Button

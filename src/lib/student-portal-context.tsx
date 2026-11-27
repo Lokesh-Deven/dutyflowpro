@@ -165,8 +165,22 @@ export function StudentPortalProvider({ children }: { children: ReactNode }) {
       )
       .subscribe();
 
+    const handleSeatingPublishedChange = () => {
+      if (sessionRef.current) {
+        if (typeof window !== 'undefined') {
+          const cleanRoll = sessionRef.current.registerNumber.trim().toUpperCase();
+          localStorage.removeItem(`dutyflow_${sessionRef.current.institutionId}_student_exams_${cleanRoll}`);
+        }
+        const updated = getStudentExaminations(sessionRef.current.registerNumber, sessionRef.current.institutionId);
+        setExaminations(updated);
+        syncWithCloud(sessionRef.current);
+      }
+    };
+    window.addEventListener('dutyflow:seating-published-change', handleSeatingPublishedChange);
+
     return () => {
       supabase.removeChannel(channel);
+      window.removeEventListener('dutyflow:seating-published-change', handleSeatingPublishedChange);
     };
   }, [session?.institutionId, syncWithCloud]);
 

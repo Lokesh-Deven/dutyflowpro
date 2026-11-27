@@ -82,6 +82,7 @@ import {
   ArrowDown,
   Info,
   Columns3,
+  Globe,
 } from 'lucide-react';
 
 function SeatingAllocationWizardContent() {
@@ -92,6 +93,7 @@ function SeatingAllocationWizardContent() {
     saveAllocation,
     activeAllocation,
     setActiveAllocation,
+    togglePublishAllocation,
   } = useStudentSeating();
 
   const { activeAllotment, signatory, pdfPaletteId } = useAllotment();
@@ -994,6 +996,33 @@ function SeatingAllocationWizardContent() {
         title: "Allocation Error",
         description: err.message || "Failed to auto-complete allocation.",
       });
+    }
+  };
+
+  const [isPublishing, setIsPublishing] = useState(false);
+
+  const handleTogglePublish = async () => {
+    if (!activeAllocation) return;
+    setIsPublishing(true);
+    try {
+      const willPublish = !activeAllocation.isPublished;
+      const updated = await togglePublishAllocation(activeAllocation.id, willPublish);
+      if (updated) {
+        toast({
+          title: willPublish ? "Published to Student Portal" : "Unpublished from Student Portal",
+          description: willPublish
+            ? `Seating details for "${activeAllocation.name}" are now live on the Student Portal.`
+            : `Seating details for "${activeAllocation.name}" have been removed from the Student Portal.`,
+        });
+      }
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Action Failed",
+        description: err?.message || "Failed to update publication status.",
+      });
+    } finally {
+      setIsPublishing(false);
     }
   };
 
@@ -3425,18 +3454,55 @@ function SeatingAllocationWizardContent() {
             </div>
           )}
 
-          {/* Global Action Bar for PDFs */}
+          {/* Global Action Bar with Student Portal Publishing */}
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 className="font-headline font-bold text-sm text-slate-900 dark:text-white">
-                {activeAllocation.name}
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="font-headline font-bold text-sm text-slate-900 dark:text-white">
+                  {activeAllocation.name}
+                </h3>
+                {activeAllocation.isPublished ? (
+                  <Badge className="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 text-[10px] font-bold gap-1 shadow-2xs">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Published to Student Portal
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 text-[10px] font-medium gap-1">
+                    Not Published
+                  </Badge>
+                )}
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Date: {activeAllocation.examination.date} &bull; Time: {activeAllocation.examination.startTime} – {activeAllocation.examination.endTime}
+                {activeAllocation.isPublished && activeAllocation.publishedAt && (
+                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold ml-2">
+                    &bull; Published {new Date(activeAllocation.publishedAt).toLocaleString()}
+                  </span>
+                )}
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
+              <Button
+                size="sm"
+                onClick={handleTogglePublish}
+                disabled={isPublishing}
+                className={cn(
+                  "h-9 text-xs font-bold px-4 gap-1.5 transition-all shadow-xs cursor-pointer",
+                  activeAllocation.isPublished
+                    ? "bg-amber-600 hover:bg-amber-700 text-white"
+                    : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-900/10"
+                )}
+                title={activeAllocation.isPublished ? "Unpublish from Student Portal" : "Publish to Student Portal"}
+              >
+                <Globe className="w-3.5 h-3.5" />
+                {isPublishing
+                  ? "Updating..."
+                  : activeAllocation.isPublished
+                  ? "Unpublish from Portal"
+                  : "Publish to Student Portal"}
+              </Button>
+
               <Button
                 size="sm"
                 onClick={() => {
@@ -3474,6 +3540,67 @@ function SeatingAllocationWizardContent() {
               </Button>
             </div>
           </div>
+
+          {/* Student Portal Publication Feedback Banner */}
+          {activeAllocation.isPublished ? (
+            <div className="bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 rounded-xl p-4 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-emerald-600 text-white rounded-lg shrink-0 shadow-xs">
+                  <Globe className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="font-headline font-bold text-xs text-emerald-950 dark:text-emerald-200 flex items-center gap-2">
+                    <span>Live on Student Portal</span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  </div>
+                  <p className="text-xs text-emerald-800 dark:text-emerald-300 mt-0.5">
+                    Finalized seating data for this exam is published. Students can view their Subject, Exam Date & Timing, Room Number, and Bench / Seat Position under &ldquo;My Examination&rdquo;.
+                    {activeAllocation.publishedAt && (
+                      <span className="font-semibold block sm:inline sm:ml-1">
+                        &bull; Published on {new Date(activeAllocation.publishedAt).toLocaleString()}
+                      </span>
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleTogglePublish}
+                disabled={isPublishing}
+                className="text-xs font-bold h-8 px-3 border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 shrink-0"
+              >
+                Unpublish from Portal
+              </Button>
+            </div>
+          ) : (
+            <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-4 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg shrink-0">
+                  <Globe className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="font-headline font-bold text-xs text-slate-800 dark:text-slate-200">
+                    Seating Data Finalized &bull; Ready to Publish
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Click &ldquo;Publish to Student Portal&rdquo; to sync this exam&apos;s seating details so students can check their room and bench / seat positions before the exam.
+                  </p>
+                </div>
+              </div>
+
+              <Button
+                size="sm"
+                onClick={handleTogglePublish}
+                disabled={isPublishing}
+                className="text-xs font-bold h-8 px-4 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shrink-0 shadow-xs cursor-pointer"
+              >
+                <Globe className="w-3.5 h-3.5" />
+                Publish to Student Portal
+              </Button>
+            </div>
+          )}
 
           {/* Incomplete Allocation Alert & One-Click 100% Completion Action */}
           {activeAllocation.summary.unallocatedStudents > 0 && (
