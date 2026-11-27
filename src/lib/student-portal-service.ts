@@ -375,12 +375,36 @@ export async function authenticateStudent(
       institution.institutionId,
       cleanRegNo
     );
-    if (cloudRes.success && cloudRes.student) {
-      record = {
-        student: cloudRes.student,
-        subject: cloudRes.subject || undefined,
-        institutionName: cloudRes.institutionName || institution.institutionName,
-      };
+    if (cloudRes.success) {
+      if (cloudRes.student) {
+        record = {
+          student: cloudRes.student,
+          subject: cloudRes.subject || undefined,
+          institutionName: cloudRes.institutionName || institution.institutionName,
+        };
+      } else if (Array.isArray(cloudRes.examinations) && cloudRes.examinations.length > 0) {
+        // Construct student profile from published seating record if unlisted in general roster
+        const firstExam = cloudRes.examinations[0];
+        record = {
+          student: {
+            id: firstExam.registerNumber,
+            name: firstExam.studentName || 'Student',
+            rollNo: firstExam.registerNumber,
+            section: firstExam.section || 'A',
+            subjectId: firstExam.subjectId,
+          },
+          subject: {
+            id: firstExam.subjectId || 'subj',
+            name: firstExam.subjectName || 'Academic Course',
+            code: firstExam.subjectCode || '',
+            expectedStudents: 60,
+            uploadedStudentsCount: 60,
+            createdAt: new Date().toISOString(),
+          },
+          institutionName: cloudRes.institutionName || institution.institutionName,
+        };
+      }
+
       if (cloudRes.examinations && cloudRes.examinations.length > 0) {
         cloudExams = cloudRes.examinations;
       }
@@ -451,6 +475,10 @@ export async function authenticateStudent(
     try {
       localStorage.setItem(
         `dutyflow_${institution.institutionId}_student_exams_${cleanRegNo}`,
+        JSON.stringify(cloudExams)
+      );
+      localStorage.setItem(
+        `dutyflow_${institution.institutionCode}_student_exams_${cleanRegNo}`,
         JSON.stringify(cloudExams)
       );
     } catch (_) {}
@@ -585,16 +613,23 @@ export function getStudentExaminations(
 
   // 0. Check cached cloud-synced examinations for instant mobile rendering
   const cleanRoll = registerNumber.trim().toUpperCase();
-  const cloudCacheKey = `dutyflow_${effectiveInstId}_student_exams_${cleanRoll}`;
-  try {
-    const rawCloud = localStorage.getItem(cloudCacheKey);
-    if (rawCloud) {
-      const parsedCloud = JSON.parse(rawCloud);
-      if (Array.isArray(parsedCloud) && parsedCloud.length > 0) {
-        return parsedCloud;
+  const cacheKeysToCheck = [
+    `dutyflow_${effectiveInstId}_student_exams_${cleanRoll}`,
+    currentSession?.institutionCode ? `dutyflow_${currentSession.institutionCode}_student_exams_${cleanRoll}` : '',
+    `dutyflow_001_student_exams_${cleanRoll}`,
+  ].filter(Boolean);
+
+  for (const cloudCacheKey of cacheKeysToCheck) {
+    try {
+      const rawCloud = localStorage.getItem(cloudCacheKey);
+      if (rawCloud) {
+        const parsedCloud = JSON.parse(rawCloud);
+        if (Array.isArray(parsedCloud) && parsedCloud.length > 0) {
+          return parsedCloud;
+        }
       }
-    }
-  } catch (_) {}
+    } catch (_) {}
+  }
 
   // 1. Gather allocations strictly from this institution (with guest fallback)
   const allocations: SeatingAllocationRecord[] = [];
@@ -720,7 +755,11 @@ export function getStudentExaminations(
   // Cache confirmed examinations for immediate reload
   if (results.length > 0 && typeof window !== 'undefined') {
     try {
-      localStorage.setItem(cloudCacheKey, JSON.stringify(results));
+      const primaryKey = `dutyflow_${effectiveInstId}_student_exams_${cleanRoll}`;
+      localStorage.setItem(primaryKey, JSON.stringify(results));
+      if (currentSession?.institutionCode) {
+        localStorage.setItem(`dutyflow_${currentSession.institutionCode}_student_exams_${cleanRoll}`, JSON.stringify(results));
+      }
     } catch (_) {}
   }
 

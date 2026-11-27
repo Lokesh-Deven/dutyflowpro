@@ -46,3 +46,6 @@ firestore-debug.log
 
 # scratch
 scratch/
+
+# server runtime data
+.dutyflow_data/

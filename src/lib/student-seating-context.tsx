@@ -227,7 +227,7 @@ function recoverAllLocalSubjects(scope: string): StudentSubject[] {
 }
 
 export function StudentSeatingProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [rooms, setRooms] = useState<SeatingMasterRoom[]>(DEFAULT_STUDENT_ROOMS);
   const [subjects, setSubjects] = useState<StudentSubject[]>([]);
   const [studentsBySubject, setStudentsBySubject] = useState<Record<string, StudentRecord[]>>({});
@@ -356,7 +356,32 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
           } catch (_) {}
         }
       }
-      if (isMounted) setAllocations(loadedAllocs);
+      if (isMounted) {
+        setAllocations(loadedAllocs);
+        // Proactively sync all published allocations to shared server store on mount
+        // so computer, tablet, and mobile phones immediately have synchronized access
+        const publishedOnes = loadedAllocs.filter((a) => a && (a.isPublished || a.status === 'Published'));
+        if (publishedOnes.length > 0) {
+          try {
+            fetch('/api/student-portal/sync', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'sync-all',
+                allocations: publishedOnes,
+                institutionId: user?.id || profile?.institution_id || scope,
+                institutionCode: profile?.institution_code || '001',
+                institutionName: profile?.institution_name || 'Institution',
+                workspace: {
+                  subjects,
+                  studentsBySubject,
+                  rooms,
+                },
+              }),
+            }).catch(() => {});
+          } catch (_) {}
+        }
+      }
 
       // 5. Asynchronous IndexedDB Recovery (handles allocations larger than localStorage 5MB quota)
       idbGet<SeatingAllocationRecord[]>(`dutyflow_${scope}_seating_allocations`).then((idbAllocs) => {
@@ -1033,10 +1058,33 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
         syncUserWorkspaceToDatabase(user.id, { activeSeatingAllocationId: allocation.id }).catch(() => {});
       }
 
+      // If this allocation is published, persist directly to shared server store
+      if (allocation.isPublished || allocation.status === 'Published') {
+        try {
+          fetch('/api/student-portal/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'publish',
+              allocation,
+              allocationId: allocation.id,
+              institutionId: user?.id || profile?.institution_id || scope,
+              institutionCode: profile?.institution_code || '001',
+              institutionName: profile?.institution_name || 'Institution',
+              workspace: {
+                subjects,
+                studentsBySubject,
+                rooms,
+              },
+            }),
+          }).catch(() => {});
+        } catch (_) {}
+      }
+
       return next;
     });
     setActiveAllocation(allocation);
-  }, [user?.id]);
+  }, [user?.id, profile?.institution_code, profile?.institution_id, profile?.institution_name, subjects, studentsBySubject, rooms]);
 
   const deleteAllocation = useCallback((id: string) => {
     const scope = user?.id ? user.id : 'guest';
@@ -1063,7 +1111,20 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    // Deletion Sync: Invalidate student portal cache and broadcast event
+    // Deletion Sync: Invalidate student portal cache on server and broadcast event
+    try {
+      fetch('/api/student-portal/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'delete',
+          allocationId: id,
+          institutionId: user?.id || profile?.institution_id || scope,
+          institutionCode: profile?.institution_code || '001',
+        }),
+      }).catch(() => {});
+    } catch (_) {}
+
     clearInstitutionStudentExamsCache(scope);
     if (typeof window !== 'undefined') {
       window.dispatchEvent(
@@ -1072,7 +1133,7 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
         })
       );
     }
-  }, [activeAllocation?.id, user?.id]);
+  }, [activeAllocation?.id, user?.id, profile?.institution_code, profile?.institution_id]);
 
   const togglePublishAllocation = useCallback(async (id: string, publish?: boolean): Promise<SeatingAllocationRecord | null> => {
     const scope = user?.id ? user.id : 'guest';
@@ -1121,7 +1182,7 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
       clearInstitutionStudentExamsCache('guest');
       clearInstitutionStudentExamsCache('guest-session');
 
-      // Persist to shared backend endpoint for immediate student portal visibility
+      // Persist to shared backend endpoint for immediate student portal visibility across all devices
       try {
         fetch('/api/student-portal/sync', {
           method: 'POST',
@@ -1130,7 +1191,14 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
             action: (updatedAlloc as SeatingAllocationRecord).isPublished ? 'publish' : 'unpublish',
             allocation: updatedAlloc,
             allocationId: id,
-            institutionId: user?.id || scope,
+            institutionId: user?.id || profile?.institution_id || scope,
+            institutionCode: profile?.institution_code || '001',
+            institutionName: profile?.institution_name || 'Institution',
+            workspace: {
+              subjects,
+              studentsBySubject,
+              rooms,
+            },
           }),
         }).catch(() => {});
       } catch (_) {}
@@ -1145,7 +1213,7 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
     }
 
     return updatedAlloc;
-  }, [user?.id, activeAllocation]);
+  }, [user?.id, profile?.institution_code, profile?.institution_id, profile?.institution_name, activeAllocation, subjects, studentsBySubject, rooms]);
 
   const duplicateAllocation = useCallback((id: string): SeatingAllocationRecord | null => {
     const existing = allocations.find((a) => a.id === id);

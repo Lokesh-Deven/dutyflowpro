@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { StudentExaminationDetail } from '@/lib/student-portal-types';
 import { StudentRecord, StudentSubject, SeatingAllocationRecord } from '@/lib/student-seating-types';
+import {
+  savePublishedAllocationServer,
+  unpublishAllocationServer,
+  deleteAllocationServer,
+  getPublishedDataServer,
+} from '@/lib/server-published-store';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -204,11 +210,30 @@ export async function GET(req: NextRequest) {
       }
     } catch (_) {}
 
-    // Step 2: Fallback to direct queries if RPC was not available or empty
-    if (!workspace && !allocations.length) {
-      // 2a. Resolve institution info
-      if (!institutionId && resolvedCode) {
-        const cleanFormatted = resolvedCode.padStart(3, '0');
+    // Step 2: Load published seating allocations & workspace from shared server store
+    // This guarantees immediate access across computers, tablets, and mobile phones!
+    const serverPublished = getPublishedDataServer(resolvedCode, institutionId);
+    if (serverPublished) {
+      if (serverPublished.institutionName && institutionName === 'Institution') {
+        institutionName = serverPublished.institutionName;
+      }
+      if (serverPublished.institutionId && !institutionId) {
+        institutionId = serverPublished.institutionId;
+      }
+      if (serverPublished.workspace && !workspace) {
+        workspace = serverPublished.workspace;
+      }
+      for (const sAlloc of serverPublished.allocations) {
+        if (sAlloc && sAlloc.id && !allocations.some((a) => a.id === sAlloc.id)) {
+          allocations.push(sAlloc);
+        }
+      }
+    }
+
+    // Step 3: Direct institution resolution and cloud database fallback
+    if (!institutionId && resolvedCode) {
+      const cleanFormatted = resolvedCode.padStart(3, '0');
+      try {
         const { data: regData } = await supabase
           .from('institution_code_registry')
           .select('institution_id, institution_code, institution_name')
@@ -218,7 +243,7 @@ export async function GET(req: NextRequest) {
         if (regData?.institution_id) {
           institutionId = regData.institution_id;
           resolvedCode = regData.institution_code;
-          institutionName = regData.institution_name || 'Institution';
+          institutionName = regData.institution_name || institutionName;
         } else {
           const { data: profData } = await supabase
             .from('profiles')
@@ -229,49 +254,48 @@ export async function GET(req: NextRequest) {
           if (profData?.id) {
             institutionId = profData.id;
             resolvedCode = profData.institution_code || cleanFormatted;
-            institutionName = profData.institution_name || 'Institution';
+            institutionName = profData.institution_name || institutionName;
           }
         }
-      }
+      } catch (_) {}
+    }
 
-      if (institutionId) {
-        // 2b. Fetch published calendar
-        const { data: calData } = await supabase
-          .from('examination_calendar')
-          .select('*')
-          .or(`institution_id.eq.${institutionId},institution_code.eq.${resolvedCode}`)
-          .in('publication_status', ['tentative_published', 'final_published'])
-          .order('slot_number', { ascending: true });
+    if (institutionId) {
+      // 3b. Fetch workspace & allocations from saved_allotments if user_id is a UUID
+      try {
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(institutionId);
+        if (isUUID) {
+          const { data: allotmentsData } = await supabase
+            .from('saved_allotments')
+            .select('*')
+            .eq('user_id', institutionId)
+            .order('created_at', { ascending: false });
 
-        if (calData) calendarSchedules = calData;
-
-        // 2d. Fetch workspace & allocations from saved_allotments
-        const { data: allotmentsData } = await supabase
-          .from('saved_allotments')
-          .select('*')
-          .or(`user_id.eq.${institutionId},institution_id.eq.${institutionId}`)
-          .order('created_at', { ascending: false });
-
-        if (allotmentsData && Array.isArray(allotmentsData)) {
-          for (const row of allotmentsData) {
-            if (row.id === `dutyflow_workspace_${institutionId}` && row.assignments?.workspace) {
-              workspace = row.assignments.workspace;
-            } else if (
-              row.assignments?._record_type === 'SeatingAllocation' ||
-              row.assignments?.seatingAllocation ||
-              (row.id && String(row.id).startsWith('alloc-'))
-            ) {
-              const alloc = row.assignments?.seatingAllocation || row;
-              if (alloc && alloc.id) {
-                if (row.status === 'Published' || alloc.status === 'Published' || alloc.isPublished) {
-                  alloc.status = 'Published';
-                  alloc.isPublished = true;
+          if (allotmentsData && Array.isArray(allotmentsData)) {
+            for (const row of allotmentsData) {
+              if (row.id === `dutyflow_workspace_${institutionId}` && row.assignments?.workspace && !workspace) {
+                workspace = row.assignments.workspace;
+              } else if (
+                row.assignments?._record_type === 'SeatingAllocation' ||
+                row.assignments?.seatingAllocation ||
+                (row.id && String(row.id).startsWith('alloc-'))
+              ) {
+                const alloc = row.assignments?.seatingAllocation || row;
+                if (alloc && alloc.id) {
+                  if (row.status === 'Published' || alloc.status === 'Published' || alloc.isPublished) {
+                    alloc.status = 'Published';
+                    alloc.isPublished = true;
+                  }
+                  if (alloc.isPublished && !allocations.some((a) => a.id === alloc.id)) {
+                    allocations.push(alloc);
+                  }
                 }
-                allocations.push(alloc);
               }
             }
           }
         }
+      } catch (err) {
+        console.warn('Database allotments lookup skipped:', err);
       }
     }
 
@@ -315,13 +339,11 @@ export async function GET(req: NextRequest) {
     let studentExaminations: StudentExaminationDetail[] = [];
 
     if (registerNumber) {
-      const targetRoll = registerNumber.trim().toLowerCase();
-
       // Look in workspace student rosters
       if (workspace?.studentsBySubject && typeof workspace.studentsBySubject === 'object') {
         for (const [subjKey, list] of Object.entries(workspace.studentsBySubject)) {
           if (!Array.isArray(list)) continue;
-          const found = list.find((s: any) => s?.rollNo && s.rollNo.trim().toLowerCase() === targetRoll);
+          const found = list.find((s: any) => matchStudentRoll(getStudentRecordRoll(s), registerNumber));
           if (found) {
             matchedStudent = found;
             const subId = found.subjectId || subjKey;
@@ -338,16 +360,20 @@ export async function GET(req: NextRequest) {
         if (!alloc || !Array.isArray(alloc.roomPlans)) continue;
         for (const room of alloc.roomPlans) {
           for (const bench of room.benches || []) {
-            for (const seat of bench.seats || []) {
-              if (seat?.student?.rollNo && seat.student.rollNo.trim().toLowerCase() === targetRoll) {
+            const seats = bench.seats || (bench as any).positions || [];
+            if (!Array.isArray(seats)) continue;
+
+            for (const seat of seats) {
+              const sRoll = getStudentRecordRoll(seat?.student);
+              if (sRoll && matchStudentRoll(sRoll, registerNumber)) {
                 if (!matchedStudent) {
                   matchedStudent = seat.student;
                 }
-                if (!matchedSubject && (seat.student.subjectId || seat.subjectName)) {
+                if (!matchedSubject && (seat.student?.subjectId || seat.subjectName)) {
                   matchedSubject = {
-                    id: seat.student.subjectId || 'subj',
+                    id: seat.student?.subjectId || 'subj',
                     name: seat.subjectName || 'Examination Subject',
-                    code: seat.student.section || '',
+                    code: seat.student?.section || '',
                     expectedStudents: 60,
                     uploadedStudentsCount: 60,
                     createdAt: new Date().toISOString(),
@@ -402,79 +428,134 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const action = (body.action || '').trim();
-    const institutionCode = (body.institutionCode || '').trim();
+    const institutionCode = (body.institutionCode || '').trim() || '001';
     const institutionId = (body.institutionId || '').trim();
     const registerNumber = (body.registerNumber || '').trim();
+    const institutionName = (body.institutionName || '').trim();
 
     // 1. Backend Publish Action
     if (action === 'publish' && body.allocation) {
       const alloc: SeatingAllocationRecord = body.allocation;
       const targetInstId = institutionId || body.userId;
-      if (alloc && alloc.id && targetInstId) {
-        const now = new Date().toISOString();
-        const payload: any = {
-          id: alloc.id,
-          user_id: targetInstId,
-          institution_id: targetInstId,
-          name: alloc.name,
-          status: 'Published',
-          invigilators: [],
-          examinations: [alloc.examination],
-          assignments: {
-            _record_type: 'SeatingAllocation',
-            seatingAllocation: {
-              ...alloc,
-              isPublished: true,
-              status: 'Published',
-              publishedAt: alloc.publishedAt || now,
-            },
-          },
-          created_at: alloc.createdAt || now,
-          updated_at: now,
-        };
 
-        const { error } = await supabase.from('saved_allotments').upsert(payload);
-        if (error) {
-          console.warn('API seating allocation publish note:', error.message);
-        }
-        return NextResponse.json(
-          { success: true, published: true, allocation: payload.assignments.seatingAllocation },
-          { headers: NO_CACHE_HEADERS }
-        );
+      // Save directly to shared server store accessible by mobile, tablet, and computer
+      const publishedAlloc = savePublishedAllocationServer({
+        allocation: alloc,
+        institutionCode,
+        institutionId: targetInstId,
+        institutionName,
+        workspace: body.workspace,
+      });
+
+      // Best-effort database sync (without invalid columns or crashing)
+      if (targetInstId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetInstId)) {
+        try {
+          const now = new Date().toISOString();
+          const payload: any = {
+            id: alloc.id,
+            user_id: targetInstId,
+            name: alloc.name,
+            status: 'Published',
+            invigilators: [],
+            examinations: [alloc.examination],
+            assignments: {
+              _record_type: 'SeatingAllocation',
+              seatingAllocation: publishedAlloc,
+            },
+            created_at: alloc.createdAt || now,
+            updated_at: now,
+          };
+          await supabase.from('saved_allotments').upsert(payload);
+        } catch (_) {}
       }
+
+      return NextResponse.json(
+        { success: true, published: true, allocation: publishedAlloc },
+        { headers: NO_CACHE_HEADERS }
+      );
     }
 
-    // 2. Backend Unpublish Action
+    // 2. Batch Sync All Published Allocations Action
+    if (action === 'sync-all' && Array.isArray(body.allocations)) {
+      const targetInstId = institutionId || body.userId;
+      for (const item of body.allocations) {
+        if (item && item.id && (item.isPublished || item.status === 'Published')) {
+          savePublishedAllocationServer({
+            allocation: item,
+            institutionCode,
+            institutionId: targetInstId,
+            institutionName,
+            workspace: body.workspace,
+          });
+        }
+      }
+      return NextResponse.json(
+        { success: true, synced: true, count: body.allocations.length },
+        { headers: NO_CACHE_HEADERS }
+      );
+    }
+
+    // 3. Backend Unpublish Action
     if (action === 'unpublish' && body.allocationId) {
       const allocId = body.allocationId;
       const targetInstId = institutionId || body.userId;
-      if (allocId && targetInstId) {
-        const { data: existing } = await supabase
-          .from('saved_allotments')
-          .select('*')
-          .eq('id', allocId)
-          .maybeSingle();
 
-        if (existing) {
-          const currentAlloc = existing.assignments?.seatingAllocation || {};
-          const updatedPayload = {
-            ...existing,
-            status: 'Draft',
-            assignments: {
-              ...existing.assignments,
-              seatingAllocation: {
-                ...currentAlloc,
-                isPublished: false,
-                status: 'Draft',
-                publishedAt: undefined,
+      unpublishAllocationServer({
+        allocationId: allocId,
+        institutionCode,
+        institutionId: targetInstId,
+      });
+
+      if (targetInstId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetInstId)) {
+        try {
+          const { data: existing } = await supabase
+            .from('saved_allotments')
+            .select('*')
+            .eq('id', allocId)
+            .maybeSingle();
+
+          if (existing) {
+            const currentAlloc = existing.assignments?.seatingAllocation || {};
+            const updatedPayload = {
+              ...existing,
+              status: 'Draft',
+              assignments: {
+                ...existing.assignments,
+                seatingAllocation: {
+                  ...currentAlloc,
+                  isPublished: false,
+                  status: 'Draft',
+                  publishedAt: undefined,
+                },
               },
-            },
-            updated_at: new Date().toISOString(),
-          };
-          await supabase.from('saved_allotments').upsert(updatedPayload);
-        }
-        return NextResponse.json({ success: true, published: false }, { headers: NO_CACHE_HEADERS });
+              updated_at: new Date().toISOString(),
+            };
+            await supabase.from('saved_allotments').upsert(updatedPayload);
+          }
+        } catch (_) {}
       }
+
+      return NextResponse.json({ success: true, published: false }, { headers: NO_CACHE_HEADERS });
+    }
+
+    // 4. Backend Delete Action
+    if (action === 'delete' && body.allocationId) {
+      const allocId = body.allocationId;
+      const targetInstId = institutionId || body.userId;
+
+      deleteAllocationServer({
+        allocationId: allocId,
+        institutionCode,
+        institutionId: targetInstId,
+      });
+
+      if (targetInstId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetInstId)) {
+        try {
+          await supabase.from('saved_allotments').delete().eq('id', allocId);
+        } catch (_) {}
+      }
+
+      return NextResponse.json({ success: true, deleted: true }, { headers: NO_CACHE_HEADERS });
     }
 
     const getUrl = new URL(req.url);
