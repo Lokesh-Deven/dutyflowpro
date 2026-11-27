@@ -1025,6 +1025,7 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
       idbSet(`dutyflow_${scope}_seating_allocations`, next);
       if (scope === 'guest') {
         safeSetLocalStorage('dutyflow_guest_seating_allocations', next);
+        safeSetLocalStorage('dutyflow_guest-session_seating_allocations', next);
       }
 
       if (user?.id && isUUID(user.id)) {
@@ -1046,6 +1047,7 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
       idbSet(`dutyflow_${scope}_seating_allocations`, next);
       if (scope === 'guest') {
         safeSetLocalStorage('dutyflow_guest_seating_allocations', next);
+        safeSetLocalStorage('dutyflow_guest-session_seating_allocations', next);
       }
 
       if (user?.id && isUUID(user.id)) {
@@ -1078,26 +1080,34 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
 
     setAllocations((prev) => {
       const idx = prev.findIndex((a) => a.id === id);
-      if (idx < 0) return prev;
-      const current = prev[idx];
+      const current = idx >= 0 ? prev[idx] : (activeAllocation?.id === id ? activeAllocation : null);
+      if (!current) return prev;
+
       const nextIsPublished = publish !== undefined ? publish : !current.isPublished;
-      updatedAlloc = {
+      const recordToUpdate: SeatingAllocationRecord = {
         ...current,
         isPublished: nextIsPublished,
         publishedAt: nextIsPublished ? (current.publishedAt || new Date().toISOString()) : undefined,
+        status: nextIsPublished ? 'Published' : (current.status === 'Published' ? 'Draft' : (current.status || 'Draft')),
         updatedAt: new Date().toISOString(),
       };
+      updatedAlloc = recordToUpdate;
       const next = [...prev];
-      next[idx] = updatedAlloc;
+      if (idx >= 0) {
+        next[idx] = recordToUpdate;
+      } else {
+        next.unshift(recordToUpdate);
+      }
 
       safeSetLocalStorage(`dutyflow_${scope}_seating_allocations`, next);
       idbSet(`dutyflow_${scope}_seating_allocations`, next);
       if (scope === 'guest') {
         safeSetLocalStorage('dutyflow_guest_seating_allocations', next);
+        safeSetLocalStorage('dutyflow_guest-session_seating_allocations', next);
       }
 
       if (user?.id && isUUID(user.id)) {
-        syncSeatingAllocationToDatabase(updatedAlloc, user.id).catch(() => {});
+        syncSeatingAllocationToDatabase(recordToUpdate, user.id).catch(() => {});
       }
 
       return next;
@@ -1108,6 +1118,23 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
         setActiveAllocation(updatedAlloc);
       }
       clearInstitutionStudentExamsCache(scope);
+      clearInstitutionStudentExamsCache('guest');
+      clearInstitutionStudentExamsCache('guest-session');
+
+      // Persist to shared backend endpoint for immediate student portal visibility
+      try {
+        fetch('/api/student-portal/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: (updatedAlloc as SeatingAllocationRecord).isPublished ? 'publish' : 'unpublish',
+            allocation: updatedAlloc,
+            allocationId: id,
+            institutionId: user?.id || scope,
+          }),
+        }).catch(() => {});
+      } catch (_) {}
+
       if (typeof window !== 'undefined') {
         window.dispatchEvent(
           new CustomEvent('dutyflow:seating-published-change', {
@@ -1118,7 +1145,7 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
     }
 
     return updatedAlloc;
-  }, [user?.id, activeAllocation?.id]);
+  }, [user?.id, activeAllocation]);
 
   const duplicateAllocation = useCallback((id: string): SeatingAllocationRecord | null => {
     const existing = allocations.find((a) => a.id === id);
@@ -1141,6 +1168,7 @@ export function StudentSeatingProvider({ children }: { children: ReactNode }) {
       idbSet(`dutyflow_${scope}_seating_allocations`, next);
       if (scope === 'guest') {
         safeSetLocalStorage('dutyflow_guest_seating_allocations', next);
+        safeSetLocalStorage('dutyflow_guest-session_seating_allocations', next);
       }
 
       if (user?.id && isUUID(user.id)) {

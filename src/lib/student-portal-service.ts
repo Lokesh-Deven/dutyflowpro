@@ -54,6 +54,42 @@ function saveStoredPins(pins: Record<string, StudentPinRecord>) {
 }
 
 /**
+ * Normalizes student roll/register number by removing all whitespace and lowercasing
+ */
+export function normalizeStudentRoll(val: string | null | undefined): string {
+  if (!val) return '';
+  return String(val).trim().replace(/\s+/g, '').toLowerCase();
+}
+
+/**
+ * Checks if two roll/register numbers match, forgiving whitespace, case, and separators
+ */
+export function matchStudentRoll(a: string | null | undefined, b: string | null | undefined): boolean {
+  if (!a || !b) return false;
+  const normA = normalizeStudentRoll(a);
+  const normB = normalizeStudentRoll(b);
+  if (normA === normB) return true;
+  const cleanA = normA.replace(/[-_.]/g, '');
+  const cleanB = normB.replace(/[-_.]/g, '');
+  return cleanA === cleanB;
+}
+
+/**
+ * Extracts student roll number from any candidate record property
+ */
+export function getStudentRecordRoll(student: any): string {
+  if (!student) return '';
+  return String(
+    student.rollNo ||
+    student.rollNumber ||
+    student.registerNumber ||
+    student.regNo ||
+    student.id ||
+    ''
+  ).trim();
+}
+
+/**
  * Finds a student record STRICTLY within the specified institution.
  * Never searches across multiple institutions to prevent identity confusion.
  */
@@ -62,7 +98,7 @@ export function findStudentRecordByRegisterNumber(
   institutionId: string
 ): { student: StudentRecord; subject?: StudentSubject; institutionName?: string } | null {
   if (typeof window === 'undefined' || !regNo || !institutionId) return null;
-  const target = regNo.trim().toLowerCase();
+  const target = regNo.trim();
 
   // 1. Target specific storage keys belonging strictly to this institution
   const studentBuckets: Record<string, StudentRecord[]>[] = [];
@@ -73,13 +109,13 @@ export function findStudentRecordByRegisterNumber(
     `dutyflow_${institutionId}_seating_subjects`,
   ];
 
-  if (institutionId === 'guest-session') {
+  if (institutionId === 'guest-session' || institutionId === 'guest') {
     scopedKeys.push('dutyflow_guest_seating_students', 'dutyflow_guest_seating_subjects');
   }
 
   try {
     const rawStudents = localStorage.getItem(`dutyflow_${institutionId}_seating_students`)
-      || (institutionId === 'guest-session' ? localStorage.getItem('dutyflow_guest_seating_students') : null);
+      || (institutionId === 'guest-session' || institutionId === 'guest' ? localStorage.getItem('dutyflow_guest_seating_students') : null);
     if (rawStudents) {
       const parsed = JSON.parse(rawStudents);
       if (parsed && typeof parsed === 'object') {
@@ -92,7 +128,7 @@ export function findStudentRecordByRegisterNumber(
     }
 
     const rawSubjects = localStorage.getItem(`dutyflow_${institutionId}_seating_subjects`)
-      || (institutionId === 'guest-session' ? localStorage.getItem('dutyflow_guest_seating_subjects') : null);
+      || (institutionId === 'guest-session' || institutionId === 'guest' ? localStorage.getItem('dutyflow_guest_seating_subjects') : null);
     if (rawSubjects) {
       const parsed = JSON.parse(rawSubjects);
       if (Array.isArray(parsed) && parsed.length > 0) {
@@ -108,7 +144,7 @@ export function findStudentRecordByRegisterNumber(
   for (const bucket of studentBuckets) {
     for (const [subjId, list] of Object.entries(bucket)) {
       if (!Array.isArray(list)) continue;
-      const found = list.find((s) => s?.rollNo && s.rollNo.trim().toLowerCase() === target);
+      const found = list.find((s) => s && matchStudentRoll(getStudentRecordRoll(s), target));
       if (found) {
         matchedStudent = found;
         matchedSubjectId = found.subjectId || subjId;
@@ -121,8 +157,11 @@ export function findStudentRecordByRegisterNumber(
   // 2b. If not in raw rosters, search this institution's seating allocations
   if (!matchedStudent) {
     try {
-      const allocKeys = [`dutyflow_${institutionId}_seating_allocations`];
-      if (institutionId === 'guest-session') allocKeys.push('dutyflow_guest_seating_allocations');
+      const allocKeys = [
+        `dutyflow_${institutionId}_seating_allocations`,
+        'dutyflow_guest_seating_allocations',
+        'dutyflow_guest-session_seating_allocations',
+      ];
 
       for (const k of allocKeys) {
         const val = localStorage.getItem(k);
@@ -132,10 +171,12 @@ export function findStudentRecordByRegisterNumber(
             for (const alloc of parsed) {
               for (const room of alloc.roomPlans || []) {
                 for (const bench of room.benches || []) {
-                  for (const seat of bench.seats || []) {
-                    if (seat?.student?.rollNo && seat.student.rollNo.trim().toLowerCase() === target) {
-                      matchedStudent = seat.student;
-                      matchedSubjectId = seat.student.subjectId || seat.subjectName;
+                  const seats = bench.seats || (bench as any).positions || [];
+                  for (const seat of seats) {
+                    const s = seat?.student;
+                    if (s && matchStudentRoll(getStudentRecordRoll(s), target)) {
+                      matchedStudent = s;
+                      matchedSubjectId = s.subjectId || seat.subjectId || seat.subjectName;
                       break;
                     }
                   }
@@ -258,8 +299,8 @@ export async function syncStudentPortalFromCloud(
           } catch (_) {}
         }
 
-        // Cache examinations in localStorage for instant rendering and offline mode
-        if (Array.isArray(json.examinations) && typeof window !== 'undefined' && registerNumber) {
+        // Cache examinations in localStorage for instant rendering and offline mode ONLY if non-empty
+        if (Array.isArray(json.examinations) && json.examinations.length > 0 && typeof window !== 'undefined' && registerNumber) {
           try {
             const cleanTarget = registerNumber.trim().toUpperCase();
             const examCacheKey = `dutyflow_${effInstId}_student_exams_${cleanTarget}`;
@@ -504,13 +545,12 @@ function formatPosition(
  * when allocations are published, unpublished, or deleted.
  */
 export function clearInstitutionStudentExamsCache(institutionId?: string): void {
-  if (typeof window === 'undefined' || !institutionId) return;
+  if (typeof window === 'undefined') return;
   try {
-    const prefix = `dutyflow_${institutionId}_student_exams_`;
     const toRemove: string[] = [];
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
-      if (k && k.startsWith(prefix)) {
+      if (k && (k.includes('_student_exams_') || (institutionId && k.includes(`_${institutionId}_`)))) {
         toRemove.push(k);
       }
     }
@@ -528,7 +568,7 @@ export function getStudentExaminations(
   targetInstitutionId?: string
 ): StudentExaminationDetail[] {
   if (typeof window === 'undefined' || !registerNumber) return [];
-  const target = registerNumber.trim().toLowerCase();
+  const target = registerNumber.trim();
 
   const currentSession = getStudentSession();
   const effectiveInstId = targetInstitutionId || currentSession?.institutionId;
@@ -556,20 +596,45 @@ export function getStudentExaminations(
     }
   } catch (_) {}
 
-  // 1. Gather allocations strictly from this institution
+  // 1. Gather allocations strictly from this institution (with guest fallback)
   const allocations: SeatingAllocationRecord[] = [];
   try {
-    const allocKey = `dutyflow_${effectiveInstId}_seating_allocations`;
-    const val = localStorage.getItem(allocKey);
-    if (val) {
-      const parsed = JSON.parse(val);
-      if (Array.isArray(parsed)) allocations.push(...parsed);
+    const keysToCheck = [
+      `dutyflow_${effectiveInstId}_seating_allocations`,
+      'dutyflow_guest_seating_allocations',
+      'dutyflow_guest-session_seating_allocations',
+    ];
+    for (const k of keysToCheck) {
+      const val = localStorage.getItem(k);
+      if (val) {
+        const parsed = JSON.parse(val);
+        if (Array.isArray(parsed)) {
+          for (const item of parsed) {
+            if (item && item.id && !allocations.some((a) => a.id === item.id)) {
+              allocations.push(item);
+            }
+          }
+        }
+      }
     }
-    if (effectiveInstId === 'guest-session') {
-      const guestVal = localStorage.getItem('dutyflow_guest_seating_allocations');
-      if (guestVal && guestVal !== val) {
-        const parsed = JSON.parse(guestVal);
-        if (Array.isArray(parsed)) allocations.push(...parsed);
+
+    // Comprehensive scan across any remaining local allocation stores
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('dutyflow_') && key.endsWith('_seating_allocations') && !keysToCheck.includes(key)) {
+        const val = localStorage.getItem(key);
+        if (val) {
+          try {
+            const parsed = JSON.parse(val);
+            if (Array.isArray(parsed)) {
+              for (const item of parsed) {
+                if (item && item.id && !allocations.some((a) => a.id === item.id)) {
+                  allocations.push(item);
+                }
+              }
+            }
+          } catch (_) {}
+        }
       }
     }
   } catch (_) {}
@@ -577,7 +642,8 @@ export function getStudentExaminations(
   // 2. Scan each Published allocation for this student's allocated seat
   for (const alloc of allocations) {
     // Student Portal Visibility Rule: Only display exams marked as Published
-    if (!alloc || !alloc.isPublished || !Array.isArray(alloc.roomPlans)) continue;
+    const isPub = alloc.isPublished === true || alloc.status === 'Published';
+    if (!alloc || !isPub || !Array.isArray(alloc.roomPlans)) continue;
 
     const examName = alloc.examination?.examName || alloc.name || 'Examination';
     const examDate = alloc.examination?.date || '';
@@ -590,27 +656,33 @@ export function getStudentExaminations(
       if (!roomPlan || !Array.isArray(roomPlan.benches)) continue;
 
       for (const bench of roomPlan.benches) {
-        if (!bench || !Array.isArray(bench.seats)) continue;
+        const seats = bench.seats || (bench as any).positions || [];
+        if (!Array.isArray(seats)) continue;
 
-        for (const seat of bench.seats) {
+        for (const seat of seats) {
           if (!seat || !seat.student) continue;
 
-          const sRoll = (seat.student.rollNo || '').trim().toLowerCase();
-          if (sRoll === target) {
+          const sStudent = seat.student;
+          const sRoll = getStudentRecordRoll(sStudent);
+          if (matchStudentRoll(sRoll, target)) {
             const subjectName = seat.subjectName || 'General Subject';
-            const dedupeKey = `${examName}-${subjectName}-${examDate}`.toLowerCase();
+            const dedupeKey = `${alloc.id}-${roomPlan.roomId || roomPlan.roomNo}-${bench.benchNumber}-${seat.position}`.toLowerCase();
 
             if (!seenKeys.has(dedupeKey)) {
               seenKeys.add(dedupeKey);
 
               const now = new Date();
-              const todayStr = now.toISOString().slice(0, 10);
-              const isToday = examDate === todayStr;
-              const isUpcoming = examDate >= todayStr;
-              const isPast = examDate < todayStr && !isToday;
+              const year = now.getFullYear();
+              const month = String(now.getMonth() + 1).padStart(2, '0');
+              const day = String(now.getDate()).padStart(2, '0');
+              const todayStr = `${year}-${month}-${day}`;
+              const isToday = Boolean(examDate && examDate === todayStr);
+              const isUpcoming = Boolean(!examDate || examDate >= todayStr);
+              const isPast = Boolean(examDate && examDate < todayStr && !isToday);
+              const benchLabel = bench.rowLabel || `${bench.side === 'LEFT' ? 'L' : bench.side === 'MIDDLE' ? 'M' : 'R'}${bench.benchNumber}`;
 
               results.push({
-                id: `exam-${alloc.id}-${roomPlan.roomId}-${bench.benchNumber}-${seat.position}`,
+                id: `exam-${alloc.id}-${roomPlan.roomId || roomPlan.roomNo}-${bench.benchNumber}-${seat.position}`,
                 examId: alloc.id,
                 examName,
                 date: examDate,
@@ -619,16 +691,16 @@ export function getStudentExaminations(
                 startTime,
                 endTime,
                 timeSlot,
-                subjectId: seat.student.subjectId || seat.subjectId || '',
+                subjectId: sStudent.subjectId || seat.subjectId || '',
                 subjectName,
-                subjectCode: seat.student.section || '',
-                courseStream: seat.student.section ? `Section ${seat.student.section}` : 'Standard Stream',
-                section: seat.student.section || 'A',
-                studentName: seat.student.name,
-                registerNumber: seat.student.rollNo,
+                subjectCode: sStudent.section || '',
+                courseStream: sStudent.section ? `Section ${sStudent.section}` : 'Standard Stream',
+                section: sStudent.section || 'A',
+                studentName: sStudent.name,
+                registerNumber: sStudent.rollNo || target,
                 roomNo: String(roomPlan.roomNo),
                 roomId: roomPlan.roomId,
-                benchNumber: `B${bench.benchNumber}`,
+                benchNumber: benchLabel,
                 benchSide: bench.side,
                 position: formatPosition(seat.position),
                 positionSlot: seat.position,
@@ -643,6 +715,13 @@ export function getStudentExaminations(
         }
       }
     }
+  }
+
+  // Cache confirmed examinations for immediate reload
+  if (results.length > 0 && typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(cloudCacheKey, JSON.stringify(results));
+    } catch (_) {}
   }
 
   // 3. Demo fallback if no allocations saved yet for 101 or 123456

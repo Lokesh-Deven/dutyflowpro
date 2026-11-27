@@ -250,7 +250,12 @@ export async function sendDutySummaryEmails(payload: SendEmailPayload): Promise<
       });
       sentCount++;
     } catch (err: any) {
-      const errMsg = err?.response?.body?.errors?.[0]?.message || err?.message || 'Failed to send email via SendGrid.';
+      let errMsg = err?.response?.body?.errors?.[0]?.message || err?.message || 'Failed to send email via SendGrid.';
+      if (err?.code === 'ENOTFOUND' || (typeof errMsg === 'string' && errMsg.includes('getaddrinfo ENOTFOUND'))) {
+        errMsg = 'Unable to reach SendGrid servers (DNS / network resolution failed). Please ensure your server has active internet access.';
+      } else if (err?.code === 'ETIMEDOUT' || (typeof errMsg === 'string' && errMsg.includes('ETIMEDOUT'))) {
+        errMsg = 'Connection to SendGrid servers timed out. Please check your internet connection.';
+      }
       console.error(`SendGrid error for ${toEmail}:`, errMsg);
       results.push({
         to: toEmail,

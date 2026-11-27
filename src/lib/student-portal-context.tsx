@@ -39,11 +39,16 @@ export function StudentPortalProvider({ children }: { children: ReactNode }) {
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
   const sessionRef = useRef<StudentSession | null>(null);
+  const examinationsRef = useRef<StudentExaminationDetail[]>([]);
 
-  // Keep sessionRef in sync for event listeners
+  // Keep sessionRef and examinationsRef in sync for event listeners and async calls
   useEffect(() => {
     sessionRef.current = session;
   }, [session]);
+
+  useEffect(() => {
+    examinationsRef.current = examinations;
+  }, [examinations]);
 
   // Synchronizes student data with cloud server
   const syncWithCloud = useCallback(async (activeSession: StudentSession | null) => {
@@ -58,8 +63,23 @@ export function StudentPortalProvider({ children }: { children: ReactNode }) {
       );
 
       if (res.success) {
-        setExaminations(res.examinations || []);
-        setLastSyncedAt(new Date().toISOString());
+        // PREVENT STATE OVERWRITE:
+        // Only update examinations if cloud response has confirmed examination data!
+        // Never overwrite existing published examinations with an empty array [].
+        if (Array.isArray(res.examinations) && res.examinations.length > 0) {
+          setExaminations(res.examinations);
+          setLastSyncedAt(new Date().toISOString());
+        } else {
+          // If cloud sync returned empty, check if local storage has valid published examinations
+          const localExams = getStudentExaminations(
+            activeSession.registerNumber,
+            activeSession.institutionId
+          );
+          if (localExams && localExams.length > 0) {
+            setExaminations(localExams);
+          }
+          // If current state already has examinations, preserve them stably!
+        }
 
         // Reconcile student profile updates if changed in admin roster
         if (res.student && (res.student.name !== activeSession.studentName || res.student.section !== activeSession.section)) {
@@ -88,10 +108,12 @@ export function StudentPortalProvider({ children }: { children: ReactNode }) {
     if (cur?.registerNumber && cur?.institutionId) {
       // 1. Instant local render
       const localExams = getStudentExaminations(cur.registerNumber, cur.institutionId);
-      setExaminations(localExams);
+      if (localExams && localExams.length > 0) {
+        setExaminations(localExams);
+      }
       setIsLoading(false);
 
-      // 2. Realtime cloud sync
+      // 2. Realtime cloud sync (will not wipe out localExams if cloud is empty)
       syncWithCloud(cur);
     } else {
       setExaminations([]);
@@ -190,9 +212,11 @@ export function StudentPortalProvider({ children }: { children: ReactNode }) {
       const res = await authenticateStudent(institutionCode, registerNumber, pin);
       if (res.success && res.session) {
         setSessionState(res.session);
-        // Load initial examinations
+        // Load initial examinations immediately from local storage if available
         const exams = getStudentExaminations(res.session.registerNumber, res.session.institutionId);
-        setExaminations(exams);
+        if (exams && exams.length > 0) {
+          setExaminations(exams);
+        }
         // Launch live sync
         syncWithCloud(res.session);
       }
@@ -217,6 +241,10 @@ export function StudentPortalProvider({ children }: { children: ReactNode }) {
 
   const refreshExaminations = useCallback(async () => {
     if (session) {
+      const localExams = getStudentExaminations(session.registerNumber, session.institutionId);
+      if (localExams && localExams.length > 0) {
+        setExaminations(localExams);
+      }
       await syncWithCloud(session);
     }
   }, [session, syncWithCloud]);

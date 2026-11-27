@@ -161,7 +161,7 @@ export interface SeatingAllocationRecord {
   summary: SeatingAllocationSummary;
   multiSubjectConfig?: MultiSubjectConfig;
   threeColumnConfig?: ThreeColumnPatternConfig;
-  status: 'Draft' | 'Finalized';
+  status: 'Draft' | 'Finalized' | 'Published';
   isPublished?: boolean;
   publishedAt?: string;
   createdAt: string;

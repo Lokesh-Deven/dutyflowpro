@@ -469,17 +469,24 @@ export async function syncSeatingAllocationToDatabase(
       return true;
     }
 
+    const isPublished = allocation.isPublished === true || allocation.status === 'Published';
+    const statusVal = isPublished ? 'Published' : (allocation.status || 'Draft');
+
     const payload: any = {
       id: allocation.id,
       user_id: userId,
       institution_id: userId,
       name: allocation.name,
-      status: 'Draft',
+      status: statusVal,
       invigilators: [],
       examinations: [allocation.examination],
       assignments: {
         _record_type: 'SeatingAllocation',
-        seatingAllocation: allocation,
+        seatingAllocation: {
+          ...allocation,
+          isPublished,
+          status: statusVal,
+        },
       },
       created_at: allocation.createdAt || new Date().toISOString(),
       updated_at: allocation.updatedAt || new Date().toISOString(),
@@ -529,7 +536,14 @@ export async function fetchUserSeatingAllocationsFromDatabase(
           (row.id && String(row.id).startsWith('alloc-'))
         );
       })
-      .map((row: any) => row.assignments?.seatingAllocation)
+      .map((row: any) => {
+        const alloc = row.assignments?.seatingAllocation || row;
+        if (alloc && (row.status === 'Published' || alloc.status === 'Published' || alloc.isPublished)) {
+          alloc.status = 'Published';
+          alloc.isPublished = true;
+        }
+        return alloc;
+      })
       .filter((alloc): alloc is SeatingAllocationRecord => Boolean(alloc && alloc.id));
   } catch (err) {
     console.error('Exception in fetchUserSeatingAllocationsFromDatabase:', err);

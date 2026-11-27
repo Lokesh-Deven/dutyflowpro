@@ -38,6 +38,33 @@ function formatPosition(pos: string | undefined): 'Left' | 'Center' | 'Right' | 
   return 'Unassigned';
 }
 
+function normalizeStudentRoll(val: string | null | undefined): string {
+  if (!val) return '';
+  return String(val).trim().replace(/\s+/g, '').toLowerCase();
+}
+
+function matchStudentRoll(a: string | null | undefined, b: string | null | undefined): boolean {
+  if (!a || !b) return false;
+  const normA = normalizeStudentRoll(a);
+  const normB = normalizeStudentRoll(b);
+  if (normA === normB) return true;
+  const cleanA = normA.replace(/[-_.]/g, '');
+  const cleanB = normB.replace(/[-_.]/g, '');
+  return cleanA === cleanB;
+}
+
+function getStudentRecordRoll(student: any): string {
+  if (!student) return '';
+  return String(
+    student.rollNo ||
+    student.rollNumber ||
+    student.registerNumber ||
+    student.regNo ||
+    student.id ||
+    ''
+  ).trim();
+}
+
 /**
  * Builds StudentExaminationDetail array for a given student from raw seating allocations.
  * STRICT VISIBILITY RULE: Only allocations marked as Published (isPublished: true) are shown to students.
@@ -48,13 +75,14 @@ function extractStudentExaminations(
   matchedStudent?: StudentRecord,
   matchedSubject?: StudentSubject
 ): StudentExaminationDetail[] {
-  const cleanRoll = targetRoll.trim().toLowerCase();
+  const cleanRoll = targetRoll.trim();
   const results: StudentExaminationDetail[] = [];
   const seenKeys = new Set<string>();
   const todayStr = new Date().toISOString().slice(0, 10);
 
   for (const alloc of allocations) {
-    if (!alloc || !alloc.isPublished || !Array.isArray(alloc.roomPlans)) continue;
+    const isPub = alloc.isPublished === true || alloc.status === 'Published';
+    if (!alloc || !isPub || !Array.isArray(alloc.roomPlans)) continue;
 
     const examName = alloc.examination?.examName || alloc.name || 'Examination';
     const examDate = alloc.examination?.date || '';
@@ -67,24 +95,27 @@ function extractStudentExaminations(
       if (!roomPlan || !Array.isArray(roomPlan.benches)) continue;
 
       for (const bench of roomPlan.benches) {
-        if (!bench || !Array.isArray(bench.seats)) continue;
+        const seats = bench.seats || (bench as any).positions || [];
+        if (!Array.isArray(seats)) continue;
 
-        for (const seat of bench.seats) {
+        for (const seat of seats) {
           if (!seat || !seat.student) continue;
 
-          const sRoll = (seat.student.rollNo || '').trim().toLowerCase();
-          if (sRoll === cleanRoll) {
+          const sStudent = seat.student;
+          const sRoll = getStudentRecordRoll(sStudent);
+          if (matchStudentRoll(sRoll, cleanRoll)) {
             const subjectName = seat.subjectName || (matchedSubject ? matchedSubject.name : 'General Subject');
-            const dedupeKey = `${examName}-${subjectName}-${examDate}`.toLowerCase();
+            const dedupeKey = `${alloc.id}-${roomPlan.roomId || roomPlan.roomNo}-${bench.benchNumber}-${seat.position}`.toLowerCase();
 
             if (!seenKeys.has(dedupeKey)) {
               seenKeys.add(dedupeKey);
               const isToday = examDate === todayStr;
               const isUpcoming = examDate >= todayStr;
               const isPast = examDate < todayStr && !isToday;
+              const benchLabel = bench.rowLabel || `${bench.side === 'LEFT' ? 'L' : bench.side === 'MIDDLE' ? 'M' : 'R'}${bench.benchNumber}`;
 
               results.push({
-                id: `exam-${alloc.id}-${roomPlan.roomId}-${bench.benchNumber}-${seat.position}`,
+                id: `exam-${alloc.id}-${roomPlan.roomId || roomPlan.roomNo}-${bench.benchNumber}-${seat.position}`,
                 examId: alloc.id,
                 examName,
                 date: examDate,
@@ -93,16 +124,16 @@ function extractStudentExaminations(
                 startTime,
                 endTime,
                 timeSlot,
-                subjectId: seat.student.subjectId || seat.subjectId || matchedSubject?.id || '',
+                subjectId: sStudent.subjectId || seat.subjectId || matchedSubject?.id || '',
                 subjectName,
-                subjectCode: seat.student.section || matchedSubject?.code || '',
-                courseStream: seat.student.section ? `Section ${seat.student.section}` : 'Standard Stream',
-                section: seat.student.section || matchedStudent?.section || 'A',
-                studentName: seat.student.name || matchedStudent?.name || 'Student',
-                registerNumber: seat.student.rollNo || targetRoll,
+                subjectCode: sStudent.section || matchedSubject?.code || '',
+                courseStream: sStudent.section ? `Section ${sStudent.section}` : 'Standard Stream',
+                section: sStudent.section || matchedStudent?.section || 'A',
+                studentName: sStudent.name || matchedStudent?.name || 'Student',
+                registerNumber: sStudent.rollNo || targetRoll,
                 roomNo: String(roomPlan.roomNo),
                 roomId: roomPlan.roomId,
-                benchNumber: `${bench.side === 'LEFT' ? 'L' : bench.side === 'MIDDLE' ? 'M' : 'R'}${bench.benchNumber}`,
+                benchNumber: benchLabel,
                 benchSide: bench.side,
                 position: formatPosition(seat.position),
                 positionSlot: seat.position,
@@ -117,34 +148,6 @@ function extractStudentExaminations(
         }
       }
     }
-  }
-
-  // If student exists in roster but has no seat allocated in current plans, add pending indicator
-  if (results.length === 0 && matchedStudent) {
-    results.push({
-      id: `pending-${matchedStudent.id || matchedStudent.rollNo}`,
-      examName: 'Upcoming Examination',
-      date: '',
-      formattedDate: 'Date Scheduled Soon',
-      dayOfWeek: '',
-      startTime: '',
-      endTime: '',
-      timeSlot: 'Timetable in progress',
-      subjectId: matchedStudent.subjectId || '',
-      subjectName: matchedSubject?.name || 'Assigned Subject',
-      subjectCode: matchedSubject?.code || '',
-      courseStream: matchedSubject?.code || 'Course Roster',
-      section: matchedStudent.section || 'A',
-      studentName: matchedStudent.name,
-      registerNumber: matchedStudent.rollNo,
-      roomNo: 'Notice Soon',
-      benchNumber: 'Seat Allocation Pending',
-      position: 'Unassigned',
-      isToday: false,
-      isUpcoming: true,
-      isPast: false,
-      status: 'Pending Allocation',
-    });
   }
 
   // Sort: Today first, then Confirmed, then Upcoming by date
@@ -260,6 +263,10 @@ export async function GET(req: NextRequest) {
             ) {
               const alloc = row.assignments?.seatingAllocation || row;
               if (alloc && alloc.id) {
+                if (row.status === 'Published' || alloc.status === 'Published' || alloc.isPublished) {
+                  alloc.status = 'Published';
+                  alloc.isPublished = true;
+                }
                 allocations.push(alloc);
               }
             }
@@ -394,9 +401,81 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+    const action = (body.action || '').trim();
     const institutionCode = (body.institutionCode || '').trim();
     const institutionId = (body.institutionId || '').trim();
     const registerNumber = (body.registerNumber || '').trim();
+
+    // 1. Backend Publish Action
+    if (action === 'publish' && body.allocation) {
+      const alloc: SeatingAllocationRecord = body.allocation;
+      const targetInstId = institutionId || body.userId;
+      if (alloc && alloc.id && targetInstId) {
+        const now = new Date().toISOString();
+        const payload: any = {
+          id: alloc.id,
+          user_id: targetInstId,
+          institution_id: targetInstId,
+          name: alloc.name,
+          status: 'Published',
+          invigilators: [],
+          examinations: [alloc.examination],
+          assignments: {
+            _record_type: 'SeatingAllocation',
+            seatingAllocation: {
+              ...alloc,
+              isPublished: true,
+              status: 'Published',
+              publishedAt: alloc.publishedAt || now,
+            },
+          },
+          created_at: alloc.createdAt || now,
+          updated_at: now,
+        };
+
+        const { error } = await supabase.from('saved_allotments').upsert(payload);
+        if (error) {
+          console.warn('API seating allocation publish note:', error.message);
+        }
+        return NextResponse.json(
+          { success: true, published: true, allocation: payload.assignments.seatingAllocation },
+          { headers: NO_CACHE_HEADERS }
+        );
+      }
+    }
+
+    // 2. Backend Unpublish Action
+    if (action === 'unpublish' && body.allocationId) {
+      const allocId = body.allocationId;
+      const targetInstId = institutionId || body.userId;
+      if (allocId && targetInstId) {
+        const { data: existing } = await supabase
+          .from('saved_allotments')
+          .select('*')
+          .eq('id', allocId)
+          .maybeSingle();
+
+        if (existing) {
+          const currentAlloc = existing.assignments?.seatingAllocation || {};
+          const updatedPayload = {
+            ...existing,
+            status: 'Draft',
+            assignments: {
+              ...existing.assignments,
+              seatingAllocation: {
+                ...currentAlloc,
+                isPublished: false,
+                status: 'Draft',
+                publishedAt: undefined,
+              },
+            },
+            updated_at: new Date().toISOString(),
+          };
+          await supabase.from('saved_allotments').upsert(updatedPayload);
+        }
+        return NextResponse.json({ success: true, published: false }, { headers: NO_CACHE_HEADERS });
+      }
+    }
 
     const getUrl = new URL(req.url);
     if (institutionCode) getUrl.searchParams.set('institutionCode', institutionCode);
