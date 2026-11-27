@@ -181,10 +181,14 @@ function SeatingAllocationWizardContent() {
     };
 
     window.addEventListener('focus', loadTimetables);
+    window.addEventListener('dutyflow:timetable-deleted', loadTimetables);
+    window.addEventListener('dutyflow:saved-timetables-changed', loadTimetables);
     document.addEventListener('visibilitychange', handleVisibility);
     return () => {
       isMounted = false;
       window.removeEventListener('focus', loadTimetables);
+      window.removeEventListener('dutyflow:timetable-deleted', loadTimetables);
+      window.removeEventListener('dutyflow:saved-timetables-changed', loadTimetables);
       document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, [user?.id]);

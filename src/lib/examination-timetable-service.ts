@@ -15,10 +15,60 @@ import {
   deleteExaminationTimetableFromDatabase,
   syncUserWorkspaceToDatabase,
   fetchUserWorkspaceFromDatabase,
+  removeTimetableFromMemoryCache,
 } from './storage-service';
 
 const STORAGE_PREFIX = 'dutyflow_examination_timetables_';
 const ACTIVE_TIMETABLE_STORAGE_PREFIX = 'dutyflow_active_timetable_id_';
+const DELETED_TIMETABLES_PREFIX = 'dutyflow_deleted_timetable_ids_';
+
+/**
+ * Retrieve tombstoned (deleted) timetable IDs to prevent resurrection
+ */
+export function getDeletedTimetableIds(userId?: string): Set<string> {
+  if (typeof window === 'undefined') return new Set();
+  try {
+    const key = `${DELETED_TIMETABLES_PREFIX}${userId || 'guest'}`;
+    const raw = localStorage.getItem(key);
+    if (!raw) return new Set();
+    const arr = JSON.parse(raw);
+    return new Set(Array.isArray(arr) ? arr : []);
+  } catch {
+    return new Set();
+  }
+}
+
+/**
+ * Add a timetable ID to the tombstone list
+ */
+export function addDeletedTimetableId(id: string, userId?: string): void {
+  if (typeof window === 'undefined' || !id) return;
+  try {
+    const key = `${DELETED_TIMETABLES_PREFIX}${userId || 'guest'}`;
+    const set = getDeletedTimetableIds(userId);
+    set.add(id);
+    localStorage.setItem(key, JSON.stringify(Array.from(set)));
+  } catch (err) {
+    console.error('Failed to add deleted timetable tombstone:', err);
+  }
+}
+
+/**
+ * Remove a timetable ID from the tombstone list (e.g. when explicitly saved/recreated)
+ */
+export function removeDeletedTimetableId(id: string, userId?: string): void {
+  if (typeof window === 'undefined' || !id) return;
+  try {
+    const key = `${DELETED_TIMETABLES_PREFIX}${userId || 'guest'}`;
+    const set = getDeletedTimetableIds(userId);
+    if (set.has(id)) {
+      set.delete(id);
+      localStorage.setItem(key, JSON.stringify(Array.from(set)));
+    }
+  } catch (err) {
+    console.error('Failed to remove deleted timetable tombstone:', err);
+  }
+}
 
 /**
  * Generate 12-hour clock times at 15-minute intervals (7:00 AM to 7:00 PM)
@@ -199,17 +249,22 @@ export function getActiveTimetableStorageKey(userId?: string): string {
 export function getActiveTimetableId(userId?: string): string | null {
   if (typeof window === 'undefined') return null;
   try {
+    const tombstones = getDeletedTimetableIds(userId);
     const key = getActiveTimetableStorageKey(userId);
     const directId = localStorage.getItem(key);
     if (directId && directId !== 'null' && directId !== 'undefined') {
-      return directId;
+      if (tombstones.has(directId)) {
+        localStorage.removeItem(key);
+      } else {
+        return directId;
+      }
     }
     // Fallback: check if any saved timetable is marked isActive
     const listKey = getStorageKey(userId);
     const raw = localStorage.getItem(listKey);
     if (raw) {
       const list = JSON.parse(raw) as ExaminationTimetable[];
-      const activeItem = list.find((t) => t.isActive || t.status === 'Active');
+      const activeItem = list.find((t) => t && !tombstones.has(t.id) && (t.isActive || t.status === 'Active'));
       if (activeItem) {
         localStorage.setItem(key, activeItem.id);
         return activeItem.id;
@@ -242,7 +297,8 @@ export function getTimetableEffectiveStatus(
 }
 
 /**
- * Fetch all saved examination timetables from localStorage with accurate active state and status
+ * Fetch all saved examination timetables from localStorage with accurate active state and status,
+ * strictly excluding any tombstoned/deleted timetables.
  */
 export function getSavedTimetables(userId?: string): ExaminationTimetable[] {
   if (typeof window === 'undefined') return [];
@@ -252,17 +308,20 @@ export function getSavedTimetables(userId?: string): ExaminationTimetable[] {
     if (!data) return [];
     const list = JSON.parse(data) as ExaminationTimetable[];
     const activeId = getActiveTimetableId(userId);
+    const tombstones = getDeletedTimetableIds(userId);
 
-    return list.map((item) => {
-      const normalized = normalizeTimetable(item);
-      const isActive = Boolean(activeId && normalized.id === activeId);
-      const status = getTimetableEffectiveStatus(normalized, activeId);
-      return {
-        ...normalized,
-        isActive,
-        status,
-      };
-    });
+    return list
+      .filter((item) => item && item.id && !tombstones.has(item.id))
+      .map((item) => {
+        const normalized = normalizeTimetable(item);
+        const isActive = Boolean(activeId && normalized.id === activeId);
+        const status = getTimetableEffectiveStatus(normalized, activeId);
+        return {
+          ...normalized,
+          isActive,
+          status,
+        };
+      });
   } catch (err) {
     console.error('Failed to load saved timetables:', err);
     return [];
@@ -533,6 +592,9 @@ export function setTimetableStatus(
 export function saveTimetable(timetable: ExaminationTimetable, userId?: string): void {
   if (typeof window === 'undefined') return;
   try {
+    // If this timetable was previously tombstoned, clear it on explicit save
+    removeDeletedTimetableId(timetable.id, userId);
+
     const key = getStorageKey(userId);
     const existing = getSavedTimetables(userId);
     const index = existing.findIndex((t) => t.id === timetable.id);
@@ -575,18 +637,29 @@ export function saveTimetable(timetable: ExaminationTimetable, userId?: string):
 }
 
 /**
- * Delete a timetable from localStorage and Supabase database
+ * Permanently delete a timetable from localStorage, tombstones, student portal, and Supabase database.
  */
-export function deleteTimetable(id: string, userId?: string): void {
-  if (typeof window === 'undefined') return;
+export async function deleteTimetable(id: string, userId?: string): Promise<boolean> {
+  if (typeof window === 'undefined' || !id) return false;
   try {
+    // 1. Immediately record tombstone so background cloud syncs / focus events NEVER resurrect it
+    addDeletedTimetableId(id, userId);
+
+    // 2. Remove immediately from local saved timetables cache
     const key = getStorageKey(userId);
     const existing = getSavedTimetables(userId);
     const nextList = existing.filter((t) => t.id !== id);
     localStorage.setItem(key, JSON.stringify(nextList));
 
+    // 3. Update in-memory workspace cache immediately
+    if (userId) {
+      removeTimetableFromMemoryCache(id, userId);
+    }
+
+    // 4. If this timetable was currently active, clear active operational status
     const activeId = getActiveTimetableId(userId);
-    if (activeId === id) {
+    const wasActive = activeId === id;
+    if (wasActive) {
       const activeKey = getActiveTimetableStorageKey(userId);
       localStorage.removeItem(activeKey);
       window.dispatchEvent(
@@ -596,18 +669,30 @@ export function deleteTimetable(id: string, userId?: string): void {
       );
     }
 
-    // Delete from Supabase database
+    // 5. Unpublish from Student Portal if published
+    try {
+      await unpublishTimetableFromStudentPortal(id, userId || 'guest');
+    } catch (_) {}
+
+    // 6. Delete from Supabase database and sync workspace state
     if (userId && isUUID(userId)) {
-      deleteExaminationTimetableFromDatabase(id, userId).catch((err) => {
-        console.error('Failed to delete examination timetable from Supabase:', err);
-      });
-      syncUserWorkspaceToDatabase(userId, {
-        timetables: nextList,
-        activeTimetableId: activeId === id ? null : undefined,
-      }).catch(() => {});
+      await Promise.allSettled([
+        deleteExaminationTimetableFromDatabase(id, userId),
+        syncUserWorkspaceToDatabase(userId, {
+          timetables: nextList,
+          activeTimetableId: wasActive ? null : undefined,
+        }),
+      ]);
     }
+
+    // 7. Dispatch events so all tabs, modules, and open views update instantaneously
+    window.dispatchEvent(new CustomEvent('dutyflow:timetable-deleted', { detail: { id } }));
+    window.dispatchEvent(new Event('dutyflow:saved-timetables-changed'));
+
+    return true;
   } catch (err) {
     console.error('Failed to delete timetable:', err);
+    return false;
   }
 }
 
@@ -649,7 +734,8 @@ export function toggleLockTimetable(id: string, isLocked: boolean, userId?: stri
 
 /**
  * Fetch timetables from Supabase database and merge with local cache.
- * Guarantees cross-device availability when switching devices or browsers.
+ * Guarantees cross-device availability when switching devices or browsers,
+ * while strictly honoring deletion tombstones so deleted timetables never reappear.
  */
 export async function fetchTimetablesFromCloud(userId?: string): Promise<ExaminationTimetable[]> {
   if (!userId || !isUUID(userId)) {
@@ -657,41 +743,73 @@ export async function fetchTimetablesFromCloud(userId?: string): Promise<Examina
   }
 
   try {
+    const tombstones = getDeletedTimetableIds(userId);
+
     const [dbTimetables, ws] = await Promise.all([
       fetchUserTimetablesFromDatabase(userId),
       fetchUserWorkspaceFromDatabase(userId),
     ]);
 
     const map = new Map<string, ExaminationTimetable>();
+    const tombstonedInCloud: string[] = [];
+
     if (Array.isArray(ws?.timetables)) {
       ws.timetables.forEach((t) => {
-        if (t && t.id) map.set(t.id, t);
+        if (t && t.id) {
+          if (tombstones.has(t.id)) {
+            tombstonedInCloud.push(t.id);
+          } else {
+            map.set(t.id, t);
+          }
+        }
       });
     }
     if (Array.isArray(dbTimetables)) {
       dbTimetables.forEach((t) => {
-        if (t && t.id) map.set(t.id, t);
+        if (t && t.id) {
+          if (tombstones.has(t.id)) {
+            tombstonedInCloud.push(t.id);
+          } else {
+            map.set(t.id, t);
+          }
+        }
       });
     }
 
     // Also include any local entries not yet synced to cloud and opportunistically sync them
     const local = getSavedTimetables(userId);
     local.forEach((t) => {
-      if (t && t.id && !map.has(t.id)) {
+      if (t && t.id && !tombstones.has(t.id) && !map.has(t.id)) {
         map.set(t.id, t);
         syncExaminationTimetableToDatabase(t, userId).catch(() => {});
       }
     });
 
-    // Sync activeTimetableId from cloud workspace if present
+    // Proactively purge any tombstoned entries still lingering in the database
+    if (tombstonedInCloud.length > 0) {
+      const uniquePurgeIds = Array.from(new Set(tombstonedInCloud));
+      uniquePurgeIds.forEach((delId) => {
+        deleteExaminationTimetableFromDatabase(delId, userId).catch(() => {});
+      });
+      syncUserWorkspaceToDatabase(userId, {
+        timetables: Array.from(map.values()),
+      }).catch(() => {});
+    }
+
+    // Sync activeTimetableId from cloud workspace if present and not deleted
     const activeKey = getActiveTimetableStorageKey(userId);
     let activeId = localStorage.getItem(activeKey);
-    if (!activeId && ws?.activeTimetableId) {
+    if (activeId && tombstones.has(activeId)) {
+      activeId = null;
+      localStorage.removeItem(activeKey);
+    }
+    if (!activeId && ws?.activeTimetableId && !tombstones.has(ws.activeTimetableId)) {
       activeId = ws.activeTimetableId;
       localStorage.setItem(activeKey, activeId);
     }
 
     const merged = Array.from(map.values())
+      .filter((item) => item && item.id && !tombstones.has(item.id))
       .map(normalizeTimetable)
       .map((item) => {
         const isActive = Boolean(activeId && item.id === activeId);

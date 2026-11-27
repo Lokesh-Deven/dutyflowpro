@@ -657,16 +657,26 @@ export async function deleteExaminationTimetableFromDatabase(
   if (!userId || !timetableId || !isUUID(userId)) return false;
 
   try {
-    const { error } = await supabase
+    // 1. Delete by primary ID
+    const { error: err1 } = await supabase
       .from('saved_allotments')
       .delete()
       .eq('id', timetableId)
       .eq('user_id', userId);
 
-    if (error) {
-      console.error('Error deleting examination timetable from database:', error);
-      return false;
+    if (err1) {
+      console.error('Error deleting examination timetable by primary ID from database:', err1);
     }
+
+    // 2. Also delete any record that stores this timetable inside assignments JSON
+    try {
+      await supabase
+        .from('saved_allotments')
+        .delete()
+        .eq('user_id', userId)
+        .filter('assignments->examinationTimetable->>id', 'eq', timetableId);
+    } catch (_) {}
+
     return true;
   } catch (err) {
     console.error('Exception in deleteExaminationTimetableFromDatabase:', err);
@@ -676,6 +686,22 @@ export async function deleteExaminationTimetableFromDatabase(
 
 // In-memory cache for user workspace state to merge partial updates safely
 const workspaceMemoryCache: Record<string, UserWorkspaceState> = {};
+
+/**
+ * Remove a deleted timetable from the in-memory workspace cache immediately
+ */
+export function removeTimetableFromMemoryCache(timetableId: string, userId: string): void {
+  if (!userId) return;
+  const current = workspaceMemoryCache[userId];
+  if (current) {
+    if (Array.isArray(current.timetables)) {
+      current.timetables = current.timetables.filter((t) => t && t.id !== timetableId);
+    }
+    if (current.activeTimetableId === timetableId) {
+      current.activeTimetableId = undefined;
+    }
+  }
+}
 
 /**
  * Sync user central workspace state (instructions, master rooms, seating rooms, subjects, students, active selections)

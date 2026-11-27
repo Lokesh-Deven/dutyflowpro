@@ -14,6 +14,7 @@ import {
   createNewTimetable,
   getSavedTimetables,
   fetchTimetablesFromCloud,
+  getDeletedTimetableIds,
   saveTimetable,
   deleteTimetable,
   toggleLockTimetable,
@@ -188,18 +189,60 @@ export default function ExaminationTimetablePage() {
     };
   }, [userId, timetable.id]);
 
+  // Listen for timetable deletion and saved changes across tabs and modules
+  useEffect(() => {
+    const handleTimetableDeleted = (e: any) => {
+      const deletedId = e.detail?.id;
+      if (deletedId) {
+        setSavedTimetables((prev) => prev.filter((t) => t.id !== deletedId));
+        if (timetable.id === deletedId) {
+          const remaining = getSavedTimetables(userId);
+          if (remaining.length > 0) {
+            setTimetable(remaining[0]);
+          } else {
+            setTimetable(createNewTimetable(defaultInstitutionName));
+          }
+          setHasUnsavedChanges(false);
+        }
+      }
+    };
+
+    const handleSavedChanged = () => {
+      setSavedTimetables(getSavedTimetables(userId));
+    };
+
+    window.addEventListener('dutyflow:timetable-deleted', handleTimetableDeleted);
+    window.addEventListener('dutyflow:saved-timetables-changed', handleSavedChanged);
+    return () => {
+      window.removeEventListener('dutyflow:timetable-deleted', handleTimetableDeleted);
+      window.removeEventListener('dutyflow:saved-timetables-changed', handleSavedChanged);
+    };
+  }, [userId, timetable.id, defaultInstitutionName]);
+
   // Cross-device auto-refresh on window focus or visibility change
   useEffect(() => {
     if (!userId) return;
 
     const handleRefresh = () => {
       fetchTimetablesFromCloud(userId).then((cloudList) => {
-        setSavedTimetables(cloudList);
-        if (cloudList.length > 0) {
+        const tombstones = getDeletedTimetableIds(userId);
+        const filtered = cloudList.filter((t) => !tombstones.has(t.id));
+        setSavedTimetables(filtered);
+        if (filtered.length > 0) {
           setTimetable((prev) => {
             if (hasUnsavedChanges) return prev;
-            const match = cloudList.find((t) => t.id === prev.id);
+            if (tombstones.has(prev.id)) {
+              return filtered[0];
+            }
+            const match = filtered.find((t) => t.id === prev.id);
             return match || prev;
+          });
+        } else {
+          setTimetable((prev) => {
+            if (tombstones.has(prev.id)) {
+              return createNewTimetable(defaultInstitutionName);
+            }
+            return prev;
           });
         }
       }).catch(() => {});
@@ -217,7 +260,7 @@ export default function ExaminationTimetablePage() {
       window.removeEventListener('focus', handleRefresh);
       document.removeEventListener('visibilitychange', handleVisibility);
     };
-  }, [userId, hasUnsavedChanges]);
+  }, [userId, hasUnsavedChanges, defaultInstitutionName]);
 
   // Combined available subjects
   const allAvailableSubjects = useMemo(() => {
@@ -775,22 +818,35 @@ export default function ExaminationTimetablePage() {
     });
   };
 
-  // Delete saved timetable
-  const handleDeleteSavedTimetable = (id: string) => {
-    deleteTimetable(id, userId);
-    const updatedList = getSavedTimetables(userId);
-    setSavedTimetables(updatedList);
+  // Delete saved timetable permanently
+  const handleDeleteSavedTimetable = async (id: string) => {
+    // 1. Immediately update UI state so the card is removed instantaneously
+    const nextSaved = savedTimetables.filter((t) => t.id !== id);
+    setSavedTimetables(nextSaved);
+
     if (timetable.id === id) {
-      if (updatedList.length > 0) {
-        setTimetable(updatedList[0]);
+      if (nextSaved.length > 0) {
+        setTimetable(nextSaved[0]);
       } else {
         setTimetable(createNewTimetable(defaultInstitutionName));
       }
+      setHasUnsavedChanges(false);
     }
+    if (activeTimetableId === id) {
+      setActiveTimetableId(null);
+    }
+
     toast({
       title: "Timetable Deleted",
-      description: "The saved timetable has been removed.",
+      description: "The saved timetable has been permanently removed.",
     });
+
+    // 2. Perform permanent deletion (tombstone, localStorage, Supabase DB, student portal)
+    await deleteTimetable(id, userId);
+
+    // 3. Re-verify the current list from storage
+    const updatedList = getSavedTimetables(userId);
+    setSavedTimetables(updatedList);
   };
 
   // Direct PDF Download
