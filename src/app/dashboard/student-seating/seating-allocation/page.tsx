@@ -17,7 +17,11 @@ import {
   ThreeColumnPatternConfig,
   MiddleBenchSeatingPattern,
 } from '@/lib/student-seating-types';
-import { runDeterministicSeatingAllocation, getRoomEffectiveCapacity } from '@/lib/student-seating-engine';
+import {
+  runDeterministicSeatingAllocation,
+  getRoomEffectiveCapacity,
+  completeAllocationTo100Percent,
+} from '@/lib/student-seating-engine';
 import {
   generateRoomSeatingPlanPdf,
   generateStudentSeatingIndexPdf,
@@ -28,7 +32,9 @@ import {
   isUUID,
 } from '@/lib/storage-service';
 import { RoomSeatingDiagram } from '@/components/dashboard/student-seating/room-seating-diagram';
-import { getSubjectColor } from '@/lib/student-seating-colors';
+import { getSubjectColor, getClassBadgeStyle } from '@/lib/student-seating-colors';
+import { resolveSubjectClass, isSubjectMatchingExamSlot } from '@/lib/student-seating-utils';
+import { cn } from '@/lib/utils';
 import { ExaminationTimetable, TimetableRow } from '@/lib/examination-timetable-types';
 import { ApprovalRestrictionDialog } from '@/components/dashboard/approval-restriction-dialog';
 import { getSavedTimetables, fetchTimetablesFromCloud, sortTimetableRows } from '@/lib/examination-timetable-service';
@@ -215,17 +221,24 @@ function SeatingAllocationWizardContent() {
     enabled: false,
     leftSubjectId: '',
     rightSubjectId: '',
-    middlePattern: 'allThree',
-    middleEnabledSeats: { sideA: true, center: true, sideB: true },
+    middlePattern: 'centerOnly',
+    middleEnabledSeats: { sideA: false, center: true, sideB: false },
     middleSeats: { sideA: '', center: '', sideB: '' },
   });
 
+  const createDefaultUnusedRows = useCallback((): MultiSubjectRow[] => [
+    { rowNumber: 1, sideA: 'UNUSED', center: 'UNUSED', sideB: 'UNUSED', enabled: true },
+    { rowNumber: 2, sideA: 'UNUSED', center: 'UNUSED', sideB: 'UNUSED', enabled: true },
+    { rowNumber: 3, sideA: 'UNUSED', center: 'UNUSED', sideB: 'UNUSED', enabled: true },
+    { rowNumber: 4, sideA: 'UNUSED', center: 'UNUSED', sideB: 'UNUSED', enabled: false },
+  ], []);
+
   // Step 4: Multi-Subject 4-Row Sequential System (3 or 4 Subjects)
   const [multiSubjectRows, setMultiSubjectRows] = useState<MultiSubjectRow[]>([
-    { rowNumber: 1, sideA: '', center: '', sideB: '', enabled: true },
-    { rowNumber: 2, sideA: '', center: '', sideB: '', enabled: true },
-    { rowNumber: 3, sideA: '', center: '', sideB: '', enabled: true },
-    { rowNumber: 4, sideA: '', center: 'NIL', sideB: '', enabled: false },
+    { rowNumber: 1, sideA: 'UNUSED', center: 'UNUSED', sideB: 'UNUSED', enabled: true },
+    { rowNumber: 2, sideA: 'UNUSED', center: 'UNUSED', sideB: 'UNUSED', enabled: true },
+    { rowNumber: 3, sideA: 'UNUSED', center: 'UNUSED', sideB: 'UNUSED', enabled: true },
+    { rowNumber: 4, sideA: 'UNUSED', center: 'UNUSED', sideB: 'UNUSED', enabled: false },
   ]);
   const [isSavingPattern, setIsSavingPattern] = useState<boolean>(false);
 
@@ -307,33 +320,95 @@ function SeatingAllocationWizardContent() {
     }
   }, [studentsBySubject, subjects]);
 
-  // Helper to generate safe pattern for 3-Column rooms according to student strength
-  const generateDefault3ColumnConfig = useCallback((subIds: string[]): ThreeColumnPatternConfig => {
-    const sorted = [...subIds].sort((a, b) => {
-      const countA = studentsBySubject[a]?.length || 0;
-      const countB = studentsBySubject[b]?.length || 0;
-      if (countB !== countA) return countB - countA;
-      const nameA = subjects.find((s) => s.id === a)?.name || '';
-      const nameB = subjects.find((s) => s.id === b)?.name || '';
-      return nameA.localeCompare(nameB);
-    });
+  // Helper to generate safe pattern for 3-Column rooms according to student strength and active mode demonstration
+  const generateDefault3ColumnConfig = useCallback(
+    (
+      subIds: string[],
+      modeOverride?: 'standard' | 'multiSubject',
+      rowsOverride?: MultiSubjectRow[]
+    ): ThreeColumnPatternConfig => {
+      const sorted = [...subIds].sort((a, b) => {
+        const countA = studentsBySubject[a]?.length || 0;
+        const countB = studentsBySubject[b]?.length || 0;
+        if (countB !== countA) return countB - countA;
+        const nameA = subjects.find((s) => s.id === a)?.name || '';
+        const nameB = subjects.find((s) => s.id === b)?.name || '';
+        return nameA.localeCompare(nameB);
+      });
 
-    const s1 = sorted[0] || '';
-    const s2 = sorted[1] || sorted[0] || '';
-    const s3 = sorted[2] || sorted[1] || sorted[0] || '';
+      const s1 = sorted[0] || '';
+      const s2 = sorted[1] || sorted[0] || '';
+      const s3 = sorted[2] || sorted[1] || sorted[0] || '';
 
-    return {
-      enabled: false,
-      leftSubjectId: s1,
-      rightSubjectId: s2,
-      middlePattern: 'allThree',
-      middleEnabledSeats: { sideA: true, center: true, sideB: true },
-      middleSeats: { sideA: s1, center: s2, sideB: s3 },
-      left: { sideA: s1, center: s1, sideB: s1 },
-      middle: { sideA: s1, center: s2, sideB: s3 },
-      right: { sideA: s2, center: s2, sideB: s2 },
-    };
-  }, [studentsBySubject, subjects]);
+      const has3ColRooms = masterRooms.some((r) => (Number(r.middleBenches) || 0) > 0);
+      const activeMode = modeOverride || (subIds.length > 2 ? 'multiSubject' : 'standard');
+      const rows = rowsOverride || multiSubjectRows;
+
+      let leftConfig = {
+        sideA: s1,
+        center: sorted.length >= 2 ? s2 : 'VACANT',
+        sideB: s1,
+      };
+      let middleSeatsConfig = {
+        sideA: s1,
+        center: sorted.length >= 2 ? s2 : s1,
+        sideB: s3,
+      };
+      let rightConfig = {
+        sideA: sorted.length >= 2 ? s2 : s1,
+        center: sorted.length >= 2 ? s1 : 'VACANT',
+        sideB: sorted.length >= 2 ? s2 : s1,
+      };
+
+      if (activeMode === 'multiSubject' && rows && rows.length > 0) {
+        const row1 = rows[0];
+        const rA = row1?.sideA || s1;
+        const rCenter =
+          row1?.center && row1.center !== 'NIL' && row1.center !== 'VACANT'
+            ? row1.center
+            : sorted.length >= 2
+              ? s2
+              : 'VACANT';
+        const rB = row1?.sideB || s1;
+
+        leftConfig = {
+          sideA: rA,
+          center: rCenter,
+          sideB: rB,
+        };
+
+        middleSeatsConfig = {
+          sideA: rA,
+          center:
+            row1?.center && row1.center !== 'NIL' && row1.center !== 'VACANT'
+              ? row1.center
+              : sorted.length >= 2
+                ? s2
+                : s1,
+          sideB: s3 || rB,
+        };
+
+        rightConfig = {
+          sideA: sorted.length >= 2 ? s2 : s1,
+          center: s1,
+          sideB: sorted.length >= 2 ? s2 : s1,
+        };
+      }
+
+      return {
+        enabled: has3ColRooms,
+        leftSubjectId: leftConfig.sideA,
+        rightSubjectId: rightConfig.sideA,
+        middlePattern: 'centerOnly',
+        middleEnabledSeats: { sideA: false, center: true, sideB: false },
+        middleSeats: middleSeatsConfig,
+        left: leftConfig,
+        middle: middleSeatsConfig,
+        right: rightConfig,
+      };
+    },
+    [studentsBySubject, subjects, masterRooms, multiSubjectRows]
+  );
 
   // Handler for "Auto Arrange Safe Pattern" action
   const handleAutoArrangeSafePattern = useCallback(() => {
@@ -341,9 +416,10 @@ function SeatingAllocationWizardContent() {
     const s1 = sortedSelectedSubjectIds[0];
     const s2 = sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0];
 
+    let currentRows = multiSubjectRows;
     if (step4Mode === 'multiSubject') {
-      const newRows = generateDefaultRows(sortedSelectedSubjectIds);
-      setMultiSubjectRows(newRows);
+      currentRows = generateDefaultRows(sortedSelectedSubjectIds);
+      setMultiSubjectRows(currentRows);
     } else {
       setPositionMapping({
         SIDE_A: s1,
@@ -353,12 +429,12 @@ function SeatingAllocationWizardContent() {
     }
 
     setThreeColumnConfig((prev) => {
-      const fresh = generateDefault3ColumnConfig(sortedSelectedSubjectIds);
+      const fresh = generateDefault3ColumnConfig(sortedSelectedSubjectIds, step4Mode, currentRows);
       return {
         ...fresh,
-        enabled: prev.enabled,
-        middlePattern: prev.middlePattern || 'allThree',
-        middleEnabledSeats: prev.middleEnabledSeats || { sideA: true, center: true, sideB: true },
+        enabled: prev.enabled !== undefined ? prev.enabled : masterRooms.some((r) => (Number(r.middleBenches) || 0) > 0),
+        middlePattern: 'centerOnly',
+        middleEnabledSeats: { sideA: false, center: true, sideB: false },
       };
     });
 
@@ -366,7 +442,7 @@ function SeatingAllocationWizardContent() {
       title: "Auto Arrange Safe Pattern Applied",
       description: "Subjects arranged according to student strength from highest to lowest.",
     });
-  }, [sortedSelectedSubjectIds, step4Mode, generateDefaultRows, generateDefault3ColumnConfig, pattern, toast]);
+  }, [sortedSelectedSubjectIds, step4Mode, generateDefaultRows, generateDefault3ColumnConfig, pattern, masterRooms, toast, multiSubjectRows]);
 
   // Automatically apply safe pattern arrangement when sorted subjects change or Step 4 loads
   const prevSubjectsKeyRef = useRef<string>('');
@@ -377,6 +453,12 @@ function SeatingAllocationWizardContent() {
         prevSubjectsKeyRef.current = currentKey;
         const s1 = sortedSelectedSubjectIds[0];
         const s2 = sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0];
+
+        // Step 4 default mode: When more than 2 subjects are included in the allocation, automatically select Mode 2
+        const isMulti = sortedSelectedSubjectIds.length > 2;
+        if (!activeAllocation) {
+          setStep4Mode(isMulti ? 'multiSubject' : 'standard');
+        }
 
         setPositionMapping((prev) => {
           const hasValidA = prev.SIDE_A && sortedSelectedSubjectIds.includes(prev.SIDE_A);
@@ -392,25 +474,41 @@ function SeatingAllocationWizardContent() {
           return prev;
         });
 
-        setThreeColumnConfig((prev) => {
-          if (!prev.leftSubjectId && !prev.left?.sideA) {
-            return generateDefault3ColumnConfig(sortedSelectedSubjectIds);
-          }
-          return prev;
-        });
-
+        let defaultRows = multiSubjectRows;
         setMultiSubjectRows((prevRows) => {
           const hasCustomized = prevRows.some(
-            (r) => r.sideA && sortedSelectedSubjectIds.includes(r.sideA)
+            (r) => r.sideA && r.sideA !== 'UNUSED' && sortedSelectedSubjectIds.includes(r.sideA)
           );
-          if (!hasCustomized || prevRows[0]?.sideA === '') {
-            return generateDefaultRows(sortedSelectedSubjectIds);
+          if (!hasCustomized) {
+            const unusedRows = createDefaultUnusedRows();
+            defaultRows = unusedRows;
+            return unusedRows;
           }
           return prevRows;
         });
+
+        const has3ColRooms = masterRooms.some((r) => (Number(r.middleBenches) || 0) > 0);
+        const default3Col = generateDefault3ColumnConfig(
+          sortedSelectedSubjectIds,
+          isMulti ? 'multiSubject' : 'standard',
+          defaultRows
+        );
+
+        setThreeColumnConfig((prev) => {
+          if (!activeAllocation) {
+            return {
+              ...default3Col,
+              enabled: has3ColRooms,
+            };
+          }
+          if (!prev.leftSubjectId && !prev.left?.sideA) {
+            return default3Col;
+          }
+          return prev;
+        });
       }
     }
-  }, [sortedSelectedSubjectIds, pattern, generateDefaultRows, generateDefault3ColumnConfig]);
+  }, [sortedSelectedSubjectIds, pattern, generateDefaultRows, generateDefault3ColumnConfig, activeAllocation, masterRooms]);
 
   // Validation function for multi-subject configuration
   const getPatternValidationError = useCallback((): string | null => {
@@ -498,12 +596,29 @@ function SeatingAllocationWizardContent() {
       if (activeAllocation.multiSubjectConfig.rows?.length) {
         setMultiSubjectRows(activeAllocation.multiSubjectConfig.rows);
       }
+    } else if (activeAllocation) {
+      setStep4Mode('standard');
+    } else if (selectedSubjectIds.length > 2) {
+      setStep4Mode('multiSubject');
     } else {
       setStep4Mode('standard');
     }
+
     if (activeAllocation?.threeColumnConfig) {
       setThreeColumnConfig(activeAllocation.threeColumnConfig);
-    } else if (selectedSubjectIds.length >= 3) {
+    } else {
+      const has3ColRooms = masterRooms.some((r) => (Number(r.middleBenches) || 0) > 0);
+      if (has3ColRooms) {
+        setThreeColumnConfig((prev) => ({
+          ...prev,
+          enabled: true,
+          middlePattern: prev.middlePattern || 'centerOnly',
+          middleEnabledSeats: prev.middleEnabledSeats || { sideA: false, center: true, sideB: false },
+        }));
+      }
+    }
+
+    if (!activeAllocation && selectedSubjectIds.length >= 3) {
       try {
         const storageKey = selectedDutyExamId
           ? `dutyflow_pattern_exam_${selectedDutyExamId}`
@@ -528,7 +643,7 @@ function SeatingAllocationWizardContent() {
         }).catch(() => { });
       }
     }
-  }, [activeAllocation, selectedDutyExamId, selectedSubjectIds, user?.id]);
+  }, [activeAllocation, selectedDutyExamId, selectedSubjectIds, user?.id, masterRooms]);
 
   // Step 5: Selected Rooms
   const [selectedRoomIds, setSelectedRoomIds] = useState<string[]>([]);
@@ -554,50 +669,50 @@ function SeatingAllocationWizardContent() {
 
   // Selected rooms capacity
   const selectedRoomsCapacity = useMemo(() => {
+    const multiCfg = isMultiSubjectMode ? { enabled: true, rows: multiSubjectRows } : undefined;
     return selectedRoomIds.reduce((sum, rId) => {
       const r = masterRooms.find((rm) => rm.id === rId);
       if (!r) return sum;
-      return sum + getRoomEffectiveCapacity(r, pattern, isMultiSubjectMode, threeColumnConfig);
+      return sum + getRoomEffectiveCapacity(r, pattern, isMultiSubjectMode, threeColumnConfig, multiCfg);
     }, 0);
-  }, [selectedRoomIds, masterRooms, pattern, isMultiSubjectMode, threeColumnConfig]);
+  }, [selectedRoomIds, masterRooms, pattern, isMultiSubjectMode, threeColumnConfig, multiSubjectRows]);
 
   const isCapacitySufficient = selectedRoomsCapacity >= totalStudentsSelected && totalStudentsSelected > 0;
 
-  // Simulated benches preview
-  const simulatedMultiSubjectBenches = useMemo(() => {
-    if (!isMultiSubjectMode || selectedSubjectIds.length < 2) return [];
+  // Auto-select needed rooms helper
+  const autoSelectNeededRooms = useCallback(
+    (
+      targetStudents: number = totalStudentsSelected,
+      currentPattern: SeatingPattern = pattern,
+      isMulti: boolean = isMultiSubjectMode,
+      threeColCfg: ThreeColumnPatternConfig = threeColumnConfig,
+      multiCfgRows: MultiSubjectRow[] = multiSubjectRows
+    ): string[] => {
+      if (masterRooms.length === 0 || targetStudents <= 0) return [];
+      let needed = targetStudents;
+      const picked: string[] = [];
+      const multiCfg = isMulti ? { enabled: true, rows: multiCfgRows } : undefined;
+      for (const r of masterRooms) {
+        if (needed <= 0) break;
+        const cap = getRoomEffectiveCapacity(r, currentPattern, isMulti, threeColCfg, multiCfg);
+        picked.push(r.id);
+        needed -= cap;
+      }
+      return picked;
+    },
+    [masterRooms, totalStudentsSelected, pattern, isMultiSubjectMode, threeColumnConfig, multiSubjectRows]
+  );
 
-    const dummyRoom: SeatingMasterRoom = {
-      id: 'sim-dummy-room',
-      roomNo: 'PREVIEW',
-      leftBenches: 15,
-      rightBenches: 15,
-      totalBenches: 30,
-      capacityOne: 30,
-      capacityTwo: 60,
-      capacityThree: 90,
-      status: 'Available',
-    };
+  // Step 5: Enable auto-selection of required rooms so that the needed rooms are pre-selected by default
+  useEffect(() => {
+    if (currentStep === 5 && selectedRoomIds.length === 0 && masterRooms.length > 0 && totalStudentsSelected > 0) {
+      const picked = autoSelectNeededRooms();
+      if (picked.length > 0) {
+        setSelectedRoomIds(picked);
+      }
+    }
+  }, [currentStep, selectedRoomIds.length, masterRooms.length, totalStudentsSelected, autoSelectNeededRooms]);
 
-    const activeSubjs = subjects.filter((s) => selectedSubjectIds.includes(s.id));
-    if (activeSubjs.length === 0) return [];
-
-    const simResult = runDeterministicSeatingAllocation({
-      rooms: [dummyRoom],
-      subjects: activeSubjs,
-      studentsBySubject,
-      pattern: isMultiSubjectMode ? '3_PER_BENCH' : pattern,
-      positionMapping,
-      multiSubjectConfig: isMultiSubjectMode ? {
-        enabled: true,
-        rows: multiSubjectRows,
-      } : undefined,
-      threeColumnConfig: threeColumnConfig?.enabled ? threeColumnConfig : undefined,
-    });
-
-    const benches = simResult.roomPlans[0]?.benches || [];
-    return benches.filter((b) => b.seats.some((s) => !!s.student)).slice(0, 16);
-  }, [isMultiSubjectMode, subjects, selectedSubjectIds, studentsBySubject, positionMapping, multiSubjectRows, threeColumnConfig, pattern]);
 
   // Handle Examination session select from Examination Timetable
   const handleSelectTimetableRow = (rowId: string) => {
@@ -643,17 +758,29 @@ function SeatingAllocationWizardContent() {
     if (rowStart) setStartTime(rowStart);
     if (rowEnd) setEndTime(rowEnd);
 
-    // 4. Auto-match and pre-select subjects in Step 2 from slot.subjects or row.subjects
+    // 4. Auto-match and pre-select subjects in Step 2 using COMPOSITE KEY (Class + Subject Title)
     const activeSubjects = slot?.subjects || row.subjects || [];
     if (activeSubjects.length > 0) {
+      let slotCourse = slot?.course || row.course || '';
+
+      if (!slotCourse && targetTimetable.classes && slot?.timings) {
+        const activeClassIds = Object.keys(slot.timings).filter((cId) => {
+          const t = slot.timings[cId];
+          return t?.startTime && t.startTime !== '-' && t?.endTime && t.endTime !== '-';
+        });
+        if (activeClassIds.length === 1) {
+          const col = targetTimetable.classes.find((c) => c.id === activeClassIds[0]);
+          if (col?.name) slotCourse = col.name;
+        }
+      }
+
       const matchedIds = subjects
-        .filter((subj) =>
-          activeSubjects.some(
-            (subName) =>
-              subName.trim().toLowerCase() === subj.name.trim().toLowerCase() ||
-              (subj.code && subName.trim().toLowerCase() === subj.code.trim().toLowerCase())
-          )
-        )
+        .filter((subj) => {
+          const subjStudents = studentsBySubject[subj.id] || [];
+          return activeSubjects.some((subName) =>
+            isSubjectMatchingExamSlot(subj, subjStudents, subName, slotCourse)
+          );
+        })
         .map((subj) => subj.id);
 
       if (matchedIds.length > 0) {
@@ -707,13 +834,17 @@ function SeatingAllocationWizardContent() {
 
     const result = runDeterministicSeatingAllocation({
       rooms: selectedRooms,
+      allEligibleRooms: masterRooms,
       subjects: selectedSubjs,
       studentsBySubject,
       pattern: isMultiSubjectMode ? '3_PER_BENCH' : pattern,
       positionMapping,
       multiSubjectConfig,
       threeColumnConfig: threeColumnConfig?.enabled ? threeColumnConfig : undefined,
+      allowAutoExpandRooms: true,
     });
+
+    const finalRoomIds = result.roomPlans.map((rp) => rp.roomId);
 
     const newRecord: SeatingAllocationRecord = {
       id: activeAllocation ? activeAllocation.id : `alloc-${Date.now()}`,
@@ -730,7 +861,7 @@ function SeatingAllocationWizardContent() {
       positionMapping,
       multiSubjectConfig,
       threeColumnConfig: threeColumnConfig?.enabled ? threeColumnConfig : undefined,
-      roomIds: selectedRoomIds,
+      roomIds: finalRoomIds,
       roomPlans: result.roomPlans,
       subjectStats: result.subjectStats,
       summary: result.summary,
@@ -838,11 +969,35 @@ function SeatingAllocationWizardContent() {
     }
   };
 
+  const handleCompleteAllocationTo100 = () => {
+    if (!activeAllocation) return;
+    try {
+      const repaired = completeAllocationTo100Percent(
+        activeAllocation,
+        masterRooms,
+        subjects,
+        studentsBySubject
+      );
+      saveAllocation(repaired);
+      setActiveAllocation(repaired);
+      toast({
+        title: "100% Student Allocation Completed!",
+        description: `Successfully allocated all ${repaired.summary.allocatedStudents} students across ${repaired.summary.totalRooms} rooms with zero unallocated students.`,
+      });
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Allocation Error",
+        description: err.message || "Failed to auto-complete allocation.",
+      });
+    }
+  };
+
   // 3-Column Examination Room Configuration Segment
   const renderThreeColumnSegment = () => {
     const is3ColEnabled = Boolean(threeColumnConfig.enabled);
-    const middlePattern = threeColumnConfig.middlePattern || 'allThree';
-    const middleEnabled = threeColumnConfig.middleEnabledSeats || { sideA: true, center: true, sideB: true };
+    const middlePattern = threeColumnConfig.middlePattern || 'centerOnly';
+    const middleEnabled = threeColumnConfig.middleEnabledSeats || { sideA: false, center: true, sideB: false };
     const middleSeats = threeColumnConfig.middleSeats || {
       sideA: sortedSelectedSubjectIds[0] || '',
       center: sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0] || '',
@@ -870,34 +1025,22 @@ function SeatingAllocationWizardContent() {
               value={is3ColEnabled ? "yes" : "no"}
               onValueChange={(val) => {
                 const isYes = val === "yes";
-                setThreeColumnConfig((prev) => ({
-                  ...prev,
-                  enabled: isYes,
-                  leftSubjectId: prev.leftSubjectId || sortedSelectedSubjectIds[0] || '',
-                  rightSubjectId: prev.rightSubjectId || sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0] || '',
-                  middlePattern: prev.middlePattern || 'allThree',
-                  middleEnabledSeats: prev.middleEnabledSeats || { sideA: true, center: true, sideB: true },
-                  middleSeats: prev.middleSeats || {
-                    sideA: sortedSelectedSubjectIds[0] || '',
-                    center: sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0] || '',
-                    sideB: sortedSelectedSubjectIds[2] || sortedSelectedSubjectIds[0] || '',
-                  },
-                  left: {
-                    sideA: prev.left?.sideA || prev.leftSubjectId || sortedSelectedSubjectIds[0] || '',
-                    center: prev.left?.center || sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0] || 'VACANT',
-                    sideB: prev.left?.sideB || prev.leftSubjectId || sortedSelectedSubjectIds[0] || '',
-                  },
-                  right: {
-                    sideA: prev.right?.sideA || prev.rightSubjectId || sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0] || '',
-                    center: prev.right?.center || sortedSelectedSubjectIds[0] || 'VACANT',
-                    sideB: prev.right?.sideB || prev.rightSubjectId || sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0] || '',
-                  },
-                  middle: prev.middle || prev.middleSeats || {
-                    sideA: sortedSelectedSubjectIds[0] || '',
-                    center: sortedSelectedSubjectIds[1] || sortedSelectedSubjectIds[0] || '',
-                    sideB: sortedSelectedSubjectIds[2] || sortedSelectedSubjectIds[0] || '',
-                  },
-                }));
+                setThreeColumnConfig((prev) => {
+                  const fresh = generateDefault3ColumnConfig(sortedSelectedSubjectIds, step4Mode);
+                  return {
+                    ...fresh,
+                    ...prev,
+                    enabled: isYes,
+                    leftSubjectId: prev.leftSubjectId || fresh.leftSubjectId,
+                    rightSubjectId: prev.rightSubjectId || fresh.rightSubjectId,
+                    middlePattern: prev.middlePattern || 'centerOnly',
+                    middleEnabledSeats: prev.middleEnabledSeats || { sideA: false, center: true, sideB: false },
+                    middleSeats: prev.middleSeats || fresh.middleSeats,
+                    left: prev.left || fresh.left,
+                    right: prev.right || fresh.right,
+                    middle: prev.middle || fresh.middle,
+                  };
+                });
               }}
               className="flex items-center gap-4 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 shrink-0"
             >
@@ -1341,6 +1484,12 @@ function SeatingAllocationWizardContent() {
                 <div
                   onClick={() => {
                     if (isCompleted || (activeAllocation && currentStep === 6)) {
+                      if (s.num === 5 && selectedRoomIds.length === 0) {
+                        const picked = autoSelectNeededRooms();
+                        if (picked.length > 0) {
+                          setSelectedRoomIds(picked);
+                        }
+                      }
                       setCurrentStep(s.num);
                     }
                   }}
@@ -1643,6 +1792,8 @@ function SeatingAllocationWizardContent() {
             {alphabeticalSubjects.map((subj) => {
               const students = studentsBySubject[subj.id] || [];
               const isChecked = selectedSubjectIds.includes(subj.id);
+              const resolvedClass = resolveSubjectClass(subj, students);
+              const classStyle = getClassBadgeStyle(resolvedClass);
 
               return (
                 <div
@@ -1666,12 +1817,20 @@ function SeatingAllocationWizardContent() {
                       className="data-[state=checked]:bg-[#1E2A5E]"
                     />
                     <div>
-                      <div className="font-headline font-bold text-xs text-slate-900 dark:text-white">
-                        {subj.name}
+                      <div className="flex items-center gap-2">
+                        <span className="font-headline font-bold text-xs text-slate-900 dark:text-white">
+                          {subj.name}
+                        </span>
+                        <Badge
+                          variant="outline"
+                          className={cn("text-[10px] font-bold px-2 py-0.5", classStyle.badgeClass)}
+                        >
+                          {resolvedClass}
+                        </Badge>
                       </div>
-                      {subj.code && (
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-                          Class: {subj.code}
+                      {subj.code && subj.code !== resolvedClass && (
+                        <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                          Code: {subj.code}
                         </div>
                       )}
                     </div>
@@ -1843,7 +2002,36 @@ function SeatingAllocationWizardContent() {
             </Button>
 
             <Button
-              onClick={() => setCurrentStep(4)}
+              onClick={() => {
+                const isMulti = selectedSubjectIds.length > 2;
+                if (isMulti) {
+                  setStep4Mode('multiSubject');
+                  setMultiSubjectRows((prevRows) => {
+                    const hasCustomized = prevRows.some(
+                      (r) => r.sideA && r.sideA !== 'UNUSED' && sortedSelectedSubjectIds.includes(r.sideA)
+                    );
+                    if (!hasCustomized) {
+                      return createDefaultUnusedRows();
+                    }
+                    return prevRows;
+                  });
+                } else {
+                  setStep4Mode('standard');
+                }
+
+                const has3Col = masterRooms.some((r) => (Number(r.middleBenches) || 0) > 0);
+                setThreeColumnConfig((prev) => {
+                  const fresh = generateDefault3ColumnConfig(sortedSelectedSubjectIds, isMulti ? 'multiSubject' : 'standard');
+                  return {
+                    ...fresh,
+                    enabled: prev.enabled !== undefined ? prev.enabled : has3Col,
+                    middlePattern: prev.middlePattern || 'centerOnly',
+                    middleEnabledSeats: prev.middleEnabledSeats || { sideA: false, center: true, sideB: false },
+                  };
+                });
+
+                setCurrentStep(4);
+              }}
               className="bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs h-9 px-5 gap-1.5 shadow-xs"
             >
               Continue to Assign Positions
@@ -1887,7 +2075,18 @@ function SeatingAllocationWizardContent() {
                 type="button"
                 size="sm"
                 variant={step4Mode === 'standard' ? "default" : "outline"}
-                onClick={() => setStep4Mode('standard')}
+                onClick={() => {
+                  setStep4Mode('standard');
+                  setThreeColumnConfig((prev) => {
+                    const fresh = generateDefault3ColumnConfig(sortedSelectedSubjectIds, 'standard');
+                    return {
+                      ...fresh,
+                      enabled: prev.enabled !== undefined ? prev.enabled : masterRooms.some((r) => (Number(r.middleBenches) || 0) > 0),
+                      middlePattern: prev.middlePattern || 'centerOnly',
+                      middleEnabledSeats: prev.middleEnabledSeats || { sideA: false, center: true, sideB: false },
+                    };
+                  });
+                }}
                 className={`text-xs h-8 font-bold ${step4Mode === 'standard'
                     ? "bg-[#1E2A5E] text-white hover:bg-[#151D42]"
                     : "text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700"
@@ -1902,9 +2101,24 @@ function SeatingAllocationWizardContent() {
                 variant={step4Mode === 'multiSubject' ? "default" : "outline"}
                 onClick={() => {
                   setStep4Mode('multiSubject');
-                  if (!multiSubjectRows[0]?.sideA) {
-                    setMultiSubjectRows(generateDefaultRows(sortedSelectedSubjectIds));
-                  }
+                  setMultiSubjectRows((prevRows) => {
+                    const hasCustomized = prevRows.some(
+                      (r) => r.sideA && r.sideA !== 'UNUSED' && sortedSelectedSubjectIds.includes(r.sideA)
+                    );
+                    if (!hasCustomized) {
+                      return createDefaultUnusedRows();
+                    }
+                    return prevRows;
+                  });
+                  setThreeColumnConfig((prev) => {
+                    const fresh = generateDefault3ColumnConfig(sortedSelectedSubjectIds, 'multiSubject', multiSubjectRows);
+                    return {
+                      ...fresh,
+                      enabled: prev.enabled !== undefined ? prev.enabled : masterRooms.some((r) => (Number(r.middleBenches) || 0) > 0),
+                      middlePattern: prev.middlePattern || 'centerOnly',
+                      middleEnabledSeats: prev.middleEnabledSeats || { sideA: false, center: true, sideB: false },
+                    };
+                  });
                 }}
                 className={`text-xs h-8 font-bold gap-1.5 ${step4Mode === 'multiSubject'
                     ? "bg-[#1E2A5E] text-white hover:bg-[#151D42] shadow-xs"
@@ -2347,7 +2561,24 @@ function SeatingAllocationWizardContent() {
                   size="sm"
                   onClick={() => {
                     setStep4Mode('multiSubject');
-                    setMultiSubjectRows(generateDefaultRows(sortedSelectedSubjectIds));
+                    setMultiSubjectRows((prevRows) => {
+                      const hasCustomized = prevRows.some(
+                        (r) => r.sideA && r.sideA !== 'UNUSED' && sortedSelectedSubjectIds.includes(r.sideA)
+                      );
+                      if (!hasCustomized) {
+                        return createDefaultUnusedRows();
+                      }
+                      return prevRows;
+                    });
+                    setThreeColumnConfig((prev) => {
+                      const fresh = generateDefault3ColumnConfig(sortedSelectedSubjectIds, 'multiSubject', multiSubjectRows);
+                      return {
+                        ...fresh,
+                        enabled: prev.enabled !== undefined ? prev.enabled : masterRooms.some((r) => (Number(r.middleBenches) || 0) > 0),
+                        middlePattern: prev.middlePattern || 'centerOnly',
+                        middleEnabledSeats: prev.middleEnabledSeats || { sideA: false, center: true, sideB: false },
+                      };
+                    });
                   }}
                   className="bg-[#1E2A5E] hover:bg-[#151D42] text-white text-xs font-bold shrink-0 gap-1.5 h-8 px-3.5 shadow-2xs"
                 >
@@ -2476,11 +2707,11 @@ function SeatingAllocationWizardContent() {
                           )}
 
                           <div className="text-[11px] font-semibold text-slate-500 bg-slate-50 px-2.5 py-0.5 rounded-full border border-slate-200">
-                            {sA?.name || '—'} &bull;{' '}
+                            {(!row.sideA || row.sideA === 'UNUSED') ? 'Optional/Unused' : sA?.name || '—'} &bull;{' '}
                             <span className={isCenterNil ? 'text-amber-600 font-bold' : ''}>
-                              {isCenterNil ? 'NIL' : sC?.name || '—'}
+                              {isCenterNil ? 'NIL' : (!row.center || row.center === 'UNUSED') ? 'Optional/Unused' : sC?.name || '—'}
                             </span>{' '}
-                            &bull; {sB?.name || '—'}
+                            &bull; {(!row.sideB || row.sideB === 'UNUSED') ? 'Optional/Unused' : sB?.name || '—'}
                           </div>
                         </div>
                       </div>
@@ -2494,10 +2725,10 @@ function SeatingAllocationWizardContent() {
                             <span className="text-[10px] text-slate-400 font-normal">Subject</span>
                           </Label>
                           <Select
-                            value={row.sideA || (row.rowNumber >= 3 ? 'UNUSED' : undefined)}
+                            value={row.sideA || 'UNUSED'}
                             onValueChange={(val) => {
                               const next = [...multiSubjectRows];
-                              next[idx] = { ...next[idx], sideA: val === 'UNUSED' ? '' : val };
+                              next[idx] = { ...next[idx], sideA: val };
                               setMultiSubjectRows(next);
                             }}
                           >
@@ -2514,11 +2745,9 @@ function SeatingAllocationWizardContent() {
                                   </SelectItem>
                                 );
                               })}
-                              {row.rowNumber >= 3 && (
-                                <SelectItem value="UNUSED" className="text-xs text-slate-400 italic">
-                                  -- Optional / Unused --
-                                </SelectItem>
-                              )}
+                              <SelectItem value="UNUSED" className="text-xs text-slate-400 italic">
+                                -- Optional / Unused --
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -2530,10 +2759,10 @@ function SeatingAllocationWizardContent() {
                             <span className="text-[10px] text-slate-400 font-normal">Subject / NIL</span>
                           </Label>
                           <Select
-                            value={row.center || (row.rowNumber >= 3 ? 'UNUSED' : 'NIL')}
+                            value={row.center || 'UNUSED'}
                             onValueChange={(val) => {
                               const next = [...multiSubjectRows];
-                              next[idx] = { ...next[idx], center: val === 'UNUSED' ? '' : val };
+                              next[idx] = { ...next[idx], center: val };
                               setMultiSubjectRows(next);
                             }}
                           >
@@ -2556,11 +2785,9 @@ function SeatingAllocationWizardContent() {
                               >
                                 ∅ NIL / Vacant (Leave Empty)
                               </SelectItem>
-                              {row.rowNumber >= 3 && (
-                                <SelectItem value="UNUSED" className="text-xs text-slate-400 italic">
-                                  -- Optional / Unused --
-                                </SelectItem>
-                              )}
+                              <SelectItem value="UNUSED" className="text-xs text-slate-400 italic">
+                                -- Optional / Unused --
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -2572,10 +2799,10 @@ function SeatingAllocationWizardContent() {
                             <span className="text-[10px] text-slate-400 font-normal">Subject</span>
                           </Label>
                           <Select
-                            value={row.sideB || (row.rowNumber >= 3 ? 'UNUSED' : undefined)}
+                            value={row.sideB || 'UNUSED'}
                             onValueChange={(val) => {
                               const next = [...multiSubjectRows];
-                              next[idx] = { ...next[idx], sideB: val === 'UNUSED' ? '' : val };
+                              next[idx] = { ...next[idx], sideB: val };
                               setMultiSubjectRows(next);
                             }}
                           >
@@ -2592,11 +2819,9 @@ function SeatingAllocationWizardContent() {
                                   </SelectItem>
                                 );
                               })}
-                              {row.rowNumber >= 3 && (
-                                <SelectItem value="UNUSED" className="text-xs text-slate-400 italic">
-                                  -- Optional / Unused --
-                                </SelectItem>
-                              )}
+                              <SelectItem value="UNUSED" className="text-xs text-slate-400 italic">
+                                -- Optional / Unused --
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -2604,128 +2829,6 @@ function SeatingAllocationWizardContent() {
                     </div>
                   );
                 })}
-              </div>
-
-              {/* Section 4: Trigger Condition Explainer & Flowchart */}
-              <div className="bg-gradient-to-br from-slate-900 to-[#1E2A5E] text-white rounded-xl p-5 shadow-sm space-y-4">
-                <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
-                  <div className="flex items-center gap-2">
-                    <ListOrdered className="w-4 h-4 text-amber-400" />
-                    <span className="font-headline font-bold text-xs uppercase tracking-wider text-slate-200">
-                      Sequential Trigger Rule & Flowchart
-                    </span>
-                  </div>
-                  <Badge variant="outline" className="text-[10px] font-bold text-amber-300 border-amber-400/40 bg-white/5">
-                    Immediate Auto-Row Switch
-                  </Badge>
-                </div>
-
-                {/* Explanation Banner */}
-                <div className="bg-white/10 border border-white/15 rounded-lg p-3 text-xs space-y-1.5">
-                  <div className="text-amber-300 font-bold flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
-                    <Info className="w-3.5 h-3.5" />
-                    Core Trigger Condition
-                  </div>
-                  <p className="text-slate-200 text-xs leading-relaxed">
-                    <strong>IF either subject in the current row is fully allocated &rarr; IMMEDIATELY activate the next row</strong> and continue allocation carrying forward any unfinished students.
-                  </p>
-                  <p className="text-slate-300 text-[11px] leading-relaxed">
-                    <strong>Single Remaining Subject Rule:</strong> When only one subject remains unallocated, it is placed <strong>strictly on Side A and Side B with Centre set to NIL</strong>.
-                  </p>
-                </div>
-
-                {/* Visual Flowchart */}
-                <div className="space-y-1.5 pt-1">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-300">
-                    Execution Flow Sequence
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2 text-xs">
-                    {multiSubjectRows
-                      .filter(
-                        (r) =>
-                          r.enabled !== false &&
-                          ((r.sideA && r.sideA !== 'UNUSED') || (r.sideB && r.sideB !== 'UNUSED'))
-                      )
-                      .map((r, idx, arr) => {
-                        const sA = subjects.find((s) => s.id === r.sideA)?.name || 'Side A';
-                        const sC = r.center === 'NIL' || r.center === 'VACANT' ? 'NIL' : subjects.find((s) => s.id === r.center)?.name || 'Centre';
-                        const sB = subjects.find((s) => s.id === r.sideB)?.name || 'Side B';
-
-                        return (
-                          <React.Fragment key={r.rowNumber}>
-                            <div className="bg-white/10 border border-white/15 px-3 py-1.5 rounded-lg flex items-center gap-2">
-                              <span className="font-mono text-amber-300 font-bold text-[10px]">
-                                ROW {r.rowNumber}:
-                              </span>
-                              <span className="font-semibold text-white text-xs">
-                                {sA} | {sC} | {sB}
-                              </span>
-                            </div>
-                            <span className="text-amber-400 font-bold">&rarr;</span>
-                          </React.Fragment>
-                        );
-                      })}
-                    <div className="bg-amber-400/20 border border-amber-400/40 text-amber-200 px-3 py-1.5 rounded-lg font-semibold text-xs">
-                      Single Remaining Subject (Side A & B only &bull; Centre NIL)
-                    </div>
-                  </div>
-                </div>
-
-                {/* Simulated Bench Assignments Table */}
-                {simulatedMultiSubjectBenches.length > 0 && (
-                  <div className="bg-black/30 rounded-lg p-3 border border-white/10 mt-3">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-300 mb-2 flex items-center justify-between">
-                      <span>Live Simulation (First {simulatedMultiSubjectBenches.length} Benches)</span>
-                      <span className="text-[9px] text-amber-300 font-normal">Deterministic dry-run with actual students</span>
-                    </div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-[11px] border-collapse">
-                        <thead>
-                          <tr className="text-slate-400 border-b border-white/10 font-bold uppercase text-[9px]">
-                            <th className="py-1 px-2">Bench</th>
-                            <th className="py-1 px-2">Side A</th>
-                            <th className="py-1 px-2">Centre</th>
-                            <th className="py-1 px-2">Side B</th>
-                            <th className="py-1 px-2 text-right">Active Pattern</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-white/5 font-medium">
-                          {simulatedMultiSubjectBenches.map((b, idx) => {
-                            const seatA = b.seats.find((s) => s.position === 'SIDE_A');
-                            const seatC = b.seats.find((s) => s.position === 'CENTER');
-                            const seatB = b.seats.find((s) => s.position === 'SIDE_B');
-
-                            const formatSeat = (st: typeof seatA) => {
-                              if (!st?.student) return <span className="text-amber-400/70 italic">NIL</span>;
-                              return (
-                                <span>
-                                  <span className="font-bold text-white">{st.student.rollNo}</span>{' '}
-                                  <span className="text-[9px] text-slate-300">({st.subjectName})</span>
-                                </span>
-                              );
-                            };
-
-                            return (
-                              <tr key={`sim-bench-${b.side}-${b.benchNumber}-${idx}`} className="hover:bg-white/5">
-                                <td className="py-1 px-2 font-mono text-amber-300 font-bold">
-                                  {b.side === 'LEFT' ? 'L' : b.side === 'MIDDLE' ? 'M' : 'R'}{b.benchNumber}
-                                </td>
-                                <td className="py-1 px-2">{formatSeat(seatA)}</td>
-                                <td className="py-1 px-2">{formatSeat(seatC)}</td>
-                                <td className="py-1 px-2">{formatSeat(seatB)}</td>
-                                <td className="py-1 px-2 text-right">
-                                  <span className="text-indigo-300 font-mono text-[10px] bg-white/10 px-1.5 py-0.5 rounded-xs">
-                                    {b.rowLabel || 'Allocated'}
-                                  </span>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
               </div>
 
               {/* Integrated 3-Column Examination Room Configuration for Mode 2 */}
@@ -2777,35 +2880,28 @@ function SeatingAllocationWizardContent() {
                 }
                 setPositionMapping(updated);
 
-                // Ensure 3-column configuration has valid defaults if enabled
-                if (threeColumnConfig.enabled) {
-                  setThreeColumnConfig((prev) => ({
-                    ...prev,
-                    leftSubjectId: prev.leftSubjectId || s1,
-                    rightSubjectId: prev.rightSubjectId || s2,
-                    middlePattern: prev.middlePattern || 'allThree',
-                    middleEnabledSeats: prev.middleEnabledSeats || { sideA: true, center: true, sideB: true },
-                    middleSeats: prev.middleSeats || {
-                      sideA: s1,
-                      center: s2,
-                      sideB: sortedSelectedSubjectIds[2] || s1,
-                    },
-                    left: {
-                      sideA: prev.left?.sideA || prev.leftSubjectId || s1,
-                      center: prev.left?.center || (sortedSelectedSubjectIds.length >= 2 ? s2 : 'VACANT'),
-                      sideB: prev.left?.sideB || prev.leftSubjectId || s1,
-                    },
-                    right: {
-                      sideA: prev.right?.sideA || prev.rightSubjectId || s2,
-                      center: prev.right?.center || s1,
-                      sideB: prev.right?.sideB || prev.rightSubjectId || s2,
-                    },
-                    middle: prev.middle || prev.middleSeats || {
-                      sideA: s1,
-                      center: s2,
-                      sideB: sortedSelectedSubjectIds[2] || s1,
-                    },
-                  }));
+                // Ensure 3-column configuration has valid defaults
+                const has3Col = masterRooms.some((r) => (Number(r.middleBenches) || 0) > 0);
+                const fresh3Col = generateDefault3ColumnConfig(sortedSelectedSubjectIds, step4Mode);
+                setThreeColumnConfig((prev) => ({
+                  ...fresh3Col,
+                  ...prev,
+                  enabled: prev.enabled !== undefined ? prev.enabled : has3Col,
+                  leftSubjectId: prev.leftSubjectId || fresh3Col.leftSubjectId,
+                  rightSubjectId: prev.rightSubjectId || fresh3Col.rightSubjectId,
+                  middlePattern: prev.middlePattern || 'centerOnly',
+                  middleEnabledSeats: prev.middleEnabledSeats || { sideA: false, center: true, sideB: false },
+                  left: prev.left || fresh3Col.left,
+                  right: prev.right || fresh3Col.right,
+                  middle: prev.middle || fresh3Col.middle,
+                }));
+
+                // Step 5: Enable auto-selection of required rooms so that the needed rooms are pre-selected by default
+                if (selectedRoomIds.length === 0) {
+                  const picked = autoSelectNeededRooms();
+                  if (picked.length > 0) {
+                    setSelectedRoomIds(picked);
+                  }
                 }
 
                 setCurrentStep(5);
@@ -2859,9 +2955,10 @@ function SeatingAllocationWizardContent() {
                   // Quick auto select enough rooms
                   let needed = totalStudentsSelected;
                   const picked: string[] = [];
+                  const multiCfg = isMultiSubjectMode ? { enabled: true, rows: multiSubjectRows } : undefined;
                   for (const r of masterRooms) {
                     if (needed <= 0) break;
-                    const cap = getRoomEffectiveCapacity(r, pattern, isMultiSubjectMode, threeColumnConfig);
+                    const cap = getRoomEffectiveCapacity(r, pattern, isMultiSubjectMode, threeColumnConfig, multiCfg);
                     picked.push(r.id);
                     needed -= cap;
                   }
@@ -2908,7 +3005,13 @@ function SeatingAllocationWizardContent() {
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70 font-medium text-slate-700 dark:text-slate-200">
                 {masterRooms.map((room, index) => {
                   const isChecked = selectedRoomIds.includes(room.id);
-                  const effectiveCap = getRoomEffectiveCapacity(room, pattern, isMultiSubjectMode, threeColumnConfig);
+                  const effectiveCap = getRoomEffectiveCapacity(
+                    room,
+                    pattern,
+                    isMultiSubjectMode,
+                    threeColumnConfig,
+                    isMultiSubjectMode ? { enabled: true, rows: multiSubjectRows } : undefined
+                  );
 
                   return (
                     <tr
@@ -3367,6 +3470,33 @@ function SeatingAllocationWizardContent() {
               </Button>
             </div>
           </div>
+
+          {/* Incomplete Allocation Alert & One-Click 100% Completion Action */}
+          {activeAllocation.summary.unallocatedStudents > 0 && (
+            <div className="bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-300 dark:border-amber-700/60 rounded-xl p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-amber-500 text-white rounded-lg mt-0.5">
+                  <AlertCircle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-headline font-bold text-sm text-amber-950 dark:text-amber-200">
+                    Incomplete Seating Allocation ({activeAllocation.summary.unallocatedStudents} Student{activeAllocation.summary.unallocatedStudents > 1 ? 's' : ''} Unallocated)
+                  </h4>
+                  <p className="text-xs text-amber-800 dark:text-amber-300 mt-0.5">
+                    Some students were not seated in this plan. Click below to automatically complete 100% allocation across all eligible examination rooms.
+                  </p>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                onClick={handleCompleteAllocationTo100}
+                className="bg-[#1E2A5E] hover:bg-[#151D42] text-white font-bold text-xs h-9 px-4 gap-2 shrink-0 shadow-sm cursor-pointer"
+              >
+                <Sparkles className="w-4 h-4 text-amber-300" />
+                Complete 100% Allocation Now
+              </Button>
+            </div>
+          )}
 
           {/* Subject-Wise Allocation Table */}
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-xs">

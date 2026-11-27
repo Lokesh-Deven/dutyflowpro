@@ -16,6 +16,7 @@ import {
 import type { ExaminationTimetable, TimetableRow } from '@/lib/examination-timetable-types';
 import type { Examination } from '@/lib/types';
 import type { SeatingAllocationRecord, StudentSubject } from '@/lib/student-seating-types';
+import { findMatchingAllocationRooms, matchSeatingAllocationDetails } from '@/lib/student-seating-utils';
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -80,120 +81,7 @@ const HOURS = Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2
 const MINUTES = ['00', '15', '30', '45'];
 const PERIODS = ['AM', 'PM'];
 
-/**
- * Match a timetable session by Date and Subject to records in Seating Allocations
- */
-function findMatchingAllocationRooms(
-  sessionDate: Date | string,
-  subjectTitle: string,
-  allocations: SeatingAllocationRecord[],
-  studentSubjects: StudentSubject[] = []
-): number {
-  if (!allocations || allocations.length === 0) return 0;
 
-  let isoDate = '';
-  let ddmmyyyyDate = '';
-
-  if (sessionDate instanceof Date) {
-    if (!isNaN(sessionDate.getTime())) {
-      isoDate = sessionDate.toISOString().split('T')[0];
-      ddmmyyyyDate = format(sessionDate, 'dd.MM.yyyy');
-    }
-  } else if (typeof sessionDate === 'string') {
-    const clean = sessionDate.trim();
-    if (clean.includes('.')) {
-      ddmmyyyyDate = clean;
-      const parts = clean.split('.');
-      if (parts.length === 3) {
-        isoDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
-      }
-    } else {
-      isoDate = clean.split('T')[0];
-      const parts = isoDate.split('-');
-      if (parts.length === 3) {
-        ddmmyyyyDate = `${parts[2].padStart(2, '0')}.${parts[1].padStart(2, '0')}.${parts[0]}`;
-      }
-    }
-  }
-
-  const subjectTokens = (subjectTitle || '')
-    .toLowerCase()
-    .split(/[\s,\/&\-_+()]+/)
-    .filter((t) => t.length > 2);
-
-  // 1. Strict priority: Match both Date AND Subject
-  const matchedOnBoth = allocations.filter((alloc) => {
-    const aDate = (alloc.examination?.date || '').trim();
-    const dateMatches =
-      aDate === isoDate ||
-      aDate === ddmmyyyyDate ||
-      (isoDate && aDate.startsWith(isoDate));
-    if (!dateMatches) return false;
-
-    const allocSubjectNames = (alloc.subjectIds || []).map((sid) => {
-      const foundSubj = studentSubjects.find((s) => s.id === sid);
-      return (foundSubj ? foundSubj.name : sid).toLowerCase();
-    });
-    const allocName = (alloc.name || '').toLowerCase();
-    const allocExamName = (alloc.examination?.examName || '').toLowerCase();
-
-    const hasSubjectMatch =
-      subjectTokens.length === 0 ||
-      subjectTokens.some(
-        (tok) =>
-          allocSubjectNames.some((asn) => asn.includes(tok)) ||
-          allocName.includes(tok) ||
-          allocExamName.includes(tok)
-      );
-
-    return hasSubjectMatch;
-  });
-
-  if (matchedOnBoth.length > 0) {
-    return matchedOnBoth.reduce((max, a) => {
-      const roomCount = a.summary?.totalRooms || a.roomPlans?.length || a.roomIds?.length || 0;
-      return Math.max(max, roomCount);
-    }, 0);
-  }
-
-  // 2. Secondary priority: Match on Date alone
-  const matchedOnDate = allocations.filter((alloc) => {
-    const aDate = (alloc.examination?.date || '').trim();
-    return aDate === isoDate || aDate === ddmmyyyyDate || (isoDate && aDate.startsWith(isoDate));
-  });
-
-  if (matchedOnDate.length > 0) {
-    return matchedOnDate.reduce((max, a) => {
-      const roomCount = a.summary?.totalRooms || a.roomPlans?.length || a.roomIds?.length || 0;
-      return Math.max(max, roomCount);
-    }, 0);
-  }
-
-  // 3. Fallback: Match on Subject name alone
-  if (subjectTokens.length > 0) {
-    const matchedOnSubject = allocations.filter((alloc) => {
-      const allocSubjectNames = (alloc.subjectIds || []).map((sid) => {
-        const foundSubj = studentSubjects.find((s) => s.id === sid);
-        return (foundSubj ? foundSubj.name : sid).toLowerCase();
-      });
-      const allocName = (alloc.name || '').toLowerCase();
-      return subjectTokens.some(
-        (tok) =>
-          allocSubjectNames.some((asn) => asn.includes(tok)) ||
-          allocName.includes(tok)
-      );
-    });
-
-    if (matchedOnSubject.length > 0) {
-      return matchedOnSubject.reduce((max, a) => {
-        const roomCount = a.summary?.totalRooms || a.roomPlans?.length || a.roomIds?.length || 0;
-        return Math.max(max, roomCount);
-      }, 0);
-    }
-  }
-
-  return 0;
-}
 
 const parseTimeToParts = (time: string) => {
   if (!time) return { hour: '10', minute: '00', period: 'AM' };
@@ -311,16 +199,24 @@ export function ExaminationManagement() {
               }
             }
 
-            const roomsAllocated = findMatchingAllocationRooms(
-              row.date,
-              subject,
+            const slotExamId = slot.id ? `${row.id}__${slot.id}` : row.id;
+            const matchedDetails = matchSeatingAllocationDetails({
+              sessionDate: row.date,
+              startTime,
+              endTime,
+              subjectTitle: subject,
+              course: slot.course || row.course,
+              examId: slotExamId,
               allocations,
-              studentSubjects
-            );
+              studentSubjects,
+            });
+            const roomsAllocated = matchedDetails.roomCount;
+            const allocatedRoomNumbers = matchedDetails.roomNumbers;
+
             // Default invigilators required strictly to rooms allocated (or 1 if none yet allocated)
             const invigilatorsRequired = Math.max(1, roomsAllocated || 1);
-            // Standard ratio: 1 reliever per 5 rooms
-            const relieversRequired = Math.ceil((roomsAllocated || 0) / 5);
+            // Default relievers required to 0
+            const relieversRequired = 0;
 
             generated.push({
               id: `tt-${row.id || rowIndex}-slot-${slot.id || slotIndex}`,
@@ -331,6 +227,7 @@ export function ExaminationManagement() {
               rooms: invigilatorsRequired,
               relievers: relieversRequired,
               roomsAllocated,
+              allocatedRoomNumbers,
               college: timetable.institutionName || institutionName,
               examName: timetable.examinationName || 'Examination',
             });
@@ -352,14 +249,20 @@ export function ExaminationManagement() {
             }
           }
 
-          const roomsAllocated = findMatchingAllocationRooms(
-            row.date,
-            subject,
+          const matchedDetails = matchSeatingAllocationDetails({
+            sessionDate: row.date,
+            startTime,
+            endTime,
+            subjectTitle: subject,
+            course: row.course,
+            examId: row.id,
             allocations,
-            studentSubjects
-          );
+            studentSubjects,
+          });
+          const roomsAllocated = matchedDetails.roomCount;
+          const allocatedRoomNumbers = matchedDetails.roomNumbers;
           const invigilatorsRequired = Math.max(1, roomsAllocated || 1);
-          const relieversRequired = Math.ceil((roomsAllocated || 0) / 5);
+          const relieversRequired = 0;
 
           generated.push({
             id: `tt-${row.id || rowIndex}`,
@@ -370,6 +273,7 @@ export function ExaminationManagement() {
             rooms: invigilatorsRequired,
             relievers: relieversRequired,
             roomsAllocated,
+            allocatedRoomNumbers,
             college: timetable.institutionName || institutionName,
             examName: timetable.examinationName || 'Examination',
           });
@@ -459,30 +363,38 @@ export function ExaminationManagement() {
     }
   }, [examinations.length, syncWithTimetable, user]);
 
-  // Backfill or update rooms allocated when allocations load/change
+  // Backfill or update rooms allocated when allocations load/change using the composite key
   useEffect(() => {
     if (examinations.length > 0 && allocations.length > 0) {
       let changed = false;
       const updated = examinations.map((exam) => {
-        const matched = findMatchingAllocationRooms(
-          exam.date,
-          exam.subject,
+        const matchedDetails = matchSeatingAllocationDetails({
+          sessionDate: exam.date,
+          startTime: exam.startTime,
+          endTime: exam.endTime,
+          subjectTitle: exam.subject,
+          examId: exam.id,
           allocations,
-          studentSubjects
-        );
+          studentSubjects,
+        });
 
-        if (exam.roomsAllocated !== matched) {
+        const matched = matchedDetails.roomCount;
+        const matchedRooms = matchedDetails.roomNumbers;
+
+        if (
+          exam.roomsAllocated !== matched ||
+          JSON.stringify(exam.allocatedRoomNumbers || []) !== JSON.stringify(matchedRooms)
+        ) {
           changed = true;
           return {
             ...exam,
             roomsAllocated: matched,
+            allocatedRoomNumbers: matchedRooms,
             // If rooms was left untouched or at default, auto-update 1:1
             rooms: exam.roomsAllocated === undefined || exam.rooms === (exam.roomsAllocated || 1)
               ? Math.max(1, matched || 1)
               : exam.rooms,
-            relievers: exam.roomsAllocated === undefined || exam.relievers === Math.ceil((exam.roomsAllocated || 0) / 5)
-              ? Math.ceil((matched || 0) / 5)
-              : exam.relievers,
+            relievers: exam.relievers !== undefined ? exam.relievers : 0,
           };
         }
         return exam;
@@ -655,12 +567,16 @@ export function ExaminationManagement() {
       newSessionForm.endTimePeriod
     );
 
-    const roomsAllocated = findMatchingAllocationRooms(
-      newSessionForm.dateStr,
-      newSessionForm.subject,
+    const matchedDetails = matchSeatingAllocationDetails({
+      sessionDate: newSessionForm.dateStr,
+      startTime: formattedStartTime,
+      endTime: formattedEndTime,
+      subjectTitle: newSessionForm.subject,
       allocations,
-      studentSubjects
-    );
+      studentSubjects,
+    });
+    const roomsAllocated = matchedDetails.roomCount;
+    const allocatedRoomNumbers = matchedDetails.roomNumbers;
 
     const newExam: Examination = {
       id: `custom-exam-${Date.now()}`,
@@ -671,6 +587,7 @@ export function ExaminationManagement() {
       rooms: newSessionForm.rooms,
       relievers: newSessionForm.relievers,
       roomsAllocated,
+      allocatedRoomNumbers,
       college: activeTimetable?.institutionName || institutionName,
       examName: activeTimetable?.examinationName || 'Examination',
     };
@@ -991,7 +908,14 @@ export function ExaminationManagement() {
                         {/* 5. ROOMS ALLOCATED */}
                         <TableCell className="text-center">
                           {roomsCount > 0 ? (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                            <span
+                              title={
+                                exam.allocatedRoomNumbers && exam.allocatedRoomNumbers.length > 0
+                                  ? `Rooms Allocated: ${exam.allocatedRoomNumbers.join(', ')}`
+                                  : `${roomsCount} rooms allocated from seating plan`
+                              }
+                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 cursor-default"
+                            >
                               <DoorOpen className="h-3.5 w-3.5" />
                               <span>{roomsCount} {roomsCount === 1 ? 'Room' : 'Rooms'}</span>
                             </span>
@@ -1021,10 +945,10 @@ export function ExaminationManagement() {
                           </Select>
                         </TableCell>
 
-                        {/* 7. RELIEVERS REQUIRED (Dropdown 0-50, Pre-filled 1 per 5 rooms) */}
+                        {/* 7. RELIEVERS REQUIRED (Dropdown 0-50, Default: 0) */}
                         <TableCell className="text-center">
                           <Select
-                            value={exam.relievers.toString()}
+                            value={(exam.relievers ?? 0).toString()}
                             onValueChange={(val) => handleRelieversChange(exam.id, val)}
                           >
                             <SelectTrigger className="h-8.5 w-24 mx-auto bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-800 dark:text-slate-200 rounded-xl shadow-2xs">

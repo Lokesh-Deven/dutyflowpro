@@ -7,6 +7,7 @@ import { useAllotment } from '@/lib/allotment-context';
 import { useAuth } from '@/lib/auth-context';
 import { SeatingAllocationRecord } from '@/lib/student-seating-types';
 import { generateRoomSeatingPlanPdf, generateStudentSeatingIndexPdf } from '@/lib/student-seating-pdf-service';
+import { completeAllocationTo100Percent } from '@/lib/student-seating-engine';
 import { ApprovalRestrictionDialog } from '@/components/dashboard/approval-restriction-dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -42,7 +43,157 @@ import {
   Layers,
   CheckCircle2,
   ChevronsUpDown,
+  Sparkles,
 } from 'lucide-react';
+
+interface ExamColorTheme {
+  id: string;
+  name: string;
+  panelBorder: string;
+  headerBg: string;
+  accentBar: string;
+  badgeClass: string;
+  badgeDot: string;
+  titleClass: string;
+  roomSectionBg: string;
+  roomSectionBorder: string;
+  roomSectionTitle: string;
+  roomPillClass: string;
+  roomCapacityText: string;
+  statPillClass: string;
+  iconBg: string;
+  iconColor: string;
+}
+
+const EXAM_COLOR_THEMES: ExamColorTheme[] = [
+  // 1. Royal Indigo
+  {
+    id: 'indigo',
+    name: 'Royal Indigo',
+    panelBorder: 'border-indigo-200/90 dark:border-indigo-800/80',
+    headerBg: 'bg-gradient-to-r from-indigo-50/90 via-blue-50/50 to-white/70 dark:from-indigo-950/40 dark:via-blue-950/30 dark:to-slate-900',
+    accentBar: 'bg-indigo-600 dark:bg-indigo-500',
+    badgeClass: 'bg-indigo-100 dark:bg-indigo-900/70 text-indigo-950 dark:text-indigo-200 border-indigo-300 dark:border-indigo-700 font-extrabold',
+    badgeDot: 'bg-indigo-600',
+    titleClass: 'text-indigo-950 dark:text-indigo-100',
+    roomSectionBg: 'bg-indigo-50/40 dark:bg-indigo-950/20',
+    roomSectionBorder: 'border-indigo-100 dark:border-indigo-900/40',
+    roomSectionTitle: 'text-indigo-950 dark:text-indigo-200',
+    roomPillClass: 'bg-white dark:bg-indigo-950/80 text-indigo-950 dark:text-indigo-200 border-indigo-200/90 dark:border-indigo-800 shadow-2xs hover:border-indigo-400',
+    roomCapacityText: 'text-indigo-700 dark:text-indigo-300',
+    statPillClass: 'bg-white/90 dark:bg-indigo-950/70 text-indigo-950 dark:text-indigo-200 border-indigo-200 dark:border-indigo-800',
+    iconBg: 'bg-indigo-100/90 dark:bg-indigo-900/60',
+    iconColor: 'text-indigo-700 dark:text-indigo-300',
+  },
+  // 2. Mint Emerald
+  {
+    id: 'emerald',
+    name: 'Mint Emerald',
+    panelBorder: 'border-emerald-200/90 dark:border-emerald-800/80',
+    headerBg: 'bg-gradient-to-r from-emerald-50/90 via-teal-50/50 to-white/70 dark:from-emerald-950/40 dark:via-teal-950/30 dark:to-slate-900',
+    accentBar: 'bg-emerald-600 dark:bg-emerald-500',
+    badgeClass: 'bg-emerald-100 dark:bg-emerald-900/70 text-emerald-950 dark:text-emerald-200 border-emerald-300 dark:border-emerald-700 font-extrabold',
+    badgeDot: 'bg-emerald-600',
+    titleClass: 'text-emerald-950 dark:text-emerald-100',
+    roomSectionBg: 'bg-emerald-50/40 dark:bg-emerald-950/20',
+    roomSectionBorder: 'border-emerald-100 dark:border-emerald-900/40',
+    roomSectionTitle: 'text-emerald-950 dark:text-emerald-200',
+    roomPillClass: 'bg-white dark:bg-emerald-950/80 text-emerald-950 dark:text-emerald-200 border-emerald-200/90 dark:border-emerald-800 shadow-2xs hover:border-emerald-400',
+    roomCapacityText: 'text-emerald-700 dark:text-emerald-300',
+    statPillClass: 'bg-white/90 dark:bg-emerald-950/70 text-emerald-950 dark:text-emerald-200 border-emerald-200 dark:border-emerald-800',
+    iconBg: 'bg-emerald-100/90 dark:bg-emerald-900/60',
+    iconColor: 'text-emerald-700 dark:text-emerald-300',
+  },
+  // 3. Warm Amber
+  {
+    id: 'amber',
+    name: 'Warm Amber',
+    panelBorder: 'border-amber-200/90 dark:border-amber-800/80',
+    headerBg: 'bg-gradient-to-r from-amber-50/90 via-orange-50/50 to-white/70 dark:from-amber-950/40 dark:via-orange-950/30 dark:to-slate-900',
+    accentBar: 'bg-amber-600 dark:bg-amber-500',
+    badgeClass: 'bg-amber-100 dark:bg-amber-900/70 text-amber-950 dark:text-amber-200 border-amber-300 dark:border-amber-700 font-extrabold',
+    badgeDot: 'bg-amber-600',
+    titleClass: 'text-amber-950 dark:text-amber-100',
+    roomSectionBg: 'bg-amber-50/40 dark:bg-amber-950/20',
+    roomSectionBorder: 'border-amber-100 dark:border-amber-900/40',
+    roomSectionTitle: 'text-amber-950 dark:text-amber-200',
+    roomPillClass: 'bg-white dark:bg-amber-950/80 text-amber-950 dark:text-amber-200 border-amber-200/90 dark:border-amber-800 shadow-2xs hover:border-amber-400',
+    roomCapacityText: 'text-amber-700 dark:text-amber-300',
+    statPillClass: 'bg-white/90 dark:bg-amber-950/70 text-amber-950 dark:text-amber-200 border-amber-200 dark:border-amber-800',
+    iconBg: 'bg-amber-100/90 dark:bg-amber-900/60',
+    iconColor: 'text-amber-700 dark:text-amber-300',
+  },
+  // 4. Regal Purple
+  {
+    id: 'purple',
+    name: 'Regal Purple',
+    panelBorder: 'border-purple-200/90 dark:border-purple-800/80',
+    headerBg: 'bg-gradient-to-r from-purple-50/90 via-violet-50/50 to-white/70 dark:from-purple-950/40 dark:via-violet-950/30 dark:to-slate-900',
+    accentBar: 'bg-purple-600 dark:bg-purple-500',
+    badgeClass: 'bg-purple-100 dark:bg-purple-900/70 text-purple-950 dark:text-purple-200 border-purple-300 dark:border-purple-700 font-extrabold',
+    badgeDot: 'bg-purple-600',
+    titleClass: 'text-purple-950 dark:text-purple-100',
+    roomSectionBg: 'bg-purple-50/40 dark:bg-purple-950/20',
+    roomSectionBorder: 'border-purple-100 dark:border-purple-900/40',
+    roomSectionTitle: 'text-purple-950 dark:text-purple-200',
+    roomPillClass: 'bg-white dark:bg-purple-950/80 text-purple-950 dark:text-purple-200 border-purple-200/90 dark:border-purple-800 shadow-2xs hover:border-purple-400',
+    roomCapacityText: 'text-purple-700 dark:text-purple-300',
+    statPillClass: 'bg-white/90 dark:bg-purple-950/70 text-purple-950 dark:text-purple-200 border-purple-200 dark:border-purple-800',
+    iconBg: 'bg-purple-100/90 dark:bg-purple-900/60',
+    iconColor: 'text-purple-700 dark:text-purple-300',
+  },
+  // 5. Ruby Rose
+  {
+    id: 'rose',
+    name: 'Ruby Rose',
+    panelBorder: 'border-rose-200/90 dark:border-rose-800/80',
+    headerBg: 'bg-gradient-to-r from-rose-50/90 via-pink-50/50 to-white/70 dark:from-rose-950/40 dark:via-pink-950/30 dark:to-slate-900',
+    accentBar: 'bg-rose-600 dark:bg-rose-500',
+    badgeClass: 'bg-rose-100 dark:bg-rose-900/70 text-rose-950 dark:text-rose-200 border-rose-300 dark:border-rose-700 font-extrabold',
+    badgeDot: 'bg-rose-600',
+    titleClass: 'text-rose-950 dark:text-rose-100',
+    roomSectionBg: 'bg-rose-50/40 dark:bg-rose-950/20',
+    roomSectionBorder: 'border-rose-100 dark:border-rose-900/40',
+    roomSectionTitle: 'text-rose-950 dark:text-rose-200',
+    roomPillClass: 'bg-white dark:bg-rose-950/80 text-rose-950 dark:text-rose-200 border-rose-200/90 dark:border-rose-800 shadow-2xs hover:border-rose-400',
+    roomCapacityText: 'text-rose-700 dark:text-rose-300',
+    statPillClass: 'bg-white/90 dark:bg-rose-950/70 text-rose-950 dark:text-rose-200 border-rose-200 dark:border-rose-800',
+    iconBg: 'bg-rose-100/90 dark:bg-rose-900/60',
+    iconColor: 'text-rose-700 dark:text-rose-300',
+  },
+  // 6. Deep Teal
+  {
+    id: 'teal',
+    name: 'Deep Teal',
+    panelBorder: 'border-teal-200/90 dark:border-teal-800/80',
+    headerBg: 'bg-gradient-to-r from-teal-50/90 via-cyan-50/50 to-white/70 dark:from-teal-950/40 dark:via-cyan-950/30 dark:to-slate-900',
+    accentBar: 'bg-teal-600 dark:bg-teal-500',
+    badgeClass: 'bg-teal-100 dark:bg-teal-900/70 text-teal-950 dark:text-teal-200 border-teal-300 dark:border-teal-700 font-extrabold',
+    badgeDot: 'bg-teal-600',
+    titleClass: 'text-teal-950 dark:text-teal-100',
+    roomSectionBg: 'bg-teal-50/40 dark:bg-teal-950/20',
+    roomSectionBorder: 'border-teal-100 dark:border-teal-900/40',
+    roomSectionTitle: 'text-teal-950 dark:text-teal-200',
+    roomPillClass: 'bg-white dark:bg-teal-950/80 text-teal-950 dark:text-teal-200 border-teal-200/90 dark:border-teal-800 shadow-2xs hover:border-teal-400',
+    roomCapacityText: 'text-teal-700 dark:text-teal-300',
+    statPillClass: 'bg-white/90 dark:bg-teal-950/70 text-teal-950 dark:text-teal-200 border-teal-200 dark:border-teal-800',
+    iconBg: 'bg-teal-100/90 dark:bg-teal-900/60',
+    iconColor: 'text-teal-700 dark:text-teal-300',
+  },
+];
+
+function getExamColorTheme(index: number, title?: string): ExamColorTheme {
+  if (typeof index === 'number' && index >= 0) {
+    return EXAM_COLOR_THEMES[index % EXAM_COLOR_THEMES.length];
+  }
+  let hash = 0;
+  for (let i = 0; i < (title || '').length; i++) {
+    hash = (hash << 5) - hash + (title || '').charCodeAt(i);
+    hash |= 0;
+  }
+  const idx = Math.abs(hash) % EXAM_COLOR_THEMES.length;
+  return EXAM_COLOR_THEMES[idx];
+}
 
 /**
  * Extracts class/grade info from allocation metadata or allocated student records
@@ -85,6 +236,10 @@ export default function AllocationHistoryPage() {
     deleteAllocation,
     duplicateAllocation,
     setActiveAllocation,
+    rooms: masterRooms,
+    subjects,
+    studentsBySubject,
+    saveAllocation,
   } = useStudentSeating();
 
   const { signatory, pdfPaletteId } = useAllotment();
@@ -221,6 +376,28 @@ export default function AllocationHistoryPage() {
     setAllocationToDelete(null);
   };
 
+  const handleAutoRepair = (alloc: SeatingAllocationRecord) => {
+    try {
+      const repaired = completeAllocationTo100Percent(
+        alloc,
+        masterRooms,
+        subjects,
+        studentsBySubject
+      );
+      saveAllocation(repaired);
+      toast({
+        title: "100% Allocation Guaranteed",
+        description: `Successfully allocated all ${repaired.summary.allocatedStudents} students across ${repaired.summary.totalRooms} rooms.`,
+      });
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Re-allocation Error",
+        description: err.message || "Failed to auto-complete allocation.",
+      });
+    }
+  };
+
   const handleDownloadPdf = async (alloc: SeatingAllocationRecord) => {
     if (!isApproved) {
       setIsRestrictionDialogOpen(true);
@@ -288,10 +465,10 @@ export default function AllocationHistoryPage() {
             </div>
             <div>
               <h1 className="font-headline text-2xl font-black tracking-tight text-slate-800 dark:text-slate-100">
-                Allocation Status
+                Allocation Summary
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                Review, duplicate, view, and re-export past student seating allocations grouped by examination.
+                Review allocated rooms, student strengths, and export seating allocations grouped by examination.
               </p>
             </div>
           </div>
@@ -373,13 +550,36 @@ export default function AllocationHistoryPage() {
       ) : (
         /* Grouped Exam Panels (Accordion / Panel View) */
         <div className="space-y-4">
-          {groupedAllocations.map((group) => {
+          {groupedAllocations.map((group, examIndex) => {
             const isOpen = isExamOpen(group.examTitle);
+            const theme = getExamColorTheme(examIndex, group.examTitle);
 
             // Compute summary metrics for this exam
             const totalExamStudents = group.allocations.reduce(
               (acc, a) => acc + (a.summary?.allocatedStudents || 0),
               0
+            );
+
+            // Aggregate unique examination rooms for this exam
+            const examRoomsMap = new Map<string, { roomNo: string; capacity: number; totalAllocated: number }>();
+            group.allocations.forEach((a) => {
+              (a.roomPlans || []).forEach((rp) => {
+                const key = String(rp.roomNo || rp.roomId).trim();
+                const existing = examRoomsMap.get(key);
+                if (!existing) {
+                  examRoomsMap.set(key, {
+                    roomNo: String(rp.roomNo || key),
+                    capacity: rp.capacity || 0,
+                    totalAllocated: rp.allocatedCount || 0,
+                  });
+                } else {
+                  existing.totalAllocated = Math.max(existing.totalAllocated, rp.allocatedCount || 0);
+                  existing.capacity = Math.max(existing.capacity, rp.capacity || 0);
+                }
+              });
+            });
+            const sortedExamRooms = Array.from(examRoomsMap.values()).sort((a, b) =>
+              a.roomNo.localeCompare(b.roomNo, undefined, { numeric: true, sensitivity: 'base' })
             );
 
             const allRoomIds = new Set<string>();
@@ -394,31 +594,38 @@ export default function AllocationHistoryPage() {
             return (
               <div
                 key={group.examTitle}
-                className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl overflow-hidden shadow-xs transition-all"
+                className={cn("bg-white dark:bg-slate-900 border rounded-xl overflow-hidden shadow-xs transition-all relative", theme.panelBorder)}
               >
+                {/* Accent Color Indicator Bar on Top */}
+                <div className={cn("h-1.5 w-full", theme.accentBar)} />
+
                 {/* Collapsible Panel Card Header */}
                 <div
                   onClick={() => toggleExam(group.examTitle)}
-                  className="p-4 bg-slate-50/70 dark:bg-slate-800/40 hover:bg-slate-100/70 dark:hover:bg-slate-800/70 border-b border-slate-200/80 dark:border-slate-800 cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 select-none transition-colors"
+                  className={cn("p-4 border-b cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 select-none transition-colors", theme.headerBg, theme.roomSectionBorder)}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-indigo-100/70 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 shrink-0">
+                    <div className={cn("p-2 rounded-lg shrink-0", theme.iconBg, theme.iconColor)}>
                       <GraduationCap className="w-5 h-5" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h2 className="font-headline font-bold text-sm text-slate-900 dark:text-white tracking-tight">
+                        <span className={cn("inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border shadow-3xs", theme.badgeClass)}>
+                          <span className={cn("w-1.5 h-1.5 rounded-full", theme.badgeDot)} />
+                          Exam {examIndex + 1}
+                        </span>
+                        <h2 className={cn("font-headline font-bold text-sm tracking-tight", theme.titleClass)}>
                           {group.examTitle}
                         </h2>
                         <Badge
                           variant="secondary"
-                          className="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/60 text-[10px] font-bold py-0.5 px-2"
+                          className={cn("text-[10px] font-bold py-0.5 px-2 border", theme.statPillClass)}
                         >
                           {group.allocations.length}{' '}
                           {group.allocations.length === 1 ? 'Allocation' : 'Allocations'}
                         </Badge>
                       </div>
-                      <div className="text-[11px] text-slate-400 dark:text-slate-500 font-medium flex items-center gap-2 mt-0.5">
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium flex items-center gap-2 mt-1">
                         <Calendar className="w-3 h-3 text-slate-400 dark:text-slate-500 inline" />
                         <span>
                           {uniqueDates.length > 0 ? uniqueDates.join(', ') : 'Date Not Specified'}
@@ -429,13 +636,13 @@ export default function AllocationHistoryPage() {
 
                   <div className="flex items-center gap-3 self-end sm:self-center">
                     <div className="hidden md:flex items-center gap-2 text-xs">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-semibold text-[11px]">
+                      <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border font-semibold text-[11px]", theme.statPillClass)}>
                         <Users className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
                         {totalExamStudents} Students
                       </span>
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-semibold text-[11px]">
+                      <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border font-semibold text-[11px]", theme.statPillClass)}>
                         <DoorOpen className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                        {allRoomIds.size} Rooms
+                        {sortedExamRooms.length > 0 ? sortedExamRooms.length : allRoomIds.size} Rooms
                       </span>
                     </div>
 
@@ -449,6 +656,31 @@ export default function AllocationHistoryPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Allocated Rooms Showcase Bar */}
+                {sortedExamRooms.length > 0 && (
+                  <div className={cn("px-4 py-2.5 border-b flex flex-wrap items-center justify-between gap-2", theme.roomSectionBg, theme.roomSectionBorder)}>
+                    <div className="flex items-center gap-2">
+                      <div className={cn("p-1 rounded-md", theme.iconBg, theme.iconColor)}>
+                        <DoorOpen className="w-3.5 h-3.5" />
+                      </div>
+                      <span className={cn("text-xs font-bold uppercase tracking-wider", theme.roomSectionTitle)}>
+                        Allocated Rooms ({sortedExamRooms.length})
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {sortedExamRooms.map((rm) => (
+                        <span
+                          key={rm.roomNo}
+                          className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold border transition-colors", theme.roomPillClass)}
+                        >
+                          <span className="font-headline font-black">Room {rm.roomNo}</span>
+                          <span className={cn("text-[11px] font-semibold", theme.roomCapacityText)}>({rm.capacity} Seats)</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Expanded Panel Table */}
                 {isOpen && (
@@ -524,16 +756,37 @@ export default function AllocationHistoryPage() {
 
                               {/* 6th Column: Status */}
                               <td className="py-3 px-3 text-center">
-                                <Badge
-                                  variant="outline"
-                                  className={
-                                    alloc.status === 'Finalized'
-                                      ? "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800 text-[10px]"
-                                      : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 text-[10px]"
-                                  }
-                                >
-                                  {alloc.status || 'Draft'}
-                                </Badge>
+                                {alloc.summary?.unallocatedStudents > 0 ? (
+                                  <div className="flex flex-col items-center gap-1">
+                                    <Badge
+                                      variant="outline"
+                                      className="bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700 text-[10px] font-bold"
+                                    >
+                                      Partial ({alloc.summary.unallocatedStudents} unallocated)
+                                    </Badge>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleAutoRepair(alloc)}
+                                      className="h-5 text-[10px] font-bold px-1.5 bg-amber-500 hover:bg-amber-600 text-white border-none gap-1 shadow-3xs cursor-pointer"
+                                      title="Auto-complete 100% allocation across all eligible rooms"
+                                    >
+                                      <Sparkles className="w-2.5 h-2.5" />
+                                      Fix (100%)
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <Badge
+                                    variant="outline"
+                                    className={
+                                      alloc.status === 'Finalized'
+                                        ? "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800 text-[10px]"
+                                        : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 text-[10px]"
+                                    }
+                                  >
+                                    {alloc.status === 'Draft' ? 'Complete (Draft)' : (alloc.status || 'Complete')}
+                                  </Badge>
+                                )}
                               </td>
 
                               {/* 7th Column: Created On */}

@@ -58,9 +58,9 @@ import {
 
 export const studentSeatingSubmenu = [
   { href: '/dashboard/student-seating/master-rooms', label: 'Examination Rooms', icon: DoorOpen },
-  { href: '/dashboard/student-seating/student-data', label: 'Student Data', icon: Users },
+  { href: '/dashboard/student-seating/student-data', label: 'Subject Strength', icon: Users },
   { href: '/dashboard/student-seating/seating-allocation', label: 'Seating Allocation', icon: LayoutGrid },
-  { href: '/dashboard/student-seating/allocation-history', label: 'Allocation Status', icon: History },
+  { href: '/dashboard/student-seating/allocation-history', label: 'Allocation Summary', icon: History },
 ];
 
 export const invigilationDutySubmenu = [
